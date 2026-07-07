@@ -1,0 +1,135 @@
+erDiagram
+    roles ||--o{ users : "has"
+    users ||--o{ app_clients : "linked account"
+    users ||--o{ app_assignees : "linked account"
+    users ||--o{ app_tickets : "created_by"
+    users ||--o{ app_tickets_comments : "user_id"
+    users ||--o{ app_tickets_attachments : "uploaded_by"
+    users ||--o{ app_tickets_status_history : "changed_by"
+    users ||--o{ app_ticket_evaluations : "created_by"
+
+    app_clients ||--o{ app_tickets : "client_id"
+    app_clients ||--o{ app_ticket_evaluations : "client_id"
+    app_assignees ||--o{ app_tickets : "assignee_id"
+
+    app_tickets ||--o{ app_tickets_comments : "ticket_id"
+    app_tickets ||--o{ app_tickets_attachments : "ticket_id"
+    app_tickets ||--o{ app_tickets_status_history : "ticket_id"
+    app_tickets ||--|| app_ticket_evaluations : "ticket_id (unique)"
+    app_tickets_comments ||--o{ app_tickets_attachments : "comment_id"
+
+    roles {
+        bigint id PK
+        string name
+        string guard_name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users {
+        bigint id PK
+        string name
+        string email UK
+        timestamp email_verified_at "nullable"
+        string password "nullable"
+        bigint role_id FK "nullable"
+        string status "default active"
+        string remember_token "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_clients {
+        bigint id PK
+        bigint user_id FK "nullable"
+        string status "default active"
+        string client_code UK "nullable"
+        string company_name
+        string first_name
+        string last_name
+        string email UK
+        string phone "nullable"
+        text address "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_assignees {
+        bigint id PK
+        bigint user_id FK "nullable"
+        string status "default active"
+        string employee_no UK "nullable"
+        string first_name
+        string last_name
+        string designation "nullable"
+        string email UK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_tickets {
+        bigint id PK
+        string ticket_no UK
+        string title
+        text description "nullable"
+        string status "default open"
+        string priority "nullable default medium"
+        string category "nullable"
+        bigint client_id FK
+        bigint assignee_id FK "nullable"
+        boolean is_billable "default false"
+        bigint created_by FK
+        timestamp opened_at
+        date due_date "nullable"
+        timestamp resolved_at "nullable"
+        timestamp closed_at "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_tickets_comments {
+        bigint id PK
+        bigint ticket_id FK
+        bigint user_id FK
+        longtext comment
+        boolean is_internal "default false"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_tickets_attachments {
+        bigint id PK
+        bigint ticket_id FK
+        bigint comment_id FK "nullable"
+        bigint uploaded_by FK
+        string original_name
+        string file_name
+        string file_path
+        string mime_type
+        bigint file_size
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_tickets_status_history {
+        bigint id PK
+        bigint ticket_id FK
+        string previous_status "nullable"
+        string new_status
+        text remarks "nullable"
+        bigint changed_by FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    app_ticket_evaluations {
+        bigint id PK
+        bigint ticket_id FK,UK
+        bigint client_id FK
+        tinyint service_rating
+        tinyint platform_rating
+        text message "nullable"
+        bigint created_by FK
+        timestamp created_at
+        timestamp updated_at
+    }

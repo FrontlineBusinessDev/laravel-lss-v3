@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frontline · Welcome (client added)</title>
+  <!-- Trigger: a client account is created / added to the system. Recipient: client. -->
+</head>
+<body style="margin:0; padding:24px; background:#f4f5f7;">
+  <div style="max-width:600px; margin:0 auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 1px 3px rgba(20,21,26,.08); font-family:'Plus Jakarta Sans',Arial,sans-serif; color:#14151a;">
+    <div style="height:4px; background:linear-gradient(90deg,#cc2e9c,#7b2ecc);"></div>
+    <div style="padding:24px 36px 0; display:flex; align-items:center; gap:10px;">
+      <div style="width:30px; height:30px; border-radius:8px; background:#cc2e9c; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff;">F</div>
+      <div style="font-size:14px; font-weight:700; letter-spacing:-.01em;">Frontline</div>
+      <div style="margin-left:auto; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#aab0bb;">Support</div>
+    </div>
+    <div style="padding:28px 36px 32px;">
+      <div style="font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#cc2e9c; margin-bottom:12px;">Account created</div>
+      <h1 style="font-size:23px; font-weight:800; letter-spacing:-.02em; margin:0 0 14px; line-height:1.25;">Welcome to Frontline, {{ $clientName }}</h1>
+      <p style="font-size:14.5px; line-height:1.6; color:#4b5159; margin:0 0 22px;">Your client account has just been added to the Frontline support system. You can now submit support requests and track every ticket from one place.</p>
+      <div style="border:1px solid #ecedf1; border-radius:12px; overflow:hidden; margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #f0f1f4;"><span style="font-size:13px; color:#9099a3; font-weight:500;">Account email</span><span style="font-size:13px; color:#14151a; font-weight:600;">{{ $clientEmail }}</span></div>
+        <div style="display:flex; justify-content:space-between; padding:12px 16px;"><span style="font-size:13px; color:#9099a3; font-weight:500;">Organization</span><span style="font-size:13px; color:#14151a; font-weight:600;">{{ $organization }}</span></div>
+      </div>
+      <a href="{{ $portalUrl }}" style="display:inline-block; background:#cc2e9c; color:#fff; text-decoration:none; font-size:14px; font-weight:600; padding:12px 24px; border-radius:10px;">Go to your portal</a>
+      <p style="font-size:13px; line-height:1.6; color:#9099a3; margin:20px 0 0;">Didn't expect this email? Just reply and we'll sort it out.</p>
+    </div>
+    <div style="padding:24px 36px; background:#fafafb; border-top:1px solid #f0f1f4;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:22px; height:22px; border-radius:6px; background:#cc2e9c; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff;">F</div>
+        <span style="font-size:12.5px; font-weight:700;">Frontline Support</span>
+      </div>
+      <div style="font-size:12px; line-height:1.65; color:#9099a3;">Frontline Business Solutions Inc. · Baloc Road, Brgy. San Ignacio, San Pablo City, Philippines<br />You're receiving this because you have a Frontline support account.</div>
+      <div style="margin-top:12px; display:flex; gap:16px; font-size:12px; font-weight:600;"><a href="#" style="color:#6b7280; text-decoration:none;">Help Center</a><a href="#" style="color:#6b7280; text-decoration:none;">Privacy</a><a href="#" style="color:#6b7280; text-decoration:none;">Unsubscribe</a></div>
+    </div>
+  </div>
+</body>
+</html>
