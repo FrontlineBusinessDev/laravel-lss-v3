@@ -85,11 +85,12 @@ abstract class BaseController extends Controller implements HasMiddleware
             });
         }
         foreach ((array) $request->input('filters', []) as $col => $value) {
-            if ($value !== '' && in_array($col, $this->filterable, true)) {
+            $cleanedValue = is_string($value) ? trim($value) : $value;
+            if ($cleanedValue !== '' && in_array($col, $this->filterable, true)) {
                 // Exact match for columns like `status` (so 'active' doesn't
                 // also match 'inactive'); LIKE for everything else.
                 if (in_array($col, $this->exactFilters, true)) {
-                    $query->where($col, $value);
+                    $query->where($col, $cleanedValue);
                 } else {
                     $query->where($col, 'like', "%{$value}%");
                 }

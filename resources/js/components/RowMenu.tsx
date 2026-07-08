@@ -70,7 +70,7 @@ export function RowMenu({ actions }: { actions: RowMenuAction[] }) {
             ref={menuRef}
             role="menu"
             style={{ position: 'fixed', top: coords.top, left: coords.left, width: 190 }}
-            className="z-[60] animate-scaleIn overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-popover"
+            className="z-60 animate-scaleIn overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-popover"
           >
             {actions.map((a, idx) => (
               <button

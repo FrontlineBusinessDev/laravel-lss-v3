@@ -34,16 +34,17 @@ export function SettingsShell({
         <div>
             <h1 className="text-xl font-semibold text-ink">Settings</h1>
             <p className="mb-4 text-sm text-neutral-500">
-                Manage user accounts, partner schools, and academic reference data
+                Manage user accounts, partner schools, and academic reference
+                data
             </p>
 
-            <div className="mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5 lss-scrollbar">
+            <div className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5">
                 {TABS.map((t) => (
                     <button
                         key={t}
                         onClick={() => setTab(t)}
                         className={cn(
-                            'whitespace-nowrap pb-2.5 text-sm font-medium transition-colors',
+                            'pb-2.5 text-sm font-medium whitespace-nowrap transition-colors',
                             tab === t
                                 ? 'border-b-2 border-brand-500 font-semibold text-ink'
                                 : 'text-neutral-500 hover:text-neutral-700',
@@ -55,9 +56,9 @@ export function SettingsShell({
             </div>
 
             {tab === 'Users' && (
-                <div>
+                <>
                     {showRoles && (
-                        <div className="mb-3.5 flex flex-wrap gap-1.5">
+                        <div className="my-2 inline-flex flex-wrap gap-1.5">
                             {SUB_TABS.map((t) => (
                                 <button
                                     key={t}
@@ -74,13 +75,14 @@ export function SettingsShell({
                             ))}
                         </div>
                     )}
-
                     {showRoles && sub === 'Roles' ? (
-                        <RolesManagement permissionModules={permissionModules} />
+                        <RolesManagement
+                            permissionModules={permissionModules}
+                        />
                     ) : (
                         <UsersManagement />
                     )}
-                </div>
+                </>
             )}
             {tab === 'Partner schools' && <PartnerSchoolsTab />}
             {tab === 'Academic' && <AcademicTab />}

@@ -170,7 +170,7 @@ export function RecordModal<T extends object>({
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
-                className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-background shadow-xl"
+                className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white z-10 shadow-xl"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">

@@ -17,6 +17,10 @@ export interface ColumnDef<T = object> {
     searchable?: boolean;
     sortable?: boolean;
     width?: string;
+    type?: string;
+    typeData?: string[] | Record<string, unknown>[];
+    exactFilters?: boolean;
+    // | { label: string; value: unknown }[];
     render?: (value: unknown, row: T) => ReactNode;
 }
 
@@ -58,6 +62,7 @@ export interface DataTableProps<T> {
     title?: string;
     description?: string;
     actions?: ReactNode;
+    actionsCreateClassName?: string;
     renderCard?: (row: T, actions: CardActions) => ReactNode;
     renderModal?: (props: RenderModalProps<T>) => ReactNode;
     createUrl?:

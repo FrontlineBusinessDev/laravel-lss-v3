@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -26,19 +27,20 @@ class UserSeeder extends Seeder
 
     protected function makeUser(string $email, string $first, string $last, string $role): User
     {
+        $roleId = Role::where('name', $role)->first();
         $user = User::updateOrCreate(
             ['email' => $email],
             [
-                'first_name' => $first,
-                'last_name' => $last,
-                'password' => Hash::make('123123qQ!'),
-                'status' => 'active',
-                'email_verified_at' => now(),
+                'first_name'            => $first,
+                'last_name'             => $last,
+                'role_id'               => $roleId?->id,
+                'password'              => Hash::make('123123qQ!'),
+                'status'                => 'active',
+                'email_verified_at'     => now(),
             ]
         );
-
-        $user->syncRoles([$role]);
-
+        $user->assignRole($role);
+        // $user->syncRoles([$role]);
         return $user;
     }
 }

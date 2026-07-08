@@ -4,63 +4,68 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
 @theme {
-    --font-sans: 'Inter Variable', Inter, 'Plus Jakarta Sans', -apple-system, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-sans:
+        'Inter Variable', Inter, 'Plus Jakarta Sans', -apple-system, system-ui,
+        sans-serif;
+    --font-mono:
+        'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace,
+        SFMono-Regular, monospace;
 
     /* Primary brand blue — banner, primary actions, active states, links */
-    --color-brand-50: #E6F1FB;
-    --color-brand-100: #B5D4F4;
-    --color-brand-200: #85B7EB;
-    --color-brand-300: #5AA0E6;
-    --color-brand-400: #378ADD;
-    --color-brand-500: #2176E3;
-    --color-brand-600: #185FA5;
-    --color-brand-700: #0C447C;
-    --color-brand-800: #0A3868;
-    --color-brand-900: #042C53;
+    --color-brand-50: #e6f1fb;
+    --color-brand-100: #b5d4f4;
+    --color-brand-200: #85b7eb;
+    --color-brand-300: #5aa0e6;
+    --color-brand-400: #378add;
+    --color-brand-500: #2176e3;
+    --color-brand-600: #185fa5;
+    --color-brand-700: #0c447c;
+    --color-brand-800: #0a3868;
+    --color-brand-900: #042c53;
 
     /* Gradient accent (magenta -> deep plum) — used sparingly */
-    --color-accent-start: #E31C8D;
-    --color-accent-end: #5A1A45;
+    --color-primary: #e31c8d;
+    --color-accent-start: #e31c8d;
+    --color-accent-end: #5a1a45;
 
-    --color-ink: #1C1C1E;
+    --color-ink: #1c1c1e;
 
     /* Cool-toned 9-step neutral scale */
-    --color-neutral-0: #FFFFFF;
-    --color-neutral-50: #F6F7F9;
-    --color-neutral-100: #EEF1F4;
-    --color-neutral-200: #DDE1E6;
-    --color-neutral-300: #C1C7CD;
-    --color-neutral-400: #9AA2AB;
+    --color-neutral-0: #ffffff;
+    --color-neutral-50: #f6f7f9;
+    --color-neutral-100: #eef1f4;
+    --color-neutral-200: #dde1e6;
+    --color-neutral-300: #c1c7cd;
+    --color-neutral-400: #9aa2ab;
     --color-neutral-500: #717981;
-    --color-neutral-600: #4F565D;
-    --color-neutral-700: #33383D;
+    --color-neutral-600: #4f565d;
+    --color-neutral-700: #33383d;
     --color-neutral-800: #202428;
-    --color-neutral-900: #1C1C1E;
+    --color-neutral-900: #1c1c1e;
 
-    --color-success-50: #EAF3DE;
-    --color-success-100: #C0DD97;
+    --color-success-50: #eaf3de;
+    --color-success-100: #c0dd97;
     --color-success-400: #639922;
-    --color-success-600: #3B6D11;
-    --color-success-800: #27500A;
+    --color-success-600: #3b6d11;
+    --color-success-800: #27500a;
 
-    --color-warning-50: #FAEEDA;
-    --color-warning-100: #FAC775;
-    --color-warning-400: #BA7517;
-    --color-warning-600: #854F0B;
+    --color-warning-50: #faeeda;
+    --color-warning-100: #fac775;
+    --color-warning-400: #ba7517;
+    --color-warning-600: #854f0b;
     --color-warning-800: #633806;
 
-    --color-danger-50: #FCEBEB;
-    --color-danger-100: #F7C1C1;
-    --color-danger-400: #E24B4A;
-    --color-danger-600: #A32D2D;
-    --color-danger-800: #791F1F;
+    --color-danger-50: #fcebeb;
+    --color-danger-100: #f7c1c1;
+    --color-danger-400: #e24b4a;
+    --color-danger-600: #a32d2d;
+    --color-danger-800: #791f1f;
 
-    --color-info-50: #E6F1FB;
-    --color-info-100: #B5D4F4;
-    --color-info-400: #378ADD;
-    --color-info-600: #185FA5;
-    --color-info-800: #0C447C;
+    --color-info-50: #e6f1fb;
+    --color-info-100: #b5d4f4;
+    --color-info-400: #378add;
+    --color-info-600: #185fa5;
+    --color-info-800: #0c447c;
 
     --radius-sm: 6px;
     --radius-DEFAULT: 8px;
@@ -68,32 +73,53 @@
     --radius-lg: 12px;
     --radius-pill: 999px;
 
-    --shadow-card: 0 1px 2px rgba(28,28,30,0.04);
-    --shadow-popover: 0 8px 24px rgba(28,28,30,0.12), 0 2px 6px rgba(28,28,30,0.08);
-    --shadow-modal: 0 20px 48px rgba(28,28,30,0.24);
+    --shadow-card: 0 1px 2px rgba(28, 28, 30, 0.04);
+    --shadow-popover:
+        0 8px 24px rgba(28, 28, 30, 0.12), 0 2px 6px rgba(28, 28, 30, 0.08);
+    --shadow-modal: 0 20px 48px rgba(28, 28, 30, 0.24);
 
     --spacing-4_5: 18px;
 
     --animate-fadeIn: fadeIn 0.15s ease-out;
-    --animate-scaleIn: scaleIn 0.16s cubic-bezier(0.16,1,0.3,1);
+    --animate-scaleIn: scaleIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
     --animate-slideDown: slideDown 0.14s ease-out;
-    --animate-slideInLeft: slideInLeft 0.2s cubic-bezier(0.16,1,0.3,1);
+    --animate-slideInLeft: slideInLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
     @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
     }
     @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.96) translateY(4px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
+        from {
+            opacity: 0;
+            transform: scale(0.96) translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
     }
     @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-4px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     @keyframes slideInLeft {
-        from { transform: translateX(-100%); }
-        to { transform: translateX(0); }
+        from {
+            transform: translateX(-100%);
+        }
+        to {
+            transform: translateX(0);
+        }
     }
 }
 
@@ -106,7 +132,7 @@
         height: 100%;
     }
     body {
-        @apply bg-neutral-50 text-ink antialiased;
+        @apply text-ink bg-neutral-50 antialiased;
         font-feature-settings: 'cv11', 'ss01';
         -webkit-font-smoothing: antialiased;
     }
@@ -114,7 +140,7 @@
         @apply bg-brand-100 text-brand-800;
     }
     :focus-visible {
-        outline: 2px solid #2176E3;
+        outline: 2px solid #2176e3;
         outline-offset: 2px;
         border-radius: 4px;
     }
@@ -123,6 +149,7 @@
     textarea,
     button {
         font-family: inherit;
+        @apply cursor-pointer;
     }
 }
 
@@ -132,7 +159,7 @@
         height: 8px;
     }
     .lss-scrollbar::-webkit-scrollbar-thumb {
-        @apply bg-neutral-200 rounded-pill;
+        @apply rounded-pill bg-neutral-200;
     }
     .lss-scrollbar::-webkit-scrollbar-track {
         background: transparent;

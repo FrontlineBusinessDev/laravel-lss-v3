@@ -29,7 +29,7 @@ class UserController extends BaseController
 
     protected array $searchable = ['first_name', 'last_name', 'email'];
 
-    protected array $filterable = ['status'];
+    protected array $filterable = ['status', 'email', 'first_name', 'last_name'];
 
     protected array $sortable = ['first_name', 'last_name', 'email', 'status', 'created_at'];
 
@@ -41,10 +41,10 @@ class UserController extends BaseController
     private ?string $pendingRole = null;
 
     /** The settings shell is rendered by SettingController; bounce stray hits. */
-    public function index(Request $request): mixed
-    {
-        return redirect()->route('settings.index');
-    }
+    // public function index(Request $request): mixed
+    // {
+    //     return redirect()->route('settings.index');
+    // }
 
     /**
      * Eager-load roles for display, and translate the Spatie role filter
@@ -54,10 +54,10 @@ class UserController extends BaseController
     protected function newQuery(): Builder
     {
         $query = User::query()->with('roles');
-        $role = request()->input('filters.role');
+        $role = request()->input('filters.roles');
 
         if (is_string($role) && $role !== '') {
-            $query->whereHas('roles', fn (Builder $q) => $q->where('name', $role));
+            $query->whereHas('roles', fn(Builder $q) => $q->where('name', $role));
         }
 
         return $query;
@@ -66,7 +66,8 @@ class UserController extends BaseController
     protected function storeRules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', 'string', Rule::in($this->assignableRoles())],
         ];
@@ -77,7 +78,9 @@ class UserController extends BaseController
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required', 'email', 'max:255',
+                'required',
+                'email',
+                'max:255',
                 Rule::unique('users', 'email')->ignore($model->getKey()),
             ],
             'role' => ['required', 'string', Rule::in($this->assignableRoles())],
@@ -148,8 +151,8 @@ class UserController extends BaseController
     /** Roles the current actor may assign (creator-scoped matrix). */
     protected function assignableRoles(): array
     {
+        /** @disregard P1013 */ // this disregard the error below but it works 
         $actor = auth()->user();
-
         if ($actor?->hasRole('developer')) {
             return ['developer', 'admin', 'trainer'];
         }
@@ -173,8 +176,13 @@ class UserController extends BaseController
         if (! $user->hasRole('admin') || $user->status !== Statuses::ACTIVE) {
             return false;
         }
-
-        return User::role('admin')->where('status', Statuses::ACTIVE)->count() <= 1;
+        // Find the last active admin's ID
+        $lastActiveAdminId = User::role('admin')
+            ->where('status', Statuses::ACTIVE)
+            ->latest('id')
+            ->value('id');
+        // return User::role('admin')->where('status', Statuses::ACTIVE)->count() <= 1;
+        return $lastActiveAdminId === $user->id;
     }
 
     /** @return array{0: string, 1: string} */

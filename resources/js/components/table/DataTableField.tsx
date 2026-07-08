@@ -25,6 +25,18 @@
  * See types/index.ts → DataTableProps for the full prop surface.
  */
 
+import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
+import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
+import { useAsyncAction } from '@/hooks/use-async-action';
+import { useCrud } from '@/hooks/use-crud';
+import { usePermission } from '@/hooks/use-permissions';
+import { useToast } from '@/hooks/use-toast';
+import { apiFetch } from '@/lib/apiFetch';
+import { parseApiError } from '@/lib/parseApiError';
+import { cn } from '@/lib/utils';
+import type { CardActions } from '@/types/reusable/card';
+import type { DataTableProps } from '@/types/reusable/data-table';
+import type { ModalMode } from '@/types/reusable/fields';
 import { usePage } from '@inertiajs/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -37,17 +49,7 @@ import {
     UserRoundX,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
-import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
-import { useAsyncAction } from '@/hooks/use-async-action';
-import { useCrud } from '@/hooks/use-crud';
-import { usePermission } from '@/hooks/use-permissions';
-import { useToast } from '@/hooks/use-toast';
-import { apiFetch } from '@/lib/apiFetch';
-import { parseApiError } from '@/lib/parseApiError';
-import type { CardActions } from '@/types/reusable/card';
-import type { DataTableProps } from '@/types/reusable/data-table';
-import type { ModalMode } from '@/types/reusable/fields';
+import { Dropdown } from '../Dropdown';
 import { ConfirmArchiveAccountModal } from '../modal/ConfirmArchiveAccountModal';
 import { ConfirmDeleteModal } from '../modal/ConfirmDeleteModal';
 import FetchingSpinner from '../spinners/FetchingSpinner';
@@ -89,6 +91,7 @@ export function DataTableField<T extends Record<string, unknown>>({
     title,
     description,
     actions,
+    actionsCreateClassName = '',
     renderCard,
     renderModal,
     createUrl,
@@ -130,7 +133,10 @@ export function DataTableField<T extends Record<string, unknown>>({
     // Single, stable cache key for this resource. `useCrud` keys the list query
     // as `[queryKey, queryParams]`, so every mutation refresh below reuses this
     // exact value — one source of truth, no ad-hoc rebuilding.
-    const queryKey = useMemo(() => normalizeQueryKey(apiQueryKey), [apiQueryKey]);
+    const queryKey = useMemo(
+        () => normalizeQueryKey(apiQueryKey),
+        [apiQueryKey],
+    );
 
     // Invalidate every cached page/sort/filter variant of the list so it
     // refetches after a mutation. The key is wrapped one level deeper
@@ -495,8 +501,8 @@ export function DataTableField<T extends Record<string, unknown>>({
             toast({ title: 'Deleted', variant: 'info' });
 
             if (isSelfDelete) {
-window.location.href = '/login';
-}
+                window.location.href = '/login';
+            }
 
             setDeleteTarget(null);
         } catch (err) {
@@ -716,23 +722,52 @@ window.location.href = '/login';
                 </div>
             )}
             {filterCols.length > 0 && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {filterCols.map((col) => (
-                        <label key={col.key} className="block">
-                            <span className="mb-1 block text-xs font-medium">
-                                {col.label}
-                            </span>
-                            <input
-                                type="text"
-                                value={columnFilters[col.key] ?? ''}
-                                onChange={(e) =>
-                                    handleColumnFilter(col.key, e.target.value)
-                                }
-                                placeholder={`Filter by ${col.label.toLowerCase()}…`}
-                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
-                            />
-                        </label>
-                    ))}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+                    {filterCols.map((col, i) => {
+                        if (col.type == 'select' && col.typeData) {
+                            return (
+                                <div className="relative block" key={i}>
+                                    <label
+                                        htmlFor={col.label}
+                                        className="mb-1 block text-xs font-medium"
+                                    >
+                                        {col.label}
+                                    </label>
+                                    <Dropdown
+                                        options={col.typeData.map(
+                                            (item) =>
+                                                (item as { value: string })
+                                                    .value,
+                                        )}
+                                        value={columnFilters[col.key] ?? 'All'}
+                                        onChange={(value) =>
+                                            handleColumnFilter(col.key, value)
+                                        }
+                                    />
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <label key={col.key} className="block">
+                                <span className="mb-1 block text-xs font-medium">
+                                    {col.label}
+                                </span>
+                                <input
+                                    type="text"
+                                    value={columnFilters[col.key] ?? ''}
+                                    onChange={(e) =>
+                                        handleColumnFilter(
+                                            col.key,
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder={`Filter by ${col.label.toLowerCase()}…`}
+                                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
+                                />
+                            </label>
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -743,13 +778,13 @@ window.location.href = '/login';
     // shell (header row + rules); otherwise they stack as standalone cards.
     const tableMode = Boolean(listHeader);
 
-    const skeletonNodes = Array.from({ length: 4 }).map((_, i) =>
+    const skeletonNodes = Array.from({ length: 7 }).map((_, i) =>
         tableMode ? (
-            <div key={i} className="h-16 animate-pulse bg-gray-100/70" />
+            <div key={i} className="h-16 animate-pulse bg-gray-400/50" />
         ) : (
             <div
                 key={i}
-                className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/70 dark:bg-gray-300/30"
+                className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/40 dark:bg-gray-300/80"
             />
         ),
     );
@@ -820,201 +855,205 @@ window.location.href = '/login';
 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
-        <div className="mx-auto w-full 2xl:min-w-7xl">
-            {/* Page header */}
-            {(title || description || canCreate) && (
-                <div className="mb-6 flex items-center justify-between gap-4">
-                    <div>
-                        {title && (
-                            <h1 className="text-2xl font-semibold tracking-tight">
-                                {title}
-                            </h1>
+        <>
+            {actions ??
+                (canCreate && (
+                    <button
+                        type="button"
+                        onClick={openCreateModal}
+                        className={cn(
+                            'float-right inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90',
+                            actionsCreateClassName,
                         )}
-                        {description && (
-                            <p className="mt-1 text-sm">{description}</p>
-                        )}
+                    >
+                        <Plus className="h-4 w-4" strokeWidth={2} />
+                        {createLabel ?? 'New'}
+                    </button>
+                ))}
+            <div className="2xl:min-w-7x mx-auto mt-2 w-full">
+                {/* Page header */}
+                {/* {(title || description || canCreate) && (
+                    <div className="mb-6 flex items-center justify-between gap-4">
+                        <div className="inline-block">
+                            {title && (
+                                <h1 className="text-2xl font-semibold tracking-tight">
+                                    {title}
+                                </h1>
+                            )}
+                            {description && (
+                                <p className="mt-1 text-sm">{description}</p>
+                            )}
+                        </div>
                     </div>
-                    {actions ??
-                        (canCreate && (
-                            <button
-                                type="button"
-                                onClick={openCreateModal}
-                                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90"
-                            >
-                                <Plus className="h-4 w-4" strokeWidth={2} />
-                                {createLabel ?? 'New'}
-                            </button>
-                        ))}
-                </div>
-            )}
-
-            {/* Always-visible status tab bar (opt-in via statusFilterOptions).
+                )} */}
+                {/* Always-visible status tab bar (opt-in via statusFilterOptions).
                 Used by the ticket history page for lifecycle stages; the generic
                 Active/Inactive/All control still lives inside the filter panel. */}
-            {statusFilterOptions && statusFilterOptions.length > 0 && (
-                <div className="mb-4">
-                    <StatusFilter
-                        value={customStatusScope}
-                        onChange={handleStatusChange}
-                        tabs={statusFilterOptions}
-                    />
-                </div>
-            )}
+                {statusFilterOptions && statusFilterOptions.length > 0 && (
+                    <div className="mb-4">
+                        <StatusFilter
+                            value={customStatusScope}
+                            onChange={handleStatusChange}
+                            tabs={statusFilterOptions}
+                        />
+                    </div>
+                )}
 
-            {/* Search / sort / filter toolbar (status filter now lives inside
+                {/* Search / sort / filter toolbar (status filter now lives inside
                 the collapsible filter panel) */}
-            <Toolbar
-                columns={columns}
-                searchInput={searchInput}
-                onSearchChange={setSearchInput}
-                searchableCols={searchableCols}
-                sortBy={sortBy}
-                sortDir={sortDir}
-                onSortByChange={handleSortByChange}
-                onSortDirToggle={() =>
-                    setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-                }
-                perPage={perPage}
-                onPerPageChange={setPerPage}
-                filtersOpen={filtersOpen}
-                onFiltersToggle={() => setFiltersOpen((o) => !o)}
-                hasActiveColumnFilters={hasActiveColumnFilters}
-                showFiltersButton={showFiltersButton}
-                filterPanel={filterPanel}
-            />
-
-            {/* Parent-owned filter controls (e.g. Ticket History's multi-select
-                client / assignee dropdowns). Presentational slot only. */}
-            {filterControls && (
-                <div className="mb-4 flex flex-wrap items-center gap-2.5">
-                    {filterControls}
-                </div>
-            )}
-
-            {/* Active-filter indicator */}
-            {hasActiveFilters && (
-                <div className="mb-4 flex items-center justify-between">
-                    <span className="text-xs">Filters applied</span>
-                    <button
-                        onClick={clearAllFilters}
-                        className="text-xs font-medium underline-offset-2 hover:underline"
-                    >
-                        Clear all
-                    </button>
-                </div>
-            )}
-
-            {/* API error banner */}
-            {isError && (
-                <div className="mb-4 flex items-center justify-between rounded-xl border border-rose-200 px-4 py-3 text-sm text-rose-700">
-                    <span>⚠ {error?.message}</span>
-                    <button
-                        onClick={() => refetch()}
-                        className="font-medium underline-offset-2 hover:underline"
-                    >
-                        Retry
-                    </button>
-                </div>
-            )}
-
-            {/* Record list — rounded table shell or a stack of cards */}
-            <div className="relative">
-                {isLoading && rows.length === 0
-                    ? listShell(skeletonNodes)
-                    : rows.length === 0
-                      ? tableMode
-                          ? listShell(emptyState)
-                          : emptyState
-                      : listShell(rowNodes)}
-
-                {/* Subtle loading overlay on subsequent fetches (page change, sort, etc.) */}
-                {isFetching && !isLoading && <FetchingSpinner />}
-            </div>
-
-            {/* Pagination bar */}
-            {meta && (
-                <PaginationBar
-                    meta={meta}
-                    page={page}
-                    loading={isFetching}
-                    onPageChange={setPage}
+                <Toolbar
+                    columns={columns}
+                    searchInput={searchInput}
+                    onSearchChange={setSearchInput}
+                    searchableCols={searchableCols}
+                    sortBy={sortBy}
+                    sortDir={sortDir}
+                    onSortByChange={handleSortByChange}
+                    onSortDirToggle={() =>
+                        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+                    }
+                    perPage={perPage}
+                    onPerPageChange={setPerPage}
+                    filtersOpen={filtersOpen}
+                    onFiltersToggle={() => setFiltersOpen((o) => !o)}
+                    hasActiveColumnFilters={hasActiveColumnFilters}
+                    showFiltersButton={showFiltersButton}
+                    filterPanel={filterPanel}
                 />
-            )}
 
-            {/* Create / edit modal */}
-            {modalState &&
-                (renderModal ? (
-                    renderModal({
-                        mode: modalState.mode,
-                        row: modalState.row,
-                        title:
-                            modalTitle?.(modalState) ??
-                            (modalState.mode === 'create'
-                                ? `New ${title ?? 'record'}`
-                                : `Edit ${title ?? 'record'}`),
-                        isLoading:
-                            crud.create.isPending || crud.update.isPending,
-                        error: modalError,
-                        onClose: closeModal,
-                        onSubmit: handleSave,
-                    })
-                ) : (
-                    <RecordModal
-                        mode={modalState.mode}
-                        row={modalState.row}
-                        fields={resolvedFields}
-                        title={
-                            modalTitle?.(modalState) ??
-                            (modalState.mode === 'create'
-                                ? `New ${title ?? 'record'}`
-                                : `Edit ${title ?? 'record'}`)
-                        }
-                        onClose={closeModal}
-                        onSubmit={handleSave}
-                        onError={onSaveError}
+                {/* Parent-owned filter controls (e.g. Ticket History's multi-select
+                client / assignee dropdowns). Presentational slot only. */}
+                {filterControls && (
+                    <div className="mb-4 flex flex-wrap items-center gap-2.5">
+                        {filterControls}
+                    </div>
+                )}
+
+                {/* Active-filter indicator */}
+                {hasActiveFilters && (
+                    <div className="mb-4 flex items-center justify-between">
+                        <span className="text-xs">Filters applied</span>
+                        <button
+                            onClick={clearAllFilters}
+                            className="text-xs font-medium underline-offset-2 hover:underline"
+                        >
+                            Clear all
+                        </button>
+                    </div>
+                )}
+
+                {/* API error banner */}
+                {isError && (
+                    <div className="mb-4 flex items-center justify-between rounded-xl border border-rose-200 px-4 py-3 text-sm text-rose-700">
+                        <span>⚠ {error?.message}</span>
+                        <button
+                            onClick={() => refetch()}
+                            className="font-medium underline-offset-2 hover:underline"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                )}
+
+                {/* Record list — rounded table shell or a stack of cards */}
+                <div className="relative">
+                    {isLoading && rows.length === 0
+                        ? listShell(skeletonNodes)
+                        : rows.length === 0
+                          ? tableMode
+                              ? listShell(emptyState)
+                              : emptyState
+                          : listShell(rowNodes)}
+
+                    {/* Subtle loading overlay on subsequent fetches (page change, sort, etc.) */}
+                    {isFetching && !isLoading && <FetchingSpinner />}
+                </div>
+
+                {/* Pagination bar */}
+                {meta && (
+                    <PaginationBar
+                        meta={meta}
+                        page={page}
+                        loading={isFetching}
+                        onPageChange={setPage}
                     />
-                ))}
+                )}
 
-            <ConfirmInUseModal
-                open={inUseTarget !== null}
-                recordLabel={
-                    inUseTarget
-                        ? formatCell(inUseTarget[columns[0]?.key])
-                        : undefined
-                }
-                usages={inUseEntries}
-                onClose={() => {
-                    setInUseTarget(null);
-                    setInUseEntries([]);
-                }}
-            />
-            {/* Delete confirmation */}
-            <ConfirmDeleteModal
-                open={deleteTarget !== null}
-                busy={deleting}
-                label={
-                    deleteTarget
-                        ? formatCell(deleteTarget[columns[0]?.key])
-                        : undefined
-                }
-                onCancel={() => setDeleteTarget(null)}
-                onConfirm={confirmDelete}
-                isSelfDelete={isSelfDelete}
-            />
-            {/* Suspend confirmation */}
-            <ConfirmArchiveAccountModal
-                open={suspendTarget !== null}
-                busy={suspend}
-                label={
-                    suspendTarget
-                        ? formatCell(suspendTarget[columns[0]?.key])
-                        : undefined
-                }
-                onCancel={() => setSuspendTarget(null)}
-                onConfirm={confirmSuspend}
-                isSelfSuspend={isSelfSuspend}
-            />
-        </div>
+                {/* Create / edit modal */}
+                {modalState &&
+                    (renderModal ? (
+                        renderModal({
+                            mode: modalState.mode,
+                            row: modalState.row,
+                            title:
+                                modalTitle?.(modalState) ??
+                                (modalState.mode === 'create'
+                                    ? `New ${title ?? 'record'}`
+                                    : `Edit ${title ?? 'record'}`),
+                            isLoading:
+                                crud.create.isPending || crud.update.isPending,
+                            error: modalError,
+                            onClose: closeModal,
+                            onSubmit: handleSave,
+                        })
+                    ) : (
+                        <RecordModal
+                            mode={modalState.mode}
+                            row={modalState.row}
+                            fields={resolvedFields}
+                            title={
+                                modalTitle?.(modalState) ??
+                                (modalState.mode === 'create'
+                                    ? `New ${title ?? 'record'}`
+                                    : `Edit ${title ?? 'record'}`)
+                            }
+                            onClose={closeModal}
+                            onSubmit={handleSave}
+                            onError={onSaveError}
+                        />
+                    ))}
+
+                <ConfirmInUseModal
+                    open={inUseTarget !== null}
+                    recordLabel={
+                        inUseTarget
+                            ? formatCell(inUseTarget[columns[0]?.key])
+                            : undefined
+                    }
+                    usages={inUseEntries}
+                    onClose={() => {
+                        setInUseTarget(null);
+                        setInUseEntries([]);
+                    }}
+                />
+                {/* Delete confirmation */}
+                <ConfirmDeleteModal
+                    open={deleteTarget !== null}
+                    busy={deleting}
+                    label={
+                        deleteTarget
+                            ? formatCell(deleteTarget[columns[0]?.key])
+                            : undefined
+                    }
+                    onCancel={() => setDeleteTarget(null)}
+                    onConfirm={confirmDelete}
+                    isSelfDelete={isSelfDelete}
+                />
+                {/* Suspend confirmation */}
+                <ConfirmArchiveAccountModal
+                    open={suspendTarget !== null}
+                    busy={suspend}
+                    label={
+                        suspendTarget
+                            ? formatCell(suspendTarget[columns[0]?.key])
+                            : undefined
+                    }
+                    onCancel={() => setSuspendTarget(null)}
+                    onConfirm={confirmSuspend}
+                    isSelfSuspend={isSelfSuspend}
+                />
+            </div>
+        </>
     );
 }
 

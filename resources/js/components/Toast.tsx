@@ -35,7 +35,7 @@ const ICON_COLOR: Record<ToastItem['variant'], string> = {
 
 let idCounter = 0
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function SystemToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   const showToast = useCallback((message: string, variant: ToastItem['variant'] = 'success') => {

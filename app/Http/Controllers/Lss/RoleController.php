@@ -118,7 +118,9 @@ class RoleController extends BaseController
     {
         return [
             'name' => [
-                'required', 'string', 'max:255',
+                'required',
+                'string',
+                'max:255',
                 Rule::unique('roles', 'name')->ignore($model->getKey()),
             ],
             'permissions' => ['array'],

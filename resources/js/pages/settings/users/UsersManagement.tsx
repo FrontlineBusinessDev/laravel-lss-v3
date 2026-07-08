@@ -28,14 +28,39 @@ interface UserRow extends Record<string, unknown> {
 const GRID =
     'sm:grid sm:grid-cols-[1.6fr_2.2fr_1.2fr_0.9fr_2.5rem] sm:items-center sm:gap-3';
 
-const ROLE_FILTERS = ['All roles', 'Developer', 'Admin', 'Trainer', 'Trainee'];
-const STATUS_FILTERS = ['All statuses', 'Active', 'Archive'];
+const ROLE_FILTER_PAIRS = [
+    { value: '', label: 'All Roles' },
+    { value: 'developer', label: 'Developer' },
+    { value: 'admin', label: 'Admin' },
+    { value: 'trainer', label: 'Trainer' },
+    { value: 'trainee', label: 'Trainee' },
+];
+const STATUS_FILTER_PAIRS = [
+    { value: '', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+];
 
 const columns: ColumnDef<UserRow>[] = [
-    { key: 'first_name', label: 'Name', sortable: true },
-    { key: 'email', label: 'Email', sortable: true },
-    { key: 'role', label: 'Role', sortable: false },
-    { key: 'status', label: 'Status', sortable: true },
+    {
+        key: 'status',
+        label: 'Status',
+        sortable: true,
+        filterable: true,
+        type: 'select',
+        typeData: STATUS_FILTER_PAIRS,
+        exactFilters: true,
+    },
+    {
+        key: 'roles',
+        label: 'Role',
+        sortable: false,
+        filterable: true,
+        type: 'select',
+        typeData: ROLE_FILTER_PAIRS,
+    },
+    { key: 'first_name', label: 'Name', sortable: true, filterable: true },
+    { key: 'email', label: 'Email', sortable: true, filterable: true },
 ];
 
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
@@ -48,23 +73,28 @@ function roleOptions(actorRole: string) {
             : actorRole === 'admin'
               ? ['admin', 'trainer']
               : [];
-
     return roles.map((r) => ({ value: r, label: cap(r) }));
 }
 
 export function UsersManagement() {
     const { role } = useAuth();
     const currentUserId = usePage().props.auth?.user?.id;
-    const [roleFilter, setRoleFilter] = useState('All roles');
-    const [statusFilter, setStatusFilter] = useState('All statuses');
 
     const fields: FieldDef<UserRow>[] = [
         {
-            key: 'name',
-            label: 'Full name',
+            key: 'first_name',
+            label: 'First name',
             type: 'text',
             required: true,
-            placeholder: 'Juan Dela Cruz',
+            placeholder: 'Juan',
+            colSpan: 2,
+        },
+        {
+            key: 'last_name',
+            label: 'Last name',
+            type: 'text',
+            required: true,
+            placeholder: 'Dela Cruz',
             colSpan: 2,
         },
         {
@@ -86,32 +116,6 @@ export function UsersManagement() {
             defaultValue: roleOptions(role)[0]?.value,
         },
     ];
-
-    const extraFilters: Record<string, unknown> = {
-        ...(roleFilter !== 'All roles' ? { role: roleFilter.toLowerCase() } : {}),
-        ...(statusFilter !== 'All statuses'
-            ? { status: statusFilter === 'Active' ? 'active' : 'inactive' }
-            : {}),
-    };
-
-    const filterControls = (
-        <>
-            <div className="w-full sm:w-44">
-                <Dropdown
-                    options={ROLE_FILTERS}
-                    value={roleFilter}
-                    onChange={setRoleFilter}
-                />
-            </div>
-            <div className="w-full sm:w-40">
-                <Dropdown
-                    options={STATUS_FILTERS}
-                    value={statusFilter}
-                    onChange={setStatusFilter}
-                />
-            </div>
-        </>
-    );
 
     const listHeader = (
         <div
@@ -140,20 +144,24 @@ export function UsersManagement() {
                 disabled: !actions.canEdit,
             },
             isArchived
-                ? { label: 'Restore', icon: ArchiveRestore, onClick: actions.onRestore }
+                ? {
+                      label: 'Restore',
+                      icon: ArchiveRestore,
+                      onClick: actions.onRestore,
+                  }
                 : {
                       label: 'Archive',
                       icon: Archive,
                       onClick: actions.onArchive,
                       disabled: !actions.canArchive || isSelf,
                   },
-            {
-                label: 'Delete',
-                icon: Trash2,
-                danger: true,
-                onClick: () => void actions.onDelete(),
-                disabled: !actions.canDelete || isSelf,
-            },
+            // {
+            //     label: 'Delete',
+            //     icon: Trash2,
+            //     danger: true,
+            //     onClick: () => void actions.onDelete(),
+            //     disabled: !actions.canDelete || isSelf,
+            // },
         ];
 
         return (
@@ -172,7 +180,9 @@ export function UsersManagement() {
                         </span>
                     )}
                 </div>
-                <div className="truncate text-xs text-neutral-500">{row.email}</div>
+                <div className="truncate text-xs text-neutral-500">
+                    {row.email}
+                </div>
                 <div className="inline-flex items-center gap-1 text-sm text-neutral-600">
                     {row.role === 'admin' && (
                         <ShieldCheck size={12} className="text-brand-500" />
@@ -190,22 +200,26 @@ export function UsersManagement() {
     };
 
     return (
-        <DataTableField<UserRow>
-            apiUrl="/settings/users"
-            apiQueryKey="settings-users"
-            columns={columns}
-            fields={fields}
-            createLabel="Add user"
-            modalTitle={(s) => (s.mode === 'create' ? 'Add user' : 'Edit user')}
-            defaultSortBy="first_name"
-            createPermission="manage users"
-            editPermission="manage users"
-            archivePermission="manage users"
-            deletePermission="manage users"
-            extraFilters={extraFilters}
-            filterControls={filterControls}
-            listHeader={listHeader}
-            renderCard={renderRow}
-        />
+        <>
+            <DataTableField<UserRow>
+                apiUrl="/settings/users"
+                apiQueryKey="settings-users"
+                actionsCreateClassName="float-right"
+                columns={columns}
+                fields={fields}
+                enableSuspend={true}
+                createLabel="Add user"
+                modalTitle={(s) =>
+                    s.mode === 'create' ? 'Add user' : 'Edit user'
+                }
+                defaultSortBy="first_name"
+                createPermission="manage users"
+                editPermission="manage users"
+                archivePermission="manage users"
+                deletePermission="manage users"
+                listHeader={listHeader}
+                renderCard={renderRow}
+            />
+        </>
     );
 }

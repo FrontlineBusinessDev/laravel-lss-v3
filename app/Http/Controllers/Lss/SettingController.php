@@ -16,9 +16,10 @@ class SettingController extends Controller
      */
     public function index(): Response
     {
+        /** @disregard P1013 */ // this disregard the error below but it works 
         $component = auth()->user()?->can(Permissions::MANAGE_ROLES)
-            ? 'developer/settings/index'
-            : 'admin/settings/index';
+            ? 'shell/developer/settings/index'
+            : 'shell/admin/settings/index';
 
         return Inertia::render($component, [
             'permissionModules' => Permissions::modules(),

@@ -66,10 +66,9 @@ export function Toolbar<T>({
     onFiltersToggle,
     hasActiveColumnFilters,
     showFiltersButton,
-    filterPanel,
+    filterPanel, 
 }: ToolbarProps<T>) {
-    const sortableColumns = columns.filter((c) => c.sortable !== false);
-
+    const sortableColumns = columns.filter((c) => c.sortable !== false); 
     return (
         <div className="mb-4">
             {/* Top row: search + controls */}

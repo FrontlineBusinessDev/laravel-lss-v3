@@ -27,7 +27,7 @@ export function StatusBadge({ status, className }: { status: StatusKind; classNa
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium leading-5 whitespace-nowrap',
+        'items-center rounded-pill px-2.5 py-0.5 text-xs font-medium leading-5 w-fit',
         STATUS_STYLES[status],
         className,
       )}
