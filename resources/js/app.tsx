@@ -26,7 +26,7 @@ createInertiaApp({
     },
     layout: (name) => {
         switch (true) {
-            case name === 'welcome' || name.startsWith('Auth/'):
+            case name === 'welcome' || name.startsWith('auth/'):
                 return null;
             case name.startsWith('settings/') &&
                 appSettings.includes(name?.split('/')[1] ?? ''):
