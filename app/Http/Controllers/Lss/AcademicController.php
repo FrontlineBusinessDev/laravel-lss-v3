@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 
-class SettingController extends Controller implements HasMiddleware
+class AcademicController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
     {
@@ -28,18 +28,12 @@ class SettingController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $user = $request->user();
-        // if ($user->can('manage users')) {
-        //     return redirect()->route('settings.users.index'); // or '/settings/users'
-        // }
-        // if ($user->can('manage settings partner schools')) {
-        //     return redirect('/settings/partner-schools');
-        // }
-        // if ($user->can('manage settings academics')) {
-        //     return redirect('/settings/academic');
-        // }
+        if ($user->can('manage settings academics')) {
+            return redirect('/settings/academic');
+        }
         // Default catch-all if they have absolutely no business being here
-        // abort(404);
+        abort(404);
         // Use CSR for authenticated dashboard
-        return InertiaPageResponse::csr('settings/index');
+        return InertiaPageResponse::csr('settings/academic');
     }
 }
