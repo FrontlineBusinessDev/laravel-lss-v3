@@ -18,6 +18,7 @@ use App\Http\Controllers\Lss\SettingController;
 use App\Http\Controllers\Lss\TaskController;
 use App\Http\Controllers\Lss\TraineeController;
 use App\Http\Controllers\Lss\UserController;
+use App\Http\Controllers\Lss\PartnerSchoolsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -49,6 +50,8 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::crudModule('/users', UserController::class, 'users');
     // Roles Management
     Route::crudModule('/roles', RoleController::class, 'roles');
+    // Partner School Management
+    Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
 });
 
 /**

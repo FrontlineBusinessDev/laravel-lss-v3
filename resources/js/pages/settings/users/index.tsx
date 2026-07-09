@@ -10,8 +10,17 @@ import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
 import { cn } from '@/lib/utils';
 import { StatusKind } from '@/types';
+import { GRID } from '@/types/reusable/data-table';
+import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 import { usePage } from '@inertiajs/react';
-import { Archive, ArchiveRestore, Pencil, ShieldCheck } from 'lucide-react';
+import {
+    Pencil,
+    ShieldCheck,
+    Trash2,
+    UserCheck,
+    UserRoundX,
+} from 'lucide-react';
 
 /** Row shape returned by UserResource. Index signature satisfies DataTableField. */
 interface UserRow extends Record<string, unknown> {
@@ -21,22 +30,6 @@ interface UserRow extends Record<string, unknown> {
     role: string | null;
     status: string;
 }
-
-const GRID =
-    'sm:grid sm:grid-cols-[1.6fr_2.2fr_1.2fr_0.9fr_2.5rem] sm:items-center sm:gap-3';
-
-const ROLE_FILTER_PAIRS = [
-    { value: '', label: 'All Roles' },
-    { value: 'developer', label: 'Developer' },
-    { value: 'admin', label: 'Admin' },
-    { value: 'trainer', label: 'Trainer' },
-    { value: 'trainee', label: 'Trainee' },
-];
-const STATUS_FILTER_PAIRS = [
-    { value: '', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-];
 
 const columns: ColumnDef<UserRow>[] = [
     {
@@ -131,7 +124,7 @@ export default function index() {
     const renderRow = (row: UserRow, actions: CardActions) => {
         const isSelf = row.id === currentUserId;
         const isArchived = row.status !== 'active';
-        const badge: StatusKind = isArchived ? 'archived' : 'active';
+        const badge: StatusKind = isArchived ? 'suspended' : 'active';
         const menu: RowMenuAction[] = [
             {
                 label: 'Edit user',
@@ -142,22 +135,24 @@ export default function index() {
             isArchived
                 ? {
                       label: 'Restore',
-                      icon: ArchiveRestore,
+                      icon: UserCheck,
                       onClick: actions.onRestore,
                   }
                 : {
-                      label: 'Archive',
-                      icon: Archive,
+                      label: 'Suspend',
+                      icon: UserRoundX,
                       onClick: actions.onArchive,
                       disabled: !actions.canArchive || isSelf,
                   },
-            // {
-            //     label: 'Delete',
-            //     icon: Trash2,
-            //     danger: true,
-            //     onClick: () => void actions.onDelete(),
-            //     disabled: !actions.canDelete || isSelf,
-            // },
+            isArchived
+                ? {
+                      label: 'Delete',
+                      icon: Trash2,
+                      danger: true,
+                      onClick: () => void actions.onDelete(),
+                      disabled: !actions.canDelete || isSelf,
+                  }
+                : null,
         ];
 
         return (

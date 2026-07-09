@@ -3,6 +3,8 @@
  * Field + modal contracts consumed by RecordModal and DataTableField.
  */
 
+export type ModalMode = 'create' | 'edit';
+
 export type FieldType =
     | 'text'
     | 'email'
@@ -13,9 +15,22 @@ export type FieldType =
     | 'textarea'
     | 'select'
     | 'checkbox'
-    | 'async-select';
+    | 'async-select'
+    | 'file';
 
-export type ModalMode = 'create' | 'edit';
+export interface ExistingFile {
+    id: string | number;
+    name: string;
+    url: string;
+    size?: number;
+    type?: string;
+}
+
+export interface FileFieldValue {
+    existing: ExistingFile[];
+    files: File[];
+    removedIds: Array<string | number>;
+}
 
 export interface FieldOption {
     value: string;
@@ -52,4 +67,11 @@ export interface FieldDef<T = unknown> {
     getOptionLabel?: (value: unknown) => string;
     debounceMs?: number;
     minSearchLength?: number;
+
+    // ── only relevant when type === 'file' ──
+    multiple?: boolean;
+    accept?: string;
+    maxSizeMB?: number;
+    maxFiles?: number;
+    preview?: boolean;
 }

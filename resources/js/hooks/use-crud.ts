@@ -50,7 +50,7 @@ export interface UseCrudOptions {
     /** HTTP method for create requests. */
     createMethod?: 'POST' | 'PUT' | 'PATCH';
     /** HTTP method for update requests. */
-    updateMethod?: 'PUT' | 'PATCH';
+    updateMethod?: 'POST' | 'PUT' | 'PATCH';
     /** TanStack Query cache key, e.g. 'clients'. Defaults to 'crud'. */
     queryKey?: string[] | string;
     queryParams?: CrudQueryParams;
@@ -84,6 +84,154 @@ function errorMessage(error: unknown): string {
     }
 
     return 'An unexpected error occurred';
+}
+
+/**
+ * Helper to check if a payload contains files/binary streams
+ */
+function hasBinaryFiles(obj: unknown): boolean {
+    if (!obj || typeof obj !== 'object') return false;
+
+    return Object.values(obj).some((val) => {
+        if (val instanceof File || val instanceof Blob) return true;
+        if (typeof val === 'object' && val !== null) {
+            return hasBinaryFiles(val); // Recursively search deep structures
+        }
+        return false;
+    });
+}
+
+/**
+ * Recursively flattens nested objects/arrays into standard HTML FormData.
+ * Safely handles text inputs, arrays, booleans, and intercepts your
+ * specific 'image' file state structure to avoid 422 errors.
+ */
+function buildFormData(data: Record<string, unknown>): FormData {
+    const formData = new FormData();
+
+    Object.entries(data).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+
+        // 💡 THE ULTIMATE FIX: Map directly to a dot-notation key stream
+        if (
+            key === 'image' &&
+            value &&
+            typeof value === 'object' &&
+            'files' in value
+        ) {
+            const fileWrapper = value as { files?: unknown[] };
+            if (
+                Array.isArray(fileWrapper.files) &&
+                fileWrapper.files.length > 0
+            ) {
+                const actualFile = fileWrapper.files[0];
+                if (actualFile instanceof File || actualFile instanceof Blob) {
+                    // Using dot notation allows Laravel to build the validation tree
+                    // without passing an explicit literal array type that crashes SQLite mass-assignments.
+                    formData.append('image.files', actualFile);
+                }
+            }
+            return;
+        }
+
+        // Handle standard array entries
+        if (Array.isArray(value)) {
+            value.forEach((item) => {
+                if (item instanceof File || item instanceof Blob) {
+                    formData.append(`${key}[]`, item);
+                } else if (item !== undefined && item !== null) {
+                    formData.append(`${key}[]`, String(item));
+                }
+            });
+            return;
+        }
+
+        // Handle standalone nested raw objects
+        if (
+            typeof value === 'object' &&
+            !(value instanceof File) &&
+            !(value instanceof Blob) &&
+            !(value instanceof Date)
+        ) {
+            Object.entries(value as Record<string, unknown>).forEach(
+                ([nestedKey, nestedValue]) => {
+                    if (
+                        nestedValue === undefined ||
+                        nestedValue === null ||
+                        nestedValue === ''
+                    )
+                        return;
+
+                    if (Array.isArray(nestedValue)) {
+                        nestedValue.forEach((item) => {
+                            if (
+                                item !== undefined &&
+                                item !== null &&
+                                item !== ''
+                            ) {
+                                formData.append(
+                                    `${key}[${nestedKey}][]`,
+                                    String(item),
+                                );
+                            }
+                        });
+                        return;
+                    }
+                    formData.append(
+                        `${key}[${nestedKey}]`,
+                        String(nestedValue),
+                    );
+                },
+            );
+            return;
+        }
+
+        // Handle standalone raw files
+        if (value instanceof File || value instanceof Blob) {
+            formData.append(key, value);
+            return;
+        }
+
+        // Handle standard string / boolean / number primitives
+        formData.append(key, String(value));
+    });
+
+    return formData;
+}
+
+/**
+ * Recursively scans an object and converts any File/Blob instances
+ * into a base64 Data URL string so it can be transmitted safely over JSON.
+ */
+async function transformFilesToBinary(obj: unknown): Promise<any> {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    // Helper to read a single file into a base64 string
+    const fileToBase64 = (file: File | Blob): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
+    // If it's an array, map over its items recursively
+    if (Array.isArray(obj)) {
+        return Promise.all(obj.map((item) => transformFilesToBinary(item)));
+    }
+
+    // If it's a file wrapper object, convert it immediately
+    if (obj instanceof File || obj instanceof Blob) {
+        return await fileToBase64(obj);
+    }
+
+    // If it's a standard dictionary object, map over keys recursively
+    const serialized: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+        serialized[key] = await transformFilesToBinary(value);
+    }
+    return serialized;
 }
 
 /**
@@ -193,10 +341,8 @@ export function useCrud<T extends { id?: number | string }>(
                     );
                 },
             );
-
             return;
         }
-
         searchParams.append(key, String(value));
     });
     const queryString = searchParams.toString();
@@ -223,9 +369,16 @@ export function useCrud<T extends { id?: number | string }>(
                 typeof createUrl === 'function'
                     ? createUrl(payload)
                     : (createUrl ?? baseUrl);
+
+            const useForm = hasBinaryFiles(payload);
+            const body = useForm
+                ? buildFormData(payload as Record<string, unknown>)
+                : JSON.stringify(payload);
+
             const response = await apiFetchJson<T>(resolvedUrl, {
-                method: createMethod,
-                body: JSON.stringify(payload),
+                method: createMethod, // Keeps native 'POST'
+                body,
+                headers: {}, // Empty so apiFetch dynamically configures JSON vs Multi-part boundaries
             });
 
             return response.data as T;
@@ -246,11 +399,24 @@ export function useCrud<T extends { id?: number | string }>(
                 typeof updateUrl === 'function'
                     ? updateUrl(context)
                     : (updateUrl ?? `${baseUrl}/${id}`);
-            const response = await apiFetchJson<T>(resolvedUrl, {
-                method: updateMethod,
-                body: JSON.stringify(data),
-            });
 
+            const useForm = hasBinaryFiles(data);
+            let finalMethod = updateMethod;
+            let body: string | FormData;
+            if (useForm) {
+                body = buildFormData(data as Record<string, unknown>);
+                // Laravel PUT Fix: Append spoof parameter & toggle network layer to POST
+                body.append('_method', updateMethod);
+                finalMethod = 'POST';
+            } else {
+                body = JSON.stringify(data);
+            }
+            const response = await apiFetchJson<T>(resolvedUrl, {
+                method: finalMethod,
+                body,
+                // Leave headers empty; let custom apiFetch handle it
+                headers: {},
+            });
             return response.data as T;
         },
         onSuccess: invalidate,

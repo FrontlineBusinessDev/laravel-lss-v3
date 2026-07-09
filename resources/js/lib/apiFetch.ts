@@ -54,7 +54,12 @@ export function apiFetch(
     headers.set('Accept', 'application/json');
     headers.set('X-Requested-With', 'XMLHttpRequest');
 
-    if (init.body && !headers.has('Content-Type')) {
+    // Only set Content-Type to JSON if the body isn't a FormData object
+    if (
+        init.body &&
+        !headers.has('Content-Type') &&
+        !(init.body instanceof FormData)
+    ) {
         headers.set('Content-Type', 'application/json');
     }
 
@@ -86,9 +91,7 @@ export async function apiFetchJson<T>(
 ): Promise<ApiEnvelope<T>> {
     const res = await apiFetch(url, init);
 
-    if (res.status === 204) {
-        return { data: null as T };
-    }
+    if (res.status === 204) return { data: null as T };
 
     const body = (await res.json().catch(() => null)) as
         | (ApiEnvelope<T> & { errors?: Record<string, string[]> })

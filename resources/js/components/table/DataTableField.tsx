@@ -331,14 +331,9 @@ export function DataTableField<T extends Record<string, unknown>>({
 
     // ── Save (create or update) ───────────────────────────────────────────────
     const handleSave = async (values: unknown) => {
-        if (!modalState) {
-            return;
-        }
-
+        if (!modalState) return;
         const { mode, row } = modalState;
-
         const formValues = values as Record<string, unknown>;
-
         // A custom renderModal fully owns its own field set and value
         // shaping — trust it as-is. Only the default RecordModal path
         // (driven by the `fields` prop) needs the transform/whitelist step
@@ -346,9 +341,22 @@ export function DataTableField<T extends Record<string, unknown>>({
         // Filtering a custom modal's submission through `fields` would
         // silently drop any field `fields` doesn't happen to declare.
         let payload: Record<string, unknown>;
-
         if (renderModal) {
-            payload = formValues;
+            // payload = formValues;
+            // Extract raw value fields from your custom file uploader state
+            payload = { ...formValues };
+            // Check if our custom image structure exists in the form sub-state
+            if (payload.image && typeof payload.image === 'object') {
+                const imgObj = payload.image as Record<string, unknown>;
+                if (Array.isArray(imgObj.files) && imgObj.files.length > 0) {
+                    // // Extract the raw file reference and map it to your Laravel image key
+                    // payload.image = imgObj.files[0];
+                    // Pass the entire array of files to the backend
+                    payload.images = imgObj.files;
+                }
+                // Strip the nested state object out so it doesn't pollute the payload validation
+                delete payload.image;
+            }
         } else {
             payload = {};
             resolvedFields
@@ -539,7 +547,6 @@ export function DataTableField<T extends Record<string, unknown>>({
                     setInUseEntries(apiError.inUse);
                     setInUseTarget(deleteTarget);
                     setDeleteTarget(null);
-
                     return;
                 }
 

@@ -9,10 +9,12 @@
  *  - Renders the right input type via <DynamicField>
  */
 
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
+import { FileUploadField } from '@/hooks/use-file-upload-field';
+import { useScrollLock } from '@/hooks/use-scroll-lock';
+import { FileFieldValue } from '@/types/reusable/fields';
 import { Loader2, X } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { useScrollLock } from '@/hooks/use-scroll-lock';
 import type { FieldDef, ModalMode } from '../types';
 import { isFieldDisabled, isFieldVisible } from '../utils';
 
@@ -272,6 +274,42 @@ function DynamicField<T>({
     const border = error
         ? 'border-rose-300 focus:border-rose-400'
         : 'border-slate-200 focus:border-slate-300';
+
+    // ── file (single or multiple upload) ────────────────────────────────────
+    if (field.type === 'file') {
+        return (
+            <div>
+                <span className="mb-1 block text-xs font-medium">
+                    {field.label}
+                    {field.required && (
+                        <span className="ml-0.5 text-rose-500">*</span>
+                    )}
+                </span>
+                <FileUploadField
+                    value={
+                        (value as FileFieldValue) ?? {
+                            existing: [],
+                            files: [],
+                            removedIds: [],
+                        }
+                    }
+                    onChange={onChange}
+                    multiple={field.multiple}
+                    accept={field.accept}
+                    maxSizeMB={field.maxSizeMB}
+                    maxFiles={field.maxFiles}
+                    preview={field.preview}
+                    disabled={disabled}
+                    error={error}
+                />
+                {field.helpText && !error && (
+                    <span className="mt-1 block text-xs text-slate-500">
+                        {field.helpText}
+                    </span>
+                )}
+            </div>
+        );
+    }
 
     // ── async-select ──────────────────────────────────────────────────────────
     if (field.type === 'async-select') {

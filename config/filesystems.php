@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -59,6 +59,14 @@ return [
             'throw' => false,
             'report' => false,
         ],
+
+        'nextcloud' => [
+            'driver' => 'webdav',
+            'baseUri' => env('AWS_URL'), // 'https://your-nextcloud-domain/remote.php/webdav/',
+            'userName' => env('AWS_ACCESS_KEY_ID'), // 'your-username',
+            'password' => env('AWS_SECRET_ACCESS_KEY'), //'your-password',
+        ],
+
 
         /*
         |----------------------------------------------------------------------

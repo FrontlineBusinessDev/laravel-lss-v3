@@ -7,8 +7,10 @@ import type { ReactNode } from 'react';
 import type { CardActions } from '@/types/reusable/card';
 import type { FieldDef, ModalMode } from '@/types/reusable/fields';
 import type { PaginationMeta } from '@/types/reusable/pagination';
-
 export type { PaginationMeta };
+
+export const GRID =
+    'sm:grid sm:grid-cols-[1.6fr_2.2fr_1.2fr_0.9fr_2.5rem] sm:items-center sm:gap-3';
 
 export interface ColumnDef<T = object> {
     key: string;

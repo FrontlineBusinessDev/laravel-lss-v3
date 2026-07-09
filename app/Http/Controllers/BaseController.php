@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Responses\InertiaPageResponse;
 use App\Support\Statuses;
+use App\Traits\HandlesFileUploads;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
@@ -16,24 +17,17 @@ use Illuminate\Support\Facades\DB;
 
 abstract class BaseController extends Controller implements HasMiddleware
 {
-    use AuthorizesRequests;
-
+    use AuthorizesRequests, HandlesFileUploads;
     public const STATUS_ACTIVE = Statuses::ACTIVE;
-
     public const STATUS_INACTIVE = Statuses::INACTIVE;
-
     /** Fully qualified model class for this module. Set by child when using the CRUD helpers below. */
     protected string $model;
-
     /** Inertia page component path for the CSR shell. Set by child. */
     protected string $view;
-
     /** Columns allowed for the global "search" param */
     protected array $searchable = [];
-
     /** Columns allowed for per-column filters[col]=value */
     protected array $filterable = [];
-
     /**
      * Filterable columns matched with `=` instead of `LIKE`.
      * `status` MUST be exact: a LIKE '%active%' would also match 'inactive'.
@@ -41,21 +35,30 @@ abstract class BaseController extends Controller implements HasMiddleware
      * @var list<string>
      */
     protected array $exactFilters = ['status'];
-
     /** Columns allowed for sort_by */
     protected array $sortable = ['id'];
-
     /** Optional resource class to transform output, e.g. UserResource::class */
     protected ?string $resource = null;
-
     /** Columns returned by the lightweight searchActive() lookup. */
     protected array $activeColumns = ['id', 'name'];
-
     /** Default sort column. */
     protected string $sortBy = 'name';
-
     /** Check if associated to other modules. */
     protected array $inUseRelations = [];
+    /**
+     * Map of field name => storage subfolder.
+     * Override in child controllers.
+     * e.g. ['image' => 'partner-schools', 'attachment' => 'documents']
+     */
+    protected array $fileFieldFolders = [];
+    /**
+     * File fields that should be transformed to full URLs in the response.
+     * Override in child controllers.
+     * e.g. ['image', 'attachment']
+     */
+    protected array $fileFields = [];
+    /** Duration in minutes for presigned URLs. Override in child controllers. */
+    protected int $fileUrlExpiry = 60;
 
     public static function middleware(): array
     {
@@ -106,7 +109,7 @@ abstract class BaseController extends Controller implements HasMiddleware
         $paginatedData = [
             'data' => $this->resource
                 ? $this->resource::collection($paginator->items())
-                : $paginator->items(),
+                : collect($paginator->items())->map(fn($item) => $this->transformFileUrls($item)),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
