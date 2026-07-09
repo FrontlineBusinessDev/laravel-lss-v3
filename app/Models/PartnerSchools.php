@@ -14,7 +14,7 @@ class PartnerSchools extends Model
      *
      * @var list<string>
      */
-    protected $fillable = ['name', 'status', 'abbreviation', 'email', 'contact', 'image', 'physical_address'];
+    protected $fillable = ['school_name', 'status', 'abbreviation', 'contact_email', 'contact_first_name', 'contact_last_name', 'image', 'physical_address'];
     /**
      * Columns available for per-column dropdown / exact filtering.
      * These will be sent to the frontend so it knows which column headers get a filter control.

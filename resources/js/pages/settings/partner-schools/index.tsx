@@ -16,6 +16,7 @@ const listHeader = (
     <div
         className={cn(
             GRID,
+            'sm:grid-cols-[1fr_1.6fr_2.2fr_1.2fr_0.9fr_2.5rem]',
             'hidden bg-neutral-50 px-4 py-2.5 text-xs font-medium text-neutral-500',
         )}
     >
@@ -66,16 +67,22 @@ const renderRow = (row: PartnerSchools, actions: CardActions) => {
             className={cn(
                 'flex flex-col gap-1 px-4 py-3',
                 GRID,
+                'sm:grid-cols-[1fr_1.6fr_2.2fr_1.2fr_0.9fr_2.5rem]',
                 isArchived && 'opacity-60',
             )}
         >
             <div className="flex items-center gap-1.5 font-medium text-ink">
-                <span className="truncate">{row.name}</span>
+                <span className="truncate">{row.school_name}</span>
             </div>
             <div className="flex items-center gap-1.5 font-medium text-ink">
                 <span className="truncate">{row.abbreviation}</span>
             </div>
-            <div className="truncate text-xs text-neutral-500">{row.email}</div>
+            <div className="truncate text-xs text-neutral-500">
+                {row.contact_first_name} {row.contact_last_name}
+            </div>
+            <div className="truncate text-xs text-neutral-500">
+                {row.contact_email}
+            </div>
             <div className="flex items-center justify-between sm:contents">
                 <StatusBadge status={badge} />
                 <div className="sm:justify-self-end">

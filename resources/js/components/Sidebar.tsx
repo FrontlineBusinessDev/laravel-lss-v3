@@ -1,31 +1,31 @@
-import { NavLink, useNavigate } from '@/lib/router-compat';
-import { router } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect, useRef, useState } from 'react';
+import { NavLink, useNavigate } from '@/lib/router-compat';
+import { cn } from '@/lib/utils';
+import { router } from '@inertiajs/react';
 import {
-    LayoutDashboard,
-    UsersRound,
-    User,
-    CalendarOff,
-    Star,
+    BadgeCheck,
     Banknote,
     CalendarDays,
-    BadgeCheck,
-    FileBarChart,
-    Settings,
-    X,
+    CalendarOff,
     ChevronsUpDown,
-    LogOut,
-    UserCog,
-    Megaphone,
-    ListChecks,
+    ClipboardList,
+    FileBarChart,
     Fingerprint,
     GraduationCap,
-    ClipboardList,
+    LayoutDashboard,
+    ListChecks,
+    LogOut,
+    Megaphone,
+    Settings,
+    Star,
+    User,
+    UserCog,
+    UsersRound,
+    X,
 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { LogoMark } from './Logo';
 import { NotificationBell } from './NotificationBell';
-import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -62,7 +62,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
             )}
             <aside
                 className={cn(
-                    'fixed inset-y-0 left-0 z-50 flex h-screen w-[236px] flex-col gap-0.5 border-r border-neutral-200 bg-white p-3 transition-transform duration-200 ease-out lg:z-30 lg:translate-x-0',
+                    'fixed inset-y-0 left-0 z-50 flex h-screen w-59 flex-col gap-0.5 border-r border-neutral-200 bg-white p-3 transition-transform duration-200 ease-out lg:z-30 lg:translate-x-0',
                     mobileOpen
                         ? 'translate-x-0 animate-slideInLeft'
                         : '-translate-x-full',

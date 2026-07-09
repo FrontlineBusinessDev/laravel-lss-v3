@@ -4,11 +4,12 @@ import { FieldDef } from '@/types/reusable/fields';
 export interface PartnerSchools extends Record<string, unknown> {
     id: number;
     status: string;
-    name: string;
+    school_name: string;
     abbreviation: string;
     image: string;
-    contact: string;
-    email: string;
+    contact_first_name: string;
+    contact_last_name: string;
+    contact_email: string;
     physical_address: string;
     created_at: string;
     updated_at: string;
@@ -17,7 +18,7 @@ export interface PartnerSchools extends Record<string, unknown> {
 // ─── Columns: drives the card body, sort dropdown, and filter bar ───────────
 export const columns: ColumnDef<PartnerSchools>[] = [
     {
-        key: 'name',
+        key: 'school_name',
         label: 'School Name',
         searchable: true,
         filterable: true,
@@ -45,13 +46,19 @@ export const columns: ColumnDef<PartnerSchools>[] = [
             ),
     },
     {
-        key: 'contact',
-        label: 'Contact',
+        key: 'contact_first_name',
+        label: 'First name',
         filterable: true,
         searchable: true,
     },
     {
-        key: 'email',
+        key: 'contact_last_name',
+        label: 'Last name',
+        filterable: true,
+        searchable: true,
+    },
+    {
+        key: 'contact_email',
         label: 'Email',
         filterable: true,
         searchable: true,
@@ -82,7 +89,7 @@ export const fields: FieldDef<PartnerSchools>[] = [
         defaultValue: true,
     },
     {
-        key: 'name',
+        key: 'school_name',
         label: 'School Name',
         type: 'text',
         placeholder: 'SPC School',
@@ -98,15 +105,23 @@ export const fields: FieldDef<PartnerSchools>[] = [
         colSpan: 2,
     },
     {
-        key: 'contact',
-        label: 'Full name',
+        key: 'contact_first_name',
+        label: 'First name',
         type: 'text',
         required: true,
         placeholder: 'Jane Doe',
         colSpan: 2,
     },
     {
-        key: 'email',
+        key: 'contact_last_name',
+        label: 'Last name',
+        type: 'text',
+        required: true,
+        placeholder: 'Jane Doe',
+        colSpan: 2,
+    },
+    {
+        key: 'contact_email',
         label: 'Email',
         type: 'email',
         required: true,

@@ -21,27 +21,29 @@ class PartnerSchoolsController extends BaseController
     protected function storeRules(?Model $record = null): array
     {
         return [
-            'name'             => ['required', 'string', 'unique:app_settings_partner_schools,name'],
-            'abbreviation'     => ['required', 'string'],
-            'contact'          => ['required', 'string'],
-            'email'            => ['nullable', 'email', 'unique:app_settings_partner_schools,email'],
-            'physical_address' => ['nullable', 'string'],
-            // 'image'            => ['nullable', 'image', 'max:2048'],
-            'image'            => ['nullable', 'array'],
-            'image.files'      => ['nullable', 'file', 'image', 'max:2048'],
+            'school_name'               => ['required', 'string', 'unique:app_settings_partner_schools,school_name'],
+            'abbreviation'              => ['required', 'string'],
+            'contact_email'             => ['nullable', 'email', 'unique:app_settings_partner_schools,contact_email'],
+            'contact_first_name'        => ['required', 'string'],
+            'contact_last_name'         => ['required', 'string'],
+            'physical_address'          => ['nullable', 'string'],
+            // 'image'                     => ['nullable', 'image', 'max:2048'],
+            'image'                     => ['nullable', 'array'],
+            'image.files'               => ['nullable', 'file', 'image', 'max:2048'],
         ];
     }
     protected function updateRules(Model $model): array
     {
         return [
-            'name'             => ['required', 'string', 'unique:app_settings_partner_schools,name,' . $model->id],
-            'abbreviation'     => ['required', 'string'],
-            'contact'          => ['required', 'string'],
-            'email'            => ['nullable', 'email', 'unique:app_settings_partner_schools,email,' . $model->id],
-            'physical_address' => ['nullable', 'string'],
-            // 'image'            => ['nullable', 'image', 'max:2048'],
-            'image'            => ['nullable', 'array'],
-            'image.files'      => ['nullable', 'file', 'image', 'max:2048'],
+            'school_name'               => ['required', 'string', 'unique:app_settings_partner_schools,school_name'],
+            'abbreviation'              => ['required', 'string'],
+            'contact_email'             => ['nullable', 'email', 'unique:app_settings_partner_schools,contact_email'],
+            'contact_first_name'        => ['required', 'string'],
+            'contact_last_name'         => ['required', 'string'],
+            'physical_address'          => ['nullable', 'string'],
+            // 'image'                     => ['nullable', 'image', 'max:2048'],
+            'image'                     => ['nullable', 'array'],
+            'image.files'               => ['nullable', 'file', 'image', 'max:2048'],
         ];
     }
 }
