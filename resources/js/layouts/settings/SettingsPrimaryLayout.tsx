@@ -1,10 +1,7 @@
-import { Sidebar } from '@/components/Sidebar';
-import { TopBar } from '@/components/TopBar';
 import { usePermission } from '@/hooks/use-permissions';
-import { ToastProvider } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 
 interface LayoutProps {
     children: ReactNode;

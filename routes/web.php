@@ -1,5 +1,14 @@
 <?php
 
+use App\Http\Controllers\Settings\SettingController;
+use App\Http\Controllers\Settings\RoleController;
+use App\Http\Controllers\Settings\UserController;
+use App\Http\Controllers\Settings\PartnerSchoolsController;
+use App\Http\Controllers\Settings\AcademicController;
+use App\Http\Controllers\Settings\AcademicIndustryController;
+use App\Http\Controllers\Settings\AcademicLearningOutcomesController;
+use App\Http\Controllers\Settings\AcademicLevelController;
+use App\Http\Controllers\Settings\AcademicProgramController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Lss\AnnouncementController;
 use App\Http\Controllers\Lss\BatchController;
@@ -13,14 +22,9 @@ use App\Http\Controllers\Lss\RatingController;
 use App\Http\Controllers\Lss\ReportController;
 use App\Http\Controllers\Lss\ScheduleController;
 use App\Http\Controllers\Lss\SeminarController;
-use App\Http\Controllers\Lss\RoleController;
-use App\Http\Controllers\Lss\SettingController;
 use App\Http\Controllers\Lss\TaskController;
 use App\Http\Controllers\Lss\TraineeController;
-use App\Http\Controllers\Lss\UserController;
-use App\Http\Controllers\Lss\PartnerSchoolsController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 
 // Landing dispatcher: guests -> login, authenticated users -> dashboard.
@@ -52,6 +56,13 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::crudModule('/roles', RoleController::class, 'roles');
     // Partner School Management
     Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
+    Route::prefix('academic')->name('academic.')->group(function () {
+        Route::get('/', [AcademicController::class, 'index'])->name('index');
+        Route::crudModule('/industry', AcademicIndustryController::class, 'industry');
+        Route::crudModule('/learning-outcomes', AcademicLearningOutcomesController::class, 'learning-outcomes');
+        Route::crudModule('/level', AcademicLevelController::class, 'level');
+        Route::crudModule('/program', AcademicProgramController::class, 'program');
+    });
 });
 
 /**

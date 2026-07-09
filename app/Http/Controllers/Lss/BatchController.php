@@ -8,6 +8,7 @@ use Inertia\Response;
 
 class BatchController extends Controller
 {
+    
     public function index(): Response
     {
         return Inertia::render('batches/index')->asCsr();

@@ -7,12 +7,12 @@ export default function index() {
     const { can } = usePermission();
     // 1. Define the preference hierarchy for redirection
     const targets = [
-        { permission: 'manage users', href: '/settings/users' },
+        { permission: 'manage settings academic', href: '/settings/academic' },
         {
             permission: 'manage settings partner schools',
             href: '/settings/partner-schools',
         },
-        { permission: 'manage settings academic', href: '/settings/academic' },
+        { permission: 'manage users', href: '/settings/users' },
     ];
 
     // 2. Find the first module the user actually has access to

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Lss;
+namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Resources\UserResource;
