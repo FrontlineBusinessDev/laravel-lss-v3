@@ -41,7 +41,7 @@ export function PageBtn({
             disabled={disabled}
             onClick={onClick}
             title={title}
-            className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${active ? 'bg-primary text-white' : 'hover:bg-primary/50'}`}
+            className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${active ? 'bg-brand-400 text-white' : 'hover:brand-400/50'}`}
         >
             {children}
         </button>

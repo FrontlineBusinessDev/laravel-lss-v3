@@ -562,7 +562,7 @@ export function DataTableList<T extends Record<string, unknown>>({
                         <button
                             type="button"
                             onClick={openCreateModal}
-                            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary/90"
+                            className="brand-400 hover:brand-400/90 inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors"
                         >
                             <Plus className="h-4 w-4" strokeWidth={2} />
                             New
@@ -1039,7 +1039,7 @@ function RecordModal<T extends Record<string, unknown>>({
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-60"
+                            className="brand-400 hover:brand-400/90 inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
                         >
                             {submitting && (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

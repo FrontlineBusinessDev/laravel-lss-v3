@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Lss;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Resources\RoleResource;
+use App\Http\Responses\InertiaPageResponse;
 use App\Support\Permissions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +23,7 @@ class RoleController extends BaseController
 {
     protected string $model = Role::class;
 
-    protected string $view = 'developer/settings/index';
+    protected string $view = 'settings/roles/index';
 
     protected array $searchable = ['name'];
 
@@ -38,10 +39,13 @@ class RoleController extends BaseController
     /** Core roles that may not be renamed or deleted. */
     private const PROTECTED_ROLES = ['developer', 'admin', 'trainer', 'trainee'];
 
-    /** The settings shell is rendered by SettingController; bounce stray hits. */
     public function index(Request $request): mixed
     {
-        return redirect()->route('settings.index');
+        /** @disregard P1008 */ // this disregard the error below but it works 
+        return InertiaPageResponse::csr($this->view, [
+            'roles' => RoleResource::collection($this->newQuery()->get()),
+            'permissionModules' => Permissions::modules(),
+        ]);
     }
 
     protected function newQuery(): Builder
@@ -99,7 +103,7 @@ class RoleController extends BaseController
                 422,
             );
         }
-
+        /** @disregard P1005 */ // this disregard the error below but it works 
         $role->delete();
 
         return response()->json(null, 204);

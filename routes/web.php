@@ -39,6 +39,18 @@ Route::middleware('guest')->group(function () {
     Route::inertia('/reset-password', 'auth/reset-password')->name('password.reset');
 });
 
+// ==========================================
+// SETTINGS MODULE GROUP
+// ==========================================
+Route::prefix('settings')->name('settings.')->group(function () {
+    // Base /settings page (Redirects to users, or loads a default settings index layout)
+    Route::get('/', [SettingController::class, 'index'])->name('index');
+    // Users Management
+    Route::crudModule('/users', UserController::class, 'users');
+    // Roles Management
+    Route::crudModule('/roles', RoleController::class, 'roles');
+});
+
 /**
  * Authenticated LSS admin/trainer/trainee modules. Every page below is a
  * static frontend view — the React pages read their data from
@@ -66,7 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/seminars', [SeminarController::class, 'index'])->name('seminars.index');
     Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
     // Users & Roles admin JSON API consumed by the settings DataTableField.
     // Coarse access is gated by the Spatie permission; UserController layers on

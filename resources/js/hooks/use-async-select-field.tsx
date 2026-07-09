@@ -122,7 +122,7 @@ export function AsyncSelectField({
             </button>
 
             {open && !disabled && (
-                <div className="absolute z-10 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg dark:bg-sidebar">
+                <div className="dark:bg-sidebar absolute z-10 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg">
                     <div className="border-b border-slate-100 p-2">
                         <input
                             autoFocus
@@ -158,7 +158,7 @@ export function AsyncSelectField({
                                             setOpen(false);
                                             setQuery('');
                                         }}
-                                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-primary/10"
+                                        className="hover:brand-400/10 flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                                     >
                                         {opt.label}
                                         {isSelected && (

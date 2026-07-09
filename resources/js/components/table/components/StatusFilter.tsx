@@ -41,7 +41,7 @@ export function StatusFilter({
                     onClick={() => onChange(tab.value)}
                     className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                         value === tab.value
-                            ? 'bg-primary text-white'
+                            ? 'brand-400 text-white'
                             : 'text-slate-600 hover:bg-slate-50'
                     }`}
                 >

@@ -170,7 +170,7 @@ export function RecordModal<T extends object>({
                 ref={dialogRef}
                 role="dialog"
                 aria-modal="true"
-                className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white z-10 shadow-xl"
+                className="z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
@@ -230,7 +230,7 @@ export function RecordModal<T extends object>({
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-60"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-brand-400 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-400/90 disabled:opacity-60"
                         >
                             {submitting && (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

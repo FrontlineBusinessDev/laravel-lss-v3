@@ -8,12 +8,14 @@ class Permissions
      * SETTINGS
      */
     const MANAGE_SETTINGS = 'manage settings';
+    const MANAGE_SETTINGS_PARTNER_SCHOOLS = 'manage settings partner schools';
+    const MANAGE_SETTINGS_ACADEMIC = 'manage settings academic';
     /**
      * USER & ROLE MANAGEMENT
      */
     const VIEW_USERS = 'view users';
     const MANAGE_USERS = 'manage users';
-    const MANAGE_ROLES = 'manage roles'; 
+    const MANAGE_ROLES = 'manage roles';
     /**
      * NAVIGATIONS
      */
@@ -41,8 +43,6 @@ class Permissions
     const MANAGE_OWN_LEAVE = 'manage own leave';
     const MANAGE_OWN_EVALUATION = 'manage own evaluation';
 
-
-
     /**
      * Grouped by module — used in seeders, UI permission managers, role builders.
      */
@@ -51,6 +51,8 @@ class Permissions
         return [
             'Settings' => [
                 self::MANAGE_SETTINGS,
+                self::MANAGE_SETTINGS_PARTNER_SCHOOLS,
+                self::MANAGE_SETTINGS_ACADEMIC,
             ],
             'User & Role Management' => [
                 self::VIEW_USERS,
@@ -71,7 +73,13 @@ class Permissions
                 self::MANAGE_SEMINARS,
                 self::MANAGE_CERTIFICATES,
                 self::MANAGE_REPORTS,
-            ], 
+            ],
+            'Navigation Owns' => [
+                self::MANAGE_OWN_SCHEDULE,
+                self::MANAGE_OWN_TASKS,
+                self::MANAGE_OWN_LEAVE,
+                self::MANAGE_OWN_EVALUATION,
+            ]
         ];
     }
 

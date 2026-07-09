@@ -1,20 +1,17 @@
-import { usePage } from '@inertiajs/react';
-import {
-    Archive,
-    ArchiveRestore,
-    Pencil,
-    ShieldCheck,
-    Trash2,
-} from 'lucide-react';
-import { useState } from 'react';
-import { DataTableField } from '@/components/table';
-import type { CardActions, ColumnDef, FieldDef } from '@/components/table';
-import { Dropdown } from '@/components/Dropdown';
-import { RowMenu, type RowMenuAction } from '@/components/RowMenu';
+import { RowMenu, RowMenuAction } from '@/components/RowMenu';
 import { StatusBadge } from '@/components/StatusBadge';
+import DataTableField, {
+    CardActions,
+    ColumnDef,
+    FieldDef,
+} from '@/components/table';
 import { useAuth } from '@/hooks/use-auth';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
 import { cn } from '@/lib/utils';
-import type { StatusKind } from '@/types';
+import { StatusKind } from '@/types';
+import { usePage } from '@inertiajs/react';
+import { Archive, ArchiveRestore, Pencil, ShieldCheck } from 'lucide-react';
 
 /** Row shape returned by UserResource. Index signature satisfies DataTableField. */
 interface UserRow extends Record<string, unknown> {
@@ -76,10 +73,9 @@ function roleOptions(actorRole: string) {
     return roles.map((r) => ({ value: r, label: cap(r) }));
 }
 
-export function UsersManagement() {
+export default function index() {
     const { role } = useAuth();
     const currentUserId = usePage().props.auth?.user?.id;
-
     const fields: FieldDef<UserRow>[] = [
         {
             key: 'first_name',
@@ -201,25 +197,29 @@ export function UsersManagement() {
 
     return (
         <>
-            <DataTableField<UserRow>
-                apiUrl="/settings/users"
-                apiQueryKey="settings-users"
-                actionsCreateClassName="float-right"
-                columns={columns}
-                fields={fields}
-                enableSuspend={true}
-                createLabel="Add user"
-                modalTitle={(s) =>
-                    s.mode === 'create' ? 'Add user' : 'Edit user'
-                }
-                defaultSortBy="first_name"
-                createPermission="manage users"
-                editPermission="manage users"
-                archivePermission="manage users"
-                deletePermission="manage users"
-                listHeader={listHeader}
-                renderCard={renderRow}
-            />
+            <SettingsPrimaryLayout>
+                <SettingsUsersLayout>
+                    <DataTableField<UserRow>
+                        apiUrl="/settings/users"
+                        apiQueryKey="settings-users"
+                        actionsCreateClassName="float-right"
+                        columns={columns}
+                        fields={fields}
+                        enableSuspend={true}
+                        createLabel="Add user"
+                        modalTitle={(s) =>
+                            s.mode === 'create' ? 'Add user' : 'Edit user'
+                        }
+                        defaultSortBy="first_name"
+                        createPermission="manage users"
+                        editPermission="manage users"
+                        archivePermission="manage users"
+                        deletePermission="manage users"
+                        listHeader={listHeader}
+                        renderCard={renderRow}
+                    />
+                </SettingsUsersLayout>
+            </SettingsPrimaryLayout>
         </>
     );
 }

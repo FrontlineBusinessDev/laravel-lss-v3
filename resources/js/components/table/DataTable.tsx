@@ -28,7 +28,7 @@ import TableLoading from '../spinners/TableLoading';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface ColumnDef<T = object> {
+interface ColumnDef<T = object> {
     key: string;
     label: string;
     filterable?: boolean;

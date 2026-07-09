@@ -25,7 +25,7 @@ class UserController extends BaseController
 {
     protected string $model = User::class;
 
-    protected string $view = 'developer/settings/index';
+    protected string $view = 'settings/users/index';
 
     protected array $searchable = ['first_name', 'last_name', 'email'];
 
