@@ -13,6 +13,7 @@ class TraineeDocument extends Model
     protected $table = 'app_trainees_documents';
 
     protected $fillable = [
+        'status',
         'trainee_id',
         'document_type',
         'original_name',

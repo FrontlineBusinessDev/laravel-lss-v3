@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('app_batches', function (Blueprint $table) {
             $table->id();
+            $table->string('status')->default('active');
             $table->string('batch_code')->unique();
             $table->string('public_url_id')->unique();
             $table->date('date_started');

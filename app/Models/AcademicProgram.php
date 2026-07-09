@@ -13,6 +13,7 @@ class AcademicProgram extends Model
     protected $table = 'app_settings_academic_program';
 
     protected $fillable = [
+        'status',
         'name',
         'course_name',
         'specialization',

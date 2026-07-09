@@ -13,6 +13,7 @@ class AcademicLevel extends Model
     protected $table = 'app_settings_academic_level';
 
     protected $fillable = [
+        'status',
         'name',
         'year_level',
         'description',

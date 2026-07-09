@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('app_settings_academic_industry', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 150);
+            $table->string('status')->default('active');
+            $table->string('name', 150)->unique();
             $table->text('description')->nullable();
             $table->timestamps();
         });

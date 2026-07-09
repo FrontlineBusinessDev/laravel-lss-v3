@@ -14,6 +14,7 @@ class Batch extends Model
     protected $table = 'app_batches';
 
     protected $fillable = [
+        'status',
         'batch_code',
         'public_url_id',
         'date_started',

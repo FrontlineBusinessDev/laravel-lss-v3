@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('app_trainees', function (Blueprint $table) {
             $table->id();
+            $table->string('status')->default('active');
             $table->foreignId('batch_id')->constrained('app_batches')->restrictOnDelete();
             $table->foreignId('school_id')->constrained('app_settings_partner_schools')->restrictOnDelete();
             $table->string('public_url_id')->unique();

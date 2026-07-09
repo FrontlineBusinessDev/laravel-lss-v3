@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('app_trainees_documents', function (Blueprint $table) {
             $table->id();
+            $table->string('status')->default('active');
             $table->foreignId('trainee_id')->constrained('app_trainees')->restrictOnDelete();
             // OPTION A
             $table->string('document_type', 100); // resume,endorsement-letter,moa,liability-waiver,scanned-evaluations

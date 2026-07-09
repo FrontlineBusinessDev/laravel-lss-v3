@@ -13,6 +13,7 @@ class AcademicIndustry extends Model
     protected $table = 'app_settings_academic_industry';
 
     protected $fillable = [
+        'status',
         'name',
         'description',
     ];

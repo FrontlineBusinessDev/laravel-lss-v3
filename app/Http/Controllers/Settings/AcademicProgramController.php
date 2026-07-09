@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\BaseController;
 use App\Models\AcademicProgram;
+use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 class AcademicProgramController extends BaseController
 {
     protected string $model = AcademicProgram::class;
     protected string $view = 'settings/academic/program/index';
-
     protected array $searchable = ['name', 'course_name', 'specialization'];
     protected array $filterable = ['status'];
     protected array $sortable = ['id', 'name', 'course_name'];
@@ -24,6 +25,7 @@ class AcademicProgramController extends BaseController
     protected function storeRules(): array
     {
         return [
+            'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
             'course_name' => ['required', 'string', 'max:150'],
             'specialization' => ['nullable', 'string'],
@@ -33,6 +35,7 @@ class AcademicProgramController extends BaseController
     protected function updateRules(Model $model): array
     {
         return [
+            'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
             'course_name' => ['required', 'string', 'max:150'],
             'specialization' => ['nullable', 'string'],

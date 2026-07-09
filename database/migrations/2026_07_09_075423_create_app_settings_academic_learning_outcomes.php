@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('app_settings_academic_learning_outcomes', function (Blueprint $table) {
             $table->id();
-            $table->text('learning_outcomes');
+            $table->string('status')->default('active');
+            $table->text('learning_outcomes')->unique();
             $table->foreignId('academic_industry_id')->constrained('app_settings_academic_industry')->restrictOnDelete();
             $table->foreignId('academic_program_id')->constrained('app_settings_academic_program')->restrictOnDelete();
             $table->timestamps();

@@ -13,6 +13,7 @@ class AcademicLearningOutcomes extends Model
     protected $table = 'app_settings_academic_learning_outcomes';
 
     protected $fillable = [
+        'status',
         'learning_outcomes',
         'academic_industry_id',
         'academic_program_id',

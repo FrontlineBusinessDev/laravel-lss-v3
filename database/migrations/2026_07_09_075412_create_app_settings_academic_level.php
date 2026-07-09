@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('app_settings_academic_level', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 150);
+            $table->string('status')->default('active');
+            $table->string('name', 150)->unique();
             $table->string('year_level', 150);
             $table->text('description')->nullable();
             $table->timestamps();

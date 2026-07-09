@@ -202,6 +202,8 @@ abstract class BaseController extends Controller implements HasMiddleware
     public function store(Request $request): JsonResponse
     {
         $this->authorize('create', $this->model);
+        // Fix: Normalize input directly inside the request parameters
+        $this->normalizeStatusInput($request);
         $validated = $request->validate($this->storeRules(), $this->validationMessages());
         $validated = $this->beforeSave($validated);
         // Default to active unless beforeSave() already set a status (e.g. Tickets'
@@ -216,6 +218,8 @@ abstract class BaseController extends Controller implements HasMiddleware
     {
         $model = $this->resolveModel($id);
         $this->authorize('update', $model);
+        // Fix: Normalize input directly inside the request parameters
+        $this->normalizeStatusInput($request);
         $validated = $request->validate($this->updateRules($model), $this->validationMessages());
         $validated = $this->beforeSave($validated, $model);
         $model->update($validated);
@@ -240,7 +244,21 @@ abstract class BaseController extends Controller implements HasMiddleware
 
         return $this->sendResponse($model, 'Record restored successfully.');
     }
-
+    /**
+     * Safely mutates any inbound boolean/string variants into explicit 
+     * 'active' or 'inactive' status values before validation runs.
+     */
+    protected function normalizeStatusInput(Request $request): void
+    {
+        if ($request->has('status')) {
+            $statusInput = $request->input('status');
+            if ($statusInput === false || $statusInput === 'false' || $statusInput === 0 || $statusInput === '0') {
+                $request->merge(['status' => self::STATUS_INACTIVE]);
+            } elseif ($statusInput === true || $statusInput === 'true' || $statusInput === 1 || $statusInput === '1') {
+                $request->merge(['status' => self::STATUS_ACTIVE]);
+            }
+        }
+    }
     /**
      * Relations to count when checking if a record is in use.
      * Override in child controllers to enable the in-use guard.

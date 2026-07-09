@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\BaseController;
 use App\Models\AcademicLearningOutcomes;
+use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 class AcademicLearningOutcomesController extends BaseController
 {
@@ -20,6 +22,7 @@ class AcademicLearningOutcomesController extends BaseController
     protected function storeRules(): array
     {
         return [
+            'status' => ['required', Rule::in(Statuses::all())],
             'learning_outcomes' => ['required', 'string'],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
             'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
@@ -29,7 +32,13 @@ class AcademicLearningOutcomesController extends BaseController
     protected function updateRules(Model $model): array
     {
         return [
-            'learning_outcomes' => ['required', 'string'],
+            'status' => ['required', Rule::in(Statuses::all())],
+            'learning_outcomes' => [
+                'required',
+                'string',
+                // This tells Laravel: check for uniqueness, but ignore this model's ID
+                Rule::unique('app_settings_partner_schools', 'school_name')->ignore($model->id)
+            ],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
             'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
         ];

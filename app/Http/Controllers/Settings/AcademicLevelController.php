@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\BaseController;
 use App\Models\AcademicLevel;
+use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 class AcademicLevelController extends BaseController
 {
@@ -21,6 +23,7 @@ class AcademicLevelController extends BaseController
     protected function storeRules(): array
     {
         return [
+            'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
             'year_level' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
@@ -30,6 +33,7 @@ class AcademicLevelController extends BaseController
     protected function updateRules(Model $model): array
     {
         return [
+            'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
             'year_level' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],

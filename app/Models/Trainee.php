@@ -14,6 +14,7 @@ class Trainee extends Model
     protected $table = 'app_trainees';
 
     protected $fillable = [
+        'status',
         'batch_id',
         'school_id',
         'public_url_id',
