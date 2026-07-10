@@ -14,18 +14,22 @@ import { GRID } from '@/types/reusable/data-table';
 export function TextCell({
     children,
     muted = false,
+    className = '',
 }: {
     children: ReactNode;
     muted?: boolean;
+    className?: string;
 }) {
     if (muted) {
         return (
-            <div className="truncate text-xs text-neutral-500">{children}</div>
+            <div className={cn(className, 'truncate text-xs text-neutral-500')}>
+                {children}
+            </div>
         );
     }
 
     return (
-        <div className="flex items-center gap-1.5 font-medium text-ink">
+        <div className={cn('flex items-center gap-1.5 font-medium text-ink')}>
             <span className="truncate">{children}</span>
         </div>
     );
@@ -42,12 +46,14 @@ export function SettingsRow({
     isArchived = false,
     badge,
     menu,
+    classNameParent = '',
     children,
 }: {
     grid?: string;
     isArchived?: boolean;
     badge: ReactNode;
     menu: RowMenuAction[];
+    classNameParent?: string;
     children: ReactNode;
 }) {
     return (
@@ -57,6 +63,7 @@ export function SettingsRow({
                 GRID,
                 grid,
                 isArchived && 'opacity-60',
+                classNameParent,
             )}
         >
             {children}

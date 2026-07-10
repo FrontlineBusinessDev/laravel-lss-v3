@@ -1,5 +1,6 @@
-import { ColumnDef } from '@/types/reusable/data-table';
-import { FieldDef } from '@/types/reusable/fields';
+import { Thumbnail } from '@/components/Thumbnail';
+import type { ColumnDef } from '@/types/reusable/data-table';
+import type { FieldDef } from '@/types/reusable/fields';
 
 export interface PartnerSchools extends Record<string, unknown> {
     id: number;
@@ -32,18 +33,16 @@ export const columns: ColumnDef<PartnerSchools>[] = [
     {
         key: 'image',
         label: 'Logo',
-        // image comes back from the API as a plain URL string —
-        // render it as a thumbnail instead of the raw path text.
-        render: (value) =>
-            value ? (
-                <img
-                    src={value as string}
-                    alt="School logo"
-                    className="h-10 w-10 rounded-lg border border-slate-200 object-cover"
-                />
-            ) : (
-                <span className="text-sm text-slate-400">—</span>
-            ),
+        // image comes back from the API as a plain URL string — render it as a
+        // thumbnail (with graceful fallback for empty/broken URLs) instead of
+        // the raw path text.
+        render: (value) => (
+            <Thumbnail
+                src={value as string}
+                alt="School logo"
+                className="h-10 w-10 rounded-lg border border-slate-200 object-cover"
+            />
+        ),
     },
     {
         key: 'contact_first_name',

@@ -25,6 +25,7 @@ export function AsyncSelectField({
     onChange,
     loadOptions,
     getOptionLabel,
+    initialLabel,
     placeholder = 'Search…',
     debounceMs = 300,
     minSearchLength = 0,
@@ -37,7 +38,10 @@ export function AsyncSelectField({
     const [loading, setLoading] = useState(false);
     // Remembers the label of the current value so the trigger renders it even
     // when the value is a bare id (e.g. an edit row or a preselected filter).
-    const [selectedLabel, setSelectedLabel] = useState('');
+    // Seeded from `initialLabel` when the caller can resolve it up-front (e.g.
+    // from an eager-loaded relation), which also short-circuits the first-page
+    // lookup scan below — the reliable path for archived / paged-out records.
+    const [selectedLabel, setSelectedLabel] = useState(initialLabel ?? '');
     const containerRef = useRef<HTMLDivElement>(null);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const requestSeq = useRef(0);

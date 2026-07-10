@@ -16,27 +16,48 @@
  * still works as the source of "what should be uploaded."
  */
 
-import { ExistingFile, FileFieldValue } from '@/types/reusable/fields';
-import { File as FileIcon, UploadCloud, X } from 'lucide-react';
+import { Eye, File as FileIcon, UploadCloud, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { ImageLightbox } from '@/components/ImageLightbox';
+import type { ExistingFile, FileFieldValue } from '@/types/reusable/fields';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes?: number): string {
-    if (!bytes) return '';
+    if (!bytes) {
+        return '';
+    }
+
     const units = ['B', 'KB', 'MB', 'GB'];
     let val = bytes;
     let i = 0;
+
     while (val >= 1024 && i < units.length - 1) {
         val /= 1024;
         i++;
     }
+
     return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
 function isImageName(name: string, type?: string): boolean {
-    if (type) return type.startsWith('image/');
+    if (type) {
+        return type.startsWith('image/');
+    }
+
     return /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(name);
+}
+
+/**
+ * Extracts the file name from a URL/path, dropping any query string or hash.
+ * Presigned S3/Spaces URLs append `?X-Amz-…`; without stripping it the derived
+ * name keeps the query and `isImageName`'s extension test (anchored on `$`)
+ * fails, so an image would be misdetected as a generic file.
+ */
+function fileNameFromUrl(url: string): string {
+    const path = url.split(/[?#]/)[0];
+
+    return path.split('/').pop() || url;
 }
 
 /**
@@ -48,31 +69,41 @@ function isImageName(name: string, type?: string): boolean {
  *  - a plain url/path string
  */
 export function normalizeExistingFiles(raw: unknown): ExistingFile[] {
-    if (!raw) return [];
+    if (!raw) {
+        return [];
+    }
+
     const list = Array.isArray(raw) ? raw : [raw];
+
     return list
         .map((item): ExistingFile | null => {
             if (typeof item === 'string') {
                 return {
                     id: item,
-                    name: item.split('/').pop() ?? item,
+                    name: fileNameFromUrl(item),
                     url: item,
                 };
             }
+
             if (item && typeof item === 'object') {
                 const obj = item as Record<string, unknown>;
                 const url = String(obj.url ?? obj.path ?? '');
-                if (!url) return null;
+
+                if (!url) {
+                    return null;
+                }
+
                 return {
                     id: (obj.id as string | number) ?? url,
                     name: String(
-                        obj.name ?? obj.file_name ?? url.split('/').pop(),
+                        obj.name ?? obj.file_name ?? fileNameFromUrl(url),
                     ),
                     url,
                     size: typeof obj.size === 'number' ? obj.size : undefined,
                     type: typeof obj.type === 'string' ? obj.type : undefined,
                 };
             }
+
             return null;
         })
         .filter((f): f is ExistingFile => f !== null);
@@ -90,9 +121,14 @@ function LocalThumb({ file }: { file: File }) {
     const [src, setSrc] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isImageName(file.name, file.type)) return;
+        if (!isImageName(file.name, file.type)) {
+            return;
+        }
+
         const objectUrl = URL.createObjectURL(file);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSrc(objectUrl);
+
         return () => URL.revokeObjectURL(objectUrl);
     }, [file]);
 
@@ -105,6 +141,7 @@ function LocalThumb({ file }: { file: File }) {
             />
         );
     }
+
     return (
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
             <FileIcon className="size-4.5 text-slate-400" strokeWidth={1.75} />
@@ -140,6 +177,8 @@ export function FileUploadField({
     const inputRef = useRef<HTMLInputElement>(null);
     const [dragOver, setDragOver] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
+    // URL of the image currently open in the full-size lightbox, if any.
+    const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
     const existing = value?.existing ?? [];
     const files = value?.files ?? [];
@@ -147,40 +186,53 @@ export function FileUploadField({
         multiple && !!maxFiles && existing.length + files.length >= maxFiles;
 
     const addFiles = (incoming: File[]) => {
-        if (disabled || incoming.length === 0) return;
+        if (disabled || incoming.length === 0) {
+            return;
+        }
+
         setLocalError(null);
 
         if (!multiple) {
             const next = incoming[0];
+
             if (maxSizeMB && next.size > maxSizeMB * 1024 * 1024) {
                 setLocalError(`${next.name} is larger than ${maxSizeMB}MB.`);
+
                 return;
             }
+
             // Picking a new file replaces whatever was there before
             onChange({ ...value, existing: [], files: [next] });
+
             return;
         }
 
         const room = maxFiles
             ? maxFiles - existing.length - files.length
             : Infinity;
+
         if (room <= 0) {
             setLocalError(`You can only attach up to ${maxFiles} files.`);
+
             return;
         }
 
         const accepted: File[] = [];
+
         for (const f of incoming) {
             if (accepted.length >= room) {
                 setLocalError(`You can only attach up to ${maxFiles} files.`);
                 break;
             }
+
             if (maxSizeMB && f.size > maxSizeMB * 1024 * 1024) {
                 setLocalError(`${f.name} is larger than ${maxSizeMB}MB.`);
                 continue;
             }
+
             accepted.push(f);
         }
+
         if (accepted.length > 0) {
             onChange({ ...value, files: [...files, ...accepted] });
         }
@@ -194,8 +246,10 @@ export function FileUploadField({
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setDragOver(false);
-        if (!disabled && !atCapacity)
+
+        if (!disabled && !atCapacity) {
             addFiles(Array.from(e.dataTransfer.files ?? []));
+        }
     };
 
     const removeNew = (idx: number) =>
@@ -216,7 +270,10 @@ export function FileUploadField({
                 }
                 onDragOver={(e) => {
                     e.preventDefault();
-                    if (!disabled && !atCapacity) setDragOver(true);
+
+                    if (!disabled && !atCapacity) {
+                        setDragOver(true);
+                    }
                 }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
@@ -294,6 +351,19 @@ export function FileUploadField({
                                     {formatBytes(f.size)}
                                 </span>
                             )}
+                            {preview && isImageName(f.name, f.type) && (
+                                <button
+                                    type="button"
+                                    onClick={() => setLightboxSrc(f.url)}
+                                    title="View"
+                                    className="shrink-0 rounded-md p-1 hover:bg-slate-100 hover:text-slate-700"
+                                >
+                                    <Eye
+                                        className="size-4"
+                                        strokeWidth={1.75}
+                                    />
+                                </button>
+                            )}
                             {!disabled && (
                                 <button
                                     type="button"
@@ -342,6 +412,12 @@ export function FileUploadField({
                     ))}
                 </ul>
             )}
+
+            <ImageLightbox
+                open={lightboxSrc !== null}
+                src={lightboxSrc ?? ''}
+                onClose={() => setLightboxSrc(null)}
+            />
         </div>
     );
 }

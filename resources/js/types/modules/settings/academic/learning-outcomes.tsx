@@ -8,6 +8,14 @@ export interface AcademicLearningOutcomes extends Record<string, unknown> {
     learning_outcomes: string;
     academic_industry_id: number;
     academic_program_id: number;
+    // Eager-loaded relations (serialized snake_case by Laravel) — present when
+    // the list query uses `with()`. Used to show names instead of raw ids.
+    academic_industry?: { id: number; name: string } | null;
+    academic_program?: {
+        id: number;
+        name: string;
+        course_name: string;
+    } | null;
     created_at: string;
     updated_at: string;
 }
@@ -42,6 +50,20 @@ export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
         label: 'Learning Outcomes Core',
         searchable: true,
     },
+    {
+        key: 'academic_industry_id',
+        label: 'Academic Industry',
+        type: 'async-select',
+        searchable: true,
+        filterable: true,
+    },
+    {
+        key: 'academic_program_id',
+        label: 'Academic Program',
+        type: 'async-select',
+        searchable: true,
+        filterable: true,
+    },
     { key: 'created_at', label: 'Configured On' },
 ];
 
@@ -60,6 +82,8 @@ export const fields: FieldDef<AcademicLearningOutcomes>[] = [
         placeholder: 'Select target industry...',
         colSpan: 2,
         loadOptions: (q) => loadLookupOptions('/settings/academic/industry', q),
+        // Show the currently-selected industry name when editing.
+        initialLabel: (row) => row.academic_industry?.name,
     },
     {
         key: 'academic_program_id',
@@ -69,6 +93,8 @@ export const fields: FieldDef<AcademicLearningOutcomes>[] = [
         placeholder: 'Select target program...',
         colSpan: 2,
         loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
+        // Show the currently-selected program name when editing.
+        initialLabel: (row) => row.academic_program?.name,
     },
     {
         key: 'learning_outcomes',

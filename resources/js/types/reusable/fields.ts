@@ -65,6 +65,13 @@ export interface FieldDef<T = unknown> {
     // async-select only
     loadOptions?: (query: string) => Promise<FieldOption[]>;
     getOptionLabel?: (value: unknown) => string;
+    /**
+     * Resolves the display label for the currently-selected value in edit mode
+     * (e.g. from an eager-loaded relation on the row). Lets the control show the
+     * previously-selected record's name without scanning the lookup's first
+     * page — works even when that record is archived or paged out.
+     */
+    initialLabel?: (row: T) => string | undefined;
     debounceMs?: number;
     minSearchLength?: number;
 

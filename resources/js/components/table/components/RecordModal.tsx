@@ -12,7 +12,10 @@
 import { Loader2, X } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { FileUploadField } from '@/hooks/use-file-upload-field';
+import {
+    FileUploadField,
+    normalizeExistingFiles,
+} from '@/hooks/use-file-upload-field';
 import { useScrollLock } from '@/hooks/use-scroll-lock';
 import type { FileFieldValue } from '@/types/reusable/fields';
 import type { FieldDef, ModalMode } from '../types';
@@ -53,6 +56,24 @@ export function RecordModal<T extends object>({
     const initialValues = useMemo(() => {
         const init: Record<string, unknown> = {};
         visibleFields.forEach((f) => {
+            // File fields carry a FileFieldValue, not a scalar. In edit mode
+            // hydrate `existing` from whatever the row holds (a URL string or a
+            // media object) so the current file(s) render in the dropzone.
+            if (f.type === 'file') {
+                const raw =
+                    mode === 'edit' && row
+                        ? (row as Record<string, unknown>)[f.key]
+                        : null;
+
+                init[f.key] = {
+                    existing: normalizeExistingFiles(raw),
+                    files: [],
+                    removedIds: [],
+                };
+
+                return;
+            }
+
             if (mode === 'edit' && row) {
                 let val = (row as Record<string, unknown>)[f.key];
 
@@ -209,6 +230,11 @@ export function RecordModal<T extends object>({
                                         submitting ||
                                         isFieldDisabled(f, mode, row)
                                     }
+                                    initialLabel={
+                                        mode === 'edit' && row
+                                            ? f.initialLabel?.(row)
+                                            : undefined
+                                    }
                                     onChange={(v) => setValue(f.key, v)}
                                 />
                             </div>
@@ -290,12 +316,15 @@ function DynamicField<T>({
     value,
     error,
     disabled,
+    initialLabel,
     onChange,
 }: {
     field: FieldDef<T>;
     value: unknown;
     error?: string;
     disabled?: boolean;
+    /** Preset label for async-select edit mode (resolved from the row). */
+    initialLabel?: string;
     onChange: (value: unknown) => void;
 }) {
     const base =
@@ -356,6 +385,7 @@ function DynamicField<T>({
                     onChange={onChange}
                     loadOptions={field.loadOptions!}
                     getOptionLabel={field.getOptionLabel}
+                    initialLabel={initialLabel}
                     placeholder={field.placeholder}
                     debounceMs={field.debounceMs}
                     minSearchLength={field.minSearchLength}

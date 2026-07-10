@@ -1,18 +1,53 @@
-import React, { createContext, useContext } from 'react';
-import { useModal, UseModalReturn } from '@/hooks/use-modal';
+// resources/js/context/modal-context.tsx
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
-const ModalContext = createContext<UseModalReturn | null>(null);
+type ModalKey = string;
 
-export function ModalProvider({ children }: { children: React.ReactNode }) {
-    const modal = useModal(); // Instantiated once globally
+type ModalState = {
+    isOpen: boolean;
+    data: any;
+};
+
+type ModalRegistry = Record<ModalKey, ModalState>;
+
+type ModalContextType = {
+    registry: ModalRegistry;
+    openModal: (key: ModalKey, data?: any) => void;
+    closeModal: (key: ModalKey) => void;
+};
+
+const ModalContext = createContext<ModalContextType | undefined>(undefined);
+
+export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => {
+    const [registry, setRegistry] = useState<ModalRegistry>({});
+
+    const openModal = useCallback((key: ModalKey, data?: any) => {
+        setRegistry((prev) => ({
+            ...prev,
+            [key]: { isOpen: true, data: data ?? null },
+        }));
+    }, []);
+
+    const closeModal = useCallback((key: ModalKey) => {
+        setRegistry((prev) => ({
+            ...prev,
+            [key]: { isOpen: false, data: null },
+        }));
+    }, []);
+
     return (
-        <ModalContext.Provider value={modal}>{children}</ModalContext.Provider>
+        <ModalContext.Provider value={{ registry, openModal, closeModal }}>
+            {children}
+        </ModalContext.Provider>
     );
-}
+};
 
-export function useGlobalModal() {
+export const useModalContext = () => {
     const context = useContext(ModalContext);
-    if (!context)
-        throw new Error('useGlobalModal must be used within a ModalProvider');
+    if (!context) {
+        throw new Error('useModalContext must be used within a ModalProvider');
+    }
     return context;
-}
+};

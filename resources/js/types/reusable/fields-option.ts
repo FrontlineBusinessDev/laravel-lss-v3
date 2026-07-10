@@ -10,6 +10,8 @@ export interface AsyncSelectFieldProps {
     onChange: (value: unknown) => void;
     loadOptions: (query: string) => Promise<FieldOption[]>;
     getOptionLabel?: (value: unknown) => string;
+    /** Preset label for the current value (edit mode / preselected filter). */
+    initialLabel?: string;
     placeholder?: string;
     debounceMs?: number;
     minSearchLength?: number;

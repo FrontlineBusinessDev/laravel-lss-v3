@@ -48,7 +48,7 @@ import { parseApiError } from '@/lib/parseApiError';
 import { cn } from '@/lib/utils';
 import type { CardActions } from '@/types/reusable/card';
 import type { DataTableProps } from '@/types/reusable/data-table';
-import type { ModalMode } from '@/types/reusable/fields';
+import type { FileFieldValue, ModalMode } from '@/types/reusable/fields';
 import { Dropdown } from '../Dropdown';
 import { ConfirmArchiveAccountModal } from '../modal/ConfirmArchiveAccountModal';
 import { ConfirmDeleteModal } from '../modal/ConfirmDeleteModal';
@@ -391,14 +391,36 @@ return;
             }
         } else {
             payload = {};
-            resolvedFields
-                .filter((f) => isFieldVisible(f, mode, row))
+            const visibleFields = resolvedFields.filter((f) =>
+                isFieldVisible(f, mode, row),
+            );
+            visibleFields.forEach((f) => {
+                const raw = formValues[f.key];
+                // Read from `key`, but submit under `payloadKey` when the
+                // API expects a different name than the display/read key.
+                const outKey = f.payloadKey ?? f.key;
+                payload[outKey] = f.transform ? f.transform(raw) : raw;
+            });
+
+            // File fields: when the existing file was removed and no
+            // replacement was picked, the payload carries no File, so the
+            // request goes out as JSON. Emit the generic `remove_<key>` flag the
+            // backend understands (HandlesFileUploads::fileWasRemoved) and clear
+            // the wrapper so the column is nulled server-side.
+            visibleFields
+                .filter((f) => f.type === 'file')
                 .forEach((f) => {
-                    const raw = formValues[f.key];
-                    // Read from `key`, but submit under `payloadKey` when the
-                    // API expects a different name than the display/read key.
                     const outKey = f.payloadKey ?? f.key;
-                    payload[outKey] = f.transform ? f.transform(raw) : raw;
+                    const val = payload[outKey] as FileFieldValue | undefined;
+                    const removed =
+                        !!val &&
+                        val.removedIds?.length > 0 &&
+                        val.files?.length === 0;
+
+                    if (removed) {
+                        payload[`remove_${outKey}`] = true;
+                        payload[outKey] = null;
+                    }
                 });
         }
 
