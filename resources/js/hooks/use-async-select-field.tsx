@@ -3,6 +3,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FieldOption } from '@/types/reusable/fields';
 import type { AsyncSelectFieldProps } from '@/types/reusable/fields-option';
 
+/**
+ * Compares a stored value against an option value. Primitives are matched by
+ * string (so a numeric FK from an edit row equals its string option value);
+ * objects fall back to a structural compare.
+ */
+function valuesEqual(a: unknown, b: unknown): boolean {
+    if (a == null || b == null) {
+        return a === b;
+    }
+
+    if (typeof a === 'object' || typeof b === 'object') {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
+
+    return String(a) === String(b);
+}
+
 export function AsyncSelectField({
     value,
     onChange,
@@ -18,15 +35,43 @@ export function AsyncSelectField({
     const [query, setQuery] = useState('');
     const [options, setOptions] = useState<FieldOption[]>([]);
     const [loading, setLoading] = useState(false);
+    // Remembers the label of the current value so the trigger renders it even
+    // when the value is a bare id (e.g. an edit row or a preselected filter).
+    const [selectedLabel, setSelectedLabel] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const requestSeq = useRef(0);
 
-    const currentLabel = value
-        ? getOptionLabel
-            ? getOptionLabel(value)
-            : String((value as { name?: string })?.name ?? '')
-        : '';
+    const currentLabel = !value
+        ? ''
+        : getOptionLabel
+          ? getOptionLabel(value)
+          : selectedLabel || String((value as { name?: string })?.name ?? '');
+
+    // Resolve the label for a preset value once (edit mode / preselected
+    // filter). Skipped when the caller supplies its own getOptionLabel or the
+    // label is already known from a user selection.
+    useEffect(() => {
+        if (!value || selectedLabel || getOptionLabel) {
+            return;
+        }
+
+        let active = true;
+        loadOptions('')
+            .then((results) => {
+                const match = results.find((o) => valuesEqual(o.value, value));
+
+                if (active && match) {
+                    setSelectedLabel(match.label);
+                }
+            })
+            .catch(() => {});
+
+        return () => {
+            active = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
     const runSearch = useCallback(
         (q: string) => {
@@ -115,7 +160,7 @@ export function AsyncSelectField({
                     error ? 'border-rose-300' : 'border-slate-200'
                 } ${disabled ? 'cursor-not-allowed bg-slate-50/20' : 'text-slate-900 hover:border-slate-300'} dark:text-white`}
             >
-                <span className={currentLabel ? '' : ''}>
+                <span className={`text-black ${currentLabel ? '' : ''}`}>
                     {currentLabel || placeholder}
                 </span>
                 <ChevronDown className="h-4 w-4" />
@@ -145,9 +190,10 @@ export function AsyncSelectField({
                         )}
                         {!loading &&
                             options.map((opt) => {
-                                const isSelected =
-                                    JSON.stringify(opt.value) ===
-                                    JSON.stringify(value);
+                                const isSelected = valuesEqual(
+                                    opt.value,
+                                    value,
+                                );
 
                                 return (
                                     <button
@@ -155,6 +201,7 @@ export function AsyncSelectField({
                                         type="button"
                                         onClick={() => {
                                             onChange(opt.value);
+                                            setSelectedLabel(opt.label);
                                             setOpen(false);
                                             setQuery('');
                                         }}

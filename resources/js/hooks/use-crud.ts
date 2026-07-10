@@ -125,7 +125,10 @@ function buildFormData(data: Record<string, unknown>): FormData {
 return;
 }
 
-        // 💡 THE ULTIMATE FIX: Map directly to a dot-notation key stream
+        // Single-file logo field. Append the file under the clean `image` key
+        // so `$request->file('image')` resolves it server-side. A dotted
+        // `image.files` field name is mangled by PHP into `image_files` and
+        // never reaches the controller — which is why the URL came back null.
         if (
             key === 'image' &&
             value &&
@@ -133,18 +136,10 @@ return;
             'files' in value
         ) {
             const fileWrapper = value as { files?: unknown[] };
+            const actualFile = fileWrapper.files?.[0];
 
-            if (
-                Array.isArray(fileWrapper.files) &&
-                fileWrapper.files.length > 0
-            ) {
-                const actualFile = fileWrapper.files[0];
-
-                if (actualFile instanceof File || actualFile instanceof Blob) {
-                    // Using dot notation allows Laravel to build the validation tree
-                    // without passing an explicit literal array type that crashes SQLite mass-assignments.
-                    formData.append('image.files', actualFile);
-                }
+            if (actualFile instanceof File || actualFile instanceof Blob) {
+                formData.append('image', actualFile);
             }
 
             return;

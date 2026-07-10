@@ -14,6 +14,8 @@ class AcademicLearningOutcomesController extends BaseController
     protected string $view = 'settings/academic/learning-outcomes/index';
     protected array $searchable = ['learning_outcomes'];
     protected array $filterable = ['academic_industry_id', 'academic_program_id', 'status'];
+    // Id filters must match exactly — a LIKE '%5%' would also match 15/50/…
+    protected array $exactFilters = ['status', 'academic_industry_id', 'academic_program_id'];
     protected array $sortable = ['id'];
     // activeColumns override because this table doesn't have a "name" column
     protected array $activeColumns = ['id', 'academic_program_id', 'academic_industry_id'];
@@ -33,12 +35,7 @@ class AcademicLearningOutcomesController extends BaseController
     {
         return [
             'status' => ['required', Rule::in(Statuses::all())],
-            'learning_outcomes' => [
-                'required',
-                'string',
-                // This tells Laravel: check for uniqueness, but ignore this model's ID
-                Rule::unique('app_settings_partner_schools', 'school_name')->ignore($model->id)
-            ],
+            'learning_outcomes' => ['required', 'string'],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
             'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
         ];
