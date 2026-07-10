@@ -1,14 +1,15 @@
-import DataTableField, { CardActions, ColumnDef } from '@/components/table';
+import { Pencil, ShieldCheck, Trash2 } from 'lucide-react';
+import type { RowMenuAction } from '@/components/RowMenu';
+import { SettingsListHeader, SettingsRow } from '@/components/settings';
+import { StatusBadge } from '@/components/StatusBadge';
+import type { CardActions, ColumnDef } from '@/components/table';
+import DataTableField from '@/components/table';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
-import { cn } from '@/lib/utils';
-import { PermissionModules, RoleModal, RoleRow } from './RoleModal';
-import { RowMenu, RowMenuAction } from '@/components/RowMenu';
-import { Pencil, ShieldCheck, Trash2 } from 'lucide-react';
-import { StatusBadge } from '@/components/StatusBadge';
+import type { PermissionModules, RoleRow } from './RoleModal';
+import { RoleModal } from './RoleModal';
 
-const GRID =
-    'sm:grid sm:grid-cols-[2fr_1.4fr_0.9fr_2.5rem] sm:items-center sm:gap-3';
+const ROLE_GRID = 'sm:grid-cols-[2fr_1.4fr_0.9fr_2.5rem]';
 const PROTECTED_ROLES = ['developer', 'admin', 'trainer', 'trainee'];
 
 const columns: ColumnDef<RoleRow>[] = [
@@ -20,17 +21,10 @@ const columns: ColumnDef<RoleRow>[] = [
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 const listHeader = (
-    <div
-        className={cn(
-            GRID,
-            'hidden bg-neutral-50 px-4 py-2.5 text-xs font-medium text-neutral-500',
-        )}
-    >
-        <span>Role</span>
-        <span>Permissions</span>
-        <span>Status</span>
-        <span />
-    </div>
+    <SettingsListHeader
+        grid={ROLE_GRID}
+        labels={['Role', 'Permissions', 'Status']}
+    />
 );
 
 const renderRow = (row: RoleRow, actions: CardActions) => {
@@ -47,7 +41,11 @@ const renderRow = (row: RoleRow, actions: CardActions) => {
     ];
 
     return (
-        <div className={cn('flex flex-col gap-1 px-4 py-3', GRID)}>
+        <SettingsRow
+            grid={ROLE_GRID}
+            badge={<StatusBadge status="active" />}
+            menu={menu}
+        >
             <div className="inline-flex items-center gap-1.5 font-medium text-ink">
                 {isProtected && (
                     <ShieldCheck size={13} className="text-brand-500" />
@@ -58,13 +56,7 @@ const renderRow = (row: RoleRow, actions: CardActions) => {
                 {row.permissions_count}{' '}
                 {row.permissions_count === 1 ? 'permission' : 'permissions'}
             </div>
-            <div className="flex items-center justify-between sm:contents">
-                <StatusBadge status="active" />
-                <div className="sm:justify-self-end">
-                    <RowMenu actions={menu} />
-                </div>
-            </div>
-        </div>
+        </SettingsRow>
     );
 };
 

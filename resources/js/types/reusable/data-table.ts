@@ -45,6 +45,8 @@ export interface RenderModalProps<T> {
     title: string;
     isLoading: boolean;
     error: string | null;
+    /** Real upload progress (0–100) while a file is being sent, else null. */
+    uploadProgress?: number | null;
     onClose: () => void;
     onSubmit: (values: Record<string, unknown>) => Promise<void>;
 }

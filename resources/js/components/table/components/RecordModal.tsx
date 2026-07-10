@@ -9,12 +9,12 @@
  *  - Renders the right input type via <DynamicField>
  */
 
+import { Loader2, X } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { FileUploadField } from '@/hooks/use-file-upload-field';
 import { useScrollLock } from '@/hooks/use-scroll-lock';
-import { FileFieldValue } from '@/types/reusable/fields';
-import { Loader2, X } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { FileFieldValue } from '@/types/reusable/fields';
 import type { FieldDef, ModalMode } from '../types';
 import { isFieldDisabled, isFieldVisible } from '../utils';
 
@@ -25,6 +25,8 @@ interface RecordModalProps<T> {
     row?: T;
     fields: FieldDef<T>[];
     title: string;
+    /** Real upload progress (0–100) while a file is being sent, else null. */
+    uploadProgress?: number | null;
     onClose: () => void;
     /** Called with the validated+transformed values. Should throw on API error. */
     onSubmit: (values: Record<string, unknown>) => Promise<void>;
@@ -36,6 +38,7 @@ export function RecordModal<T extends object>({
     row,
     fields,
     title,
+    uploadProgress,
     onClose,
     onSubmit,
     onError,
@@ -216,6 +219,32 @@ export function RecordModal<T extends object>({
                     {formError && (
                         <div className="mx-6 mb-4 rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-600">
                             {formError}
+                        </div>
+                    )}
+
+                    {/* Live upload progress (only while a file is uploading) */}
+                    {uploadProgress != null && (
+                        <div className="mx-6 mb-4">
+                            <div className="mb-1 flex items-center justify-between text-xs font-medium text-slate-500">
+                                <span>
+                                    {uploadProgress >= 100
+                                        ? 'Processing…'
+                                        : 'Uploading…'}
+                                </span>
+                                <span>{uploadProgress}%</span>
+                            </div>
+                            <div
+                                role="progressbar"
+                                aria-valuenow={uploadProgress}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+                            >
+                                <div
+                                    className="h-full rounded-full bg-brand-400 transition-[width] duration-200 ease-out"
+                                    style={{ width: `${uploadProgress}%` }}
+                                />
+                            </div>
                         </div>
                     )}
 

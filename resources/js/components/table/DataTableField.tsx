@@ -25,18 +25,6 @@
  * See types/index.ts → DataTableProps for the full prop surface.
  */
 
-import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
-import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
-import { useAsyncAction } from '@/hooks/use-async-action';
-import { useCrud } from '@/hooks/use-crud';
-import { usePermission } from '@/hooks/use-permissions';
-import { useToast } from '@/hooks/use-toast';
-import { apiFetch } from '@/lib/apiFetch';
-import { parseApiError } from '@/lib/parseApiError';
-import { cn } from '@/lib/utils';
-import type { CardActions } from '@/types/reusable/card';
-import type { DataTableProps } from '@/types/reusable/data-table';
-import type { ModalMode } from '@/types/reusable/fields';
 import { usePage } from '@inertiajs/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -49,6 +37,18 @@ import {
     UserRoundX,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
+import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
+import { useAsyncAction } from '@/hooks/use-async-action';
+import { useCrud } from '@/hooks/use-crud';
+import { usePermission } from '@/hooks/use-permissions';
+import { useToast } from '@/hooks/use-toast';
+import { apiFetch } from '@/lib/apiFetch';
+import { parseApiError } from '@/lib/parseApiError';
+import { cn } from '@/lib/utils';
+import type { CardActions } from '@/types/reusable/card';
+import type { DataTableProps } from '@/types/reusable/data-table';
+import type { ModalMode } from '@/types/reusable/fields';
 import { Dropdown } from '../Dropdown';
 import { ConfirmArchiveAccountModal } from '../modal/ConfirmArchiveAccountModal';
 import { ConfirmDeleteModal } from '../modal/ConfirmDeleteModal';
@@ -81,6 +81,23 @@ function normalizeQueryKey(apiQueryKey: string | string[]): string[] {
     return Array.isArray(apiQueryKey)
         ? apiQueryKey.map(String)
         : [String(apiQueryKey)];
+}
+
+/**
+ * Deep-scans a save payload for an actual File/Blob so the progress bar only
+ * appears for real uploads (a file field left empty falls back to the JSON
+ * path, which never reports progress).
+ */
+function containsFile(value: unknown): boolean {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+
+    if (value instanceof File || value instanceof Blob) {
+        return true;
+    }
+
+    return Object.values(value as Record<string, unknown>).some(containsFile);
 }
 
 export function DataTableField<T extends Record<string, unknown>>({
@@ -167,6 +184,10 @@ export function DataTableField<T extends Record<string, unknown>>({
         defaultSortDir ?? 'asc',
     );
     const [filtersOpen, setFiltersOpen] = useState(false);
+    // Real upload progress (0–100) for create/update requests carrying files;
+    // null while idle so the modal only shows the bar during an actual upload.
+    // Declared before useCrud so it can be handed in as the progress callback.
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
     // Debounce free-text inputs so the query only fires after the user pauses
     const debouncedSearch = useDebouncedValue(searchInput, 350);
@@ -217,6 +238,7 @@ export function DataTableField<T extends Record<string, unknown>>({
             ? (id) => restoreUrl({ id } as unknown as T)
             : undefined,
         updateMethod,
+        onUploadProgress: setUploadProgress,
     });
 
     const rows = crud.data;
@@ -256,14 +278,17 @@ export function DataTableField<T extends Record<string, unknown>>({
     const openCreateModal = () => {
         setModalState({ mode: 'create' });
         setModalError(null);
+        setUploadProgress(null);
     };
     const openEditModal = (row: T) => {
         setModalState({ mode: 'edit', row });
         setModalError(null);
+        setUploadProgress(null);
     };
     const closeModal = () => {
         setModalState(null);
         setModalError(null);
+        setUploadProgress(null);
     };
 
     // ── Delete confirmation state ─────────────────────────────────────────────
@@ -331,7 +356,10 @@ export function DataTableField<T extends Record<string, unknown>>({
 
     // ── Save (create or update) ───────────────────────────────────────────────
     const handleSave = async (values: unknown) => {
-        if (!modalState) return;
+        if (!modalState) {
+return;
+}
+
         const { mode, row } = modalState;
         const formValues = values as Record<string, unknown>;
         // A custom renderModal fully owns its own field set and value
@@ -341,19 +369,23 @@ export function DataTableField<T extends Record<string, unknown>>({
         // Filtering a custom modal's submission through `fields` would
         // silently drop any field `fields` doesn't happen to declare.
         let payload: Record<string, unknown>;
+
         if (renderModal) {
             // payload = formValues;
             // Extract raw value fields from your custom file uploader state
             payload = { ...formValues };
+
             // Check if our custom image structure exists in the form sub-state
             if (payload.image && typeof payload.image === 'object') {
                 const imgObj = payload.image as Record<string, unknown>;
+
                 if (Array.isArray(imgObj.files) && imgObj.files.length > 0) {
                     // // Extract the raw file reference and map it to your Laravel image key
                     // payload.image = imgObj.files[0];
                     // Pass the entire array of files to the backend
                     payload.images = imgObj.files;
                 }
+
                 // Strip the nested state object out so it doesn't pollute the payload validation
                 delete payload.image;
             }
@@ -368,6 +400,14 @@ export function DataTableField<T extends Record<string, unknown>>({
                     const outKey = f.payloadKey ?? f.key;
                     payload[outKey] = f.transform ? f.transform(raw) : raw;
                 });
+        }
+
+        // Surface the progress bar immediately when the payload carries a file;
+        // JSON-only saves leave it null so no idle bar appears.
+        const uploading = containsFile(payload);
+
+        if (uploading) {
+            setUploadProgress(0);
         }
 
         try {
@@ -406,6 +446,11 @@ export function DataTableField<T extends Record<string, unknown>>({
             onSaveError?.(error);
 
             throw error;
+        } finally {
+            // Clear the bar whether the upload succeeded or failed.
+            if (uploading) {
+                setUploadProgress(null);
+            }
         }
     };
 
@@ -547,6 +592,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                     setInUseEntries(apiError.inUse);
                     setInUseTarget(deleteTarget);
                     setDeleteTarget(null);
+
                     return;
                 }
 
@@ -1000,6 +1046,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                             isLoading:
                                 crud.create.isPending || crud.update.isPending,
                             error: modalError,
+                            uploadProgress,
                             onClose: closeModal,
                             onSubmit: handleSave,
                         })
@@ -1014,6 +1061,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                                     ? `New ${title ?? 'record'}`
                                     : `Edit ${title ?? 'record'}`)
                             }
+                            uploadProgress={uploadProgress}
                             onClose={closeModal}
                             onSubmit={handleSave}
                             onError={onSaveError}

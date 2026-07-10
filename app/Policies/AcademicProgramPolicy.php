@@ -26,4 +26,9 @@ class AcademicProgramPolicy
     {
         return $user->can(Permissions::MANAGE_SETTINGS_ACADEMIC);
     }
+
+    public function delete(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_SETTINGS_ACADEMIC);
+    }
 }

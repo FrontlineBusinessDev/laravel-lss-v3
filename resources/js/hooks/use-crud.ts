@@ -56,6 +56,11 @@ export interface UseCrudOptions {
     queryParams?: CrudQueryParams;
     /** Called with a human-readable message whenever any mutation fails. */
     onError?: (message: string) => void;
+    /**
+     * Upload progress (0–100) for create/update mutations that carry files.
+     * Only fires on the multipart/FormData path; JSON payloads never call it.
+     */
+    onUploadProgress?: (percent: number) => void;
 }
 
 export interface UseCrudResult<T> {
@@ -90,13 +95,19 @@ function errorMessage(error: unknown): string {
  * Helper to check if a payload contains files/binary streams
  */
 function hasBinaryFiles(obj: unknown): boolean {
-    if (!obj || typeof obj !== 'object') return false;
+    if (!obj || typeof obj !== 'object') {
+return false;
+}
 
     return Object.values(obj).some((val) => {
-        if (val instanceof File || val instanceof Blob) return true;
+        if (val instanceof File || val instanceof Blob) {
+return true;
+}
+
         if (typeof val === 'object' && val !== null) {
             return hasBinaryFiles(val); // Recursively search deep structures
         }
+
         return false;
     });
 }
@@ -110,7 +121,9 @@ function buildFormData(data: Record<string, unknown>): FormData {
     const formData = new FormData();
 
     Object.entries(data).forEach(([key, value]) => {
-        if (value === undefined || value === null) return;
+        if (value === undefined || value === null) {
+return;
+}
 
         // 💡 THE ULTIMATE FIX: Map directly to a dot-notation key stream
         if (
@@ -120,17 +133,20 @@ function buildFormData(data: Record<string, unknown>): FormData {
             'files' in value
         ) {
             const fileWrapper = value as { files?: unknown[] };
+
             if (
                 Array.isArray(fileWrapper.files) &&
                 fileWrapper.files.length > 0
             ) {
                 const actualFile = fileWrapper.files[0];
+
                 if (actualFile instanceof File || actualFile instanceof Blob) {
                     // Using dot notation allows Laravel to build the validation tree
                     // without passing an explicit literal array type that crashes SQLite mass-assignments.
                     formData.append('image.files', actualFile);
                 }
             }
+
             return;
         }
 
@@ -143,6 +159,7 @@ function buildFormData(data: Record<string, unknown>): FormData {
                     formData.append(`${key}[]`, String(item));
                 }
             });
+
             return;
         }
 
@@ -159,8 +176,9 @@ function buildFormData(data: Record<string, unknown>): FormData {
                         nestedValue === undefined ||
                         nestedValue === null ||
                         nestedValue === ''
-                    )
-                        return;
+                    ) {
+return;
+}
 
                     if (Array.isArray(nestedValue)) {
                         nestedValue.forEach((item) => {
@@ -175,20 +193,24 @@ function buildFormData(data: Record<string, unknown>): FormData {
                                 );
                             }
                         });
+
                         return;
                     }
+
                     formData.append(
                         `${key}[${nestedKey}]`,
                         String(nestedValue),
                     );
                 },
             );
+
             return;
         }
 
         // Handle standalone raw files
         if (value instanceof File || value instanceof Blob) {
             formData.append(key, value);
+
             return;
         }
 
@@ -204,7 +226,9 @@ function buildFormData(data: Record<string, unknown>): FormData {
  * into a base64 Data URL string so it can be transmitted safely over JSON.
  */
 async function transformFilesToBinary(obj: unknown): Promise<any> {
-    if (!obj || typeof obj !== 'object') return obj;
+    if (!obj || typeof obj !== 'object') {
+return obj;
+}
 
     // Helper to read a single file into a base64 string
     const fileToBase64 = (file: File | Blob): Promise<string> => {
@@ -228,9 +252,11 @@ async function transformFilesToBinary(obj: unknown): Promise<any> {
 
     // If it's a standard dictionary object, map over keys recursively
     const serialized: Record<string, any> = {};
+
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
         serialized[key] = await transformFilesToBinary(value);
     }
+
     return serialized;
 }
 
@@ -271,6 +297,7 @@ export function useCrud<T extends { id?: number | string }>(
         queryKey = 'crud',
         queryParams = {},
         onError,
+        onUploadProgress,
     } = options;
     const queryClient = useQueryClient();
 
@@ -341,8 +368,10 @@ export function useCrud<T extends { id?: number | string }>(
                     );
                 },
             );
+
             return;
         }
+
         searchParams.append(key, String(value));
     });
     const queryString = searchParams.toString();
@@ -379,6 +408,8 @@ export function useCrud<T extends { id?: number | string }>(
                 method: createMethod, // Keeps native 'POST'
                 body,
                 headers: {}, // Empty so apiFetch dynamically configures JSON vs Multi-part boundaries
+                // Report real upload progress only when sending files.
+                ...(useForm && onUploadProgress ? { onUploadProgress } : {}),
             });
 
             return response.data as T;
@@ -403,6 +434,7 @@ export function useCrud<T extends { id?: number | string }>(
             const useForm = hasBinaryFiles(data);
             let finalMethod = updateMethod;
             let body: string | FormData;
+
             if (useForm) {
                 body = buildFormData(data as Record<string, unknown>);
                 // Laravel PUT Fix: Append spoof parameter & toggle network layer to POST
@@ -411,12 +443,16 @@ export function useCrud<T extends { id?: number | string }>(
             } else {
                 body = JSON.stringify(data);
             }
+
             const response = await apiFetchJson<T>(resolvedUrl, {
                 method: finalMethod,
                 body,
                 // Leave headers empty; let custom apiFetch handle it
                 headers: {},
+                // Report real upload progress only when sending files.
+                ...(useForm && onUploadProgress ? { onUploadProgress } : {}),
             });
+
             return response.data as T;
         },
         onSuccess: invalidate,

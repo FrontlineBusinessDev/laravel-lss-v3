@@ -1,95 +1,54 @@
-import { RowMenu, RowMenuAction } from '@/components/RowMenu';
+import {
+    SettingsListHeader,
+    SettingsRow,
+    TextCell,
+    buildRecordMenu,
+} from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
-import DataTableField, { CardActions } from '@/components/table';
+import type { CardActions } from '@/components/table';
+import DataTableField from '@/components/table';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
-import { cn } from '@/lib/utils';
-import { StatusKind } from '@/types';
+import type { StatusKind } from '@/types';
+import type {
+    PartnerSchools} from '@/types/modules/settings/partner-schools';
 import {
     columns,
-    fields,
-    PartnerSchools,
+    fields
 } from '@/types/modules/settings/partner-schools';
-import { GRID } from '@/types/reusable/data-table';
-import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react';
+
+const customGRID = 'sm:grid-cols-[1fr_1.6fr_2.2fr_1.2fr_0.9fr_2.5rem]';
 
 const listHeader = (
-    <div
-        className={cn(
-            GRID,
-            'sm:grid-cols-[1fr_1.6fr_2.2fr_1.2fr_0.9fr_2.5rem]',
-            'hidden bg-neutral-50 px-4 py-2.5 text-xs font-medium text-neutral-500',
-        )}
-    >
-        <span>School Name</span>
-        <span>Abbrevation</span>
-        <span>Contact Name</span>
-        <span>Email</span>
-        <span>Status</span>
-        <span />
-    </div>
+    <SettingsListHeader
+        grid={customGRID}
+        labels={[
+            'School Name',
+            'Abbrevation',
+            'Contact Name',
+            'Email',
+            'Status',
+        ]}
+    />
 );
 
 const renderRow = (row: PartnerSchools, actions: CardActions) => {
     const isArchived = row.status !== 'active';
     const badge: StatusKind = isArchived ? 'archived' : 'active';
-    const menu: RowMenuAction[] = [
-        {
-            label: 'Edit',
-            icon: Pencil,
-            onClick: actions.onEdit,
-            disabled: !actions.canEdit,
-        },
-        isArchived
-            ? {
-                  label: 'Restore',
-                  icon: ArchiveRestore,
-                  onClick: actions.onRestore,
-              }
-            : {
-                  label: 'Archive',
-                  icon: Archive,
-                  onClick: actions.onArchive,
-                  disabled: !actions.canArchive,
-              },
-        isArchived
-            ? {
-                  label: 'Delete',
-                  icon: Trash2,
-                  danger: true,
-                  onClick: () => void actions.onDelete(),
-                  disabled: !actions.canDelete,
-              }
-            : null,
-    ];
 
     return (
-        <div
-            className={cn(
-                'flex flex-col gap-1 px-4 py-3',
-                GRID,
-                'sm:grid-cols-[1fr_1.6fr_2.2fr_1.2fr_0.9fr_2.5rem]',
-                isArchived && 'opacity-60',
-            )}
+        <SettingsRow
+            grid={customGRID}
+            isArchived={isArchived}
+            badge={<StatusBadge status={badge} />}
+            menu={buildRecordMenu(actions, isArchived)}
         >
-            <div className="flex items-center gap-1.5 font-medium text-ink">
-                <span className="truncate">{row.school_name}</span>
-            </div>
-            <div className="flex items-center gap-1.5 font-medium text-ink">
-                <span className="truncate">{row.abbreviation}</span>
-            </div>
-            <div className="truncate text-xs text-neutral-500">
+            <TextCell>{row.school_name}</TextCell>
+            <TextCell>{row.abbreviation}</TextCell>
+            <TextCell muted>
                 {row.contact_first_name} {row.contact_last_name}
-            </div>
-            <div className="truncate text-xs text-neutral-500">
-                {row.contact_email}
-            </div>
-            <div className="flex items-center justify-between sm:contents">
-                <StatusBadge status={badge} />
-                <div className="sm:justify-self-end">
-                    <RowMenu actions={menu} />
-                </div>
-            </div>
-        </div>
+            </TextCell>
+            <TextCell muted>{row.contact_email}</TextCell>
+        </SettingsRow>
     );
 };
 

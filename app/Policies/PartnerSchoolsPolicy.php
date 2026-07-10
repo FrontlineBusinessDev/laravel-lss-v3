@@ -25,4 +25,8 @@ class PartnerSchoolsPolicy
     {
         return $user->can(Permissions::MANAGE_SETTINGS_PARTNER_SCHOOLS);
     }
+    public function delete(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_SETTINGS_PARTNER_SCHOOLS);
+    }
 }

@@ -1,18 +1,3 @@
-import { RowMenu, RowMenuAction } from '@/components/RowMenu';
-import { StatusBadge } from '@/components/StatusBadge';
-import DataTableField, {
-    CardActions,
-    ColumnDef,
-    FieldDef,
-} from '@/components/table';
-import { useAuth } from '@/hooks/use-auth';
-import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
-import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
-import { cn } from '@/lib/utils';
-import { StatusKind } from '@/types';
-import { GRID } from '@/types/reusable/data-table';
-import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
-import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 import { usePage } from '@inertiajs/react';
 import {
     Pencil,
@@ -21,6 +6,25 @@ import {
     UserCheck,
     UserRoundX,
 } from 'lucide-react';
+import type { RowMenuAction } from '@/components/RowMenu';
+import {
+    SettingsListHeader,
+    SettingsRow,
+    TextCell,
+} from '@/components/settings';
+import { StatusBadge } from '@/components/StatusBadge';
+import type {
+    CardActions,
+    ColumnDef,
+    FieldDef,
+} from '@/components/table';
+import DataTableField from '@/components/table';
+import { useAuth } from '@/hooks/use-auth';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
+import type { StatusKind } from '@/types';
+import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 /** Row shape returned by UserResource. Index signature satisfies DataTableField. */
 interface UserRow extends Record<string, unknown> {
@@ -63,6 +67,7 @@ function roleOptions(actorRole: string) {
             : actorRole === 'admin'
               ? ['admin', 'trainer']
               : [];
+
     return roles.map((r) => ({ value: r, label: cap(r) }));
 }
 
@@ -107,18 +112,7 @@ export default function index() {
     ];
 
     const listHeader = (
-        <div
-            className={cn(
-                GRID,
-                'hidden bg-neutral-50 px-4 py-2.5 text-xs font-medium text-neutral-500',
-            )}
-        >
-            <span>Name</span>
-            <span>Email</span>
-            <span>Role</span>
-            <span>Status</span>
-            <span />
-        </div>
+        <SettingsListHeader labels={['Name', 'Email', 'Role', 'Status']} />
     );
 
     const renderRow = (row: UserRow, actions: CardActions) => {
@@ -156,12 +150,10 @@ export default function index() {
         ];
 
         return (
-            <div
-                className={cn(
-                    'flex flex-col gap-1 px-4 py-3',
-                    GRID,
-                    isArchived && 'opacity-60',
-                )}
+            <SettingsRow
+                isArchived={isArchived}
+                badge={<StatusBadge status={badge} />}
+                menu={menu}
             >
                 <div className="flex items-center gap-1.5 font-medium text-ink">
                     <span className="truncate">{row.name}</span>
@@ -171,22 +163,14 @@ export default function index() {
                         </span>
                     )}
                 </div>
-                <div className="truncate text-xs text-neutral-500">
-                    {row.email}
-                </div>
+                <TextCell muted>{row.email}</TextCell>
                 <div className="inline-flex items-center gap-1 text-sm text-neutral-600">
                     {row.role === 'admin' && (
                         <ShieldCheck size={12} className="text-brand-500" />
                     )}
                     {row.role ? cap(row.role) : '—'}
                 </div>
-                <div className="flex items-center justify-between sm:contents">
-                    <StatusBadge status={badge} />
-                    <div className="sm:justify-self-end">
-                        <RowMenu actions={menu} />
-                    </div>
-                </div>
-            </div>
+            </SettingsRow>
         );
     };
 
