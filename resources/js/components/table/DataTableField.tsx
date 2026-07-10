@@ -40,6 +40,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
 import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
 import { useAsyncAction } from '@/hooks/use-async-action';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { useCrud } from '@/hooks/use-crud';
 import { usePermission } from '@/hooks/use-permissions';
 import { useToast } from '@/hooks/use-toast';
@@ -134,7 +135,6 @@ export function DataTableField<T extends Record<string, unknown>>({
     enableStatusFilter = false,
     statusFilterOptions,
     extraFilters,
-    filterControls,
     listHeader,
     defaultSortBy,
     defaultSortDir,
@@ -357,8 +357,8 @@ export function DataTableField<T extends Record<string, unknown>>({
     // ── Save (create or update) ───────────────────────────────────────────────
     const handleSave = async (values: unknown) => {
         if (!modalState) {
-return;
-}
+            return;
+        }
 
         const { mode, row } = modalState;
         const formValues = values as Record<string, unknown>;
@@ -823,6 +823,38 @@ return;
                             );
                         }
 
+                        // Async-select column filter (id-based lookup). Prepend
+                        // an "All" reset option; selecting it clears the filter
+                        // (the backend ignores empty values).
+                        if (col.type === 'async-select' && col.loadOptions) {
+                            const loadWithAll = async (q: string) => [
+                                { value: '', label: 'All' },
+                                ...(await col.loadOptions!(q)),
+                            ];
+
+                            return (
+                                <label key={col.key} className="block">
+                                    <span className="mb-1 block text-xs font-medium">
+                                        {col.label}
+                                    </span>
+                                    <AsyncSelectField
+                                        value={columnFilters[col.key] ?? ''}
+                                        placeholder="All"
+                                        loadOptions={loadWithAll}
+                                        onChange={(v) => {
+                                            handleColumnFilter(
+                                                col.key,
+                                                (v as string) ?? '',
+                                            );
+                                            (col.filterResets ?? []).forEach(
+                                                (k) => handleColumnFilter(k, ''),
+                                            );
+                                        }}
+                                    />
+                                </label>
+                            );
+                        }
+
                         return (
                             <label key={col.key} className="block">
                                 <span className="mb-1 block text-xs font-medium">
@@ -995,14 +1027,6 @@ return;
                     showFiltersButton={showFiltersButton}
                     filterPanel={filterPanel}
                 />
-
-                {/* Parent-owned filter controls (e.g. Ticket History's multi-select
-                client / assignee dropdowns). Presentational slot only. */}
-                {filterControls && (
-                    <div className="mb-4 flex flex-wrap items-center gap-2.5">
-                        {filterControls}
-                    </div>
-                )}
 
                 {/* Active-filter indicator */}
                 {hasActiveFilters && (

@@ -52,22 +52,22 @@ export function ConfirmInUseModal({
     useScrollLock(open);
 
     if (!open) {
-return null;
-}
+        return null;
+    }
 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) {
-onClose();
-}
+                    onClose();
+                }
             }}
         >
             <div
                 role="alertdialog"
                 aria-modal="true"
-                className="w-full max-w-sm rounded-2xl bg-background p-6 shadow-xl"
+                className="w-full max-w-sm rounded-2xl bg-neutral-50 p-6 shadow-xl"
             >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">

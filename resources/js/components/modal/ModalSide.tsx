@@ -56,7 +56,7 @@ export function ModalSide<T>({
                 aria-label={title}
             >
                 {(title || subtitle) && (
-                    <header className="flex shrink-0 items-start justify-between gap-3.5 border-b border-[#f1f2f5] px-6 pt-[22px] pb-4">
+                    <header className="flex shrink-0 items-start justify-between gap-3.5 border-b border-[#f1f2f5] px-6 pt-5.5 pb-4">
                         <div className="min-w-0">
                             {title && (
                                 <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[#14151a]">

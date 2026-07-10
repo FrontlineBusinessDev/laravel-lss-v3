@@ -108,6 +108,19 @@ export function AsyncSelectField({
         [loadOptions, minSearchLength],
     );
 
+    // Load the first page immediately when the menu opens — a single request so
+    // the options are ready on open (no load-then-reload double fetch).
+    useEffect(() => {
+        if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            runSearch(query);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
+
+    // Debounced re-search as the user edits the query. Intentionally NOT keyed
+    // on `open`, so merely opening the menu doesn't fire a second request on top
+    // of the initial load above — only actual keystrokes trigger a search.
     useEffect(() => {
         if (!open) {
             return;
@@ -125,17 +138,7 @@ export function AsyncSelectField({
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [query, open, debounceMs]);
-
-    // load an initial batch when first opened with empty query
-    useEffect(() => {
-        if (open && query === '' && options.length === 0 && !loading) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            runSearch('');
-        }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
+    }, [query]);
 
     // close on outside click
     useEffect(() => {

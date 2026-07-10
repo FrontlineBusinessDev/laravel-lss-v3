@@ -2,8 +2,8 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware; 
-use Illuminate\Http\Request; 
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,14 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
         $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e) {
-        $user = auth()?->user() ?? [];
-        return inertia('pages-errors/429', [
-            'auth' => ['user' => $user ? $user->toInertiaPayload() : null],
-            'title' => 'Too Many Requests',
-            'message' => 'You have exceeded your allowed rate limit. Please try again later.'
-        ])->toResponse(request())->setStatusCode(429);
+            /** @disregard P1013 */ // this disregard the error below but it works
+            $user = auth()?->user() ?? [];
+            return inertia('pages-errors/429', [
+                'auth' => ['user' => $user ? $user->toInertiaPayload() : null],
+                'title' => 'Too Many Requests',
+                'message' => 'You have exceeded your allowed rate limit. Please try again later.'
+            ])->toResponse(request())->setStatusCode(429);
         });
     })->create();

@@ -56,6 +56,9 @@ export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
         type: 'async-select',
         searchable: true,
         filterable: true,
+        loadOptions: (q) => loadLookupOptions('/settings/academic/industry', q),
+        // Changing the industry filter resets the dependent program filter.
+        filterResets: ['academic_program_id'],
     },
     {
         key: 'academic_program_id',
@@ -63,6 +66,7 @@ export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
         type: 'async-select',
         searchable: true,
         filterable: true,
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
     },
     { key: 'created_at', label: 'Configured On' },
 ];

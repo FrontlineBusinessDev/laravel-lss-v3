@@ -5,7 +5,7 @@
 
 import type { ReactNode } from 'react';
 import type { CardActions } from '@/types/reusable/card';
-import type { FieldDef, ModalMode } from '@/types/reusable/fields';
+import type { FieldDef, FieldOption, ModalMode } from '@/types/reusable/fields';
 import type { PaginationMeta } from '@/types/reusable/pagination';
 export type { PaginationMeta };
 
@@ -24,6 +24,13 @@ export interface ColumnDef<T = object> {
     exactFilters?: boolean;
     // | { label: string; value: unknown }[];
     render?: (value: unknown, row: T) => ReactNode;
+    /** Async option loader for a `type: 'async-select'` filterable column. */
+    loadOptions?: (query: string) => Promise<FieldOption[]>;
+    /**
+     * When this column's filter changes, also clear these column filters
+     * (e.g. changing Industry clears the dependent Program filter).
+     */
+    filterResets?: string[];
 }
 
 /** A single segment of the status filter segmented control. */

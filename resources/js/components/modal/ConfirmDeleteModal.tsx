@@ -36,22 +36,22 @@ export function ConfirmDeleteModal({
     useScrollLock(open);
 
     if (!open) {
-return null;
-}
+        return null;
+    }
 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) {
-onCancel();
-}
+                    onCancel();
+                }
             }}
         >
             <div
                 role="alertdialog"
                 aria-modal="true"
-                className="w-full max-w-sm rounded-2xl bg-background p-6 shadow-xl"
+                className="w-full max-w-sm rounded-2xl bg-neutral-50 p-6 shadow-xl"
             >
                 {isSelfDelete ? (
                     <h2 className="text-lg font-semibold">
