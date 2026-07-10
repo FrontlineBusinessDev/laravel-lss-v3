@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Batch extends Model
+class Batches extends Model
 {
     use HasFactory;
 
@@ -17,6 +17,7 @@ class Batch extends Model
         'status',
         'batch_code',
         'public_registration_url_id',
+        'is_public_url_enable',
         'date_started',
         'setup',
         'academic_industry_id',

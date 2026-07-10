@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Responses\InertiaPageResponse;
-use App\Models\Batch;
+use App\Models\Batches;
 use App\Models\PartnerSchools;
 use App\Models\Trainee;
 use App\Support\Statuses;
@@ -62,7 +62,7 @@ class PublicRegistrationController extends Controller
                 ->where('status', Statuses::ACTIVE)
                 ->orderBy('school_name')
                 ->get(['id', 'school_name'])
-                ->map(fn (PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
+                ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
         ]);
     }
 
@@ -115,11 +115,12 @@ class PublicRegistrationController extends Controller
             ->with('success', 'Registration submitted successfully. Our team will be in touch.');
     }
 
-    /** Resolve a batch by its public token, eager-loading the display relations. */
-    protected function resolveBatch(string $token): Batch
+    /** Resolve a Batches by its public token, eager-loading the display relations. */
+    protected function resolveBatch(string $token): Batches
     {
-        return Batch::query()
+        return Batches::query()
             ->where('public_registration_url_id', $token)
+            ->where('is_public_url_enable', true)
             ->with(['academicIndustry:id,name', 'academicLevel:id,name', 'academicProgram:id,name'])
             ->firstOrFail();
     }

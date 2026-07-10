@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Batches;
 
 use App\Http\Controllers\BaseController;
-use App\Models\Batch;
+use App\Models\Batches;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +35,7 @@ class BatchesController extends BaseController
     /** Terminated is a lifecycle end-state distinct from the active/inactive archive flag. */
     private const STATUS_TERMINATED = 'terminated';
 
-    protected string $model = Batch::class;
+    protected string $model = Batches::class;
     protected string $view = 'batches/index';
     protected array $searchable = ['batch_code'];
     protected array $filterable = [
@@ -77,6 +77,7 @@ class BatchesController extends BaseController
     {
         return [
             'setup' => ['required', Rule::in(['f2f', 'online'])],
+            'is_public_url_enable' => ['required', 'boolean'],
             'date_started' => ['required', 'date'],
             'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
             'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
@@ -90,6 +91,7 @@ class BatchesController extends BaseController
     {
         return [
             'setup' => ['required', Rule::in(['f2f', 'online'])],
+            'is_public_url_enable' => ['required', 'boolean'],
             'date_started' => ['required', 'date'],
             'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
             'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
@@ -107,7 +109,7 @@ class BatchesController extends BaseController
         $this->authorize('create', $this->model);
         $validated = $request->validate($this->storeRules(), $this->validationMessages());
 
-        $batch = DB::transaction(fn () => Batch::create([
+        $batch = DB::transaction(fn() => Batches::create([
             ...$validated,
             'status' => $validated['status'] ?? self::STATUS_ACTIVE,
             'batch_code' => $this->nextBatchCode(),
@@ -169,10 +171,10 @@ class BatchesController extends BaseController
      */
     protected function nextBatchCode(): string
     {
-        $highest = Batch::query()
+        $highest = Batches::query()
             ->where('batch_code', 'like', 'FBS-%')
             ->pluck('batch_code')
-            ->map(fn (string $code) => (int) substr($code, 4))
+            ->map(fn(string $code) => (int) substr($code, 4))
             ->max() ?? 0;
 
         $next = max($highest + 1, self::BATCH_SEQUENCE_START);
@@ -188,7 +190,8 @@ class BatchesController extends BaseController
     {
         do {
             $token = (string) Str::ulid();
-        } while (Batch::where('public_registration_url_id', $token)->exists());
+            /** @disregard P1005 */
+        } while (Batches::where('public_registration_url_id', $token)->exists());
 
         return $token;
     }

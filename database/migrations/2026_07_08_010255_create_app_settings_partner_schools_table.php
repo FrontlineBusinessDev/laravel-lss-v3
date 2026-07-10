@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('status')->default('active');
             $table->string('school_name');
             $table->string('abbreviation', 50)->nullable();
-            $table->string('contact_email')->nullable()->unique();
+            // $table->string('contact_email')->nullable()->unique();
+            $table->string('contact_email')->nullable();
             $table->string('contact_first_name')->nullable();
             $table->string('contact_last_name')->nullable();
             $table->string('image')->nullable();
