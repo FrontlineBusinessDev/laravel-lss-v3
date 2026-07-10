@@ -8,14 +8,10 @@ import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import DataTableField from '@/components/table';
 import type { StatusKind } from '@/types';
-import type {
-    AcademicIndustry} from '@/types/modules/settings/academic/industry';
-import {
-    columns,
-    fields,
-} from '@/types/modules/settings/academic/industry';
+import type { AcademicIndustry } from '@/types/modules/settings/academic/industry';
+import { columns, fields } from '@/types/modules/settings/academic/industry';
 
-const customGRID = 'sm:grid-cols-[1.6fr_2.2fr_2.5rem]';
+const customGRID = 'sm:grid-cols-[1.6fr_2.2fr_1fr_2.5rem]';
 
 const listHeader = (
     <SettingsListHeader grid={customGRID} labels={['Name', 'Description']} />
