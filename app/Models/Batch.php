@@ -16,13 +16,12 @@ class Batch extends Model
     protected $fillable = [
         'status',
         'batch_code',
-        'public_url_id',
+        'public_registration_url_id',
         'date_started',
         'setup',
         'academic_industry_id',
         'academic_level_id',
         'academic_program_id',
-        // 'status', // Uncomment if you add a status column to your migration
     ];
 
     protected $casts = [

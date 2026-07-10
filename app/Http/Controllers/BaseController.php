@@ -67,15 +67,40 @@ abstract class BaseController extends Controller implements HasMiddleware
 
     public function index(Request $request): mixed
     {
-        // return Inertia::render($this->view)->csr();
         /** @disregard P1013 */ // this disregard the error below but it works
         $user = auth()->user();
         $props = ['user' => $user];
-
-        // Use CSR for authenticated dashboard
+        // Use CSR for authenticated
         return InertiaPageResponse::csr($this->view, $props);
     }
-
+    public function show(int|string $id): mixed
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('view', $model);
+        // Process data through an optional Resource class, or fall back to file URL mutations
+        $record = $this->resource
+            ? new $this->resource($model)
+            : $this->transformFileUrls($model);
+        /** @disregard P1013 */
+        $user = auth()->user();
+        $props = ['user' => $user, 'record' => $record];
+        // Pass the flat $props array directly into your CSR shell
+        return InertiaPageResponse::csr($this->view, $props);
+    }
+    public function showPublicId(string $publicId): mixed
+    {
+        $model = $this->resolveModelByPublicId($publicId);
+        $this->authorize('view', $model);
+        // Process data through an optional Resource class, or fall back to file URL mutations
+        $record = $this->resource
+            ? new $this->resource($model)
+            : $this->transformFileUrls($model);
+        /** @disregard P1013 */
+        $user = auth()->user();
+        $props = ['user' => $user, 'record' => $record];
+        // Pass the flat $props array directly into your CSR shell
+        return InertiaPageResponse::csr($this->view, $props);
+    }
     public function paginationSearch(Request $request): JsonResponse
     {
         $query = $this->newQuery($request);
@@ -131,7 +156,6 @@ abstract class BaseController extends Controller implements HasMiddleware
         ];
         return $this->sendResponse($paginatedData);
     }
-
     public function searchActive(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -148,7 +172,6 @@ abstract class BaseController extends Controller implements HasMiddleware
 
         return response()->json($results);
     }
-
     /**
      * Paginated, status-aware option lookup for async-select dropdowns.
      *
@@ -169,9 +192,7 @@ abstract class BaseController extends Controller implements HasMiddleware
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
-
         $status = $validated['status'] ?? 'active';
-
         $query = $this->newQuery()
             ->when($status !== 'all', fn(Builder $q) => $q->where(
                 'status',
@@ -185,7 +206,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             columns: $this->activeColumns,
             page: $validated['page'] ?? 1,
         );
-
         return response()->json([
             'data' => $paginator->items(),
             'meta' => [
@@ -198,7 +218,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             ],
         ]);
     }
-
     public function store(Request $request): JsonResponse
     {
         $this->authorize('create', $this->model);
@@ -213,7 +232,6 @@ abstract class BaseController extends Controller implements HasMiddleware
         $this->afterCreate($model);
         return $this->sendResponse($model, 'Record created successfully.', 201);
     }
-
     public function update(Request $request, int|string $id): JsonResponse
     {
         $model = $this->resolveModel($id);
@@ -226,7 +244,6 @@ abstract class BaseController extends Controller implements HasMiddleware
         $this->afterUpdate($model);
         return $this->sendResponse($model, 'Record updated successfully.');
     }
-
     public function archive(int|string $id): JsonResponse
     {
         $model = $this->resolveModel($id);
@@ -235,7 +252,6 @@ abstract class BaseController extends Controller implements HasMiddleware
 
         return $this->sendResponse($model, 'Record archived successfully.');
     }
-
     public function restore(int|string $id): JsonResponse
     {
         $model = $this->resolveModel($id);
@@ -284,7 +300,6 @@ abstract class BaseController extends Controller implements HasMiddleware
 
         return $this->sendResponse($usages, 'Records Existed');
     }
-
     public function destroy(int|string $id): JsonResponse
     {
         // Run the guard + delete inside one transaction with a row lock so a
@@ -316,7 +331,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             return response()->json(null, 204);
         });
     }
-
     /**
      * Resolve the list of relations currently blocking deletion of $model.
      * Returns an empty array when nothing is blocking (or no relations configured).
@@ -339,7 +353,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             ->values()
             ->all();
     }
-
     /**
      * Send a successful JSON response.
      *
@@ -356,7 +369,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             'data' => $data,
         ], $statusCode);
     }
-
     /**
      * Send an error JSON response.
      *
@@ -373,7 +385,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             'errors' => $errors,
         ], $statusCode);
     }
-
     protected function applySearch(Builder $query, string $term): Builder
     {
         return $query->where(function (Builder $q) use ($term) {
@@ -382,51 +393,47 @@ abstract class BaseController extends Controller implements HasMiddleware
             }
         });
     }
-
     protected function newQuery(): Builder
     {
         return ($this->model)::query();
     }
-
     protected function resolveModel(int|string $id): Model
     {
         return $this->newQuery()->findOrFail($id);
     }
-
     /** Override in modules that use store(). */
     protected function storeRules(): array
     {
         return [];
     }
-
     /** Override in modules that use update(). */
     protected function updateRules(Model $model): array
     {
         return [];
     }
-
     /**
      * Custom validation messages for store()/update(), keyed as `field.rule`.
      * Override in child controllers to tailor a specific message.
-     *
      * @return array<string, string>
      */
     protected function validationMessages(): array
     {
         return [];
     }
-
     // Add no-op defaults so child classes override only what they need
     protected function afterCreate(Model $model): void {}
-
     protected function afterUpdate(Model $model): void {}
-
     protected function beforeCreate(Model $model): void {}
-
     protected function beforeUpdate(Model $model): void {}
-
     protected function beforeSave(array $validated, ?Model $model = null): array
     {
         return $validated;
+    }
+    /**
+     * Resolve the model instance using its public_id.
+     */
+    protected function resolveModelByPublicId(string $publicId): Model
+    {
+        return $this->newQuery()->where('public_id', $publicId)->firstOrFail();
     }
 }

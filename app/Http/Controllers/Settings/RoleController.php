@@ -22,23 +22,15 @@ use Spatie\Permission\Models\Role;
 class RoleController extends BaseController
 {
     protected string $model = Role::class;
-
     protected string $view = 'settings/roles/index';
-
     protected array $searchable = ['name'];
-
     /** Roles have no status column, so expose no column filters. */
     protected array $filterable = [];
-
     protected array $sortable = ['name', 'created_at'];
-
     protected string $sortBy = 'name';
-
     protected ?string $resource = RoleResource::class;
-
     /** Core roles that may not be renamed or deleted. */
     private const PROTECTED_ROLES = ['developer', 'admin', 'trainer', 'trainee'];
-
     public function index(Request $request): mixed
     {
         /** @disregard P1008 */ // this disregard the error below but it works 
@@ -47,12 +39,10 @@ class RoleController extends BaseController
             'permissionModules' => Permissions::modules(),
         ]);
     }
-
     protected function newQuery(): Builder
     {
         return Role::query()->with('permissions');
     }
-
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate($this->storeRules());

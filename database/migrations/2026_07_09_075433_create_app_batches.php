@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('status')->default('active');
             $table->string('batch_code')->unique();
-            $table->string('public_url_id')->unique();
+            $table->string('public_registration_url_id')->unique();
             $table->date('date_started');
-            $table->string('setup', 50); // f2f or online
+            $table->string('setup', 50); // f2f or online need only as string
             $table->foreignId('academic_industry_id')->constrained('app_settings_academic_industry')->restrictOnDelete();
             $table->foreignId('academic_level_id')->constrained('app_settings_academic_level')->restrictOnDelete();
             $table->foreignId('academic_program_id')->constrained('app_settings_academic_program')->restrictOnDelete();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Batches\BatchesController;
 use App\Http\Controllers\Settings\SettingController;
 use App\Http\Controllers\Settings\RoleController;
 use App\Http\Controllers\Settings\UserController;
@@ -10,8 +11,9 @@ use App\Http\Controllers\Settings\AcademicLearningOutcomesController;
 use App\Http\Controllers\Settings\AcademicLevelController;
 use App\Http\Controllers\Settings\AcademicProgramController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Lss\AnnouncementController;
-use App\Http\Controllers\Lss\BatchController;
+// use App\Http\Controllers\Lss\BatchController;
 use App\Http\Controllers\Lss\BiometricsController;
 use App\Http\Controllers\Lss\CertificateController;
 use App\Http\Controllers\Lss\DashboardController;
@@ -35,6 +37,12 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])
     ->middleware('guest')
     ->name('login');
+
+// Public batch registration. Resolved by a batch's system-generated
+// public_registration_url_id (the QR/shareable link target). Guest-accessible;
+// GET renders the form, POST persists the trainee + documents.
+Route::get('/register/{token}', [PublicRegistrationController::class, 'show'])->name('public.register');
+Route::post('/register/{token}', [PublicRegistrationController::class, 'store'])->name('public.register.store');
 
 // Static pages only (no password-reset backend wired up yet — see
 // FortifyServiceProvider / config/fortify.php, only the `login` feature
@@ -74,13 +82,13 @@ Route::prefix('settings')->name('settings.')->group(function () {
  */
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    Route::get('/batches', [BatchController::class, 'index'])->name('batches.index');
-    Route::get('/batches/{id}', [BatchController::class, 'show'])->name('batches.show');
-
+    // Batches CRUD (index/pagination-search/lookup/store/update/archive/restore/destroy)
+    // plus the Terminate transition and the QR/registration-link endpoint.
+    Route::crudModule('/batches', BatchesController::class, 'batches');
+    Route::patch('/batches/{id}/terminate', [BatchesController::class, 'terminate'])->name('batches.terminate');
+    Route::get('/batches/{id}/registration', [BatchesController::class, 'registration'])->name('batches.registration');
     Route::get('/trainees', [TraineeController::class, 'index'])->name('trainees.index');
     Route::get('/trainees/{id}', [TraineeController::class, 'show'])->name('trainees.show');
-
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');

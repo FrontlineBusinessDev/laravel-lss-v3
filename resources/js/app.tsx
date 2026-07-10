@@ -30,6 +30,10 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome' || name.startsWith('auth/'):
                 return null;
+            // Guest-facing public pages (e.g. batch registration) render
+            // without the authenticated app chrome, like the auth pages.
+            case name.startsWith('public/'):
+                return null;
             // case name.startsWith('settings/') &&
             //     appSettings.includes(name?.split('/')[1] ?? ''):
             //     return [AppLayout];
