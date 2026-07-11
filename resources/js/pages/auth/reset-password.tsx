@@ -1,5 +1,5 @@
-import { FormEvent, useMemo, useState } from 'react'
-import { useNavigate } from '@/lib/router-compat'
+import { useForm } from '@inertiajs/react'
+import { FormEvent, useMemo } from 'react'
 import { Lock, Circle, CircleCheck } from 'lucide-react'
 import { AuthLayout } from '@/components/AuthLayout'
 import { Button } from '@/components/Button'
@@ -11,17 +11,25 @@ const RULES = [
   { key: 'number', label: 'One number', test: (v: string) => /[0-9]/.test(v) },
 ]
 
-export default function ResetPasswordPage() {
-  const navigate = useNavigate()
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
+interface ResetPasswordProps {
+  token: string
+  email: string
+}
 
-  const allValid = useMemo(() => RULES.every((r) => r.test(password)), [password])
-  const matches = confirm.length > 0 && confirm === password
+export default function ResetPasswordPage({ token, email }: ResetPasswordProps) {
+  const { data, setData, post, processing, errors } = useForm({
+    email: email ?? '',
+    password: '',
+    password_confirmation: '',
+  })
+
+  const allValid = useMemo(() => RULES.every((r) => r.test(data.password)), [data.password])
+  const matches = data.password_confirmation.length > 0 && data.password_confirmation === data.password
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (allValid && matches) navigate('/login')
+    if (!allValid || !matches) return
+    post(`/invitation/${token}`)
   }
 
   return (
@@ -34,10 +42,12 @@ export default function ResetPasswordPage() {
 
       <h1 className="mb-1 text-center text-xl font-semibold text-ink">Set a new password</h1>
       <p className="mb-5 text-center text-sm leading-relaxed text-neutral-500">
-        Resetting for <span className="font-medium text-ink">thea.ramirez@frontlinebusiness.com.ph</span>
+        Resetting for <span className="font-medium text-ink">{data.email}</span>
       </p>
 
       <form onSubmit={handleSubmit}>
+        {errors.email && <p className="mb-3 text-center text-xs font-medium text-danger-600">{errors.email}</p>}
+
         <div className="mb-3.5">
           <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-neutral-600">
             New password
@@ -45,11 +55,12 @@ export default function ResetPasswordPage() {
           <input
             id="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={data.password}
+            onChange={(e) => setData('password', e.target.value)}
             placeholder="Enter new password"
             className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
           />
+          {errors.password && <p className="mt-1.5 text-xs font-medium text-danger-600">{errors.password}</p>}
         </div>
         <div className="mb-3">
           <label htmlFor="confirm" className="mb-1.5 block text-xs font-medium text-neutral-600">
@@ -58,8 +69,8 @@ export default function ResetPasswordPage() {
           <input
             id="confirm"
             type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
+            value={data.password_confirmation}
+            onChange={(e) => setData('password_confirmation', e.target.value)}
             placeholder="Re-enter new password"
             className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
           />
@@ -67,7 +78,7 @@ export default function ResetPasswordPage() {
 
         <div className="mb-5 flex flex-col gap-1.5 rounded-md bg-neutral-50 px-3 py-2.5">
           {RULES.map((rule) => {
-            const valid = rule.test(password)
+            const valid = rule.test(data.password)
             return (
               <div
                 key={rule.key}
@@ -80,8 +91,8 @@ export default function ResetPasswordPage() {
           })}
         </div>
 
-        <Button type="submit" variant="primary" className="w-full h-10 text-sm" disabled={!allValid || !matches}>
-          Reset password
+        <Button type="submit" variant="primary" className="w-full h-10 text-sm" disabled={!allValid || !matches || processing}>
+          {processing ? 'Setting password…' : 'Reset password'}
         </Button>
       </form>
     </AuthLayout>

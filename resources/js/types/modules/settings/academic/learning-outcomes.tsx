@@ -1,6 +1,5 @@
-import { apiFetchJson } from '@/lib/apiFetch';
 import type { ColumnDef } from '@/types/reusable/data-table';
-import type { FieldDef, FieldOption } from '@/types/reusable/fields';
+import { loadLookupOptions, type FieldDef } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 export interface AcademicLearningOutcomes extends Record<string, unknown> {
@@ -21,29 +20,6 @@ export interface AcademicLearningOutcomes extends Record<string, unknown> {
     updated_at: string;
 }
 
-interface LookupItem {
-    id: number;
-    name: string;
-}
-
-/**
- * Fetches active options from a `crudModule` `/lookup` endpoint and maps them
- * into FieldOption shape for the async-select control. Shared by the modal
- * fields (below) and the listing-page industry/program filters.
- */
-export async function loadLookupOptions(
-    baseUrl: string,
-    query: string,
-): Promise<FieldOption[]> {
-    const res = await apiFetchJson<LookupItem[]>(
-        `${baseUrl}/lookup?status=active&q=${encodeURIComponent(query)}`,
-    );
-
-    return (res.data ?? []).map((item) => ({
-        value: String(item.id),
-        label: item.name,
-    }));
-}
 
 export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
     {

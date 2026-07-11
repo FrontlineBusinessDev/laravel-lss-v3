@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\CronController;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -36,4 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => 'You have exceeded your allowed rate limit. Please try again later.'
             ])->toResponse(request())->setStatusCode(429);
         });
+    })->withSchedule(function () {
+        // Call your controller directly every minute (or change to your preferred frequency)
+        Schedule::call(new CronController)->everyMinute();
     })->create();

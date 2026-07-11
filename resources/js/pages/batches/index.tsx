@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import {
@@ -133,38 +134,57 @@ export default function BatchesListPage() {
         ];
 
         return (
-            <SettingsRow
-                grid={customGRID}
-                isArchived={nonActive}
-                badge={<StatusBadge status={badge} />}
-                menu={menu}
+            // Clicking anywhere on the row opens the batch detail page. The
+            // RowMenu button + items stopPropagation, so menu actions never
+            // trigger navigation.
+            <div
+                role="link"
+                tabIndex={0}
+                onClick={() => router.visit(`/batches/${row.id}`)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        router.visit(`/batches/${row.id}`);
+                    }
+                }}
+                className="cursor-pointer transition-colors hover:bg-neutral-50/70"
             >
-                <TextCell>{row.batch_code}</TextCell>
-                <TextCell muted>{row.academic_program?.name ?? '—'}</TextCell>
-                <TextCell muted>{row.academic_industry?.name ?? '—'}</TextCell>
-                <TextCell muted>
-                    {row.setup === 'f2f' ? 'F2F' : 'Online'}
-                </TextCell>
-                <TextCell muted>
-                    {row.trainees_count ?? 0}{' '}
-                    <span className="md:hidden">Trainee(s)</span>
-                </TextCell>
-                <TextCell muted>
-                    <div className="flex items-center gap-2">
-                        {row.is_public_url_enable ? (
-                            <span className="flex items-center gap-1">
-                                <Check className="size-4 text-success-600" />{' '}
-                                Link Enabled
-                            </span>
-                        ) : (
-                            <span className="flex items-center gap-1">
-                                <X className="size-4 text-danger-600" /> Link
-                                Disabled
-                            </span>
-                        )}
-                    </div>
-                </TextCell>
-            </SettingsRow>
+                <SettingsRow
+                    grid={customGRID}
+                    isArchived={nonActive}
+                    badge={<StatusBadge status={badge} />}
+                    menu={menu}
+                >
+                    <TextCell>{row.batch_code}</TextCell>
+                    <TextCell muted>
+                        {row.academic_program?.name ?? '—'}
+                    </TextCell>
+                    <TextCell muted>
+                        {row.academic_industry?.name ?? '—'}
+                    </TextCell>
+                    <TextCell muted>
+                        {row.setup === 'f2f' ? 'F2F' : 'Online'}
+                    </TextCell>
+                    <TextCell muted>
+                        {row.trainees_count ?? 0}{' '}
+                        <span className="md:hidden">Trainee(s)</span>
+                    </TextCell>
+                    <TextCell muted>
+                        <div className="flex items-center gap-2">
+                            {row.is_public_url_enable ? (
+                                <span className="flex items-center gap-1">
+                                    <Check className="size-4 text-success-600" />{' '}
+                                    Link Enabled
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-1">
+                                    <X className="size-4 text-danger-600" /> Link
+                                    Disabled
+                                </span>
+                            )}
+                        </div>
+                    </TextCell>
+                </SettingsRow>
+            </div>
         );
     };
 

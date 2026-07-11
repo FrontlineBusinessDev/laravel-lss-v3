@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Resources\UserResource;
+use App\Mail\UserInviteMail;
 use App\Models\User;
+use App\Support\PasswordSetupUrl;
 use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -56,7 +59,7 @@ class UserController extends BaseController
         $role = request()->input('filters.roles');
 
         if (is_string($role) && $role !== '') {
-            $query->whereHas('roles', fn(Builder $q) => $q->where('name', $role));
+            $query->whereHas('roles', fn (Builder $q) => $q->where('name', $role));
         }
 
         return $query;
@@ -134,6 +137,30 @@ class UserController extends BaseController
         $this->syncPendingRole($model);
     }
 
+    /**
+     * Admin-triggered "Reset password" action. Mints a single-use password
+     * setup/reset token (App\Support\PasswordSetupUrl) and queues the invite
+     * email (resources/views/users/invite.blade.php) carrying the reset link.
+     * Archived accounts are blocked from login, so a reset link is pointless.
+     */
+    public function sendPasswordReset(int|string $id): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->resolveModel($id);
+        $this->authorize('update', $user);
+
+        abort_if(
+            $user->status !== Statuses::ACTIVE,
+            422,
+            'Archived accounts cannot receive a password reset link.',
+        );
+
+        $resetUrl = PasswordSetupUrl::generate($user);
+        Mail::to($user->email)->queue(new UserInviteMail($user, $resetUrl));
+
+        return $this->sendResponse(null, 'Password reset email sent.');
+    }
+
     /** Guard the last active admin before delegating to the base archive. */
     public function archive(int|string $id): JsonResponse
     {
@@ -150,7 +177,7 @@ class UserController extends BaseController
     /** Roles the current actor may assign (creator-scoped matrix). */
     protected function assignableRoles(): array
     {
-        /** @disregard P1013 */ // this disregard the error below but it works 
+        /** @disregard P1013 */ // this disregard the error below but it works
         $actor = auth()->user();
         if ($actor?->hasRole('developer')) {
             return ['developer', 'admin', 'trainer'];
@@ -180,6 +207,7 @@ class UserController extends BaseController
             ->where('status', Statuses::ACTIVE)
             ->latest('id')
             ->value('id');
+
         // return User::role('admin')->where('status', Statuses::ACTIVE)->count() <= 1;
         return $lastActiveAdminId === $user->id;
     }

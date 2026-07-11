@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import {
+    KeyRound,
     Pencil,
     ShieldCheck,
     Trash2,
@@ -16,8 +17,10 @@ import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions, ColumnDef, FieldDef } from '@/components/table';
 import DataTableField from '@/components/table';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
+import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
 import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
@@ -69,7 +72,31 @@ function roleOptions(actorRole: string) {
 
 export default function index() {
     const { role } = useAuth();
+    const { toast } = useToast();
     const currentUserId = usePage().props.auth?.user?.id;
+
+    // Admin action: queue the reset/setup email for a user (server route
+    // POST /settings/users/{id}/reset-password). Archived accounts are blocked
+    // server-side, so the menu item is disabled for them below.
+    const sendPasswordReset = async (row: UserRow) => {
+        try {
+            await apiFetchJson(`/settings/users/${row.id}/reset-password`, {
+                method: 'POST',
+            });
+            toast({
+                title: 'Password reset email sent',
+                description: `A reset link was sent to ${row.email}.`,
+                variant: 'success',
+            });
+        } catch (err) {
+            toast({
+                title: 'Could not send reset email',
+                description:
+                    err instanceof Error ? err.message : 'Please try again.',
+                variant: 'error',
+            });
+        }
+    };
     const fields: FieldDef<UserRow>[] = [
         {
             key: 'first_name',
@@ -121,6 +148,12 @@ export default function index() {
                 icon: Pencil,
                 onClick: actions.onEdit,
                 disabled: !actions.canEdit,
+            },
+            {
+                label: 'Send password reset',
+                icon: KeyRound,
+                onClick: () => void sendPasswordReset(row),
+                disabled: isArchived,
             },
             isArchived
                 ? {

@@ -3,6 +3,12 @@
  * Field + modal contracts consumed by RecordModal and DataTableField.
  */
 
+import { apiFetchJson } from '@/lib/apiFetch';
+
+interface LookupItem {
+    id: number;
+    name: string;
+}
 export type ModalMode = 'create' | 'edit';
 
 export type FieldType =
@@ -36,7 +42,33 @@ export interface FieldOption {
     value: string;
     label: string;
 }
+/**
+ * Fetches active options from a `crudModule` `/lookup` endpoint and maps them
+ * into FieldOption shape for the async-select control. Shared by the modal
+ * fields (below) and the listing-page industry/program filters.
+ */
+export async function loadLookupOptions(
+    baseUrl: string,
+    query: string,
+): Promise<FieldOption[]> {
+    const res = await apiFetchJson<LookupItem[]>(
+        `${baseUrl}/lookup?status=active&q=${encodeURIComponent(query)}`,
+    );
 
+    return (res.data ?? []).map((item) => ({
+        value: String(item.id),
+        label: item.name,
+    }));
+}
+/**
+ * Wraps a fixed option list in the async `loadOptions` signature so Setup and
+ * Status flow through the same async-select filter control as the FK lookups
+ * (which auto-prepends an "All" reset). Satisfies the "Async Select interface"
+ * requirement without a bespoke filter type.
+ */
+export const staticOptions =
+    (options: FieldOption[]) => async (): Promise<FieldOption[]> =>
+        options;
 /**
  * Declarative description of a single form field rendered by RecordModal.
  * `T` is the row type so `disabled`/`showOnEdit` predicates can be row-aware.

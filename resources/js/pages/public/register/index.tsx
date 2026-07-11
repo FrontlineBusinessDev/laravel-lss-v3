@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { LogoMark } from '@/components/Logo';
 import { useForm, usePage } from '@inertiajs/react';
-import { CheckCircle2, GraduationCap, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface PublicBatch {
     batch_code: string;
@@ -132,9 +133,11 @@ export default function PublicRegisterPage({
     const header = (
         <div className="mb-6 flex flex-col items-center text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                <GraduationCap className="h-6 w-6" />
+                <LogoMark />
             </div>
-            <h1 className="text-xl font-semibold text-ink">Batch Registration</h1>
+            <h1 className="text-xl font-semibold text-ink">
+                Batch Registration
+            </h1>
             <p className="mt-1 text-sm text-neutral-500">
                 {batch.batch_code} · {batch.program ?? '—'} ·{' '}
                 {batch.setup === 'f2f' ? 'Face to Face' : 'Online'}
@@ -156,7 +159,10 @@ export default function PublicRegisterPage({
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/register/${token}`, { forceFormData: true, preserveScroll: true });
+        post(`/register/${token}`, {
+            forceFormData: true,
+            preserveScroll: true,
+        });
     };
 
     const fileInput = (key: keyof RegisterForm) => (
@@ -172,7 +178,7 @@ export default function PublicRegisterPage({
         <Shell>
             {header}
             {flash?.error && (
-                <p className="mb-4 rounded-md bg-danger-50 px-3 py-2 text-xs text-danger-700">
+                <p className="text-danger-700 mb-4 rounded-md bg-danger-50 px-3 py-2 text-xs">
                     {flash.error}
                 </p>
             )}
@@ -180,65 +186,175 @@ export default function PublicRegisterPage({
             <form onSubmit={submit} className="space-y-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="First name" error={errors.first_name}>
-                        <input className={inputCls} value={data.first_name} onChange={(e) => setData('first_name', e.target.value)} />
+                        <input
+                            className={inputCls}
+                            value={data.first_name}
+                            onChange={(e) =>
+                                setData('first_name', e.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Last name" error={errors.last_name}>
-                        <input className={inputCls} value={data.last_name} onChange={(e) => setData('last_name', e.target.value)} />
+                        <input
+                            className={inputCls}
+                            value={data.last_name}
+                            onChange={(e) =>
+                                setData('last_name', e.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Email" error={errors.email}>
-                        <input type="email" className={inputCls} value={data.email} onChange={(e) => setData('email', e.target.value)} />
+                        <input
+                            type="email"
+                            className={inputCls}
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                        />
                     </Field>
                     <Field label="Mobile number" error={errors.mobile_number}>
-                        <input className={inputCls} value={data.mobile_number} onChange={(e) => setData('mobile_number', e.target.value)} />
+                        <input
+                            className={inputCls}
+                            value={data.mobile_number}
+                            onChange={(e) =>
+                                setData('mobile_number', e.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Date of birth" error={errors.birthday}>
-                        <input type="date" className={inputCls} value={data.birthday} onChange={(e) => setData('birthday', e.target.value)} />
+                        <input
+                            type="date"
+                            className={inputCls}
+                            value={data.birthday}
+                            onChange={(e) =>
+                                setData('birthday', e.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Place of birth" error={errors.birth_place}>
-                        <input className={inputCls} value={data.birth_place} onChange={(e) => setData('birth_place', e.target.value)} />
+                        <input
+                            className={inputCls}
+                            value={data.birth_place}
+                            onChange={(e) =>
+                                setData('birth_place', e.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Gender" error={errors.gender}>
-                        <select className={inputCls} value={data.gender} onChange={(e) => setData('gender', e.target.value)}>
-                            <option value="" disabled>Select gender…</option>
+                        <select
+                            className={inputCls}
+                            value={data.gender}
+                            onChange={(e) => setData('gender', e.target.value)}
+                        >
+                            <option value="" disabled>
+                                Select gender…
+                            </option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                         </select>
                     </Field>
                     <Field label="Required hours" error={errors.required_hours}>
-                        <input type="number" step="0.01" min="0" className={inputCls} value={data.required_hours} onChange={(e) => setData('required_hours', e.target.value)} />
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className={inputCls}
+                            value={data.required_hours}
+                            onChange={(e) =>
+                                setData('required_hours', e.target.value)
+                            }
+                        />
                     </Field>
                     <Field label="Partner school" error={errors.school_id}>
-                        <select className={inputCls} value={data.school_id} onChange={(e) => setData('school_id', e.target.value)}>
-                            <option value="" disabled>Select school…</option>
+                        <select
+                            className={inputCls}
+                            value={data.school_id}
+                            onChange={(e) =>
+                                setData('school_id', e.target.value)
+                            }
+                        >
+                            <option value="" disabled>
+                                Select school…
+                            </option>
                             {schools.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
+                                <option key={s.id} value={s.id}>
+                                    {s.name}
+                                </option>
                             ))}
                         </select>
                     </Field>
                 </div>
 
                 <Field label="Complete address" error={errors.address}>
-                    <textarea rows={2} className={`${inputCls} h-auto resize-none py-2`} value={data.address} onChange={(e) => setData('address', e.target.value)} />
+                    <textarea
+                        rows={2}
+                        className={`${inputCls} h-auto resize-none py-2`}
+                        value={data.address}
+                        onChange={(e) => setData('address', e.target.value)}
+                    />
                 </Field>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="Emergency contact name" error={errors.emergency_contact_name}>
-                        <input className={inputCls} value={data.emergency_contact_name} onChange={(e) => setData('emergency_contact_name', e.target.value)} />
+                    <Field
+                        label="Emergency contact name"
+                        error={errors.emergency_contact_name}
+                    >
+                        <input
+                            className={inputCls}
+                            value={data.emergency_contact_name}
+                            onChange={(e) =>
+                                setData(
+                                    'emergency_contact_name',
+                                    e.target.value,
+                                )
+                            }
+                        />
                     </Field>
-                    <Field label="Emergency contact number" error={errors.emergency_contact_number}>
-                        <input className={inputCls} value={data.emergency_contact_number} onChange={(e) => setData('emergency_contact_number', e.target.value)} />
+                    <Field
+                        label="Emergency contact number"
+                        error={errors.emergency_contact_number}
+                    >
+                        <input
+                            className={inputCls}
+                            value={data.emergency_contact_number}
+                            onChange={(e) =>
+                                setData(
+                                    'emergency_contact_number',
+                                    e.target.value,
+                                )
+                            }
+                        />
                     </Field>
                 </div>
 
                 <div className="space-y-4 rounded-lg border border-neutral-200 p-4">
-                    <p className="text-xs font-semibold text-neutral-600">Documents</p>
-                    <Field label="Resume / CV" error={errors.resume}>{fileInput('resume')}</Field>
+                    <p className="text-xs font-semibold text-neutral-600">
+                        Documents
+                    </p>
+                    <Field label="Resume / CV" error={errors.resume}>
+                        {fileInput('resume')}
+                    </Field>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <Field label="Endorsement letter" optional error={errors.endorsement_letter}>{fileInput('endorsement_letter')}</Field>
-                        <Field label="MOA" optional error={errors.moa}>{fileInput('moa')}</Field>
-                        <Field label="Liability waiver" optional error={errors.liability_waiver}>{fileInput('liability_waiver')}</Field>
+                        <Field
+                            label="Endorsement letter"
+                            optional
+                            error={errors.endorsement_letter}
+                        >
+                            {fileInput('endorsement_letter')}
+                        </Field>
+                        <Field label="MOA" optional error={errors.moa}>
+                            {fileInput('moa')}
+                        </Field>
+                        <Field
+                            label="Liability waiver"
+                            optional
+                            error={errors.liability_waiver}
+                        >
+                            {fileInput('liability_waiver')}
+                        </Field>
                     </div>
-                    <p className="text-xs text-neutral-400">Accepted: PDF, DOC/DOCX, JPG, PNG (max 5&nbsp;MB each).</p>
+                    <p className="text-xs text-neutral-400">
+                        Accepted: PDF, DOC/DOCX, JPG, PNG (max 5&nbsp;MB each).
+                    </p>
                 </div>
 
                 <button

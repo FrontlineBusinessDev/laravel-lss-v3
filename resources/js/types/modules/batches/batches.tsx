@@ -1,6 +1,10 @@
 import type { ColumnDef } from '@/types/reusable/data-table';
-import type { FieldDef, FieldOption } from '@/types/reusable/fields';
-import { loadLookupOptions } from '@/types/modules/settings/academic/learning-outcomes';
+import {
+    loadLookupOptions,
+    staticOptions,
+    type FieldDef,
+    type FieldOption,
+} from '@/types/reusable/fields';
 
 export interface AppBatches extends Record<string, unknown> {
     id: number;
@@ -38,16 +42,6 @@ export const STATUS_OPTIONS: FieldOption[] = [
     { value: 'completed', label: 'Completed' },
     { value: 'terminated', label: 'Terminated' },
 ];
-
-/**
- * Wraps a fixed option list in the async `loadOptions` signature so Setup and
- * Status flow through the same async-select filter control as the FK lookups
- * (which auto-prepends an "All" reset). Satisfies the "Async Select interface"
- * requirement without a bespoke filter type.
- */
-const staticOptions =
-    (options: FieldOption[]) => async (): Promise<FieldOption[]> =>
-        options;
 
 export const columns: ColumnDef<AppBatches>[] = [
     { key: 'batch_code', label: 'Batch Code', searchable: true },

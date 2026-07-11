@@ -43,6 +43,11 @@ class Trainee extends Model
         return $this->belongsTo(Batches::class, 'batch_id');
     }
 
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(PartnerSchools::class, 'school_id');
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(TraineeDocument::class, 'trainee_id');
