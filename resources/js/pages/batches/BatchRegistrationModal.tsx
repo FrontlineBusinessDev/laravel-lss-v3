@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Check, Copy, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Modal } from '@/components/Modal';
+import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { copyText } from '@/lib/clipboard';
 
 interface RegistrationData {
     url: string;
@@ -23,6 +25,7 @@ export function BatchRegistrationModal({
     batchCode?: string;
     onClose: () => void;
 }) {
+    const { toast } = useToast();
     const [data, setData] = useState<RegistrationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -41,13 +44,14 @@ export function BatchRegistrationModal({
 
         apiFetchJson<RegistrationData>(`/batches/${batchId}/registration`)
             .then((res) => active && setData(res.data))
-            .catch((e) =>
-                active &&
-                setError(
-                    e instanceof Error
-                        ? e.message
-                        : 'Failed to load registration link.',
-                ),
+            .catch(
+                (e) =>
+                    active &&
+                    setError(
+                        e instanceof Error
+                            ? e.message
+                            : 'Failed to load registration link.',
+                    ),
             )
             .finally(() => active && setLoading(false));
 
@@ -61,8 +65,20 @@ export function BatchRegistrationModal({
             return;
         }
 
-        await navigator.clipboard.writeText(data.url);
+        const ok = await copyText(data.url);
+
+        if (!ok) {
+            toast({
+                title: 'Could not copy',
+                description: 'Please copy the link manually.',
+                variant: 'error',
+            });
+
+            return;
+        }
+
         setCopied(true);
+        toast({ title: 'Registration link copied', variant: 'success' });
         setTimeout(() => setCopied(false), 1500);
     };
 
@@ -116,8 +132,8 @@ export function BatchRegistrationModal({
                         </button>
                     </div>
                     <p className="text-center text-xs text-neutral-400">
-                        Scanning or opening this link routes guests to the public
-                        registration page.
+                        Scanning or opening this link routes guests to the
+                        public registration page.
                     </p>
                 </div>
             )}

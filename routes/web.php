@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
     // plus the Terminate transition and the QR/registration-link endpoint.
     Route::crudModule('/batches', BatchesController::class, 'batches');
     Route::patch('/batches/{id}/terminate', [BatchesController::class, 'terminate'])->name('batches.terminate');
+    Route::patch('/batches/{id}/toggle-registration', [BatchesController::class, 'toggleRegistration'])->name('batches.toggle-registration');
     Route::get('/batches/{id}/registration', [BatchesController::class, 'registration'])->name('batches.registration');
     // Batch-scoped trainee listing consumed by the detail page's DataTableField
     // (static `/trainees/pagination-search` segment, so no clash with `{id}`).

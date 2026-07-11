@@ -3,11 +3,10 @@ import {
     Archive,
     ArchiveRestore,
     Ban,
-    Check,
+    Link2,
     Pencil,
     QrCode,
     Trash2,
-    X,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Modal } from '@/components/Modal';
@@ -18,8 +17,10 @@ import {
     TextCell,
 } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
+import { Switch } from '@/components/Switch';
 import type { CardActions } from '@/components/table';
 import DataTableField from '@/components/table';
+import { useBatchLinkActions } from '@/hooks/use-batch-link-actions';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
@@ -58,6 +59,7 @@ export default function BatchesListPage() {
         null,
     );
     const [terminating, setTerminating] = useState(false);
+    const linkActions = useBatchLinkActions();
 
     const confirmTerminate = async () => {
         if (!terminateTarget) {
@@ -93,6 +95,7 @@ export default function BatchesListPage() {
         // settings lists); only active rows can be Archived or Terminated.
         const nonActive = row.status !== 'active';
         const badge: StatusKind = STATUS_BADGE[row.status] ?? 'active';
+        const linkEnabled = linkActions.isEnabled(row);
 
         const menu: RowMenuAction[] = [
             {
@@ -105,6 +108,11 @@ export default function BatchesListPage() {
                 label: 'Registration QR',
                 icon: QrCode,
                 onClick: () => setQrTarget(row),
+            },
+            {
+                label: 'Copy link',
+                icon: Link2,
+                onClick: () => void linkActions.copy(row),
             },
             nonActive
                 ? {
@@ -170,19 +178,21 @@ export default function BatchesListPage() {
                         <span className="md:hidden">Trainee(s)</span>
                     </TextCell>
                     <TextCell muted>
-                        <div className="flex items-center gap-2">
-                            {row.is_public_url_enable ? (
-                                <span className="flex items-center gap-1">
-                                    <Check className="size-4 text-success-600" />{' '}
-                                    Link Enabled
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-1">
-                                    <X className="size-4 text-danger-600" />{' '}
-                                    Link Disabled
-                                </span>
-                            )}
-                        </div>
+                        <Switch
+                            checked={linkEnabled}
+                            ariaLabel={
+                                linkEnabled
+                                    ? 'Disable public link'
+                                    : 'Enable public link'
+                            }
+                            label={
+                                linkEnabled ? 'Link Enabled' : 'Link Disabled'
+                            }
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                void linkActions.toggle(row);
+                            }}
+                        />
                     </TextCell>
                 </SettingsRow>
             </div>

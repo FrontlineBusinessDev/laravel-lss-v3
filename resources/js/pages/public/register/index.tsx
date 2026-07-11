@@ -7,6 +7,7 @@ interface PublicBatch {
     batch_code: string;
     setup: 'f2f' | 'online';
     status: string;
+    is_public_url_enable: boolean;
     date_started: string | null;
     industry: string | null;
     level: string | null;
@@ -83,15 +84,11 @@ export default function PublicRegisterPage({
     batch,
     schools,
     metaDescription,
-    registerUrl,
-    ogImage,
 }: {
     token: string;
     batch: PublicBatch;
     schools: School[];
     metaDescription: string;
-    registerUrl: string;
-    ogImage: string;
 }) {
     const pageTitle = `Batch Registration · ${batch.batch_code}`;
     const flash = usePage().props.flash as
@@ -152,8 +149,9 @@ export default function PublicRegisterPage({
         </div>
     );
 
-    // Registration closed unless the batch is active.
-    if (batch.status !== 'active') {
+    // Registration closed unless the batch is active AND its public link is
+    // enabled (an admin can disable the link from the batches list).
+    if (batch.status !== 'active' || !batch.is_public_url_enable) {
         return (
             <Shell>
                 {header}
@@ -183,52 +181,15 @@ export default function PublicRegisterPage({
 
     return (
         <Shell>
+            {/* og:* / twitter:* tags are server-rendered into the Blade <head>
+                (see PublicRegistrationController::show + app.blade.php) so
+                Facebook's non-JS crawler can scrape them. Only the plain
+                description is kept here for in-browser consumers. */}
             <Head title={pageTitle}>
                 <meta
                     head-key="description"
                     name="description"
                     content={metaDescription}
-                />
-                <meta head-key="og:type" property="og:type" content="website" />
-                <meta
-                    head-key="og:title"
-                    property="og:title"
-                    content={pageTitle}
-                />
-                <meta
-                    head-key="og:description"
-                    property="og:description"
-                    content={metaDescription}
-                />
-                <meta
-                    head-key="og:image"
-                    property="og:image"
-                    content={ogImage}
-                />
-                <meta
-                    head-key="og:url"
-                    property="og:url"
-                    content={registerUrl}
-                />
-                <meta
-                    head-key="twitter:card"
-                    name="twitter:card"
-                    content="summary_large_image"
-                />
-                <meta
-                    head-key="twitter:title"
-                    name="twitter:title"
-                    content={pageTitle}
-                />
-                <meta
-                    head-key="twitter:description"
-                    name="twitter:description"
-                    content={metaDescription}
-                />
-                <meta
-                    head-key="twitter:image"
-                    name="twitter:image"
-                    content={ogImage}
                 />
             </Head>
 

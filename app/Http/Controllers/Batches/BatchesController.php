@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Batches;
 
 use App\Http\Controllers\BaseController;
 use App\Models\Batches;
+use App\Support\QrCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use App\Support\QrCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,8 +33,11 @@ class BatchesController extends BaseController
     private const STATUS_TERMINATED = 'terminated';
 
     protected string $model = Batches::class;
+
     protected string $view = 'batches/index';
+
     protected array $searchable = ['batch_code'];
+
     protected array $filterable = [
         'status',
         'setup',
@@ -42,6 +45,7 @@ class BatchesController extends BaseController
         'academic_level_id',
         'academic_program_id',
     ];
+
     // All batch filters are exact-match (ids + enums), never LIKE.
     protected array $exactFilters = [
         'status',
@@ -50,8 +54,11 @@ class BatchesController extends BaseController
         'academic_level_id',
         'academic_program_id',
     ];
+
     protected array $sortable = ['id', 'batch_code', 'date_started', 'created_at'];
+
     protected string $sortBy = 'batch_code';
+
     protected array $activeColumns = ['id', 'batch_code'];
 
     /**
@@ -106,7 +113,7 @@ class BatchesController extends BaseController
         $this->authorize('create', $this->model);
         $validated = $request->validate($this->storeRules(), $this->validationMessages());
 
-        $batch = DB::transaction(fn() => Batches::create([
+        $batch = DB::transaction(fn () => Batches::create([
             ...$validated,
             'status' => $validated['status'] ?? self::STATUS_ACTIVE,
             'batch_code' => $this->nextBatchCode(),
@@ -130,6 +137,20 @@ class BatchesController extends BaseController
         $model->update(['status' => self::STATUS_TERMINATED]);
 
         return $this->sendResponse($model, 'Batch terminated successfully.');
+    }
+
+    /**
+     * Flip the batch's public registration link on/off. Used by the inline
+     * switch on the batches list; toggling off makes the public register page
+     * render a graceful "closed" state (see PublicRegistrationController).
+     */
+    public function toggleRegistration(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+        $model->update(['is_public_url_enable' => ! $model->is_public_url_enable]);
+
+        return $this->sendResponse($this->resolveModel($id), 'Public link updated successfully.');
     }
 
     /**
@@ -164,7 +185,7 @@ class BatchesController extends BaseController
         $highest = Batches::query()
             ->where('batch_code', 'like', 'FBS-%')
             ->pluck('batch_code')
-            ->map(fn(string $code) => (int) substr($code, 4))
+            ->map(fn (string $code) => (int) substr($code, 4))
             ->max() ?? 0;
 
         $next = max($highest + 1, self::BATCH_SEQUENCE_START);

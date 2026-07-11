@@ -27,6 +27,7 @@ class Batches extends Model
 
     protected $casts = [
         'date_started' => 'date',
+        'is_public_url_enable' => 'boolean',
     ];
 
     public function academicIndustry(): BelongsTo

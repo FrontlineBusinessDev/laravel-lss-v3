@@ -14,12 +14,14 @@ import {
     Trash2,
     Users,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { copyText } from '@/lib/clipboard';
 import { cn } from '@/lib/utils';
 import { CreateBatchModal } from '@/pages/batches/CreateBatchModal';
 import type { StatusKind } from '@/types';
@@ -88,6 +90,7 @@ export default function BatchDetailLayout({
         onDone: () => void,
     ) => {
         setBusy(true);
+
         try {
             await apiFetchJson(endpoint, { method });
             toast({ title: okMsg, variant: 'info' });
@@ -105,8 +108,10 @@ export default function BatchDetailLayout({
         }
     };
 
-    const handleCopy = () => {
-        if (!navigator.clipboard?.writeText) {
+    const handleCopy = async () => {
+        const ok = await copyText(registrationUrl);
+
+        if (!ok) {
             toast({
                 title: 'Could not copy',
                 description: 'Please copy the link manually.',
@@ -116,11 +121,9 @@ export default function BatchDetailLayout({
             return;
         }
 
-        navigator.clipboard.writeText(registrationUrl).then(() => {
-            setLinkCopied(true);
-            toast({ title: 'Registration link copied', variant: 'success' });
-            setTimeout(() => setLinkCopied(false), 1800);
-        });
+        setLinkCopied(true);
+        toast({ title: 'Registration link copied', variant: 'success' });
+        setTimeout(() => setLinkCopied(false), 1800);
     };
 
     return (
@@ -284,8 +287,8 @@ export default function BatchDetailLayout({
                     </Button>
                 </div>
                 <p className="mt-1.5 text-[11px] text-neutral-400">
-                    Trainees who open this link land on the registration form and
-                    are automatically associated with this batch.
+                    Trainees who open this link land on the registration form
+                    and are automatically associated with this batch.
                 </p>
             </div>
 
