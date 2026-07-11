@@ -1,6 +1,7 @@
 import { Thumbnail } from '@/components/Thumbnail';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import type { FieldDef } from '@/types/reusable/fields';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 export interface PartnerSchools extends Record<string, unknown> {
     id: number;
@@ -18,6 +19,15 @@ export interface PartnerSchools extends Record<string, unknown> {
 
 // ─── Columns: drives the card body, sort dropdown, and filter bar ───────────
 export const columns: ColumnDef<PartnerSchools>[] = [
+    {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        searchable: true,
+        filterable: true,
+        typeData: STATUS_FILTER_PAIRS,
+        exactFilters: true,
+    },
     {
         key: 'school_name',
         label: 'School Name',

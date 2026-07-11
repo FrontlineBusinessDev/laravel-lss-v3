@@ -1,6 +1,7 @@
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import type { FieldDef, FieldOption } from '@/types/reusable/fields';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 export interface AcademicLearningOutcomes extends Record<string, unknown> {
     id: number;
@@ -46,13 +47,17 @@ export async function loadLookupOptions(
 
 export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
     {
-        key: 'learning_outcomes',
-        label: 'Learning Outcomes',
+        key: 'status',
+        label: 'Status',
+        type: 'select',
         searchable: true,
+        filterable: true,
+        typeData: STATUS_FILTER_PAIRS,
+        exactFilters: true,
     },
     {
-        key: 'status',
-        label: 'status',
+        key: 'learning_outcomes',
+        label: 'Learning Outcomes',
         searchable: true,
         filterable: true,
     },

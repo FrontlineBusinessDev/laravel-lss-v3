@@ -1,5 +1,6 @@
 import { ColumnDef } from '@/types/reusable/data-table';
 import { FieldDef } from '@/types/reusable/fields';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 export interface AcademicIndustry extends Record<string, unknown> {
     id: number;
@@ -11,6 +12,15 @@ export interface AcademicIndustry extends Record<string, unknown> {
 }
 
 export const columns: ColumnDef<AcademicIndustry>[] = [
+    {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        searchable: true,
+        filterable: true,
+        typeData: STATUS_FILTER_PAIRS,
+        exactFilters: true,
+    },
     {
         key: 'name',
         label: 'Industry Name',
