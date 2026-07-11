@@ -78,8 +78,8 @@ class PublicRegistrationController extends Controller
             // lookup endpoint isn't reachable by guests, so pass them as props).
             'schools' => PartnerSchools::query()
                 ->where('status', Statuses::ACTIVE)
-                ->get(['id', 'school_name'])
                 ->orderBy('school_name')
+                ->get(['id', 'school_name'])
                 ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
         ])->withViewData([
             // Server-rendered into the Blade <head> so Facebook's non-JS crawler
