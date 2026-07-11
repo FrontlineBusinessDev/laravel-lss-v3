@@ -7,9 +7,17 @@ cmds = [
 [phases.build]
 cmds = [
   "npm run build",
-# "php artisan optimize"
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache",
+  "php artisan event:cache"
 ]
 
-[start]
+# DEVELOPMENT BUILD
+# [start]
 # This boots the Nginx/PHP server AND starts the Inertia SSR process in the background
-cmd = "bash -lc 'php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & exec php artisan serve --host=0.0.0.0 --port=8000'"
+# cmd = "bash -lc 'php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & exec php artisan serve --host=0.0.0.0 --port=8000'"
+
+# PRODUCTION BUILD
+[start]
+cmd = "php artisan migrate --force && php artisan config:cache && (php artisan inertia:start-ssr >> storage/logs/ssr.log 2>&1 &) && exec php-fpm -D && exec nginx -g 'daemon off;'"
