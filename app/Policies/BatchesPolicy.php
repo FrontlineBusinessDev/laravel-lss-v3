@@ -9,7 +9,7 @@ use App\Support\Permissions;
  * Auto-discovered policy for App\Models\Batch. Coarse module access is gated by
  * the single `manage batches` permission (matches the academic module policies).
  */
-class BatchPolicy
+class BatchesPolicy
 {
     public function view(User $user): bool
     {

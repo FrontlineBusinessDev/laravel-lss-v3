@@ -15,6 +15,7 @@ export interface AppBatches extends Record<string, unknown> {
     academic_level_id: number;
     academic_program_id: number;
     trainees_count?: number;
+    is_public_url_enable?: boolean;
     // Eager-loaded relations (serialized snake_case by Laravel) — present when
     // the list query uses `with()`. Used for list cells + async-select labels.
     academic_industry?: { id: number; name: string } | null;
@@ -98,14 +99,6 @@ export const columns: ColumnDef<AppBatches>[] = [
 // intentionally absent — both are system-generated and protected from input.
 export const fields: FieldDef<AppBatches>[] = [
     {
-        key: 'setup',
-        label: 'Training Delivery Format',
-        type: 'select',
-        required: true,
-        options: SETUP_OPTIONS,
-        colSpan: 2,
-    },
-    {
         key: 'academic_program_id',
         label: 'Program Type',
         type: 'async-select',
@@ -134,6 +127,20 @@ export const fields: FieldDef<AppBatches>[] = [
         colSpan: 2,
         loadOptions: (q) => loadLookupOptions('/settings/academic/level', q),
         initialLabel: (row) => row.academic_level?.name,
+    },
+    {
+        key: 'is_public_url_enable',
+        label: 'Enable Public URL',
+        type: 'checkbox',
+        colSpan: 2,
+    },
+    {
+        key: 'setup',
+        label: 'Training Delivery Format',
+        type: 'select',
+        required: true,
+        options: SETUP_OPTIONS,
+        colSpan: 2,
     },
     {
         key: 'date_started',

@@ -1,31 +1,33 @@
-import { useRef, useState } from 'react';
-import {
-    Archive,
-    ArchiveRestore,
-    Ban,
-    Pencil,
-    QrCode,
-    Trash2,
-} from 'lucide-react';
+import { Modal } from '@/components/Modal';
+import type { RowMenuAction } from '@/components/RowMenu';
 import {
     SettingsListHeader,
     SettingsRow,
     TextCell,
-    buildRecordMenu,
 } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import DataTableField from '@/components/table';
-import type { RowMenuAction } from '@/components/RowMenu';
-import { Modal } from '@/components/Modal';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns, fields } from '@/types/modules/batches/batches';
+import {
+    Archive,
+    ArchiveRestore,
+    Ban,
+    Check,
+    Pencil,
+    QrCode,
+    Trash2,
+    X,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
 import { BatchRegistrationModal } from './BatchRegistrationModal';
 
-const customGRID = 'sm:grid-cols-[0.9fr_1.4fr_1.2fr_0.7fr_0.6fr_1.5fr_2.5rem]!';
+const customGRID =
+    'sm:grid-cols-[0.9fr_1.4fr_1.2fr_0.7fr_0.6fr_1fr_1.5fr_2.5rem]!';
 
 const listHeader = (
     <SettingsListHeader
@@ -143,7 +145,25 @@ export default function BatchesListPage() {
                 <TextCell muted>
                     {row.setup === 'f2f' ? 'F2F' : 'Online'}
                 </TextCell>
-                <TextCell muted>{row.trainees_count ?? 0}</TextCell>
+                <TextCell muted>
+                    {row.trainees_count ?? 0}{' '}
+                    <span className="md:hidden">Trainee(s)</span>
+                </TextCell>
+                <TextCell muted>
+                    <div className="flex items-center gap-2">
+                        {row.is_public_url_enable ? (
+                            <span className="flex items-center gap-1">
+                                <Check className="size-4 text-success-600" />{' '}
+                                Link Enabled
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-1">
+                                <X className="size-4 text-danger-600" /> Link
+                                Disabled
+                            </span>
+                        )}
+                    </div>
+                </TextCell>
             </SettingsRow>
         );
     };
