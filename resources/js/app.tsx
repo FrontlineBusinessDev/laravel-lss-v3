@@ -2,7 +2,7 @@ import { BatchesProvider } from '@/context/BatchesContext';
 import { NotificationsProvider } from '@/context/NotificationsContext';
 import { createInertiaApp } from '@inertiajs/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createRoot } from 'react-dom/client';
+import { hydrateRoot } from 'react-dom/client';
 import { SystemToastProvider } from './components/Toast';
 import { ToastProvider } from './hooks/use-toast';
 import AppLayout from './layouts/AppLayout';
@@ -42,15 +42,15 @@ createInertiaApp({
         }
     },
     setup({ el, App, props }) {
-        const root = createRoot(el);
         const queryClient = new QueryClient();
-        root.render(
+        // Use hydrateRoot instead of createRoot(el).render(...)
+        hydrateRoot(
+            el,
             <QueryClientProvider client={queryClient}>
                 <SystemToastProvider>
                     <ToastProvider>
                         <NotificationsProvider>
                             <BatchesProvider>
-                                {/* Keep <App /> at the top layer so Inertia context is available everywhere */}
                                 <App {...props} />
                             </BatchesProvider>
                         </NotificationsProvider>
