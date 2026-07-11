@@ -1,0 +1,15 @@
+[phases.install]
+cmds = [
+  "composer install --no-interaction --prefer-dist --optimize-autoloader",
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "npm run build",
+  "php artisan optimize"
+]
+
+[start]
+# This boots the Nginx/PHP server AND starts the Inertia SSR process in the background
+cmd = "php artisan inertia:start-ssr & nixpacks-start"
