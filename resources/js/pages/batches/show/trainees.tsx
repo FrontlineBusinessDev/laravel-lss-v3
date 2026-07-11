@@ -56,7 +56,7 @@ export default function BatchTraineesPage({ record, registrationUrl }: Props) {
                 )}
             >
                 <div className="flex items-center gap-2 font-medium text-ink">
-                    <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">
+                    <span className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">
                         {initialsOf(name)}
                     </span>
                     <span className="truncate">{name}</span>
