@@ -24,8 +24,8 @@ class RoleController extends BaseController
     protected string $model = Role::class;
     protected string $view = 'settings/roles/index';
     protected array $searchable = ['name'];
-    /** Roles have no status column, so expose no column filters. */
-    protected array $filterable = [];
+    /** `status` is exact-matched via BaseController::$exactFilters. */
+    protected array $filterable = ['status'];
     protected array $sortable = ['name', 'created_at'];
     protected string $sortBy = 'name';
     protected ?string $resource = RoleResource::class;

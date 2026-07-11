@@ -13,7 +13,7 @@ class AcademicLevelController extends BaseController
     protected string $model = AcademicLevel::class;
     protected string $view = 'settings/academic/level/index';
     protected array $searchable = ['name', 'year_level', 'description'];
-    protected array $filterable = ['year_level', 'status'];
+    protected array $filterable = ['status', 'name', 'year_level'];
     protected array $sortable = ['id', 'name', 'year_level'];
 
     protected array $activeColumns = ['id', 'name', 'year_level'];

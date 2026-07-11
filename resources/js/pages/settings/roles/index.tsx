@@ -6,6 +6,8 @@ import type { CardActions, ColumnDef } from '@/components/table';
 import DataTableField from '@/components/table';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
+import type { StatusKind } from '@/types';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 import type { PermissionModules, RoleRow } from './RoleModal';
 import { RoleModal } from './RoleModal';
 
@@ -13,9 +15,17 @@ const ROLE_GRID = 'sm:grid-cols-[2fr_1.4fr_0.9fr_2.5rem]';
 const PROTECTED_ROLES = ['developer', 'admin', 'trainer', 'trainee'];
 
 const columns: ColumnDef<RoleRow>[] = [
-    { key: 'name', label: 'Role', sortable: true },
+    {
+        key: 'status',
+        label: 'Status',
+        sortable: false,
+        filterable: true,
+        type: 'select',
+        typeData: STATUS_FILTER_PAIRS,
+        exactFilters: true,
+    },
+    { key: 'name', label: 'Role', sortable: true, filterable: true },
     { key: 'permissions_count', label: 'Permissions', sortable: false },
-    { key: 'status', label: 'Status', sortable: false },
 ];
 
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
@@ -29,6 +39,7 @@ const listHeader = (
 
 const renderRow = (row: RoleRow, actions: CardActions) => {
     const isProtected = PROTECTED_ROLES.includes(row.name);
+    const badge: StatusKind = row.status === 'active' ? 'active' : 'archived';
     const menu: RowMenuAction[] = [
         { label: 'Edit role', icon: Pencil, onClick: actions.onEdit },
         {
@@ -43,7 +54,7 @@ const renderRow = (row: RoleRow, actions: CardActions) => {
     return (
         <SettingsRow
             grid={ROLE_GRID}
-            badge={<StatusBadge status="active" />}
+            badge={<StatusBadge status={badge} />}
             menu={menu}
         >
             <div className="inline-flex items-center gap-1.5 font-medium text-ink">

@@ -17,7 +17,7 @@ class AcademicLearningOutcomesController extends BaseController
 
     protected array $searchable = ['learning_outcomes'];
 
-    protected array $filterable = ['academic_industry_id', 'academic_program_id', 'status'];
+    protected array $filterable = ['academic_industry_id', 'academic_program_id', 'status', 'learning_outcomes'];
 
     // Id filters must match exactly — a LIKE '%5%' would also match 15/50/…
     protected array $exactFilters = ['status', 'academic_industry_id', 'academic_program_id'];

@@ -809,12 +809,13 @@ export function DataTableField<T extends Record<string, unknown>>({
                                         {col.label}
                                     </label>
                                     <Dropdown
-                                        options={col.typeData.map(
-                                            (item) =>
-                                                (item as { value: string })
-                                                    .value,
-                                        )}
-                                        value={columnFilters[col.key] ?? 'All'}
+                                        options={
+                                            col.typeData as {
+                                                label: string;
+                                                value: string;
+                                            }[]
+                                        }
+                                        value={columnFilters[col.key] ?? ''}
                                         onChange={(value) =>
                                             handleColumnFilter(col.key, value)
                                         }
@@ -970,7 +971,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                         type="button"
                         onClick={openCreateModal}
                         className={cn(
-                            'inline-flex shrink-0 gap-1.5 rounded-xl bg-brand-400 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-400/90 [@media(min-width:300px)]:float-right',
+                            'ml-2! inline-flex shrink-0 gap-1.5 rounded-xl bg-brand-400 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-400/90 [@media(min-width:300px)]:float-right',
                             actionsCreateClassName,
                         )}
                     >

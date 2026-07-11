@@ -15,9 +15,9 @@ class RoleResource extends JsonResource
             'name' => $this->name,
             'permissions' => $this->permissions->pluck('name')->values(),
             'permissions_count' => $this->permissions->count(),
-            // Roles have no lifecycle; surface a constant so the shared table's
-            // status column renders consistently.
-            'status' => 'active',
+            // Real lifecycle status from the roles table (active/inactive), so
+            // the shared table's status column and filter reflect the DB.
+            'status' => $this->status,
         ];
     }
 }

@@ -13,7 +13,7 @@ class AcademicIndustryController extends BaseController
     protected string $model = AcademicIndustry::class;
     protected string $view = 'settings/academic/industry/index';
     protected array $searchable = ['name', 'description'];
-    protected array $filterable = ['status'];
+    protected array $filterable = ['status', 'name'];
     protected array $sortable = ['id', 'name'];
     protected array $activeColumns = ['id', 'name'];
     protected string $sortBy = 'name';

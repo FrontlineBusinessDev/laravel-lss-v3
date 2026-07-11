@@ -13,7 +13,7 @@ class AcademicProgramController extends BaseController
     protected string $model = AcademicProgram::class;
     protected string $view = 'settings/academic/program/index';
     protected array $searchable = ['name', 'course_name', 'specialization'];
-    protected array $filterable = ['status'];
+    protected array $filterable = ['status', 'name', 'course_name'];
     protected array $sortable = ['id', 'name', 'course_name'];
 
     protected array $activeColumns = ['id', 'name', 'course_name'];

@@ -1,10 +1,6 @@
-import { BatchesProvider } from '@/context/BatchesContext';
-import { NotificationsProvider } from '@/context/NotificationsContext';
 import { createInertiaApp } from '@inertiajs/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { hydrateRoot } from 'react-dom/client';
-import { SystemToastProvider } from './components/Toast';
-import { ToastProvider } from './hooks/use-toast';
+import { createRoot, hydrateRoot } from 'react-dom/client';
+import { AppProviders, makeQueryClient } from './AppProviders';
 import AppLayout from './layouts/AppLayout';
 import SettingsAcademicLayout from './layouts/settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from './layouts/settings/SettingsPrimaryLayout';
@@ -42,22 +38,23 @@ createInertiaApp({
         }
     },
     setup({ el, App, props }) {
-        const queryClient = new QueryClient();
-        // Use hydrateRoot instead of createRoot(el).render(...)
-        hydrateRoot(
-            el,
-            <QueryClientProvider client={queryClient}>
-                <SystemToastProvider>
-                    <ToastProvider>
-                        <NotificationsProvider>
-                            <BatchesProvider>
-                                <App {...props} />
-                            </BatchesProvider>
-                        </NotificationsProvider>
-                    </ToastProvider>
-                </SystemToastProvider>
-            </QueryClientProvider>,
+        // The provider tree and QueryClient options are shared with ssr.tsx via
+        // AppProviders so a client render matches the server-rendered HTML.
+        const tree = (
+            <AppProviders client={makeQueryClient()}>
+                <App {...props} />
+            </AppProviders>
         );
+
+        // Hydrate only when the server actually rendered markup (SSR enabled).
+        // With SSR off, Inertia ships an empty #app div, so hydrateRoot would
+        // report "Hydration failed …"; use createRoot instead. This keeps the
+        // entry correct whether INERTIA_SSR_ENABLED is on or off.
+        if (el.hasChildNodes()) {
+            hydrateRoot(el, tree);
+        } else {
+            createRoot(el).render(tree);
+        }
     },
     progress: {
         color: '#2176E3',

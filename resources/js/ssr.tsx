@@ -1,11 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import createServerHtml from '@inertiajs/react/server';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactDOMServer from 'react-dom/server';
-import { BatchesProvider } from '@/context/BatchesContext';
-import { NotificationsProvider } from '@/context/NotificationsContext';
-import { SystemToastProvider } from './components/Toast';
-import { ToastProvider } from './hooks/use-toast';
+import { AppProviders, makeQueryClient } from './AppProviders';
 import AppLayout from './layouts/AppLayout';
 import SettingsAcademicLayout from './layouts/settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from './layouts/settings/SettingsPrimaryLayout';
@@ -49,27 +45,12 @@ createServerHtml((page) =>
             }
         },
         setup: ({ App, props }) => {
-            // Create a fresh client instance per request to avoid data leaking between users
-            const queryClient = new QueryClient({
-                defaultOptions: {
-                    queries: {
-                        staleTime: Infinity, // Prevents refetching instantly during hydration
-                    },
-                },
-            });
-
+            // Fresh client per request (no cross-request data leak); shares the
+            // exact provider tree + options with app.tsx via AppProviders.
             return (
-                <QueryClientProvider client={queryClient}>
-                    <SystemToastProvider>
-                        <ToastProvider>
-                            <NotificationsProvider>
-                                <BatchesProvider>
-                                    <App {...props} />
-                                </BatchesProvider>
-                            </NotificationsProvider>
-                        </ToastProvider>
-                    </SystemToastProvider>
-                </QueryClientProvider>
+                <AppProviders client={makeQueryClient()}>
+                    <App {...props} />
+                </AppProviders>
             );
         },
     }),

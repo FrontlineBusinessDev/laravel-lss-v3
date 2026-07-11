@@ -3,14 +3,20 @@ import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type DropdownOption = string | { label: string; value: string };
+
 interface DropdownProps {
-    options: string[];
+    options: DropdownOption[];
     value?: string;
     placeholder?: string;
     onChange?: (value: string) => void;
     className?: string;
     fullWidthMenu?: boolean;
 }
+
+/** Normalizes `string | {label,value}` options to a `{label,value}` pair. */
+const toOption = (opt: DropdownOption): { label: string; value: string } =>
+    typeof opt === 'string' ? { label: opt, value: opt } : opt;
 
 export function Dropdown({
     options,
@@ -22,6 +28,13 @@ export function Dropdown({
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(value ?? '');
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+    const normalized = options.map(toOption);
+    // Label shown on the trigger for the current value (falls back to placeholder
+    // or the first option's label so the button is never blank).
+    const selectedLabel =
+        normalized.find((o) => o.value === selected)?.label ??
+        placeholder ??
+        normalized[0]?.label;
     const btnRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -69,13 +82,15 @@ export function Dropdown({
                 className={cn(
                     'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-card transition-all duration-150 hover:border-neutral-300 hover:shadow-none focus:ring-2 focus:ring-brand-100 focus:outline-none',
                     open && 'border-brand-400 ring-2 ring-brand-100',
-                    !selected && 'text-neutral-400',
+                    // Dim only when the value maps to no real option (placeholder
+                    // state); a real empty-value option like "All Status" stays
+                    // in normal ink.
+                    !normalized.some((o) => o.value === selected) &&
+                        'text-neutral-400',
                     className,
                 )}
             >
-                <span className="truncate">
-                    {selected || placeholder || options[0]}
-                </span>
+                <span className="truncate">{selectedLabel}</span>
                 <ChevronDown
                     size={14}
                     className={cn(
@@ -97,26 +112,24 @@ export function Dropdown({
                         }}
                         className="lss-scrollbar z-60 max-h-64 animate-scaleIn overflow-auto rounded-lg border border-neutral-200 bg-white p-1 shadow-popover"
                     >
-                        {options.map((opt) => (
+                        {normalized.map((opt) => (
                             <button
-                                key={opt}
+                                key={opt.value}
                                 role="option"
-                                aria-selected={selected === opt}
+                                aria-selected={selected === opt.value}
                                 onClick={() => {
-                                    setSelected(opt);
-                                    onChange?.(opt);
+                                    setSelected(opt.value);
+                                    onChange?.(opt.value);
                                     setOpen(false);
                                 }}
                                 className={cn(
                                     'flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-neutral-700 transition-colors hover:bg-brand-50 hover:text-brand-700',
-                                    selected === opt &&
+                                    selected === opt.value &&
                                         'bg-brand-50 text-brand-700',
                                 )}
                             >
-                                <span className="truncate">
-                                    {opt ? opt : 'all'}
-                                </span>
-                                {selected === opt && (
+                                <span className="truncate">{opt.label}</span>
+                                {selected === opt.value && (
                                     <Check
                                         size={13}
                                         className="shrink-0 text-brand-600"
