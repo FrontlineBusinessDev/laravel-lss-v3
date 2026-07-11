@@ -13,8 +13,13 @@ cmds = [
 ]
 
 # PRODUCTION BUILD
+# 1. Fire up the SSR engine in the background
+# 2. Execute the exact start entrypoint script Nixpacks builds natively for Nginx + PHP-FPM
 [start]
-cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & .nixpacks/variables.sh && nginx -g 'daemon off;'"
+cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & /nixpacks/entrypoint.sh"
+
+
+# cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & .nixpacks/variables.sh && nginx -g 'daemon off;'"
 
 # 1. Start Inertia SSR in the background
 # 2. Run the default Nixpacks PHP web server runner in the foreground to keep the container alive
