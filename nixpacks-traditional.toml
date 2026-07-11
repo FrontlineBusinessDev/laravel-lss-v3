@@ -1,0 +1,43 @@
+[phases.install]
+cmds = [
+  "composer install --no-interaction --prefer-dist --optimize-autoloader",
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "npm run build",
+  "php artisan migrate --force",
+  "php artisan config:cache",
+  "php artisan route:cache"
+]
+
+# PRODUCTION BUILD
+# 1. Fire up the SSR engine in the background
+# 2. Execute the exact start entrypoint script Nixpacks builds natively for Nginx + PHP-FPM
+[start]
+cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & /nixpacks/entrypoint.sh"
+
+
+# cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & .nixpacks/variables.sh && nginx -g 'daemon off;'"
+
+# 1. Start Inertia SSR in the background
+# 2. Run the default Nixpacks PHP web server runner in the foreground to keep the container alive
+# cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & fpm-nginx"
+
+# ALTERNATIVE FIX IF FPM-NGINX ISN'T RECOGNIZED
+# cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & .nixpacks/variables.sh && nginx -g 'daemon off;'"
+
+# OCTANE BUILD FOR FASTER DATA RETREIVAL BUT CONSUME MORE RESOURCES
+# Octane manages the PHP server and keeps it highly concurrent
+# cmd = "php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
+
+# DEVELOPMENT BUILD
+# [start]
+# This boots the Nginx/PHP server AND starts the Inertia SSR process in the background
+# cmd = "bash -lc 'php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & exec php artisan serve --host=0.0.0.0 --port=8000'"
+
+# PRODUCTION BUILD
+# cmd = "php artisan migrate --force && php artisan config:cache && (php artisan inertia:start-ssr >> storage/logs/ssr.log 2>&1 &) && exec php-fpm -D && exec nginx -g 'daemon off;'"
+# [start]
+# cmd = "php artisan migrate --force && php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &"

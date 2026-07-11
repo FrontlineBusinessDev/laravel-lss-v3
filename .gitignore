@@ -29,3 +29,6 @@ yarn-error.log
 /.vscode
 /.zed
 /gratify-out/
+**/caddy
+frankenphp
+frankenphp-worker.php
