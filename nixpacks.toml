@@ -7,9 +7,9 @@ cmds = [
 [phases.build]
 cmds = [
   "npm run build",
-  "php artisan optimize"
+# "php artisan optimize"
 ]
 
 [start]
 # This boots the Nginx/PHP server AND starts the Inertia SSR process in the background
-cmd = "php artisan inertia:start-ssr & nixpacks-start"
+cmd = "bash -lc 'php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & exec php artisan serve --host=0.0.0.0 --port=8000'"
