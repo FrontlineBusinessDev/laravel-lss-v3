@@ -157,7 +157,6 @@ export default function BatchesListPage() {
             <DataTableField<AppBatches>
                 apiUrl="/batches"
                 apiQueryKey="batches"
-                actionsCreateClassName="mt-2 sm:mt-0 ml-5"
                 columns={columns}
                 fields={fields}
                 createLabel="Add batch"

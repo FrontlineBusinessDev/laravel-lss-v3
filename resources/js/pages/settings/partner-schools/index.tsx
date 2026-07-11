@@ -63,7 +63,6 @@ export default function index() {
                 <DataTableField<PartnerSchools>
                     apiUrl="/settings/partner-schools"
                     apiQueryKey="settings-partner-schools"
-                    actionsCreateClassName="float-none ml-5"
                     columns={columns}
                     fields={fields}
                     createLabel="Add Partner School"

@@ -40,7 +40,6 @@ export default function index() {
             <DataTableField<AcademicIndustry>
                 apiUrl="/settings/academic/industry"
                 apiQueryKey="settings-academic/industry"
-                actionsCreateClassName="mt-2 sm:mt-0 ml-5"
                 columns={columns}
                 fields={fields}
                 createLabel="Add Industry"

@@ -21,6 +21,10 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             PartnerSchoolsSeeder::class,
+            AcademicIndustrySeeder::class,
+            AcademicLevelSeeder::class,
+            AcademicProgramSeeder::class,
+            AcademicLearningOutcomesSeeder::class,
         ]);
     }
 }

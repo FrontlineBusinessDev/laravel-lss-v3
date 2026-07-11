@@ -847,7 +847,8 @@ export function DataTableField<T extends Record<string, unknown>>({
                                                 (v as string) ?? '',
                                             );
                                             (col.filterResets ?? []).forEach(
-                                                (k) => handleColumnFilter(k, ''),
+                                                (k) =>
+                                                    handleColumnFilter(k, ''),
                                             );
                                         }}
                                     />
@@ -969,7 +970,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                         type="button"
                         onClick={openCreateModal}
                         className={cn(
-                            'float-right inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-brand-400 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-400/90',
+                            'inline-flex shrink-0 gap-1.5 rounded-xl bg-brand-400 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-400/90 [@media(min-width:300px)]:float-right',
                             actionsCreateClassName,
                         )}
                     >

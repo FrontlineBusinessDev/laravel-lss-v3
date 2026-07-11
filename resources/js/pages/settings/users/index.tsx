@@ -13,11 +13,7 @@ import {
     TextCell,
 } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
-import type {
-    CardActions,
-    ColumnDef,
-    FieldDef,
-} from '@/components/table';
+import type { CardActions, ColumnDef, FieldDef } from '@/components/table';
 import DataTableField from '@/components/table';
 import { useAuth } from '@/hooks/use-auth';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
@@ -181,7 +177,6 @@ export default function index() {
                     <DataTableField<UserRow>
                         apiUrl="/settings/users"
                         apiQueryKey="settings-users"
-                        actionsCreateClassName="float-right"
                         columns={columns}
                         fields={fields}
                         enableSuspend={true}

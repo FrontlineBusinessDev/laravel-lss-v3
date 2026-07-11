@@ -4,13 +4,7 @@
  * Entirely controlled — all state lives in the parent (DataTableField).
  */
 
-import {
-    ArrowDown,
-    ArrowUp,
-    Search,
-    SlidersHorizontal,
-    X,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, Search, SlidersHorizontal, X } from 'lucide-react';
 import React from 'react';
 import type { ColumnDef } from '../types';
 
@@ -66,9 +60,9 @@ export function Toolbar<T>({
     onFiltersToggle,
     hasActiveColumnFilters,
     showFiltersButton,
-    filterPanel, 
+    filterPanel,
 }: ToolbarProps<T>) {
-    const sortableColumns = columns.filter((c) => c.sortable !== false); 
+    const sortableColumns = columns.filter((c) => c.sortable !== false);
     return (
         <div className="mb-4">
             {/* Top row: search + controls */}
@@ -81,9 +75,7 @@ export function Toolbar<T>({
                     />
                     <input
                         type="text"
-                        className="w-full rounded-xl border border-slate-200 py-2.5 pr-9 pl-9 text-sm outline-none
-                            placeholder:text-slate-400 transition-shadow
-                            focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
+                        className="w-full rounded-xl border border-slate-200 py-2.5 pr-9 pl-9 text-sm transition-shadow outline-none placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
                         placeholder={
                             searchableCols.length
                                 ? `Search by ${searchableCols.join(', ')}…`
@@ -104,19 +96,23 @@ export function Toolbar<T>({
                 </div>
 
                 {/* Right-side controls */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {/* Filters toggle — shown when filterable columns or the
                         opt-in status filter make the panel non-empty */}
                     {showFiltersButton && (
                         <button
                             type="button"
                             onClick={onFiltersToggle}
-                            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors
-                                ${filtersOpen || hasActiveColumnFilters
+                            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+                                filtersOpen || hasActiveColumnFilters
                                     ? 'border-slate-300'
-                                    : 'border-slate-200'}`}
+                                    : 'border-slate-200'
+                            }`}
                         >
-                            <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            <SlidersHorizontal
+                                className="h-3.5 w-3.5"
+                                strokeWidth={1.75}
+                            />
                             Filters
                         </button>
                     )}
@@ -127,8 +123,7 @@ export function Toolbar<T>({
                             <select
                                 value={sortBy}
                                 onChange={(e) => onSortByChange(e.target.value)}
-                                className="w-full appearance-none rounded-xl border border-slate-200 py-2.5 pr-8 pl-3
-                                    text-sm font-medium outline-none hover:bg-slate-50 focus:border-slate-300"
+                                className="w-full appearance-none rounded-xl border border-slate-200 py-2.5 pr-8 pl-3 text-sm font-medium outline-none hover:bg-slate-50 focus:border-slate-300"
                             >
                                 {sortableColumns.map((c) => (
                                     <option key={c.key} value={c.key}>
@@ -142,9 +137,11 @@ export function Toolbar<T>({
                                 className="absolute right-1.5 rounded-md p-0.5"
                                 title={`Currently ${sortDir} — click to toggle`}
                             >
-                                {sortDir === 'asc'
-                                    ? <ArrowUp className="h-3.5 w-3.5" />
-                                    : <ArrowDown className="h-3.5 w-3.5" />}
+                                {sortDir === 'asc' ? (
+                                    <ArrowUp className="h-3.5 w-3.5" />
+                                ) : (
+                                    <ArrowDown className="h-3.5 w-3.5" />
+                                )}
                             </button>
                         </div>
                     )}
@@ -152,13 +149,16 @@ export function Toolbar<T>({
                     {/* Per-page selector */}
                     <select
                         value={perPage}
-                        onChange={(e) => onPerPageChange(Number(e.target.value))}
-                        className="min-w-30 rounded-xl border border-slate-200 px-3 py-2.5
-                            text-sm font-medium outline-none focus:border-slate-300"
+                        onChange={(e) =>
+                            onPerPageChange(Number(e.target.value))
+                        }
+                        className="min-w-30 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-slate-300"
                         title="Rows per page"
                     >
                         {[10, 15, 25, 50, 100].map((n) => (
-                            <option key={n} value={n}>{n} / page</option>
+                            <option key={n} value={n}>
+                                {n} / page
+                            </option>
                         ))}
                     </select>
                 </div>

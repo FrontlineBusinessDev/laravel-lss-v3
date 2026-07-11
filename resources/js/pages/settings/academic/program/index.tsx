@@ -8,12 +8,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import DataTableField from '@/components/table';
 import type { StatusKind } from '@/types';
-import type {
-    AcademicProgram} from '@/types/modules/settings/academic/program';
-import {
-    columns,
-    fields,
-} from '@/types/modules/settings/academic/program';
+import type { AcademicProgram } from '@/types/modules/settings/academic/program';
+import { columns, fields } from '@/types/modules/settings/academic/program';
 
 const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
 
@@ -48,7 +44,6 @@ export default function index() {
             <DataTableField<AcademicProgram>
                 apiUrl="/settings/academic/program"
                 apiQueryKey="settings-academic/program"
-                actionsCreateClassName="mt-2 sm:mt-0 ml-5"
                 columns={columns}
                 fields={fields}
                 createLabel="Add Program"

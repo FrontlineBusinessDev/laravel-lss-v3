@@ -22,14 +22,23 @@ export function TextCell({
 }) {
     if (muted) {
         return (
-            <div className={cn(className, 'truncate text-xs text-neutral-500')}>
+            <div
+                className={cn(
+                    className,
+                    'max-w-80 min-w-10 truncate text-xs text-neutral-500',
+                )}
+            >
                 {children}
             </div>
         );
     }
 
     return (
-        <div className={cn('flex items-center gap-1.5 font-medium text-ink')}>
+        <div
+            className={cn(
+                'flex max-w-80 min-w-10 items-center gap-1.5 font-medium text-ink',
+            )}
+        >
             <span className="truncate">{children}</span>
         </div>
     );

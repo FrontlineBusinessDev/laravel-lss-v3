@@ -9,7 +9,10 @@ import type { CardActions } from '@/components/table';
 import DataTableField from '@/components/table';
 import type { StatusKind } from '@/types';
 import type { AcademicLearningOutcomes } from '@/types/modules/settings/academic/learning-outcomes';
-import { columns, fields } from '@/types/modules/settings/academic/learning-outcomes';
+import {
+    columns,
+    fields,
+} from '@/types/modules/settings/academic/learning-outcomes';
 
 const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
 
@@ -43,7 +46,6 @@ export default function Index() {
         <DataTableField<AcademicLearningOutcomes>
             apiUrl="/settings/academic/learning-outcomes"
             apiQueryKey="settings-academic/learning-outcomes"
-            actionsCreateClassName="mt-2 sm:mt-0 ml-5"
             columns={columns}
             fields={fields}
             createLabel="Add Learning Outcomes"
