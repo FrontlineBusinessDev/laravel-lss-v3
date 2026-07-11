@@ -13,8 +13,10 @@ cmds = [
 ]
 
 # PRODUCTION BUILD
+# 1. Start Inertia SSR in the background
+# 2. Run the default Nixpacks PHP web server runner in the foreground to keep the container alive
 [start]
-cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &"
+cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & fpm-nginx"
 
 # OCTANE BUILD FOR FASTER DATA RETREIVAL BUT CONSUME MORE RESOURCES
 # Octane manages the PHP server and keeps it highly concurrent
