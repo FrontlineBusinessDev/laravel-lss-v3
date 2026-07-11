@@ -47,8 +47,14 @@ export async function loadLookupOptions(
 export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
     {
         key: 'learning_outcomes',
-        label: 'Learning Outcomes Core',
+        label: 'Learning Outcomes',
         searchable: true,
+    },
+    {
+        key: 'status',
+        label: 'status',
+        searchable: true,
+        filterable: true,
     },
     {
         key: 'academic_industry_id',
