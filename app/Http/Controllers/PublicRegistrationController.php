@@ -6,6 +6,7 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Models\Batches;
 use App\Models\PartnerSchools;
 use App\Models\Trainee;
+use App\Support\OgImage;
 use App\Support\QrCode;
 use App\Support\Statuses;
 use Illuminate\Http\RedirectResponse;
@@ -48,11 +49,13 @@ class PublicRegistrationController extends Controller
         $batch = $this->resolveBatch($token);
 
         // SEO / social-share metadata. `ogImage` is the absolute, guest-reachable
-        // PNG QR of the registration link, so a shared link previews with a
-        // scannable code.
+        // 1200x630 branded QR card. The `?v=` cache-buster is keyed on the batch's
+        // updated_at so a branding/batch edit forces Facebook/Messenger to re-scrape
+        // instead of serving a stale, previously-cached preview.
+        $systemName = config('app.name');
         $metaDescription = $this->metaDescription($batch);
         $registerUrl = route('public.register', $token);
-        $ogImage = route('public.register.qr', $token);
+        $ogImage = route('public.register.qr', $token) . '?v=' . ($batch->updated_at?->getTimestamp() ?? 1);
         $pageTitle = "Batch Registration · {$batch->batch_code}";
 
         return InertiaPageResponse::csr('public/register/index', [
@@ -75,33 +78,58 @@ class PublicRegistrationController extends Controller
             // lookup endpoint isn't reachable by guests, so pass them as props).
             'schools' => PartnerSchools::query()
                 ->where('status', Statuses::ACTIVE)
-                ->orderBy('school_name')
                 ->get(['id', 'school_name'])
-                ->map(fn (PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
+                ->orderBy('school_name')
+                ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
         ])->withViewData([
             // Server-rendered into the Blade <head> so Facebook's non-JS crawler
             // sees the og tags (the Inertia <Head> versions only exist after
-            // client hydration, which the scraper never runs).
+            // client hydration, which the scraper never runs). Width/height/type
+            // let the scraper pre-size the card; fbAppId is null until configured,
+            // in which case the fb:app_id tag is omitted rather than left empty.
             'ogTitle' => $pageTitle,
             'ogDescription' => $metaDescription,
             'ogImage' => $ogImage,
             'ogUrl' => $registerUrl,
+            'ogSiteName' => $systemName,
+            'ogImageWidth' => 1200,
+            'ogImageHeight' => 630,
+            'ogImageAlt' => "{$systemName} — register for batch {$batch->batch_code}",
+            'fbAppId' => config('services.facebook.app_id'),
         ]);
     }
 
     /**
-     * Guest-reachable QR image of the batch's public registration link, rendered
-     * as a PNG. Used as the register page's og:image / twitter:image — social
-     * scrapers (Facebook) don't render SVG, so this endpoint must be a raster.
+     * Guest-reachable 1200x630 branded share card (logo + system name +
+     * description + batch details + QR), rendered as a PNG for the register
+     * page's og:image / twitter:image. Social scrapers (Facebook) don't render
+     * SVG, so this endpoint must be a raster at the Open Graph 1.91:1 ratio.
+     *
+     * The branded card needs gd; if it's unavailable the catch falls back to a
+     * gd-free, non-clipped 1200x630 padded QR so the endpoint never 500s. Note
+     * the `?v=` query the caller appends is ignored here — it only busts the
+     * scraper/CDN cache.
      */
     public function qr(string $token): Response
     {
-        $this->resolveBatch($token);
+        $batch = $this->resolveBatch($token);
+        $registerUrl = route('public.register', $token);
 
-        $png = QrCode::png(route('public.register', $token));
+        try {
+            $png = OgImage::render(
+                $registerUrl,
+                config('app.name'),
+                $this->metaDescription($batch),
+                $this->metaDetails($batch),
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            $png = QrCode::paddedOg($registerUrl);
+        }
 
         return response($png, 200, [
             'Content-Type' => 'image/png',
+            'Content-Length' => (string) strlen($png),
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -113,7 +141,16 @@ class PublicRegistrationController extends Controller
         $setup = $batch->setup === 'f2f' ? 'Face to Face' : 'Online';
 
         return "Register for {$program} ({$setup}) — batch {$batch->batch_code}. "
-            .'Complete your application online in a few minutes.';
+            . 'Complete your application online in a few minutes.';
+    }
+
+    /** Compact one-line batch specifics rendered onto the share card. */
+    protected function metaDetails(Batches $batch): string
+    {
+        $program = $batch->academicProgram?->name ?? 'Training Program';
+        $setup = $batch->setup === 'f2f' ? 'Face to Face' : 'Online';
+
+        return "{$program}  ·  {$setup}  ·  Batch {$batch->batch_code}";
     }
 
     /**
@@ -216,7 +253,7 @@ class PublicRegistrationController extends Controller
     protected function storeDocument(UploadedFile $file, Trainee $trainee, string $type): void
     {
         $disk = config('filesystems.default');
-        $folder = env('AWS_S3_STORAGE', 'laravel-ls-system').'/trainee-documents';
+        $folder = env('AWS_S3_STORAGE', 'laravel-ls-system') . '/trainee-documents';
         $path = Storage::disk($disk)->putFile($folder, $file, 'private');
 
         $trainee->documents()->create([

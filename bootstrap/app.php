@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind the FrankenPHP/Octane (and platform) proxy, trust forwarded
+        // headers so X-Forwarded-Proto is honored and generated URLs — notably
+        // the og:image — resolve as HTTPS instead of http://, which social
+        // scrapers reject (a key cause of the "image disappears in Messenger").
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             \App\Http\Middleware\EnsureUserIsActive::class,
             \App\Http\Middleware\HandleInertiaRequests::class,

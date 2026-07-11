@@ -9,13 +9,26 @@
     {{-- Social-share tags, server-rendered only for pages that pass og view data
          (currently the public register page). Facebook's crawler runs no JS, so
          it never sees Inertia's client-side <Head> tags — these are what it
-         scrapes. Guarded so every other page's <head> is unchanged. --}}
+         scrapes. Guarded so every other page's <head> is unchanged.
+         image:width/height/type let scrapers pre-size the 1200x630 card (a
+         missing size is a common reason Messenger drops the image); secure_url
+         is the HTTPS URL Facebook requires. fb:app_id is emitted only when
+         configured (see config/services.php facebook.app_id). --}}
     @isset($ogImage)
         <meta property="og:type" content="website">
+        <meta property="og:site_name" content="{{ $ogSiteName }}">
         <meta property="og:title" content="{{ $ogTitle }}">
         <meta property="og:description" content="{{ $ogDescription }}">
-        <meta property="og:image" content="{{ $ogImage }}">
         <meta property="og:url" content="{{ $ogUrl }}">
+        <meta property="og:image" content="{{ $ogImage }}">
+        <meta property="og:image:secure_url" content="{{ $ogImage }}">
+        <meta property="og:image:type" content="image/png">
+        <meta property="og:image:width" content="{{ $ogImageWidth }}">
+        <meta property="og:image:height" content="{{ $ogImageHeight }}">
+        <meta property="og:image:alt" content="{{ $ogImageAlt }}">
+        @if (! empty($fbAppId))
+            <meta property="fb:app_id" content="{{ $fbAppId }}">
+        @endif
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $ogTitle }}">
         <meta name="twitter:description" content="{{ $ogDescription }}">

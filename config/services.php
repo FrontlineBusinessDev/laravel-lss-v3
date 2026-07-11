@@ -35,6 +35,12 @@ return [
         ],
     ],
 
+    // Facebook App ID for the public share cards' fb:app_id meta tag. Get one at
+    // developers.facebook.com; leave unset to omit the (non-blocking) tag.
+    'facebook' => [
+        'app_id' => env('FACEBOOK_APP_ID'),
+    ],
+
     // Shared secret for the external cron endpoint that runs the Laravel
     // scheduler (GET /cron/{token}). Leave unset to disable the endpoint.
     'cron' => [
