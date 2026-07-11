@@ -1,18 +1,15 @@
-import { createInertiaApp } from '@inertiajs/react';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createRoot } from 'react-dom/client';
-import { AppShell } from '@/components/AppShell';
 import { BatchesProvider } from '@/context/BatchesContext';
 import { NotificationsProvider } from '@/context/NotificationsContext';
+import { createInertiaApp } from '@inertiajs/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from './hooks/use-toast';
+import { createRoot } from 'react-dom/client';
 import { SystemToastProvider } from './components/Toast';
+import { ToastProvider } from './hooks/use-toast';
 import AppLayout from './layouts/AppLayout';
 import SettingsAcademicLayout from './layouts/settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from './layouts/settings/SettingsPrimaryLayout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'LSS Admin';
-const appSettings = ['profile', 'security', 'appearance'];
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -30,13 +27,8 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome' || name.startsWith('auth/'):
                 return null;
-            // Guest-facing public pages (e.g. batch registration) render
-            // without the authenticated app chrome, like the auth pages.
             case name.startsWith('public/'):
                 return null;
-            // case name.startsWith('settings/') &&
-            //     appSettings.includes(name?.split('/')[1] ?? ''):
-            //     return [AppLayout];
             case name.startsWith('settings/academic'):
                 return [
                     AppLayout,
