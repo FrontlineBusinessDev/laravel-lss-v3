@@ -1,53 +1,151 @@
-import { RecordModal } from '@/components/table/components/RecordModal';
-import { isFieldVisible } from '@/components/table/utils';
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Modal } from '@/components/Modal';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { AppBatches } from '@/types/modules/batches/batches';
-import { fields } from '@/types/modules/batches/batches';
+import { loadLookupOptions } from '@/types/reusable/fields';
+import {
+    Field,
+    formatDate,
+    ReadonlyField,
+    SetupToggle,
+} from './CreateBatchFields';
 
 /**
  * Unified Create/Edit batch modal. Passing `batch` switches it into edit mode
- * (PUT /batches/{id}); omitting it creates (POST /batches). Both paths render
- * the same shared `fields` through the app's RecordModal engine — the exact
- * modal the /batches list uses — so there is a single source of truth for the
- * batch form. Replaces the former CreateBatchModal + EditBatchModal pair.
+ * (PUT /batches/{id}); omitting it creates (POST /batches). The layout matches
+ * docs/img/screencapture-localhost-8000-batches-2026-07-07-14_05_07.png.
+ *
+ * Two entry points share this one modal:
+ *  - the batches list, via DataTableField's `renderModal` (pass `onSubmit`, which
+ *    persists + toasts + refreshes the table + closes the modal), and
+ *  - the batch detail page (no `onSubmit` → it persists itself via apiFetchJson).
  */
+type Values = {
+    setup: 'f2f' | 'online';
+    academic_program_id: string | number;
+    academic_industry_id: string | number;
+    academic_level_id: string | number;
+    date_started: string;
+    is_public_url_enable: boolean;
+};
+
+const inputCls =
+    'w-full rounded-md border border-neutral-200 bg-white px-2.5 h-9 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100';
+
+// The three async-select lookups are structurally identical — drive them from
+// one config instead of three near-duplicate JSX blocks. `rel` is the
+// eager-loaded relation the trigger label is seeded from in edit mode.
+const LOOKUPS = [
+    {
+        key: 'academic_program_id',
+        rel: 'academic_program',
+        label: 'Program type',
+        endpoint: '/settings/academic/program',
+        placeholder: 'Select program type',
+    },
+    {
+        key: 'academic_industry_id',
+        rel: 'academic_industry',
+        label: 'Industry',
+        endpoint: '/settings/academic/industry',
+        placeholder: 'Select industry',
+    },
+    {
+        key: 'academic_level_id',
+        rel: 'academic_level',
+        label: 'Academic level',
+        endpoint: '/settings/academic/level',
+        placeholder: 'Select academic level',
+    },
+] as const satisfies ReadonlyArray<{
+    key: keyof Values;
+    rel: string;
+    label: string;
+    endpoint: string;
+    placeholder: string;
+}>;
+
 export function CreateBatchModal({
     open,
     onClose,
     batch,
+    mode: modeProp,
+    onSubmit,
     onSaved,
 }: {
     open: boolean;
     onClose: () => void;
     batch?: AppBatches;
+    mode?: 'create' | 'edit';
+    /** When set, delegates persistence to the caller (DataTableField path). */
+    onSubmit?: (values: Record<string, unknown>) => Promise<void>;
     onSaved?: (saved: AppBatches) => void;
 }) {
     const { toast } = useToast();
+    const isEdit = (modeProp ?? (batch ? 'edit' : 'create')) === 'edit';
+
+    const [values, setValues] = useState<Values>(() => ({
+        setup: batch?.setup ?? 'f2f',
+        academic_program_id: batch?.academic_program_id ?? '',
+        academic_industry_id: batch?.academic_industry_id ?? '',
+        academic_level_id: batch?.academic_level_id ?? '',
+        date_started: batch?.date_started
+            ? String(batch.date_started).slice(0, 10)
+            : '',
+        is_public_url_enable: batch?.is_public_url_enable ?? false,
+    }));
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [submitting, setSubmitting] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
 
     if (!open) {
         return null;
     }
 
-    const mode = batch ? 'edit' : 'create';
+    const set = <K extends keyof Values>(key: K, value: Values[K]) => {
+        setValues((prev) => ({ ...prev, [key]: value }));
+        setErrors((prev) => ({ ...prev, [key]: '' }));
+    };
 
-    const handleSubmit = async (values: Record<string, unknown>) => {
-        // Mirror DataTableField's payload build: read each visible field by
-        // `key`, submit under `payloadKey` when the API name differs, and apply
-        // any `transform`. Batch fields map 1:1, but this keeps it future-proof.
-        const payload: Record<string, unknown> = {};
-        fields
-            .filter((f) => isFieldVisible(f, mode, batch))
-            .forEach((f) => {
-                const raw = values[f.key as string];
-                const outKey = f.payloadKey ?? (f.key as string);
-                payload[outKey] = f.transform ? f.transform(raw) : raw;
-            });
+    const validate = () => {
+        const next: Record<string, string> = {};
+
+        if (!values.academic_program_id) {
+            next.academic_program_id = 'Program type is required.';
+        }
+
+        if (!values.academic_industry_id) {
+            next.academic_industry_id = 'Industry is required.';
+        }
+
+        if (!values.academic_level_id) {
+            next.academic_level_id = 'Academic level is required.';
+        }
+
+        if (!values.date_started) {
+            next.date_started = 'Start date is required.';
+        }
+
+        setErrors(next);
+
+        return Object.keys(next).length === 0;
+    };
+
+    const persist = async () => {
+        // DataTableField owns persistence + toast + list refresh + close.
+        if (onSubmit) {
+            await onSubmit({ ...values });
+
+            return;
+        }
 
         const url = batch ? `/batches/${batch.id}` : '/batches';
         const response = await apiFetchJson<AppBatches>(url, {
             method: batch ? 'PUT' : 'POST',
-            body: JSON.stringify(payload),
+            body: JSON.stringify(values),
         });
 
         toast({
@@ -58,14 +156,143 @@ export function CreateBatchModal({
         onClose();
     };
 
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setFormError(null);
+
+        if (!validate()) {
+            return;
+        }
+
+        setSubmitting(true);
+
+        try {
+            await persist();
+        } catch (err: unknown) {
+            const error =
+                err instanceof Error ? err : new Error('Failed to save batch.');
+            const apiErrors = (
+                error as Error & { errors?: Record<string, string[]> }
+            ).errors;
+
+            if (apiErrors) {
+                const mapped: Record<string, string> = {};
+                Object.entries(apiErrors).forEach(([key, msgs]) => {
+                    mapped[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                });
+                setErrors((prev) => ({ ...prev, ...mapped }));
+            }
+
+            setFormError(error.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const createdDate = batch?.created_at
+        ? formatDate(new Date(batch.created_at))
+        : formatDate(new Date());
+
     return (
-        <RecordModal<AppBatches>
-            mode={mode}
-            row={batch}
-            fields={fields}
-            title={batch ? 'Edit batch' : 'Add batch'}
+        <Modal
+            open={open}
             onClose={onClose}
-            onSubmit={handleSubmit}
-        />
+            maxWidth={520}
+            title={isEdit ? 'Edit batch' : 'Add batch'}
+            description="Batch number and created date are generated automatically by the system."
+        >
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <ReadonlyField
+                        label="Batch number"
+                        mono
+                        value={batch?.batch_code ?? 'Generated on creation'}
+                    />
+                    <ReadonlyField label="Created date" value={createdDate} />
+                </div>
+
+                <Field label="Setup">
+                    <SetupToggle
+                        value={values.setup}
+                        onChange={(v) => set('setup', v)}
+                    />
+                </Field>
+
+                {LOOKUPS.map((lookup) => (
+                    <Field
+                        key={lookup.key}
+                        label={lookup.label}
+                        error={errors[lookup.key]}
+                    >
+                        <AsyncSelectField
+                            value={values[lookup.key]}
+                            onChange={(v) => set(lookup.key, v as string)}
+                            loadOptions={(q) =>
+                                loadLookupOptions(lookup.endpoint, q)
+                            }
+                            initialLabel={
+                                (
+                                    batch?.[lookup.rel] as {
+                                        name?: string;
+                                    } | null
+                                )?.name
+                            }
+                            placeholder={lookup.placeholder}
+                            error={errors[lookup.key]}
+                        />
+                    </Field>
+                ))}
+
+                <Field label="Start date" error={errors.date_started}>
+                    <input
+                        type="date"
+                        value={values.date_started}
+                        onChange={(e) => set('date_started', e.target.value)}
+                        className={inputCls}
+                    />
+                </Field>
+
+                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5">
+                    <input
+                        type="checkbox"
+                        checked={values.is_public_url_enable}
+                        onChange={(e) =>
+                            set('is_public_url_enable', e.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-100"
+                    />
+                    <span className="text-sm font-medium text-neutral-700">
+                        Enable public registration URL
+                    </span>
+                </label>
+
+                {formError && (
+                    <p className="text-danger-700 rounded-md bg-danger-50 px-3 py-2 text-xs">
+                        {formError}
+                    </p>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={submitting}
+                        className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
+                    >
+                        {submitting && (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                        {isEdit ? 'Save changes' : 'Create batch'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
     );
 }

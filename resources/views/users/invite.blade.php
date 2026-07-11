@@ -16,7 +16,7 @@
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:16px;">
         <!-- Gradient top bar -->
         <tr>
-          <td style="height:4px; line-height:4px; font-size:4px; background-color:#cc2e9c; background-image:linear-gradient(90deg,#cc2e9c,#7b2ecc); border-radius:16px 16px 0 0;">&nbsp;</td>
+          <td style="height:4px; line-height:4px; font-size:4px; background-color:#378add; background-image:linear-gradient(90deg,#378add,#7b2ecc); border-radius:16px 16px 0 0;">&nbsp;</td>
         </tr>
 
         <!-- Brand row -->
@@ -27,7 +27,7 @@
                 <td width="30" style="width:30px;">
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td width="30" height="30" align="center" valign="middle" style="width:30px; height:30px; border-radius:8px; background-color:#cc2e9c; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:800; color:#ffffff;">F</td>
+                      <td width="30" height="30" align="center" valign="middle" style="width:30px; height:30px; border-radius:8px; background-color:#378add; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:800; color:#ffffff;">F</td>
                     </tr>
                   </table>
                 </td>
@@ -41,7 +41,7 @@
         <!-- Body -->
         <tr>
           <td style="padding:28px 36px 32px;">
-            <div style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#cc2e9c; margin-bottom:12px;">Account created</div>
+            <div style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#378add; margin-bottom:12px;">Account created</div>
 
             <h1 style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:23px; font-weight:800; letter-spacing:-.02em; margin:0 0 14px; line-height:1.25; color:#14151a;">Welcome to Learning Solutions, {{ $user->name }}</h1>
 
@@ -62,7 +62,7 @@
             <!-- CTA button -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="border-radius:10px; background-color:#cc2e9c;">
+                <td style="border-radius:10px; background-color:#378add;">
                   <a href="{{ $resetUrl }}" style="display:inline-block; padding:12px 24px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:10px;">Set up your password</a>
                 </td>
               </tr>
@@ -77,8 +77,8 @@
           <td style="padding:24px 36px; background-color:#fafafb; border-top:1px solid #f0f1f4; border-radius:0 0 16px 16px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
               <tr>
-                <td width="22" height="22" align="center" valign="middle" style="width:22px; height:22px; border-radius:6px; background-color:#cc2e9c; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:800; color:#ffffff;">F</td>
-                <td style="padding-left:8px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:12.5px; font-weight:700; color:#14151a;">Learning Solutions Support</td>
+                <td width="22" height="22" align="center" valign="middle" style="width:22px; height:22px; border-radius:6px; background-color:#378add; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:800; color:#ffffff;">F</td>
+                <td style="padding-left:8px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:12.5px; font-weight:700; color:#14151a;">Learning Solutions</td>
               </tr>
             </table>
 

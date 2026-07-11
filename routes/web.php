@@ -46,6 +46,9 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])
 // GET renders the form, POST persists the trainee + documents.
 Route::get('/register/{token}', [PublicRegistrationController::class, 'show'])->name('public.register');
 Route::post('/register/{token}', [PublicRegistrationController::class, 'store'])->name('public.register.store');
+// First-party QR image for the batch's public link — used as the register
+// page's og:image / twitter:image (an absolute, guest-reachable URL).
+Route::get('/register/{token}/qr', [PublicRegistrationController::class, 'qr'])->name('public.register.qr');
 
 // Static pages only (no password-reset backend wired up yet — see
 // FortifyServiceProvider / config/fortify.php, only the `login` feature

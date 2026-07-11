@@ -52,6 +52,16 @@ Also remember to extend the module's TS interface with the eager-loaded relation
 (e.g. `academic_industry?: { id: number; name: string } | null`) so `initialLabel`
 and the list cells are typed.
 
+## Menu overflow
+
+The open menu is rendered into a `document.body` portal with `position: fixed`,
+anchored to the trigger's bounding rect (and flipped upward when there isn't
+room below). This lets it escape any `overflow:auto` / `max-h` ancestor — e.g. a
+`RecordModal` / `Modal` body — so the list overlaps the modal cleanly instead of
+forcing an inner scrollbar. This is the reusable equivalent of react-select's
+`menuPortalTarget={document.body}`; every async-select gets it for free, so no
+per-call CSS (`overflow-visible`, `z-index`) is needed on modal containers.
+
 ## Filters
 
 Page filter dropdowns bind through `extraFilters` + `filterControls` — plain

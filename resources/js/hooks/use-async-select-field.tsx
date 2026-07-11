@@ -1,5 +1,6 @@
 import { Check, ChevronDown, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { FieldOption } from '@/types/reusable/fields';
 import type { AsyncSelectFieldProps } from '@/types/reusable/fields-option';
 
@@ -43,8 +44,38 @@ export function AsyncSelectField({
     // lookup scan below — the reliable path for archived / paged-out records.
     const [selectedLabel, setSelectedLabel] = useState(initialLabel ?? '');
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const requestSeq = useRef(0);
+    // Fixed-viewport coords for the body-portaled menu (escapes modal overflow).
+    const [menuPos, setMenuPos] = useState<{
+        left: number;
+        width: number;
+        top?: number;
+        bottom?: number;
+    }>({ left: 0, width: 0, top: 0 });
+
+    // Anchor to the trigger rect; flip upward when there's no room below.
+    const updatePosition = useCallback(() => {
+        const el = triggerRef.current;
+
+        if (!el) {
+            return;
+        }
+
+        const rect = el.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const openUp = spaceBelow < 300 && rect.top > spaceBelow;
+
+        setMenuPos({
+            left: rect.left,
+            width: rect.width,
+            ...(openUp
+                ? { bottom: window.innerHeight - rect.top + 4 }
+                : { top: rect.bottom + 4 }),
+        });
+    }, []);
 
     const currentLabel = !value
         ? ''
@@ -140,12 +171,30 @@ export function AsyncSelectField({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [query]);
 
-    // close on outside click
+    // Keep the portaled menu pinned to the trigger while open (scroll/resize).
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
+    }, [open, updatePosition]);
+
+    // close on outside click — also check menuRef since the menu is portaled.
     useEffect(() => {
         const onClick = (e: MouseEvent) => {
+            const target = e.target as Node;
+
             if (
-                containerRef.current &&
-                !containerRef.current.contains(e.target as Node)
+                !containerRef.current?.contains(target) &&
+                !menuRef.current?.contains(target)
             ) {
                 setOpen(false);
             }
@@ -158,9 +207,14 @@ export function AsyncSelectField({
     return (
         <div ref={containerRef} className="relative">
             <button
+                ref={triggerRef}
                 type="button"
                 disabled={disabled}
                 onClick={() => {
+                    if (!open) {
+                        updatePosition();
+                    }
+
                     setOpen((o) => !o);
                 }}
                 className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${
@@ -173,57 +227,73 @@ export function AsyncSelectField({
                 <ChevronDown className="h-4 w-4" />
             </button>
 
-            {open && !disabled && (
-                <div className="dark:bg-sidebar absolute z-10 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg">
-                    <div className="border-b border-slate-100 p-2">
-                        <input
-                            autoFocus
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={placeholder}
-                            className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-slate-400 focus:outline-none dark:text-white"
-                        />
-                    </div>
-                    <div className="max-h-56 overflow-y-auto py-1">
-                        {loading && (
-                            <div className="flex items-center justify-center gap-2 px-3 py-3 text-sm">
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Searching…
-                            </div>
-                        )}
-                        {!loading && options.length === 0 && (
-                            <div className="px-3 py-3 text-sm">No results.</div>
-                        )}
-                        {!loading &&
-                            options.map((opt) => {
-                                const isSelected = valuesEqual(
-                                    opt.value,
-                                    value,
-                                );
+            {open &&
+                !disabled &&
+                createPortal(
+                    <div
+                        ref={menuRef}
+                        style={{
+                            position: 'fixed',
+                            left: menuPos.left,
+                            width: menuPos.width,
+                            top: menuPos.top,
+                            bottom: menuPos.bottom,
+                            zIndex: 60,
+                        }}
+                        className="dark:bg-sidebar rounded-xl border border-slate-200 bg-white shadow-lg"
+                    >
+                        <div className="border-b border-slate-100 p-2">
+                            <input
+                                autoFocus
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder={placeholder}
+                                className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-slate-400 focus:outline-none dark:text-white"
+                            />
+                        </div>
+                        <div className="max-h-56 overflow-y-auto py-1">
+                            {loading && (
+                                <div className="flex items-center justify-center gap-2 px-3 py-3 text-sm">
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Searching…
+                                </div>
+                            )}
+                            {!loading && options.length === 0 && (
+                                <div className="px-3 py-3 text-sm">
+                                    No results.
+                                </div>
+                            )}
+                            {!loading &&
+                                options.map((opt) => {
+                                    const isSelected = valuesEqual(
+                                        opt.value,
+                                        value,
+                                    );
 
-                                return (
-                                    <button
-                                        key={JSON.stringify(opt.value)}
-                                        type="button"
-                                        onClick={() => {
-                                            onChange(opt.value);
-                                            setSelectedLabel(opt.label);
-                                            setOpen(false);
-                                            setQuery('');
-                                        }}
-                                        className="hover:brand-400/10 flex w-full items-center justify-between px-3 py-2 text-left text-sm"
-                                    >
-                                        {opt.label}
-                                        {isSelected && (
-                                            <Check className="h-3.5 w-3.5 text-slate-900" />
-                                        )}
-                                    </button>
-                                );
-                            })}
-                    </div>
-                </div>
-            )}
+                                    return (
+                                        <button
+                                            key={JSON.stringify(opt.value)}
+                                            type="button"
+                                            onClick={() => {
+                                                onChange(opt.value);
+                                                setSelectedLabel(opt.label);
+                                                setOpen(false);
+                                                setQuery('');
+                                            }}
+                                            className="hover:brand-400/10 flex w-full items-center justify-between px-3 py-2 text-left text-sm"
+                                        >
+                                            {opt.label}
+                                            {isSelected && (
+                                                <Check className="h-3.5 w-3.5 text-slate-900" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                        </div>
+                    </div>,
+                    document.body,
+                )}
             {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
         </div>
     );

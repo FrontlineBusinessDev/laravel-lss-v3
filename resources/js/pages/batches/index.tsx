@@ -1,4 +1,15 @@
 import { router } from '@inertiajs/react';
+import {
+    Archive,
+    ArchiveRestore,
+    Ban,
+    Check,
+    Pencil,
+    QrCode,
+    Trash2,
+    X,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import {
@@ -14,18 +25,8 @@ import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns, fields } from '@/types/modules/batches/batches';
-import {
-    Archive,
-    ArchiveRestore,
-    Ban,
-    Check,
-    Pencil,
-    QrCode,
-    Trash2,
-    X,
-} from 'lucide-react';
-import { useRef, useState } from 'react';
 import { BatchRegistrationModal } from './BatchRegistrationModal';
+import { CreateBatchModal } from './CreateBatchModal';
 
 const customGRID =
     'sm:grid-cols-[0.9fr_1.4fr_1.2fr_0.7fr_0.6fr_1fr_1.5fr_2.5rem]!';
@@ -177,8 +178,8 @@ export default function BatchesListPage() {
                                 </span>
                             ) : (
                                 <span className="flex items-center gap-1">
-                                    <X className="size-4 text-danger-600" /> Link
-                                    Disabled
+                                    <X className="size-4 text-danger-600" />{' '}
+                                    Link Disabled
                                 </span>
                             )}
                         </div>
@@ -211,6 +212,15 @@ export default function BatchesListPage() {
                 listHeader={listHeader}
                 renderCard={renderRow}
                 onRefreshRef={(fn) => (refreshRef.current = fn)}
+                renderModal={(m) => (
+                    <CreateBatchModal
+                        open
+                        mode={m.mode}
+                        batch={m.row}
+                        onClose={m.onClose}
+                        onSubmit={m.onSubmit}
+                    />
+                )}
             />
 
             <BatchRegistrationModal

@@ -6,9 +6,11 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Models\Batches;
 use App\Models\PartnerSchools;
 use App\Models\Trainee;
+use App\Support\QrCode;
 use App\Support\Statuses;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -56,6 +58,12 @@ class PublicRegistrationController extends Controller
                 'level' => $batch->academicLevel?->name,
                 'program' => $batch->academicProgram?->name,
             ],
+            // SEO / social-share metadata for the page <Head>. `ogImage` is the
+            // absolute, guest-reachable QR of the registration link, so a shared
+            // link previews with a scannable code.
+            'metaDescription' => $this->metaDescription($batch),
+            'registerUrl' => route('public.register', $token),
+            'ogImage' => route('public.register.qr', $token),
             // Active partner schools for the affiliation selector (the auth-gated
             // lookup endpoint isn't reachable by guests, so pass them as props).
             'schools' => PartnerSchools::query()
@@ -64,6 +72,32 @@ class PublicRegistrationController extends Controller
                 ->get(['id', 'school_name'])
                 ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
         ]);
+    }
+
+    /**
+     * Guest-reachable QR image of the batch's public registration link, rendered
+     * as an inline SVG. Used as the register page's og:image / twitter:image.
+     */
+    public function qr(string $token): Response
+    {
+        $this->resolveBatch($token);
+
+        $svg = QrCode::svg(route('public.register', $token));
+
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    /** Human-readable share/description line built from the batch's attributes. */
+    protected function metaDescription(Batches $batch): string
+    {
+        $program = $batch->academicProgram?->name ?? 'training program';
+        $setup = $batch->setup === 'f2f' ? 'Face to Face' : 'Online';
+
+        return "Register for {$program} ({$setup}) — batch {$batch->batch_code}. "
+            . 'Complete your application online in a few minutes.';
     }
 
     /**

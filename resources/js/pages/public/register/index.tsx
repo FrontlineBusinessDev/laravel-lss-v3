@@ -1,7 +1,7 @@
-import { LogoMark } from '@/components/Logo';
-import { useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { LogoMark } from '@/components/Logo';
 
 interface PublicBatch {
     batch_code: string;
@@ -82,11 +82,18 @@ export default function PublicRegisterPage({
     token,
     batch,
     schools,
+    metaDescription,
+    registerUrl,
+    ogImage,
 }: {
     token: string;
     batch: PublicBatch;
     schools: School[];
+    metaDescription: string;
+    registerUrl: string;
+    ogImage: string;
 }) {
+    const pageTitle = `Batch Registration · ${batch.batch_code}`;
     const flash = usePage().props.flash as
         | { success?: string; error?: string }
         | undefined;
@@ -176,6 +183,55 @@ export default function PublicRegisterPage({
 
     return (
         <Shell>
+            <Head title={pageTitle}>
+                <meta
+                    head-key="description"
+                    name="description"
+                    content={metaDescription}
+                />
+                <meta head-key="og:type" property="og:type" content="website" />
+                <meta
+                    head-key="og:title"
+                    property="og:title"
+                    content={pageTitle}
+                />
+                <meta
+                    head-key="og:description"
+                    property="og:description"
+                    content={metaDescription}
+                />
+                <meta
+                    head-key="og:image"
+                    property="og:image"
+                    content={ogImage}
+                />
+                <meta
+                    head-key="og:url"
+                    property="og:url"
+                    content={registerUrl}
+                />
+                <meta
+                    head-key="twitter:card"
+                    name="twitter:card"
+                    content="summary_large_image"
+                />
+                <meta
+                    head-key="twitter:title"
+                    name="twitter:title"
+                    content={pageTitle}
+                />
+                <meta
+                    head-key="twitter:description"
+                    name="twitter:description"
+                    content={metaDescription}
+                />
+                <meta
+                    head-key="twitter:image"
+                    name="twitter:image"
+                    content={ogImage}
+                />
+            </Head>
+
             {header}
             {flash?.error && (
                 <p className="text-danger-700 mb-4 rounded-md bg-danger-50 px-3 py-2 text-xs">

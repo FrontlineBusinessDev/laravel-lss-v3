@@ -6,12 +6,9 @@ use App\Http\Controllers\BaseController;
 use App\Models\Batches;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Support\QrCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Writer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -150,19 +147,12 @@ class BatchesController extends BaseController
     }
 
     /**
-     * Render $text as an inline SVG QR code. The XML prolog is stripped so the
-     * markup embeds cleanly into the client via innerHTML.
+     * Render $text as an inline SVG QR code. Delegates to the shared
+     * App\Support\QrCode so this and the public og:image route render identically.
      */
     protected function qrSvg(string $text): string
     {
-        $renderer = new ImageRenderer(
-            new RendererStyle(220, 1),
-            new SvgImageBackEnd(),
-        );
-        $svg = (new Writer($renderer))->writeString($text);
-        $start = strpos($svg, '<svg');
-
-        return $start !== false ? substr($svg, $start) : $svg;
+        return QrCode::svg($text);
     }
 
     /**
