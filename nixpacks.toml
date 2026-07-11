@@ -14,7 +14,7 @@ cmds = [
 
 # PRODUCTION BUILD
 [start]
-cmd = "php artisan migrate --force && php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &"
+cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &"
 
 # OCTANE BUILD FOR FASTER DATA RETREIVAL BUT CONSUME MORE RESOURCES
 # Octane manages the PHP server and keeps it highly concurrent
