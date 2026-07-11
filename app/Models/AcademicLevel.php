@@ -21,6 +21,6 @@ class AcademicLevel extends Model
 
     public function batches(): HasMany
     {
-        return $this->hasMany(Batch::class, 'academic_level_id');
+        return $this->hasMany(Batches::class, 'academic_level_id');
     }
 }

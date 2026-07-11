@@ -25,6 +25,6 @@ class AcademicIndustry extends Model
 
     public function batches(): HasMany
     {
-        return $this->hasMany(Batch::class, 'academic_industry_id');
+        return $this->hasMany(Batches::class, 'academic_industry_id');
     }
 }

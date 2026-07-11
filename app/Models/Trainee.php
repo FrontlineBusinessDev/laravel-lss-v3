@@ -40,7 +40,7 @@ class Trainee extends Model
 
     public function batch(): BelongsTo
     {
-        return $this->belongsTo(Batch::class, 'batch_id');
+        return $this->belongsTo(Batches::class, 'batch_id');
     }
 
     public function documents(): HasMany

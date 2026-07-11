@@ -26,6 +26,6 @@ class AcademicProgram extends Model
 
     public function batches(): HasMany
     {
-        return $this->hasMany(Batch::class, 'academic_program_id');
+        return $this->hasMany(Batches::class, 'academic_program_id');
     }
 }
