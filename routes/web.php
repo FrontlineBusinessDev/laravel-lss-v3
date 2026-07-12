@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AccountSetupController;
 use App\Http\Controllers\Batches\BatchesController;
 use App\Http\Controllers\Batches\BatchTraineesController;
 use App\Http\Controllers\Batches\BatchViewController;
+use App\Http\Controllers\Developer\SystemLogController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Lss\AnnouncementController;
 use App\Http\Controllers\Lss\BiometricsController;
@@ -47,8 +48,10 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])
 Route::get('/register/{token}', [PublicRegistrationController::class, 'show'])->name('public.register');
 Route::post('/register/{token}', [PublicRegistrationController::class, 'store'])->name('public.register.store');
 // First-party QR image for the batch's public link — used as the register
-// page's og:image / twitter:image (an absolute, guest-reachable URL).
-Route::get('/register/{token}/qr', [PublicRegistrationController::class, 'qr'])->name('public.register.qr');
+// page's og:image / twitter:image (an absolute, guest-reachable URL). Answers
+// HEAD as well as GET: some social scrapers issue a HEAD to validate the image
+// (content-type/length) before fetching it, and a HEAD-less route 405s them.
+Route::match(['get', 'head'], '/register/{token}/qr', [PublicRegistrationController::class, 'qr'])->name('public.register.qr');
 
 // Static pages only (no password-reset backend wired up yet — see
 // FortifyServiceProvider / config/fortify.php, only the `login` feature
@@ -135,5 +138,13 @@ Route::middleware('auth')->group(function () {
     });
     Route::middleware('permission:manage roles')->group(function () {
         Route::crudModule('/settings/roles', RoleController::class, 'settings.roles');
+    });
+
+    // Developer-only global audit trail. Read-only: the index CSR shell plus the
+    // DataTableField list feed. Gated to the `developer` role (auth runs first,
+    // via the enclosing group + BaseController's own auth middleware).
+    Route::middleware('role:developer')->group(function () {
+        Route::get('/system-log', [SystemLogController::class, 'index'])->name('system-log.index');
+        Route::get('/system-log/pagination-search', [SystemLogController::class, 'paginationSearch'])->name('system-log.pagination-search');
     });
 });

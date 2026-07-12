@@ -1,63 +1,24 @@
 import { Building2, Video } from 'lucide-react';
-import type { ReactNode } from 'react';
 
 /**
  * Presentational atoms for the batch create/edit modal (see CreateBatchModal).
- * Kept separate so the modal file stays focused on state + submission.
+ * The generic field/input/label atoms now live in the shared form module so the
+ * batch modal and the DataTableField record modal render identically; only the
+ * batch-specific SetupToggle stays here. Re-exported for existing call sites.
  */
-const labelCls = 'mb-1.5 block text-sm font-medium text-neutral-700';
+export {
+    Field,
+    formatDate,
+    inputCls,
+    labelCls,
+    ReadonlyField,
+    textareaCls,
+} from '@/components/form/Field';
 
 const SETUP_CHOICES = [
     { value: 'f2f', label: 'Face-to-face', icon: Building2 },
     { value: 'online', label: 'Online', icon: Video },
 ] as const;
-
-/** "Mon D, YYYY" — the read-only Created-date display format. */
-export const formatDate = (d: Date) =>
-    d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-
-export function Field({
-    label,
-    error,
-    children,
-}: {
-    label: string;
-    error?: string;
-    children: ReactNode;
-}) {
-    return (
-        <div>
-            <label className={labelCls}>{label}</label>
-            {children}
-            {error && <p className="mt-1 text-xs text-danger-600">{error}</p>}
-        </div>
-    );
-}
-
-export function ReadonlyField({
-    label,
-    value,
-    mono,
-}: {
-    label: string;
-    value: string;
-    mono?: boolean;
-}) {
-    return (
-        <div>
-            <label className={labelCls}>{label}</label>
-            <div
-                className={`flex h-9 items-center rounded-md border border-neutral-200 bg-neutral-50 px-2.5 text-sm text-neutral-500 ${mono ? 'font-mono' : ''}`}
-            >
-                {value}
-            </div>
-        </div>
-    );
-}
 
 export function SetupToggle({
     value,

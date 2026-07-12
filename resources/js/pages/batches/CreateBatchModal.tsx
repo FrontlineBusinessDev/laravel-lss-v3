@@ -9,6 +9,7 @@ import { loadLookupOptions } from '@/types/reusable/fields';
 import {
     Field,
     formatDate,
+    inputCls,
     ReadonlyField,
     SetupToggle,
 } from './CreateBatchFields';
@@ -31,9 +32,6 @@ type Values = {
     date_started: string;
     is_public_url_enable: boolean;
 };
-
-const inputCls =
-    'w-full rounded-md border border-neutral-200 bg-white px-2.5 h-9 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100';
 
 // The three async-select lookups are structurally identical — drive them from
 // one config instead of three near-duplicate JSX blocks. `rel` is the

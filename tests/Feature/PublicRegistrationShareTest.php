@@ -38,10 +38,27 @@ test('qr endpoint returns a 1200x630 png with the right headers', function () {
     $response->assertOk();
     expect($response->headers->get('Content-Type'))->toBe('image/png');
     expect($response->headers->get('Content-Length'))->not->toBeNull();
+    // Long-lived cache so scrapers/CDNs don't re-render on every fetch (the
+    // ?v=updated_at query is what busts it after a batch edit).
+    expect($response->headers->get('Cache-Control'))->toContain('max-age=86400');
 
     $size = getimagesizefromstring($response->getContent());
     expect($size)->not->toBeFalse();
     expect([$size[0], $size[1]])->toBe([1200, 630]);
+});
+
+test('qr endpoint also answers HEAD (some scrapers probe before GET)', function () {
+    $token = makeShareBatch()->public_registration_url_id;
+
+    $this->call('HEAD', route('public.register.qr', $token))->assertOk();
+});
+
+test('og:title and og:description are present and non-empty', function () {
+    $html = $this->get(route('public.register', makeShareBatch()->public_registration_url_id))->getContent();
+
+    expect($html)
+        ->toMatch('#property="og:title" content="[^"]+"#')
+        ->toMatch('#property="og:description" content="[^"]+"#');
 });
 
 test('register page renders sized, cache-busted og and twitter tags', function () {

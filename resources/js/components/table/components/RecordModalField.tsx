@@ -1,0 +1,180 @@
+/**
+ * @file components/table/components/RecordModalField.tsx
+ * The dynamic input renderer for RecordModal. Split out of RecordModal so each
+ * file stays focused (and under the line cap), and restyled onto the shared
+ * form atoms (Field / inputCls / textareaCls) so the generic record modal looks
+ * identical to CreateBatchModal.
+ *
+ * Supported types: text, number, email, password, date, datetime-local,
+ *                  textarea, select, checkbox, async-select, file.
+ */
+
+import { Field, inputCls, textareaCls } from '@/components/form/Field';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
+import { FileUploadField } from '@/hooks/use-file-upload-field';
+import type { FieldDef } from '../types';
+import type { FileFieldValue } from '@/types/reusable/fields';
+
+interface DynamicFieldProps<T> {
+    field: FieldDef<T>;
+    value: unknown;
+    error?: string;
+    disabled?: boolean;
+    /** Preset label for async-select edit mode (resolved from the row). */
+    initialLabel?: string;
+    onChange: (value: unknown) => void;
+}
+
+export function DynamicField<T>({
+    field,
+    value,
+    error,
+    disabled,
+    initialLabel,
+    onChange,
+}: DynamicFieldProps<T>) {
+    if (field.type === 'file') {
+        return (
+            <Field
+                label={field.label}
+                required={field.required}
+                helpText={field.helpText}
+                error={error}
+            >
+                <FileUploadField
+                    value={
+                        (value as FileFieldValue) ?? {
+                            existing: [],
+                            files: [],
+                            removedIds: [],
+                        }
+                    }
+                    onChange={onChange}
+                    multiple={field.multiple}
+                    accept={field.accept}
+                    maxSizeMB={field.maxSizeMB}
+                    maxFiles={field.maxFiles}
+                    preview={field.preview}
+                    disabled={disabled}
+                    error={error}
+                />
+            </Field>
+        );
+    }
+
+    if (field.type === 'async-select') {
+        return (
+            <Field label={field.label} required={field.required} error={error}>
+                <AsyncSelectField
+                    value={value}
+                    onChange={onChange}
+                    loadOptions={field.loadOptions!}
+                    getOptionLabel={field.getOptionLabel}
+                    initialLabel={initialLabel}
+                    placeholder={field.placeholder}
+                    debounceMs={field.debounceMs}
+                    minSearchLength={field.minSearchLength}
+                    disabled={disabled}
+                    error={error}
+                />
+            </Field>
+        );
+    }
+
+    if (field.type === 'checkbox') {
+        return (
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5">
+                <input
+                    type="checkbox"
+                    checked={Boolean(value)}
+                    disabled={disabled}
+                    onChange={(e) => onChange(e.target.checked)}
+                    className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-100"
+                />
+                <span className="text-sm font-medium text-neutral-700">
+                    {field.label}
+                </span>
+            </label>
+        );
+    }
+
+    return (
+        <Field
+            label={field.label}
+            required={field.required}
+            helpText={field.helpText}
+            error={error}
+        >
+            <FieldControl
+                field={field}
+                value={value}
+                disabled={disabled}
+                onChange={onChange}
+            />
+        </Field>
+    );
+}
+
+/** The bare control for text-like / select / textarea fields (no label wrapper). */
+function FieldControl<T>({
+    field,
+    value,
+    disabled,
+    onChange,
+}: {
+    field: FieldDef<T>;
+    value: unknown;
+    disabled?: boolean;
+    onChange: (value: unknown) => void;
+}) {
+    if (field.type === 'textarea') {
+        return (
+            <textarea
+                rows={3}
+                value={(value as string) ?? ''}
+                disabled={disabled}
+                placeholder={field.placeholder}
+                onChange={(e) => onChange(e.target.value)}
+                className={textareaCls}
+            />
+        );
+    }
+
+    if (field.type === 'select') {
+        return (
+            <select
+                value={(value as string | number) ?? ''}
+                disabled={disabled}
+                onChange={(e) => onChange(e.target.value)}
+                className={inputCls}
+            >
+                <option value="" disabled>
+                    {field.placeholder ??
+                        `Select ${field.label.toLowerCase()}…`}
+                </option>
+                {field.options?.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                    </option>
+                ))}
+            </select>
+        );
+    }
+
+    return (
+        <input
+            type={field.type ?? 'text'}
+            value={(value as string | number) ?? ''}
+            disabled={disabled}
+            placeholder={field.placeholder}
+            onChange={(e) =>
+                onChange(
+                    field.type === 'number'
+                        ? e.target.valueAsNumber
+                        : e.target.value,
+                )
+            }
+            className={inputCls}
+        />
+    );
+}

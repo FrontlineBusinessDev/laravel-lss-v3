@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\EnsureUserIsActive::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
+            // Audit-trail "visit" logging. Self-guards on an authenticated user
+            // and an Inertia/HTML page response, so it no-ops on guest routes
+            // and JSON data endpoints (see LogPageVisit).
+            \App\Http\Middleware\LogPageVisit::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
         $middleware->alias([

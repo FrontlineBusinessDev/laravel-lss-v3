@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { usePermission } from '@/hooks/use-permissions';
 import { NavLink, useNavigate } from '@/lib/router-compat';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
@@ -16,6 +17,7 @@ import {
     ListChecks,
     LogOut,
     Megaphone,
+    ScrollText,
     Settings,
     Star,
     User,
@@ -45,12 +47,22 @@ const NAV_ITEMS = [
     { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
+// Developer-only entries, appended when the current user has the developer role.
+const DEVELOPER_ITEMS = [
+    { to: '/system-log', label: 'System Log', icon: ScrollText },
+];
+
 interface SidebarProps {
     mobileOpen: boolean;
     onCloseMobile: () => void;
 }
 
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
+    const { hasRole } = usePermission();
+    const navItems = hasRole('developer')
+        ? [...NAV_ITEMS, ...DEVELOPER_ITEMS]
+        : NAV_ITEMS;
+
     return (
         <>
             {mobileOpen && (
@@ -87,7 +99,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                     </div>
                 </div>
                 <nav className="lss-scrollbar flex flex-1 flex-col gap-0.5 overflow-y-auto">
-                    {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+                    {navItems.map(({ to, label, icon: Icon }) => (
                         <NavLink
                             key={to}
                             to={to}
