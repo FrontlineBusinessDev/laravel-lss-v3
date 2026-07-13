@@ -1,12 +1,12 @@
 <?php
 
+use App\Http\Controllers\Announcement\AnnoucementController;
 use App\Http\Controllers\Auth\AccountSetupController;
 use App\Http\Controllers\Batches\BatchesController;
 use App\Http\Controllers\Batches\BatchTraineesController;
 use App\Http\Controllers\Batches\BatchViewController;
 use App\Http\Controllers\Developer\SystemLogController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Lss\AnnouncementController;
 use App\Http\Controllers\Lss\BiometricsController;
 use App\Http\Controllers\Lss\CertificateController;
 use App\Http\Controllers\Lss\DashboardController;
@@ -114,7 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/batches/{id}/financial', [BatchViewController::class, 'financial'])->name('batches.financial');
     Route::get('/trainees', [TraineeController::class, 'index'])->name('trainees.index');
     Route::get('/trainees/{id}', [TraineeController::class, 'show'])->name('trainees.show');
-    Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
@@ -127,6 +127,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
+    Route::crudModule('/announcements', AnnoucementController::class, 'announcements');
     // Users & Roles admin JSON API consumed by the settings DataTableField.
     // Coarse access is gated by the Spatie permission; UserController layers on
     // the creator-scoped role matrix, and RolesController is developer-only.

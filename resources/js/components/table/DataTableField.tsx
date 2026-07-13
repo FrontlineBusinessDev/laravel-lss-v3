@@ -36,7 +36,7 @@ import {
     Trash2,
     UserRoundX,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { act, useCallback, useEffect, useMemo, useState } from 'react';
 import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
 import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
 import { useAsyncAction } from '@/hooks/use-async-action';
@@ -142,6 +142,8 @@ export function DataTableField<T extends Record<string, unknown>>({
     editPermission,
     archivePermission,
     deletePermission,
+    localModalState,
+    setLocalModalState,
 }: DataTableProps<T>) {
     const { can } = usePermission();
     const { toast } = useToast();
@@ -1106,6 +1108,40 @@ export function DataTableField<T extends Record<string, unknown>>({
                             title={
                                 modalTitle?.(modalState) ??
                                 (modalState.mode === 'create'
+                                    ? `New ${title ?? 'record'}`
+                                    : `Edit ${title ?? 'record'}`)
+                            }
+                            uploadProgress={uploadProgress}
+                            onClose={closeModal}
+                            onSubmit={handleSave}
+                            onError={onSaveError}
+                        />
+                    ))}
+                {localModalState &&
+                    (renderModal ? (
+                        renderModal({
+                            mode: localModalState.mode,
+                            row: localModalState.row,
+                            title:
+                                modalTitle?.(localModalState) ??
+                                (localModalState.mode === 'create'
+                                    ? `New ${title ?? 'record'}`
+                                    : `Edit ${title ?? 'record'}`),
+                            isLoading:
+                                crud.create.isPending || crud.update.isPending,
+                            error: modalError,
+                            uploadProgress,
+                            onClose: () => setLocalModalState(null),
+                            onSubmit: handleSave,
+                        })
+                    ) : (
+                        <RecordModal
+                            mode={localModalState.mode}
+                            row={localModalState.row}
+                            fields={resolvedFields}
+                            title={
+                                modalTitle?.(localModalState) ??
+                                (localModalState.mode === 'create'
                                     ? `New ${title ?? 'record'}`
                                     : `Edit ${title ?? 'record'}`)
                             }

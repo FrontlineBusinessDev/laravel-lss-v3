@@ -258,18 +258,20 @@ export type AnnouncementAudience =
     | 'Trainees with incomplete documents'
     | 'Custom group';
 
-export interface Announcement {
-    id: string;
-    title: string;
-    body: string;
-    postedBy: string;
-    postedAt: string;
-    audience: AnnouncementAudience;
-    batchNo?: string; // when audience === 'Specific batch'
-    groupTraineeNames?: string[]; // when audience === 'Custom group'
-    recipientCount: number;
-    status: Extract<StatusKind, 'active' | 'archived'>;
-}
+// export interface Announcement {
+//     id: string;
+//     title: string;
+//     body: string;
+//     postedBy: string;
+//     postedAt: string;
+//     subject: string;
+//     description: string;
+//     audience: AnnouncementAudience;
+//     batchNo?: string; // when audience === 'Specific batch'
+//     groupTraineeNames?: string[]; // when audience === 'Custom group'
+//     recipientCount: number;
+//     status: Extract<StatusKind, 'active' | 'archived'>;
+// }
 
 export interface CalendarEvent {
     id: string;

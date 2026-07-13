@@ -3,7 +3,7 @@
  * The full prop surface + supporting contracts for <DataTableField>.
  */
 
-import type { ReactNode } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type { CardActions } from '@/types/reusable/card';
 import type { FieldDef, FieldOption, ModalMode } from '@/types/reusable/fields';
 import type { PaginationMeta } from '@/types/reusable/pagination';
@@ -72,7 +72,7 @@ export interface DataTableProps<T> {
     fields?: FieldDef<T>[];
     title?: string;
     description?: string;
-    actions?: ReactNode;
+    actions?: ReactNode | boolean;
     actionsCreateClassName?: string;
     renderCard?: (row: T, actions: CardActions) => ReactNode;
     renderModal?: (props: RenderModalProps<T>) => ReactNode;
@@ -110,4 +110,8 @@ export interface DataTableProps<T> {
     editPermission?: string;
     archivePermission?: string;
     deletePermission?: string;
+    localModalState?: { mode: ModalMode; row?: T } | null;
+    setLocalModalState?: Dispatch<
+        SetStateAction<{ mode: ModalMode; row?: T } | null>
+    >;
 }
