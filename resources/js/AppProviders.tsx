@@ -12,13 +12,13 @@ import { ToastProvider } from './hooks/use-toast';
  * A fresh instance per call avoids leaking cached data between SSR requests.
  */
 export function makeQueryClient(): QueryClient {
-    return new QueryClient({
-        defaultOptions: {
-            queries: {
-                staleTime: Infinity,
-            },
-        },
-    });
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: Infinity
+      }
+    }
+  });
 }
 
 /**
@@ -27,21 +27,19 @@ export function makeQueryClient(): QueryClient {
  * HTML and the client render match, preventing hydration mismatches.
  */
 export function AppProviders({
-    client,
-    children,
+  client,
+  children
 }: {
-    client: QueryClient;
-    children: ReactNode;
+  client: QueryClient;
+  children: ReactNode;
 }) {
-    return (
-        <QueryClientProvider client={client}>
-            <SystemToastProvider>
-                <ToastProvider>
-                    <NotificationsProvider>
-                        <BatchesProvider>{children}</BatchesProvider>
+  return <QueryClientProvider client={client} data-cy="app-providers-query-client-provider-1">
+            <SystemToastProvider data-cy="app-providers-system-toast-provider-2">
+                <ToastProvider data-cy="app-providers-toast-provider-3">
+                    <NotificationsProvider data-cy="app-providers-notifications-provider-4">
+                        <BatchesProvider data-cy="app-providers-batches-provider-5">{children}</BatchesProvider>
                     </NotificationsProvider>
                 </ToastProvider>
             </SystemToastProvider>
-        </QueryClientProvider>
-    );
+        </QueryClientProvider>;
 }
