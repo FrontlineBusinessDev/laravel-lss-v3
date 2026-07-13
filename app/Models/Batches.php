@@ -47,6 +47,6 @@ class Batches extends Model
 
     public function trainees(): HasMany
     {
-        return $this->hasMany(Trainee::class, 'batch_id');
+        return $this->hasMany(Trainees::class, 'batch_id');
     }
 }

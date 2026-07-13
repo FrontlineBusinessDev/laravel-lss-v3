@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { copyText } from '@/lib/clipboard';
 import { cn } from '@/lib/utils';
-import { CreateBatchModal } from '@/pages/batches/CreateBatchModal';
+import { CreateBatchModal } from '@/pages/developer/batches/CreateBatchModal';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
 

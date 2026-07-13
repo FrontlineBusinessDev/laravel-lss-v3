@@ -9,7 +9,7 @@
 
 import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { avatarBg, initialsOf } from '@/pages/dashboard/shared';
+import { avatarBg, initialsOf } from '@/pages/developer/dashboard/shared';
 import type { CardActions } from '@/types/reusable/card';
 
 /** Colored initials avatar (deterministic gradient from the name). */

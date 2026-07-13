@@ -1,0 +1,964 @@
+import { useMemo, useState } from 'react';
+import {
+    Plus,
+    Printer,
+    Lock,
+    CheckCircle2,
+    FolderOpen,
+    Trash2,
+    X,
+    Info,
+} from 'lucide-react';
+import { Button } from '@/components/Button';
+import { Modal } from '@/components/Modal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { Dropdown } from '@/components/Dropdown';
+import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
+import { TooltipIconButton } from '@/components/TooltipIconButton';
+import { useToast } from '@/components/Toast';
+import { taskRecords as initialTaskRecords, appUsers } from '@/data/mockData';
+import { useBatches } from '@/context/BatchesContext';
+import type { TaskRecord } from '@/types';
+import { cn } from '@/lib/utils';
+import {
+    AddTaskModal,
+    type TaskFormValues,
+} from '@/pages/developer/tasks/AddTaskModal';
+import { DailyTaskSheetPrint } from '@/pages/developer/tasks/DailyTaskSheetPrint';
+
+const TABS = ['Task management', 'Daily task sheet'] as const;
+
+const STATUS_STYLE: Record<string, string> = {
+    open: 'bg-warning-50 text-warning-800',
+    completed: 'bg-success-50 text-success-800',
+    locked: 'bg-neutral-100 text-neutral-600',
+};
+const STATUS_LABEL: Record<string, string> = {
+    open: 'Open',
+    completed: 'Completed',
+    locked: 'Locked',
+};
+
+const trainerNames = Array.from(
+    new Set(
+        appUsers
+            .filter((u) => u.role === 'Trainer')
+            .map((u) => u.name)
+            .concat(['Sir Ralph', 'Sir Roy', 'Sir Mon', 'Ms. Thea']),
+    ),
+)
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .sort();
+
+/** Draft vs. applied filter state for the Daily Task Sheet tab, per the Filter / Cancel workflow. */
+interface ReportFilters {
+    dateFrom: string;
+    dateTo: string;
+    batch: string;
+    trainees: string[];
+    trainers: string[];
+}
+const EMPTY_FILTERS: ReportFilters = {
+    dateFrom: '',
+    dateTo: '',
+    batch: '',
+    trainees: [],
+    trainers: [],
+};
+
+/** Pending destructive/state-changing action awaiting confirmation. */
+type PendingAction = {
+    kind: 'complete' | 'lock' | 'delete';
+    task: TaskRecord;
+} | null;
+
+const ACTION_COPY: Record<
+    NonNullable<PendingAction>['kind'],
+    {
+        title: string;
+        body: (t: string) => string;
+        confirmLabel: string;
+        tone: 'danger' | 'default';
+    }
+> = {
+    complete: {
+        title: 'Mark task as complete',
+        body: (t) =>
+            `Mark "${t}" as complete? The trainee's time spent will be locked in for reporting.`,
+        confirmLabel: 'Mark complete',
+        tone: 'default',
+    },
+    lock: {
+        title: 'Lock task',
+        body: (t) =>
+            `Lock "${t}"? Locked tasks can no longer be edited or completed.`,
+        confirmLabel: 'Lock task',
+        tone: 'default',
+    },
+    delete: {
+        title: 'Delete task',
+        body: (t) => `Delete "${t}"? This cannot be undone.`,
+        confirmLabel: 'Delete',
+        tone: 'danger',
+    },
+};
+
+export default function TasksPage() {
+    const { trainees, batches } = useBatches();
+    const { showToast } = useToast();
+    const traineeNames = useMemo(
+        () => Array.from(new Set(trainees.map((t) => t.name))).sort(),
+        [trainees],
+    );
+    const batchNumbers = useMemo(
+        () => batches.map((b) => b.batchNo),
+        [batches],
+    );
+    const [tab, setTab] = useState<(typeof TABS)[number]>('Task management');
+    const [records, setRecords] = useState<TaskRecord[]>(initialTaskRecords);
+    const [addModalOpen, setAddModalOpen] = useState(false);
+    const [viewTask, setViewTask] = useState<TaskRecord | null>(null);
+    const [managementBatchFilter, setManagementBatchFilter] = useState('');
+    const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+
+    const [draftFilters, setDraftFilters] =
+        useState<ReportFilters>(EMPTY_FILTERS);
+    const [appliedFilters, setAppliedFilters] =
+        useState<ReportFilters>(EMPTY_FILTERS);
+
+    const managementRows = useMemo(
+        () =>
+            records.filter((t) =>
+                !managementBatchFilter || managementBatchFilter === 'Batch'
+                    ? true
+                    : t.batchNo === managementBatchFilter,
+            ),
+        [records, managementBatchFilter],
+    );
+
+    // Task Report / Daily Task Sheet is a reporting surface for completed work
+    // (per spec: "display completed task records"), so it's scoped to
+    // status === 'completed' before any user-chosen filters are applied.
+    const completedRecords = useMemo(
+        () => records.filter((t) => t.status === 'completed'),
+        [records],
+    );
+
+    const reportRows = useMemo(() => {
+        return completedRecords.filter((t) => {
+            if (appliedFilters.dateFrom && t.date < appliedFilters.dateFrom)
+                return false;
+            if (appliedFilters.dateTo && t.date > appliedFilters.dateTo)
+                return false;
+            if (
+                appliedFilters.batch &&
+                appliedFilters.batch !== 'Batch' &&
+                t.batchNo !== appliedFilters.batch
+            )
+                return false;
+            if (
+                appliedFilters.trainees.length &&
+                !appliedFilters.trainees.includes(t.trainee)
+            )
+                return false;
+            if (
+                appliedFilters.trainers.length &&
+                !appliedFilters.trainers.includes(t.trainer)
+            )
+                return false;
+            return true;
+        });
+    }, [completedRecords, appliedFilters]);
+
+    const totalTimeSpent = reportRows.reduce((sum, t) => sum + t.timeSpent, 0);
+
+    const applyFilters = () => setAppliedFilters(draftFilters);
+    const cancelFilters = () => {
+        setDraftFilters(EMPTY_FILTERS);
+        setAppliedFilters(EMPTY_FILTERS);
+    };
+
+    function handleAddTask(values: TaskFormValues) {
+        const newTask: TaskRecord = {
+            id: `tk-${Date.now()}`,
+            batchNo: values.batchNo,
+            task: values.task.trim(),
+            description: values.description.trim(),
+            timeGoal: Number(values.timeGoal),
+            timeSpent: 0,
+            trainee: values.trainee,
+            trainer: values.trainer,
+            date: values.date,
+            status: 'open',
+            onLeave: false,
+        };
+        setRecords((prev) => [newTask, ...prev]);
+        setAddModalOpen(false);
+        showToast(
+            `Task "${newTask.task}" assigned to ${newTask.trainee}.`,
+            'success',
+        );
+    }
+
+    function requestAction(
+        kind: NonNullable<PendingAction>['kind'],
+        task: TaskRecord,
+    ) {
+        setPendingAction({ kind, task });
+    }
+
+    function confirmPendingAction() {
+        if (!pendingAction) return;
+        const { kind, task } = pendingAction;
+        if (kind === 'delete') {
+            setRecords((prev) => prev.filter((t) => t.id !== task.id));
+            showToast(`"${task.task}" was deleted.`, 'error');
+        } else {
+            const status = kind === 'complete' ? 'completed' : 'locked';
+            setRecords((prev) =>
+                prev.map((t) => (t.id === task.id ? { ...t, status } : t)),
+            );
+            showToast(
+                `"${task.task}" ${kind === 'complete' ? 'marked as complete' : 'locked'}.`,
+                'success',
+            );
+        }
+        setPendingAction(null);
+    }
+
+    const updateTimeSpent = (id: string, value: number) => {
+        setRecords((prev) =>
+            prev.map((t) => (t.id === id ? { ...t, timeSpent: value } : t)),
+        );
+    };
+
+    const updateRemarks = (id: string, value: string) => {
+        setRecords((prev) =>
+            prev.map((t) => (t.id === id ? { ...t, remarks: value } : t)),
+        );
+    };
+
+    const commitRemarks = (task: TaskRecord) => {
+        showToast(
+            `Remarks saved for ${task.trainee}\u2019s "${task.task}".`,
+            'success',
+        );
+    };
+
+    const remarksFor = (t: TaskRecord) =>
+        t.onLeave ? (t.leaveReason ?? 'On approved leave') : (t.remarks ?? '');
+
+    const dateRangeLabel =
+        appliedFilters.dateFrom || appliedFilters.dateTo
+            ? `${appliedFilters.dateFrom || 'Start'} \u2013 ${appliedFilters.dateTo || 'Present'}`
+            : 'All dates';
+    const printGeneratedAt = new Date().toLocaleString('en-PH', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    });
+
+    return (
+        <div>
+            <div className="no-print mb-4 flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-semibold text-ink">Tasks</h1>
+                    <p className="text-sm text-neutral-500">
+                        Daily trainee task assignment and reporting
+                    </p>
+                </div>
+                {tab === 'Task management' && (
+                    <Button
+                        variant="primary"
+                        icon={Plus}
+                        onClick={() => setAddModalOpen(true)}
+                    >
+                        Add task
+                    </Button>
+                )}
+            </div>
+
+            <div className="no-print mb-4 flex gap-5 border-b border-neutral-200 pl-0.5">
+                {TABS.map((t) => (
+                    <button
+                        key={t}
+                        onClick={() => setTab(t)}
+                        className={cn(
+                            'pb-2.5 text-xs font-medium transition-colors',
+                            tab === t
+                                ? 'border-b-2 border-brand-500 font-semibold text-ink'
+                                : 'text-neutral-500 hover:text-neutral-700',
+                        )}
+                    >
+                        {t}
+                    </button>
+                ))}
+            </div>
+
+            {/* ── Task management ─────────────────────────────────────────── */}
+            {tab === 'Task management' && (
+                <>
+                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-neutral-200 bg-white p-3">
+                        <Dropdown
+                            options={['Batch', ...batchNumbers]}
+                            placeholder="Batch"
+                            onChange={setManagementBatchFilter}
+                            className="sm:w-44"
+                        />
+                        <span className="ml-auto text-xs text-neutral-400">
+                            {managementRows.length} task
+                            {managementRows.length === 1 ? '' : 's'}
+                        </span>
+                    </div>
+
+                    <div className="hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block">
+                        <div className="lss-scrollbar overflow-x-auto">
+                            <table className="w-full min-w-[880px] border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-neutral-50 text-left text-xs font-medium text-neutral-500">
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Status
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Batch
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Task
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Description
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Time goal
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Trainee
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Trainer
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Date
+                                        </th>
+                                        <th className="px-4 py-2.5 text-right font-medium">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {managementRows.map((t) => (
+                                        <tr
+                                            key={t.id}
+                                            className="border-t border-neutral-100 transition-colors hover:bg-neutral-50"
+                                        >
+                                            <td className="px-4 py-2.5">
+                                                <span
+                                                    className={cn(
+                                                        'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
+                                                        STATUS_STYLE[t.status],
+                                                    )}
+                                                >
+                                                    {STATUS_LABEL[t.status]}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                                {t.batchNo}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-medium text-ink">
+                                                {t.task}
+                                            </td>
+                                            <td
+                                                className="max-w-[220px] truncate px-4 py-2.5 text-xs text-neutral-500"
+                                                title={t.description}
+                                            >
+                                                {t.description}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                                {t.timeGoal}h
+                                            </td>
+                                            <td className="px-4 py-2.5 text-neutral-600">
+                                                {t.trainee}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-neutral-600">
+                                                {t.trainer}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                                {t.date}
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                                <div className="flex justify-end gap-0.5">
+                                                    <TooltipIconButton
+                                                        icon={FolderOpen}
+                                                        label="Open"
+                                                        onClick={() =>
+                                                            setViewTask(t)
+                                                        }
+                                                    />
+                                                    <TooltipIconButton
+                                                        icon={CheckCircle2}
+                                                        label="Complete"
+                                                        disabled={
+                                                            t.status ===
+                                                                'completed' ||
+                                                            t.status ===
+                                                                'locked'
+                                                        }
+                                                        onClick={() =>
+                                                            requestAction(
+                                                                'complete',
+                                                                t,
+                                                            )
+                                                        }
+                                                    />
+                                                    <TooltipIconButton
+                                                        icon={Lock}
+                                                        label="Lock"
+                                                        disabled={
+                                                            t.status ===
+                                                            'locked'
+                                                        }
+                                                        onClick={() =>
+                                                            requestAction(
+                                                                'lock',
+                                                                t,
+                                                            )
+                                                        }
+                                                    />
+                                                    <TooltipIconButton
+                                                        icon={Trash2}
+                                                        label="Delete"
+                                                        danger
+                                                        onClick={() =>
+                                                            requestAction(
+                                                                'delete',
+                                                                t,
+                                                            )
+                                                        }
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {managementRows.length === 0 && (
+                                        <tr>
+                                            <td
+                                                colSpan={9}
+                                                className="px-4 py-10 text-center text-xs text-neutral-400"
+                                            >
+                                                No tasks match this filter.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Mobile cards */}
+                    <div className="flex flex-col gap-2 sm:hidden">
+                        {managementRows.map((t) => (
+                            <div
+                                key={t.id}
+                                className="rounded-lg border border-neutral-200 bg-white p-3.5"
+                            >
+                                <button
+                                    onClick={() => setViewTask(t)}
+                                    className="flex w-full items-start justify-between gap-2 text-left"
+                                >
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-ink">
+                                            {t.task}
+                                        </p>
+                                        <p className="truncate text-xs text-neutral-500">
+                                            {t.batchNo} · {t.trainee}
+                                        </p>
+                                    </div>
+                                    <span
+                                        className={cn(
+                                            'shrink-0 rounded-pill px-2 py-0.5 text-[11px] font-medium',
+                                            STATUS_STYLE[t.status],
+                                        )}
+                                    >
+                                        {STATUS_LABEL[t.status]}
+                                    </span>
+                                </button>
+                                <p className="mt-1.5 text-xs text-neutral-500">
+                                    {t.trainer} · {t.timeGoal}h goal · {t.date}
+                                </p>
+                                <div className="mt-2.5 flex gap-2 border-t border-neutral-100 pt-2.5">
+                                    <TooltipIconButton
+                                        icon={CheckCircle2}
+                                        label="Complete"
+                                        disabled={
+                                            t.status === 'completed' ||
+                                            t.status === 'locked'
+                                        }
+                                        onClick={() =>
+                                            requestAction('complete', t)
+                                        }
+                                    />
+                                    <TooltipIconButton
+                                        icon={Lock}
+                                        label="Lock"
+                                        disabled={t.status === 'locked'}
+                                        onClick={() => requestAction('lock', t)}
+                                    />
+                                    <TooltipIconButton
+                                        icon={Trash2}
+                                        label="Delete"
+                                        danger
+                                        onClick={() =>
+                                            requestAction('delete', t)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        {managementRows.length === 0 && (
+                            <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-xs text-neutral-400">
+                                No tasks match this filter.
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* ── Daily task sheet ─────────────────────────────────────────── */}
+            {tab === 'Daily task sheet' && (
+                <>
+                    <div className="no-print mb-3 flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-3">
+                        <div className="flex flex-wrap items-end gap-2">
+                            <div>
+                                <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                                    Date from
+                                </label>
+                                <input
+                                    type="date"
+                                    value={draftFilters.dateFrom}
+                                    onChange={(e) =>
+                                        setDraftFilters((f) => ({
+                                            ...f,
+                                            dateFrom: e.target.value,
+                                        }))
+                                    }
+                                    className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                                    Date to
+                                </label>
+                                <input
+                                    type="date"
+                                    value={draftFilters.dateTo}
+                                    onChange={(e) =>
+                                        setDraftFilters((f) => ({
+                                            ...f,
+                                            dateTo: e.target.value,
+                                        }))
+                                    }
+                                    className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                />
+                            </div>
+                            <div className="w-full sm:w-44">
+                                <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                                    Batch
+                                </label>
+                                <Dropdown
+                                    options={['Batch', ...batchNumbers]}
+                                    value={draftFilters.batch}
+                                    placeholder="Batch"
+                                    onChange={(v) =>
+                                        setDraftFilters((f) => ({
+                                            ...f,
+                                            batch: v,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="w-full sm:w-52">
+                                <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                                    Trainee
+                                </label>
+                                <MultiSelectDropdown
+                                    options={traineeNames}
+                                    value={draftFilters.trainees}
+                                    placeholder="Trainee"
+                                    onChange={(v) =>
+                                        setDraftFilters((f) => ({
+                                            ...f,
+                                            trainees: v,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="w-full sm:w-52">
+                                <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                                    Trainer
+                                </label>
+                                <MultiSelectDropdown
+                                    options={trainerNames}
+                                    value={draftFilters.trainers}
+                                    placeholder="Trainer"
+                                    onChange={(v) =>
+                                        setDraftFilters((f) => ({
+                                            ...f,
+                                            trainers: v,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="ml-auto flex gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    icon={X}
+                                    onClick={cancelFilters}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={applyFilters}
+                                >
+                                    Filter
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-[11px] text-neutral-400">
+                            <Info size={12} className="mt-0.5 shrink-0" />
+                            {
+                                'Showing completed tasks only. Open or locked tasks aren\u2019t part of the Daily Task Sheet report.'
+                            }
+                        </div>
+                    </div>
+
+                    <div className="no-print mb-3 flex items-center justify-between">
+                        <span className="text-xs text-neutral-500">
+                            {reportRows.length} record
+                            {reportRows.length === 1 ? '' : 's'}
+                        </span>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            icon={Printer}
+                            onClick={() => window.print()}
+                            disabled={reportRows.length === 0}
+                        >
+                            Print daily task sheet
+                        </Button>
+                    </div>
+
+                    <div className="no-print overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                        <div className="lss-scrollbar overflow-x-auto">
+                            <table className="w-full min-w-[1020px] border-collapse text-sm">
+                                <thead>
+                                    <tr className="bg-neutral-50 text-left text-xs font-medium text-neutral-500">
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Batch
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Task
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Description
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Time goal
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Time spent
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Remarks
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Trainee
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Trainer
+                                        </th>
+                                        <th className="px-4 py-2.5 font-medium">
+                                            Date
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {reportRows.map((t) => (
+                                        <tr
+                                            key={t.id}
+                                            className="border-t border-neutral-100"
+                                        >
+                                            <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                                {t.batchNo}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-medium text-ink">
+                                                {t.task}
+                                            </td>
+                                            <td
+                                                className="max-w-[200px] truncate px-4 py-2.5 text-xs text-neutral-500"
+                                                title={t.description}
+                                            >
+                                                {t.description}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                                {t.timeGoal}h
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                                {t.onLeave ? (
+                                                    <span className="font-mono text-xs text-neutral-400">
+                                                        0h
+                                                    </span>
+                                                ) : (
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        value={t.timeSpent}
+                                                        onChange={(e) =>
+                                                            updateTimeSpent(
+                                                                t.id,
+                                                                Number(
+                                                                    e.target
+                                                                        .value,
+                                                                ),
+                                                            )
+                                                        }
+                                                        className="h-8 w-16 rounded-md border border-neutral-200 px-2 font-mono text-xs focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                                    />
+                                                )}
+                                            </td>
+                                            <td className="max-w-[220px] px-4 py-2.5">
+                                                {t.onLeave ? (
+                                                    <span
+                                                        className="inline-flex items-center rounded-pill bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600"
+                                                        title={remarksFor(t)}
+                                                    >
+                                                        {remarksFor(t)}
+                                                    </span>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        defaultValue={
+                                                            t.remarks ?? ''
+                                                        }
+                                                        placeholder="Add remarks..."
+                                                        onChange={(e) =>
+                                                            updateRemarks(
+                                                                t.id,
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        onBlur={(e) => {
+                                                            if (
+                                                                e.target.value.trim() !==
+                                                                (
+                                                                    t.remarks ??
+                                                                    ''
+                                                                ).trim()
+                                                            )
+                                                                commitRemarks({
+                                                                    ...t,
+                                                                    remarks:
+                                                                        e.target
+                                                                            .value,
+                                                                });
+                                                        }}
+                                                        className="h-8 w-full min-w-[140px] rounded-md border border-transparent px-2 text-xs text-neutral-600 transition-colors hover:border-neutral-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                                    />
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-neutral-600">
+                                                {t.trainee}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-neutral-600">
+                                                {t.trainer}
+                                            </td>
+                                            <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                                {t.date}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {reportRows.length === 0 && (
+                                        <tr>
+                                            <td
+                                                colSpan={9}
+                                                className="px-4 py-10 text-center text-xs text-neutral-400"
+                                            >
+                                                No completed records match your
+                                                filters.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="no-print mt-3 flex justify-end text-xs text-neutral-500">
+                        Total time spent (filtered):{' '}
+                        <span className="ml-1 font-mono font-semibold text-ink">
+                            {totalTimeSpent}h
+                        </span>
+                    </div>
+
+                    <DailyTaskSheetPrint
+                        rows={reportRows}
+                        generatedAt={printGeneratedAt}
+                        dateRangeLabel={dateRangeLabel}
+                    />
+                </>
+            )}
+
+            {/* ── Add task modal ──────────────────────────────────────────── */}
+            <AddTaskModal
+                open={addModalOpen}
+                onClose={() => setAddModalOpen(false)}
+                onSave={handleAddTask}
+                batchOptions={batchNumbers}
+                traineeOptions={traineeNames}
+                trainerOptions={trainerNames}
+            />
+
+            {/* ── View task modal ("Open" action) ─────────────────────────── */}
+            <Modal
+                open={!!viewTask}
+                onClose={() => setViewTask(null)}
+                title={viewTask?.task ?? ''}
+                maxWidth={440}
+            >
+                {viewTask && (
+                    <div className="flex flex-col gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                            <span
+                                className={cn(
+                                    'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
+                                    STATUS_STYLE[viewTask.status],
+                                )}
+                            >
+                                {STATUS_LABEL[viewTask.status]}
+                            </span>
+                            <span className="font-mono text-xs text-neutral-500">
+                                {viewTask.batchNo}
+                            </span>
+                        </div>
+                        <p className="text-neutral-600">
+                            {viewTask.description}
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md bg-neutral-50 p-3 text-xs">
+                            <div>
+                                <span className="text-neutral-500">
+                                    Trainee
+                                </span>
+                                <div className="font-medium text-ink">
+                                    {viewTask.trainee}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-neutral-500">
+                                    Trainer
+                                </span>
+                                <div className="font-medium text-ink">
+                                    {viewTask.trainer}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-neutral-500">Date</span>
+                                <div className="font-mono font-medium text-ink">
+                                    {viewTask.date}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-neutral-500">
+                                    Time goal
+                                </span>
+                                <div className="font-mono font-medium text-ink">
+                                    {viewTask.timeGoal}h
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-neutral-500">
+                                    Time spent
+                                </span>
+                                <div className="font-mono font-medium text-ink">
+                                    {viewTask.onLeave
+                                        ? '0h'
+                                        : `${viewTask.timeSpent}h`}
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                                Remarks
+                            </label>
+                            {viewTask.onLeave ? (
+                                <span className="inline-flex items-center rounded-pill bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-600">
+                                    {remarksFor(viewTask)}
+                                </span>
+                            ) : (
+                                <textarea
+                                    key={viewTask.id}
+                                    defaultValue={viewTask.remarks ?? ''}
+                                    placeholder="Add remarks..."
+                                    rows={3}
+                                    onChange={(e) =>
+                                        updateRemarks(
+                                            viewTask.id,
+                                            e.target.value,
+                                        )
+                                    }
+                                    className="w-full resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-2 text-sm text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                />
+                            )}
+                        </div>
+                        <div className="mt-1 flex justify-end gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={() => setViewTask(null)}
+                            >
+                                Close
+                            </Button>
+                            {!viewTask.onLeave && (
+                                <Button
+                                    variant="primary"
+                                    onClick={() => {
+                                        commitRemarks(viewTask);
+                                        setViewTask(null);
+                                    }}
+                                >
+                                    Save remarks
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* ── Confirm status change / delete ──────────────────────────── */}
+            <ConfirmDialog
+                open={!!pendingAction}
+                onClose={() => setPendingAction(null)}
+                onConfirm={confirmPendingAction}
+                title={
+                    pendingAction ? ACTION_COPY[pendingAction.kind].title : ''
+                }
+                description={
+                    pendingAction
+                        ? ACTION_COPY[pendingAction.kind].body(
+                              pendingAction.task.task,
+                          )
+                        : ''
+                }
+                confirmLabel={
+                    pendingAction
+                        ? ACTION_COPY[pendingAction.kind].confirmLabel
+                        : 'Confirm'
+                }
+                tone={
+                    pendingAction
+                        ? ACTION_COPY[pendingAction.kind].tone
+                        : 'default'
+                }
+            />
+        </div>
+    );
+}
