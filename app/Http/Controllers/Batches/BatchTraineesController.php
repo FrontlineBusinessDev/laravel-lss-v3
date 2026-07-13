@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Batches;
 
 use App\Http\Controllers\BaseController;
-use App\Models\Trainee;
+use App\Models\Trainees;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class BatchTraineesController extends BaseController
 {
-    protected string $model = Trainee::class;
+    protected string $model = Trainees::class;
 
     protected array $searchable = ['first_name', 'last_name', 'email'];
 
@@ -29,7 +29,7 @@ class BatchTraineesController extends BaseController
     {
         $batchId = request()->route('batch');
 
-        return Trainee::query()
+        return Trainees::query()
             ->with('school:id,school_name')
             ->where('batch_id', $batchId);
     }

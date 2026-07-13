@@ -1,6 +1,5 @@
 <?php
-
-namespace App\Http\Controllers\Trainees;
+ 
 
 use App\Http\Controllers\BaseController;
 use App\Models\Trainees;

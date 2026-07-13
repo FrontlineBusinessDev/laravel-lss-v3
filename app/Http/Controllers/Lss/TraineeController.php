@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Lss;
 
 use App\Http\Controllers\Controller;
-use App\Models\Trainee;
+use App\Models\Trainees;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -11,7 +11,7 @@ use Inertia\Response;
 
 class TraineeController extends Controller
 {
-    protected string $model = Trainee::class;
+    protected string $model = Trainees::class;
     protected string $view = 'trainees/index';
 
     protected array $searchable = ['first_name', 'last_name', 'email', 'mobile_number'];

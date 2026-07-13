@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\Batches;
 use App\Models\PartnerSchools;
-use App\Models\Trainee;
+use App\Models\Trainees;
 use App\Support\OgImage;
 use App\Support\QrCode;
 use App\Support\Statuses;
@@ -171,7 +171,7 @@ class PublicRegistrationController extends Controller
         $validated = $request->validate($this->storeRules());
 
         DB::transaction(function () use ($request, $validated, $batch) {
-            $trainee = Trainee::create([
+            $trainee = Trainees::create([
                 'batch_id' => $batch->id,
                 'school_id' => $validated['school_id'],
                 'public_url_id' => (string) Str::ulid(),
@@ -250,7 +250,7 @@ class PublicRegistrationController extends Controller
      * Store one uploaded document PRIVATELY on the default cloud disk and record
      * its metadata against the trainee.
      */
-    protected function storeDocument(UploadedFile $file, Trainee $trainee, string $type): void
+    protected function storeDocument(UploadedFile $file, Trainees $trainee, string $type): void
     {
         $disk = config('filesystems.default');
         $folder = env('AWS_S3_STORAGE', 'laravel-ls-system') . '/trainee-documents';

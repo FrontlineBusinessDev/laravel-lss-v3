@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AccountSetupController;
 use App\Http\Controllers\Batches\BatchesController;
 use App\Http\Controllers\Batches\BatchTraineesController;
+use App\Http\Controllers\Trainees\TraineesController;
 use App\Http\Controllers\Batches\BatchViewController;
 use App\Http\Controllers\Developer\SystemLogController;
 use App\Http\Controllers\HomeController;
@@ -18,8 +19,8 @@ use App\Http\Controllers\Lss\ReportController;
 use App\Http\Controllers\Lss\ScheduleController;
 use App\Http\Controllers\Lss\SeminarController;
 // use App\Http\Controllers\Lss\BatchController;
-use App\Http\Controllers\Lss\TaskController;
 use App\Http\Controllers\Lss\TraineeController;
+use App\Http\Controllers\Lss\TaskController;
 use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Settings\AcademicController;
 use App\Http\Controllers\Settings\AcademicIndustryController;
@@ -112,8 +113,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/batches/{id}', [BatchViewController::class, 'trainees'])->name('batches.show');
     Route::get('/batches/{id}/activity-log', [BatchViewController::class, 'activityLog'])->name('batches.activity-log');
     Route::get('/batches/{id}/financial', [BatchViewController::class, 'financial'])->name('batches.financial');
-    Route::get('/trainees', [TraineeController::class, 'index'])->name('trainees.index');
-    Route::get('/trainees/{id}', [TraineeController::class, 'show'])->name('trainees.show');
+    Route::get('/trainees', [TraineesController::class, 'index'])->name('trainees.index');
+    Route::get('/trainees/{id}', [TraineesController::class, 'show'])->name('trainees.show');
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
