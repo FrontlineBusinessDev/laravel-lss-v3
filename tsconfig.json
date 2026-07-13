@@ -111,11 +111,13 @@
             "@/*": ["./resources/js/*"]
         },
         "jsx": "react-jsx",
-        "types": ["vite/client"]
+        "types": ["vite/client", "cypress", "node"]
     },
     "include": [
         "resources/js/**/*.ts",
         "resources/js/**/*.d.ts",
-        "resources/js/**/*.tsx"
+        "resources/js/**/*.tsx",
+        "cypress/**/*.ts",
+        "cypress/**/*.d.ts"
     ]
 }
