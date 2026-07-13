@@ -7,79 +7,42 @@ import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns, type TraineeRow } from '@/types/modules/batches/trainees';
 import { GRID } from '@/types/reusable/data-table';
-
 const TRAINEE_GRID = 'sm:grid-cols-[1.8fr_1.4fr_0.9fr_0.9fr_2.5rem]!';
-
 const TRAINEE_STATUS: Record<string, StatusKind> = {
-    active: 'active',
-    inactive: 'archived',
-    completed: 'completed',
-    terminated: 'terminated',
+  active: 'active',
+  inactive: 'archived',
+  completed: 'completed',
+  terminated: 'terminated'
 };
-
 function initialsOf(name: string): string {
-    return (
-        name
-            .split(/\s+/)
-            .filter(Boolean)
-            .map((w) => w[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase() || '—'
-    );
+  return name.split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '—';
 }
-
 interface Props {
-    record: AppBatches;
-    registrationUrl: string;
+  record: AppBatches;
+  registrationUrl: string;
 }
-
-export default function BatchTraineesPage({ record, registrationUrl }: Props) {
-    const listHeader = (
-        <SettingsListHeader
-            grid={TRAINEE_GRID}
-            labels={['Trainee', 'School', 'Required hrs', 'Status']}
-        />
-    );
-
-    const renderRow = (row: TraineeRow) => {
-        const name = `${row.first_name} ${row.last_name}`.trim();
-        const badge = TRAINEE_STATUS[row.status] ?? 'active';
-
-        return (
-            <div
-                className={cn(
-                    'flex flex-col gap-1 px-4 py-3',
-                    GRID,
-                    TRAINEE_GRID,
-                    row.status !== 'active' && 'opacity-60',
-                )}
-            >
-                <div className="flex items-center gap-2 font-medium text-ink">
-                    <span className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">
+export default function BatchTraineesPage({
+  record,
+  registrationUrl
+}: Props) {
+  const listHeader = <SettingsListHeader grid={TRAINEE_GRID} labels={['Trainee', 'School', 'Required hrs', 'Status']} data-cy="trainees-settings-list-header-1" />;
+  const renderRow = (row: TraineeRow) => {
+    const name = `${row.first_name} ${row.last_name}`.trim();
+    const badge = TRAINEE_STATUS[row.status] ?? 'active';
+    return <div className={cn('flex flex-col gap-1 px-4 py-3', GRID, TRAINEE_GRID, row.status !== 'active' && 'opacity-60')} data-cy="trainees-div-2">
+                <div className="flex items-center gap-2 font-medium text-ink" data-cy="trainees-div-3">
+                    <span className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700" data-cy="trainees-span-4">
                         {initialsOf(name)}
                     </span>
-                    <span className="truncate">{name}</span>
+                    <span className="truncate" data-cy="trainees-span-5">{name}</span>
                 </div>
-                <TextCell muted>{row.school?.school_name ?? '—'}</TextCell>
-                <TextCell muted>{row.required_hours ?? '—'} hrs</TextCell>
-                <StatusBadge status={badge} />
-                <div />
-            </div>
-        );
-    };
-
-    return (
-        <BatchDetailLayout batch={record} registrationUrl={registrationUrl}>
-            <DataTableField<TraineeRow>
-                apiUrl={`/batches/${record.id}/trainees`}
-                apiQueryKey={['batch-trainees', String(record.id)]}
-                columns={columns}
-                enableCreate={false}
-                defaultSortBy="first_name"
-                listHeader={listHeader}
-                renderCard={renderRow}
-            />
-        </BatchDetailLayout>
-    );
+                <TextCell muted data-cy="trainees-text-cell-6">{row.school?.school_name ?? '—'}</TextCell>
+                <TextCell muted data-cy="trainees-text-cell-7">{row.required_hours ?? '—'} hrs</TextCell>
+                <StatusBadge status={badge} data-cy="trainees-status-badge-8" />
+                <div data-cy="trainees-div-9" />
+            </div>;
+  };
+  return <BatchDetailLayout batch={record} registrationUrl={registrationUrl} data-cy="trainees-batch-detail-layout-10">
+            <DataTableField<TraineeRow> apiUrl={`/batches/${record.id}/trainees`} apiQueryKey={['batch-trainees', String(record.id)]} columns={columns} enableCreate={false} defaultSortBy="first_name" listHeader={listHeader} renderCard={renderRow} data-cy="trainees-data-table-field-11" />
+        </BatchDetailLayout>;
 }
