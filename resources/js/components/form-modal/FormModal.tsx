@@ -11,13 +11,13 @@
  * everything else — seeding, validation, submit, error mapping — is handled here.
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Formik } from 'formik';
-import { useMemo } from 'react';
 import { ModalCenter } from '@/components/modal/ModalCenter';
 import { ModalSide } from '@/components/modal/ModalSide';
 import { isFieldVisible } from '@/components/table/utils';
 import { ApiError } from '@/lib/apiFetch';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Formik } from 'formik';
+import { useMemo } from 'react';
 import { buildYupSchema } from './build-yup-schema';
 import {
     buildInitialValues,
@@ -53,22 +53,18 @@ export function FormModal<T extends object = Record<string, unknown>>({
     uploadProgress = null,
 }: FormModalProps<T>) {
     const queryClient = useQueryClient();
-
     const visibleFields = useMemo(
         () => fields.filter((f) => isFieldVisible(f, mode, row)),
         [fields, mode, row],
     );
-
     const seededValues = useMemo(
         () => initialValues ?? buildInitialValues(visibleFields, mode, row),
         [initialValues, visibleFields, mode, row],
     );
-
     const schema = useMemo(
         () => validationSchema ?? buildYupSchema(visibleFields),
         [validationSchema, visibleFields],
     );
-
     const mutation = useMutation<T, Error, Values>({
         mutationFn,
         onSuccess: (saved) => {
@@ -90,66 +86,72 @@ export function FormModal<T extends object = Record<string, unknown>>({
         fields,
         mode,
         row,
-        submitLabel: submitLabel ?? (mode === 'create' ? 'Create' : 'Save changes'),
+        submitLabel:
+            submitLabel ?? (mode === 'create' ? 'Create' : 'Save changes'),
         cancelLabel,
         uploadProgress,
+        mutation,
     } as unknown as FormModalConfig;
 
+    const handleClose = () => {
+        if (mutation.isPending) return;
+        onClose();
+    };
+
     return (
-        <Formik<Values>
-            initialValues={seededValues}
-             
-            validationSchema={schema as any}
-            enableReinitialize={false}
-            onSubmit={async (values, helpers) => {
-                helpers.setStatus(undefined);
-
-                try {
-                    await mutation.mutateAsync(
-                        buildPayload(visibleFields, values),
-                    );
-                    onClose();
-                } catch (err) {
-                    if (err instanceof ApiError && err.errors) {
-                        helpers.setErrors(mapApiErrorsToFormik(err.errors));
+        <>
+            <Formik<Values>
+                initialValues={seededValues}
+                validationSchema={schema as any}
+                enableReinitialize={false}
+                onSubmit={async (values, helpers) => {
+                    helpers.setStatus(undefined);
+                    try {
+                        await mutation.mutateAsync(
+                            buildPayload(visibleFields, values),
+                        );
+                        onClose();
+                    } catch (err) {
+                        if (err instanceof ApiError && err.errors) {
+                            helpers.setErrors(mapApiErrorsToFormik(err.errors));
+                        }
+                        helpers.setStatus(
+                            err instanceof Error
+                                ? err.message
+                                : 'Failed to save record.',
+                        );
+                    } finally {
+                        helpers.setSubmitting(false);
                     }
-
-                    helpers.setStatus(
-                        err instanceof Error
-                            ? err.message
-                            : 'Failed to save record.',
-                    );
-                } finally {
-                    helpers.setSubmitting(false);
-                }
-            }}
-        >
-            {layout === 'side' ? (
-                <ModalSide<FormModalConfig>
-                    show={open}
-                    onClose={onClose}
-                    data={config}
-                    side={side}
-                    width={width}
-                    title={title}
-                    subtitle={subtitle}
-                    ModalComponent={FormModalBody}
-                    closeOnEscape={closeOnEscape}
-                    closeOnOverlayClick={closeOnOverlayClick}
-                />
-            ) : (
-                <ModalCenter<FormModalConfig>
-                    show={open}
-                    onClose={onClose}
-                    data={config}
-                    size={size}
-                    title={title}
-                    ModalComponent={FormModalBody}
-                    closeOnEscape={closeOnEscape}
-                    closeOnOverlayClick={closeOnOverlayClick}
-                />
-            )}
-        </Formik>
+                }}
+            >
+                {layout === 'side' ? (
+                    <ModalSide<FormModalConfig>
+                        show={open}
+                        onClose={handleClose}
+                        data={config}
+                        side={side}
+                        width={width}
+                        title={title}
+                        subtitle={subtitle}
+                        ModalComponent={FormModalBody}
+                        closeOnEscape={closeOnEscape}
+                        closeOnOverlayClick={closeOnOverlayClick}
+                    />
+                ) : (
+                    <ModalCenter<FormModalConfig>
+                        show={open}
+                        onClose={handleClose}
+                        data={config}
+                        size={size}
+                        title={title}
+                        ModalComponent={FormModalBody}
+                        closeOnEscape={closeOnEscape}
+                        closeOnOverlayClick={closeOnOverlayClick}
+                    />
+                )}
+            </Formik>
+        </>
     );
 }
 

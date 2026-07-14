@@ -76,6 +76,7 @@ export function useCardTableController<T extends Record<string, unknown>>(
         deletePermission,
         viewType = 'table',
         paginationMode = 'server',
+        onEditRow,
     } = props;
 
     const { can } = usePermission();
@@ -251,8 +252,10 @@ next.status = scope;
         canEdit,
         canArchive,
         canDelete,
-        // edit modal
-        openEditModal: (row: T) => setModalState({ mode: 'edit', row }),
+        // edit modal — bubble to the caller when it owns the form (e.g. a
+        // page-level <FormModal>); otherwise fall back to internal state.
+        openEditModal: (row: T) =>
+            onEditRow ? onEditRow(row) : setModalState({ mode: 'edit', row }),
         // row actions (archive / restore / delete + in-use guard)
         ...actions,
     };

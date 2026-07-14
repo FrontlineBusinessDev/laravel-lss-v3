@@ -7,7 +7,11 @@
  */
 
 import { normalizeExistingFiles } from '@/hooks/use-file-upload-field';
-import type { FieldDef, ModalMode } from '@/types/reusable/fields';
+import type {
+    FieldDef,
+    FileFieldValue,
+    ModalMode,
+} from '@/types/reusable/fields';
 
 /** Initial value for a single field (edit hydrates from row, create uses default). */
 function seedFieldValue<T extends object>(
@@ -62,7 +66,25 @@ export function buildPayload<T extends object>(
     const payload: Record<string, unknown> = {};
     fields.forEach((f) => {
         const raw = values[f.key];
-        payload[f.payloadKey ?? f.key] = f.transform ? f.transform(raw) : raw;
+        const outKey = f.payloadKey ?? f.key;
+        payload[outKey] = f.transform ? f.transform(raw) : raw;
+
+        // File field cleared (existing removed, no replacement picked): the
+        // request goes out as JSON, so emit the generic `remove_<key>` flag the
+        // backend understands (HandlesFileUploads::fileWasRemoved) and null the
+        // column. Mirrors DataTableField.handleSave.
+        if (f.type === 'file') {
+            const file = raw as FileFieldValue | undefined;
+            const cleared =
+                !!file &&
+                file.removedIds?.length > 0 &&
+                file.files?.length === 0;
+
+            if (cleared) {
+                payload[`remove_${outKey}`] = true;
+                payload[outKey] = null;
+            }
+        }
     });
 
     return payload;

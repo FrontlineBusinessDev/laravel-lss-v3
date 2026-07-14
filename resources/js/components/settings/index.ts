@@ -7,3 +7,4 @@
 export { SettingsListHeader } from './SettingsListHeader';
 export { SettingsRow, TextCell } from './SettingsRow';
 export { buildRecordMenu } from './recordMenu';
+export { AddRecordButton } from './AddRecordButton';

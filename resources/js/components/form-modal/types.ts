@@ -23,6 +23,7 @@ export interface FormModalConfig<T extends object = Record<string, unknown>> {
     cancelLabel: string;
     /** Real upload progress (0–100) while a file is being sent, else null. */
     uploadProgress?: number | null;
+    mutation?: T;
 }
 
 export interface FormModalProps<T extends object = Record<string, unknown>> {

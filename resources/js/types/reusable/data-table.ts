@@ -132,4 +132,11 @@ export interface DataTableProps<T> {
      * in card view all table chrome is hidden and only this content shows.
      */
     children?: ReactNode;
+    /**
+     * When provided, a row's Edit action bubbles up to the caller (e.g. to open
+     * a page-owned <FormModal>) instead of DataTableCardField managing an
+     * internal edit modal. Only consumed by DataTableCardField; DataTableField
+     * ignores it.
+     */
+    onEditRow?: (row: T) => void;
 }

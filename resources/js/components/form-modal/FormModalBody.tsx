@@ -6,12 +6,12 @@
  * Each field is rendered by the shared <DynamicField> (RecordModalField).
  */
 
-import { useFormikContext } from 'formik';
-import { Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
 import type { ModalComponentProps } from '@/components/modal/ModalCenter';
 import { DynamicField } from '@/components/table/components/RecordModalField';
 import { isFieldDisabled, isFieldVisible } from '@/components/table/utils';
+import { useFormikContext } from 'formik';
+import { Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 import type { FormModalConfig } from './types';
 
 type Values = Record<string, unknown>;
@@ -51,8 +51,9 @@ export function FormModalBody({
                             field={f}
                             value={formik.values[f.key]}
                             error={
-                                (formik.touched[f.key] || formik.submitCount > 0)
-                                    ? (formik.errors[f.key] as string | undefined)
+                                formik.touched[f.key] || formik.submitCount > 0
+                                    ? (formik.errors[f.key] as
+                                          string | undefined)
                                     : undefined
                             }
                             disabled={
@@ -80,7 +81,9 @@ export function FormModalBody({
                 <div className="px-6 pb-2">
                     <div className="mb-1 flex items-center justify-between text-xs font-medium text-neutral-500">
                         <span>
-                            {uploadProgress >= 100 ? 'Processing…' : 'Uploading…'}
+                            {uploadProgress >= 100
+                                ? 'Processing…'
+                                : 'Uploading…'}
                         </span>
                         <span>{uploadProgress}%</span>
                     </div>
@@ -93,19 +96,19 @@ export function FormModalBody({
                 </div>
             )}
 
-            <div className="mt-auto flex items-center justify-end gap-2 border-t border-neutral-100 px-6 py-4">
+            <div className="mt-auto flex w-full items-center gap-2 border-t border-neutral-100 px-6 py-4">
                 <button
                     type="button"
                     onClick={close}
                     disabled={formik.isSubmitting}
-                    className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
+                    className="inline-flex w-2/3 justify-center rounded-md border border-neutral-200 px-4 py-2 text-center text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
                 >
                     {cancelLabel}
                 </button>
                 <button
                     type="submit"
                     disabled={formik.isSubmitting}
-                    className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
                 >
                     {formik.isSubmitting && (
                         <Loader2 className="h-4 w-4 animate-spin" />
