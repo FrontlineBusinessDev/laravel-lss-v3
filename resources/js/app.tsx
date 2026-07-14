@@ -8,9 +8,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'LSS Admin';
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: (name) => {
-        const pages = import.meta.glob<{
-            default: any;
-        }>('./pages/**/*.tsx', {
+        const pages = import.meta.glob<{ default: any }>('./pages/**/*.tsx', {
             eager: true,
         });
         const key = Object.keys(pages).find(

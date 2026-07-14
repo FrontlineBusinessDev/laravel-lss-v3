@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\v1\Developer\Announcement;
 
-use App\Http\Controllers\v1\Developer\BaseController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\v1\Developer\BaseController;
 use App\Models\Announcement;
 use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;

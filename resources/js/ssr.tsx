@@ -12,11 +12,17 @@ createServerHtml((page) =>
         render: ReactDOMServer.renderToString,
         title: (title) => (title ? `${title} - ${appName}` : appName),
         resolve: (name) => {
-            const pages = import.meta.glob<{
-                default: any;
-            }>('./pages/**/*.tsx', {
-                eager: true,
-            });
+            //  const pages = import.meta.glob<{
+            //      default: any;
+            //  }>('./pages/**/*.tsx', {
+            //      eager: true,
+            //  });
+            const pages = import.meta.glob<{ default: any }>(
+                './pages/**/*.tsx',
+                {
+                    eager: true,
+                },
+            );
             const key = Object.keys(pages).find(
                 (k) => k.toLowerCase() === `./pages/${name}.tsx`.toLowerCase(),
             );
