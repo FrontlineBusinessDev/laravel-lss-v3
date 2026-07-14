@@ -39,6 +39,12 @@ export interface StatusFilterTab {
     label: string;
 }
 
+/** Presentation mode for <DataTableCardField>: a table or a stack of cards. */
+export type TableViewType = 'table' | 'card';
+
+/** Whether paging is driven by the server or sliced from the fetched set. */
+export type PaginationMode = 'server' | 'client';
+
 /** Create/edit modal state owned by DataTableField. */
 export interface ModalState<T> {
     mode: ModalMode;
@@ -114,4 +120,16 @@ export interface DataTableProps<T> {
     setLocalModalState?: Dispatch<
         SetStateAction<{ mode: ModalMode; row?: T } | null>
     >;
+    /** Initial presentation mode. Defaults to 'table'. */
+    viewType?: TableViewType;
+    /** Show a Table/Card segmented toggle in the toolbar row. */
+    enableViewToggle?: boolean;
+    /** Server-driven paging (default) or client-side slicing of the fetched set. */
+    paginationMode?: PaginationMode;
+    /**
+     * Custom row/card renderer. When provided, the default row/card output is
+     * bypassed. In table view the column headers are still rendered above it;
+     * in card view all table chrome is hidden and only this content shows.
+     */
+    children?: ReactNode;
 }
