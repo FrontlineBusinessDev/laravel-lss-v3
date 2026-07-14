@@ -1,11 +1,12 @@
 import { SettingsListHeader, TextCell } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
-import DataTableField from '@/components/table';
+import { DataTableCardField } from '@/components/table/DataTableCardField';
 import BatchDetailLayout from '@/layouts/batches/BatchDetailLayout';
 import { cn } from '@/lib/utils';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
-import { columns, type TraineeRow } from '@/types/modules/batches/trainees';
+import { columns  } from '@/types/modules/batches/trainees';
+import type {TraineeRow} from '@/types/modules/batches/trainees';
 import { GRID } from '@/types/reusable/data-table';
 const TRAINEE_GRID = 'sm:grid-cols-[1.8fr_1.4fr_0.9fr_0.9fr_2.5rem]!';
 const TRAINEE_STATUS: Record<string, StatusKind> = {
@@ -29,6 +30,7 @@ export default function BatchTraineesPage({
   const renderRow = (row: TraineeRow) => {
     const name = `${row.first_name} ${row.last_name}`.trim();
     const badge = TRAINEE_STATUS[row.status] ?? 'active';
+
     return <div className={cn('flex flex-col gap-1 px-4 py-3', GRID, TRAINEE_GRID, row.status !== 'active' && 'opacity-60')} data-cy="trainees-div-2">
                 <div className="flex items-center gap-2 font-medium text-ink" data-cy="trainees-div-3">
                     <span className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700" data-cy="trainees-span-4">
@@ -42,7 +44,8 @@ export default function BatchTraineesPage({
                 <div data-cy="trainees-div-9" />
             </div>;
   };
+
   return <BatchDetailLayout batch={record} registrationUrl={registrationUrl} data-cy="trainees-batch-detail-layout-10">
-            <DataTableField<TraineeRow> apiUrl={`/batches/${record.id}/trainees`} apiQueryKey={['batch-trainees', String(record.id)]} columns={columns} enableCreate={false} defaultSortBy="first_name" listHeader={listHeader} renderCard={renderRow} data-cy="trainees-data-table-field-11" />
+            <DataTableCardField<TraineeRow> apiUrl={`/batches/${record.id}/trainees`} apiQueryKey={['batch-trainees', String(record.id)]} columns={columns} defaultSortBy="first_name" listHeader={listHeader} renderCard={renderRow} data-cy="trainees-data-table-field-11" />
         </BatchDetailLayout>;
 }

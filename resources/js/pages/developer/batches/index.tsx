@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Archive,
     ArchiveRestore,
@@ -9,9 +10,13 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { batchService } from '@/api-service-layer/admin/batch';
+import type { BatchInput } from '@/api-service-layer/admin/batch';
+import { useGlobalModal } from '@/components/global-modal';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import {
+    AddRecordButton,
     SettingsListHeader,
     SettingsRow,
     TextCell,
@@ -19,15 +24,17 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import { Switch } from '@/components/Switch';
 import type { CardActions } from '@/components/table';
-import DataTableField from '@/components/table';
+import { DataTableCardField } from '@/components/table/DataTableCardField';
+import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useBatchLinkActions } from '@/hooks/use-batch-link-actions';
 import { useToast } from '@/hooks/use-toast';
-import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
-import { columns, fields } from '@/types/modules/batches/batches';
+import { columns } from '@/types/modules/batches/batches';
 import { BatchRegistrationModal } from './BatchRegistrationModal';
 import { CreateBatchModal } from './CreateBatchModal';
+
+const PERMISSION = 'manage batches';
 
 const customGRID =
     'sm:grid-cols-[0.9fr_1.4fr_1.2fr_0.7fr_0.6fr_1fr_1.5fr_2.5rem]!';
@@ -49,6 +56,9 @@ const STATUS_BADGE: Record<string, StatusKind> = {
 };
 export default function BatchesListPage() {
     const { toast } = useToast();
+    const queryClient = useQueryClient();
+    const modal = useGlobalModal<AppBatches | null>('batch', null);
+    const isEdit = modal.data !== null;
     // Escape hatch to the table's refetch, so the custom Terminate action can
     // refresh the list without going through the built-in mutations.
     const refreshRef = useRef<(() => void) | null>(null);
@@ -58,15 +68,43 @@ export default function BatchesListPage() {
     );
     const [terminating, setTerminating] = useState(false);
     const linkActions = useBatchLinkActions();
+
+    const closeModal = () => {
+        modal.setOpen(false);
+        modal.setData(null);
+    };
+
+    // CreateBatchModal owns its own field state, so it can't ride on FormModal.
+    // Wire a mutation directly (mirroring FormModal's success → invalidate →
+    // toast → close); on error the modal keeps itself open with inline messages.
+    const mutation = useMutation<AppBatches, Error, Record<string, unknown>>({
+        mutationFn: (payload) =>
+            (isEdit && modal.data
+                ? batchService.update(modal.data.id, payload as BatchInput)
+                : batchService.create(
+                      payload as BatchInput,
+                  )) as Promise<AppBatches>,
+        onSuccess: () => {
+            tableListInvalidateKeys('batches').forEach((queryKey) =>
+                queryClient.invalidateQueries({ queryKey }),
+            );
+            toast({
+                title: isEdit ? 'Batch updated' : 'Batch created',
+                variant: 'success',
+            });
+            closeModal();
+        },
+    });
+
     const confirmTerminate = async () => {
         if (!terminateTarget) {
             return;
         }
+
         setTerminating(true);
+
         try {
-            await apiFetchJson(`/batches/${terminateTarget.id}/terminate`, {
-                method: 'PATCH',
-            });
+            await batchService.terminate(terminateTarget.id);
             toast({
                 title: 'Batch terminated',
                 variant: 'info',
@@ -137,6 +175,7 @@ export default function BatchesListPage() {
                       onClick: () => setTerminateTarget(row),
                   },
         ];
+
         return (
             // Clicking anywhere on the row opens the batch detail page. The
             // RowMenu button + items stopPropagation, so menu actions never
@@ -208,49 +247,63 @@ export default function BatchesListPage() {
             </div>
         );
     };
+
     return (
         <>
-            <h1
-                className="text-xl font-semibold text-ink"
-                data-cy="index-h1-batches"
-            >
-                Batches
-            </h1>
-            <p
-                className="mb-4 text-sm text-neutral-500"
-                data-cy="index-p-manage-batches-data"
-            >
-                Manage Batches data.
-            </p>
-            <DataTableField<AppBatches>
+            <div className="mb-4 flex items-center justify-between">
+                <div>
+                    <h1
+                        className="text-xl font-semibold text-ink"
+                        data-cy="index-h1-batches"
+                    >
+                        Batches
+                    </h1>
+                    <p
+                        className="text-sm text-neutral-500"
+                        data-cy="index-p-manage-batches-data"
+                    >
+                        Manage Batches data.
+                    </p>
+                </div>
+                <AddRecordButton
+                    label="Add batch"
+                    permission={PERMISSION}
+                    onClick={() => {
+                        modal.setData(null);
+                        modal.setOpen(true);
+                    }}
+                />
+            </div>
+            <DataTableCardField<AppBatches>
                 apiUrl="/batches"
                 apiQueryKey="batches"
                 columns={columns}
-                fields={fields}
-                createLabel="Add batch"
-                modalTitle={(s) =>
-                    s.mode === 'create' ? 'Add batch' : 'Edit batch'
-                }
                 defaultSortBy="batch_code"
-                createPermission="manage batches"
-                editPermission="manage batches"
-                archivePermission="manage batches"
-                deletePermission="manage batches"
+                editPermission={PERMISSION}
+                archivePermission={PERMISSION}
+                deletePermission={PERMISSION}
                 listHeader={listHeader}
                 renderCard={renderRow}
                 onRefreshRef={(fn) => (refreshRef.current = fn)}
-                renderModal={(m) => (
-                    <CreateBatchModal
-                        open
-                        mode={m.mode}
-                        batch={m.row}
-                        onClose={m.onClose}
-                        onSubmit={m.onSubmit}
-                        data-cy="index-create-batch-modal-16"
-                    />
-                )}
+                onEditRow={(row) => {
+                    modal.setData(row);
+                    modal.setOpen(true);
+                }}
                 data-cy="index-data-table-field-15"
             />
+
+            {modal.open && (
+                <CreateBatchModal
+                    open
+                    mode={isEdit ? 'edit' : 'create'}
+                    batch={modal.data ?? undefined}
+                    onClose={closeModal}
+                    onSubmit={async (values) => {
+                        await mutation.mutateAsync(values);
+                    }}
+                    data-cy="index-create-batch-modal-16"
+                />
+            )}
 
             <BatchRegistrationModal
                 batchId={qrTarget?.id ?? null}
