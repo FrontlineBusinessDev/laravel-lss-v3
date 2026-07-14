@@ -1,23 +1,26 @@
-# OCTANE BUILD FOR PRODUCTION READY APPLICATIONS
+# OPTIMIZED LAREVEL OCTANE (FRANKENPHP) + INERTIA SSR CONFIG
+
+[phases.setup]
+# Force Nixpacks to include both PHP/Composer and Node/NPM in the final production container
+pkgs = ["php", "composer", "nodejs", "npm"]
 
 [phases.install]
 cmds = [
   "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
-  "php artisan octane:install --server=frankenphp --no-interaction", # Forces the binary download inside the Linux container
-  "npm ci"
+  "npm ci",
+  "php artisan octane:install --server=frankenphp --no-interaction"
 ]
 
 [phases.build]
+# Only compile assets here to avoid build-time database connection errors
 cmds = [
-  "npm run build",
-  "php artisan config:cache",
-  "php artisan route:cache",
-  "php artisan view:cache",
-  "php artisan event:cache"
+  "npm run build"
 ]
 
 [start]
-# 1. Run database migrations safely before starting the app
-# 2. Start the Inertia SSR node process in the background
-# 3. Boot FrankenPHP in the foreground to keep the container running
-cmd = "php artisan migrate --force && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
+# 1. Ensure the FrankenPHP binary has executable permissions
+# 2. Run database migrations safely
+# 3. Cache configuration and routes at runtime (where the DB is accessible)
+# 4. Start the Inertia SSR process in the background
+# 5. Boot FrankenPHP Octane server in the foreground
+cmd = "chmod +x frankenphp && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
