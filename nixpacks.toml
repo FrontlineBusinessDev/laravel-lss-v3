@@ -1,7 +1,15 @@
 # OCTANE BUILD FOR PRODUCTION READY APPLICATIONS
 
 [phases.setup]
-nixPkgs = ["php84", "nginx", "libmysqlclient", "php84Packages.composer", "nodejs_22"]
+nixPkgs = [
+  "php84", 
+  "php84Packages.composer", 
+  "php84Packages.pcntl", 
+  "php84Packages.posix", 
+  "php84Packages.pdo_mysql", 
+  "libmysqlclient", 
+  "nodejs_22"
+]
 
 [phases.install]
 cmds = [
