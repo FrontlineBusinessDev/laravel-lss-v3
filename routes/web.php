@@ -115,6 +115,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/batches/{id}/activity-log', [BatchViewController::class, 'activityLog'])->name('batches.activity-log');
     Route::get('/batches/{id}/financial', [BatchViewController::class, 'financial'])->name('batches.financial');
     Route::get('/trainees', [TraineesController::class, 'index'])->name('trainees.index');
+    // Read-only listing endpoint backing the trainees index DataTableCardField.
+    // Registered before `{id}` so the static segment wins the route match.
+    Route::get('/trainees/pagination-search', [TraineesController::class, 'paginationSearch'])
+        ->name('trainees.pagination-search');
     Route::get('/trainees/{id}', [TraineesController::class, 'show'])->name('trainees.show');
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
