@@ -73,11 +73,7 @@ export function RecordModal<T extends object>({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
-
-        if (!validate()) {
-            return;
-        }
-
+        if (!validate()) return;
         setSubmitting(true);
 
         try {

@@ -5,6 +5,7 @@ import {
     Ban,
     Link2,
     Pencil,
+    Plus,
     QrCode,
     Trash2,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns, fields } from '@/types/modules/batches/batches';
 import { BatchRegistrationModal } from './BatchRegistrationModal';
 import { CreateBatchModal } from './CreateBatchModal';
+import { Button } from '@/components/Button';
 
 const customGRID =
     'sm:grid-cols-[0.9fr_1.4fr_1.2fr_0.7fr_0.6fr_1fr_1.5fr_2.5rem]!';
@@ -201,10 +203,17 @@ export default function BatchesListPage() {
 
     return (
         <>
-            <h1 className="text-xl font-semibold text-ink">Batches</h1>
-            <p className="mb-4 text-sm text-neutral-500">
-                Manage Batches data.
-            </p>
+            <div className="mb-4 flex w-full items-center justify-between gap-2">
+                <div>
+                    <h1 className="text-xl font-semibold text-ink">Batches</h1>
+                    <p className="text-sm text-neutral-500">
+                        Manage Batches data.
+                    </p>
+                </div>
+                <Button variant="primary">
+                    <Plus className="size-5" /> Add Batch
+                </Button>
+            </div>
             <DataTableField<AppBatches>
                 apiUrl="/batches"
                 apiQueryKey="batches"
