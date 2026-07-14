@@ -1,13 +1,18 @@
 Cypress.Commands.add('login', () => {
     cy.visit('/login');
 
-    cy.get('input[name=user_account_email]').type(
-        Cypress.env('email') as string,
-    );
+    cy.get('[data-cy="login-input-email"]')
+        .should('be.visible')
+        .clear()
+        .type(Cypress.env('email'));
 
-    cy.get('input[name=password]').type(Cypress.env('password') as string);
+    cy.get('[data-cy="login-input-enter-your-password"]')
+        .should('be.visible')
+        .clear()
+        .type(Cypress.env('password'), { log: false });
 
-    cy.get('button[type=submit]').click();
+    cy.get('[data-cy="button-button-1"]').should('be.visible').click();
 
     cy.url().should('not.include', '/login');
 });
+

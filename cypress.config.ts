@@ -1,7 +1,11 @@
-export default {
-    allowCypressEnv: false,
+import { defineConfig } from 'cypress';
+
+export default defineConfig({
+    allowCypressEnv: true,
 
     e2e: {
-        baseUrl: 'http://localhost:8000/',
+        baseUrl: 'http://localhost:8000',
+        viewportWidth: 1280,
+        viewportHeight: 720,
     },
-};
+});

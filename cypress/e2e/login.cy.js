@@ -22,7 +22,7 @@ describe('Login Page', () => {
     });
 
     // check input fields
-    it('should allow users to input their email and password, with a Show/Hide button', () => {
+    it('should allow users to input their email and password, with a show/hide button', () => {
         cy.get('input[data-cy="login-input-email"]')
             .type('admin.test@gmail.com')
             .should('have.value', 'admin.test@gmail.com');
@@ -49,6 +49,21 @@ describe('Login Page', () => {
         cy.get('[data-cy="button-button-1"]').click();
     });
 
+    // check login invalid email format
+    it('should display validation error for invalid email format', () => {
+        cy.get('[data-cy="login-input-email"]').type('invalid-email');
+
+        cy.get('[data-cy="login-input-enter-your-password"]').type(
+            'Testpassword123*',
+        );
+
+        cy.get('[data-cy="button-button-1"]').click();
+
+        cy.get('[data-cy="login-input-email"]')
+            .should('have.prop', 'validationMessage')
+            .and('not.be.empty');
+    });
+
     //check forgot password modal display
     it('should redirect the user to the forgot password page when clicking the forgot password link', () => {
         cy.get('[data-cy="router-compat-inertia-link-to"]').click();
@@ -72,7 +87,7 @@ describe('Login Page', () => {
     });
 
     //check forgot password inputing unregistered email
-    it('should display a validation message when submitting forgot password without an email', () => {
+    it('should display a validation message when submitting forgot password with unregistered email', () => {
         cy.get('[data-cy="router-compat-inertia-link-to"]').click(); // click forgot password
         cy.get('input[data-cy="forgot-password-input-email"]')
             .type('herlyn.torres@frontlinebusiness.com.ph')
@@ -81,7 +96,7 @@ describe('Login Page', () => {
     });
 
     //check forgot password inputing registered email
-    it('should allow the user to request a password reset', () => {
+    it('should allow the registered user to request a password reset', () => {
         cy.get('[data-cy="router-compat-inertia-link-to"]').click(); // click forgot password
         cy.get('input[data-cy="forgot-password-input-email"]')
             .type('vincent.ramirez@frontlinebusiness.com.ph')
@@ -89,6 +104,62 @@ describe('Login Page', () => {
         cy.get('[data-cy="button-button-1"]').click();
     });
 
-    //check login page with valid credentials
-    
+    //check login empty fields
+    it('should prevent login submission when fields are empty', () => {
+        cy.get('[data-cy="button-button-1"]').click();
+
+        cy.get('[data-cy="login-input-email"]')
+            .should('have.prop', 'validationMessage')
+            .and('not.be.empty');
+
+        cy.get('[data-cy="login-input-enter-your-password"]')
+            .should('have.prop', 'validationMessage')
+            .and('not.be.empty');
+    });
+
+    //check valid credentials when pressing enter key
+    it('should allow user to login by pressing enter key', () => {
+        cy.intercept('POST', '**/login', (req) => {
+            req.reply((res) => {
+                res.setDelay(2000);
+            });
+        }).as('loginRequest');
+        cy.get('input[data-cy="login-input-email"]').type(Cypress.env('email'));
+
+        cy.get('input[data-cy="login-input-enter-your-password"]')
+            .type(Cypress.env('password'))
+            .type('{enter}');
+
+        cy.url().should('include', '/dashboard');
+        cy.get('[data-cy="sidebar-button-set-open-3"]').click();
+        cy.wait('@loginRequest');
+        cy.get('[data-cy="sidebar-button-set-open-2"]').click();
+    });
+
+    // check valid credentials
+    it('should disable login button while request is processing', () => {
+        cy.intercept('POST', '**/login', (req) => {
+            req.reply((res) => {
+                res.setDelay(2000);
+            });
+        }).as('loginRequest');
+
+        cy.get('input[data-cy="login-input-email"]').type(Cypress.env('email'));
+        cy.get('input[data-cy="login-input-enter-your-password"]').type(
+            Cypress.env('password'),
+        );
+
+        cy.get('[data-cy="login-eye-16"]').click();
+        cy.get('[data-cy="login-eye-off-15"]').click();
+
+        cy.get('[data-cy="button-button-1"]').click();
+
+        // btn should be disabled while waiting for the response
+        cy.get('[data-cy="button-button-1"]').should('be.disabled');
+
+        cy.wait('@loginRequest');
+
+        // user should be redirected after a successful login
+        cy.url().should('include', '/dashboard');
+    });
 });
