@@ -1,4 +1,11 @@
-// resources/js/components/ui/side-modal.tsx
+/**
+ * @file components/modal/ModalSide.tsx
+ * Drawer shell: an edge-anchored, full-height panel. Shares its contract and
+ * open/close behaviour with ModalCenter (same `show`/`onClose`/`data`/
+ * `ModalComponent` props, same useModalBehavior for Escape + scrim click, same
+ * unmount-on-close), so <FormModal> can swap between the two purely on `layout`.
+ */
+
 import { X } from 'lucide-react';
 import { useModalBehavior } from '@/hooks/use-modal-behavior';
 import type { ModalComponentProps } from './ModalCenter';
@@ -15,6 +22,12 @@ type ModalSideProps<T> = {
     ModalComponent: React.ComponentType<ModalComponentProps<T>>;
     closeOnEscape?: boolean;
     closeOnOverlayClick?: boolean;
+};
+
+/** Edge anchoring + matching slide-in, keyed off the `side` prop. */
+const SIDE_CLASSES: Record<Side, string> = {
+    right: 'right-0 animate-slideInRight',
+    left: 'left-0 animate-slideInLeft',
 };
 
 export function ModalSide<T>({
@@ -35,17 +48,11 @@ export function ModalSide<T>({
         closeOnEscape,
         closeOnOverlayClick,
     });
+
     if (!show) {
         return null;
     }
 
-    //  <div className="fixed top-0 right-0 bottom-0 left-0 z-30 h-full w-full">
-    //                 <div
-    //                     className="relative z-50 h-full w-full bg-black/40"
-    //                     onClick={handleClose}
-    //                 />
-
-    //                 <div className="absolute top-1/2 left-1/2 z-60 max-h-[calc(100dvh-100px)] -translate-1/2 transform rounded-md bg-white shadow-md"></div>
     return (
         <div
             ref={overlayRef}
@@ -55,7 +62,12 @@ export function ModalSide<T>({
             data-cy="modal-side-div-overlay-click"
         >
             <div
-                className="absolute top-1/2 left-1/2 z-60 max-h-[calc(100dvh-100px)] -translate-1/2 transform rounded-md bg-white shadow-md"
+                className="absolute inset-0 z-50 animate-fadeIn bg-black/40"
+                onClick={onClose}
+                data-cy="modal-side-div-scrim"
+            />
+            <div
+                className={`absolute inset-y-0 z-60 flex h-full flex-col bg-white shadow-md ${SIDE_CLASSES[side]}`}
                 style={{
                     width,
                     maxWidth: '94vw',
@@ -99,10 +111,10 @@ export function ModalSide<T>({
                         </button>
                     </header>
                 )}
-                {/* Body fills the panel; each ModalComponent owns its own scroll
-                    region + sticky footer via `flex h-full flex-col`. */}
+                {/* Scrolls the body while the ModalComponent's own `mt-auto`
+                    footer stays pinned to the bottom of the panel. */}
                 <div
-                    className="flex min-h-0 flex-1 flex-col"
+                    className="flex min-h-0 flex-1 flex-col overflow-auto"
                     data-cy="modal-side-div-9"
                 >
                     <ModalComponent

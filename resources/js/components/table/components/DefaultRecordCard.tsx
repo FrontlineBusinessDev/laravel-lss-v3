@@ -41,7 +41,7 @@ export function DefaultRecordCard<T extends Record<string, unknown>>({
     const isActive = (row as Record<string, unknown>).status === 'active';
 
     return (
-        <div className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 p-5 shadow-sm transition-shadow hover:shadow-md">
+        <div className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
             <div className="min-w-0 flex-1">
                 <h3 className="truncate text-base font-semibold">
                     {formatCell(row[titleCol?.key])}

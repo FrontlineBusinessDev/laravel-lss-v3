@@ -48,7 +48,6 @@ const renderRow = (row: PartnerSchools, actions: CardActions) => {
                 <StatusBadge status={badge} data-cy="index-status-badge-3" />
             }
             menu={buildRecordMenu(actions, isArchived)}
-            // classNameParent="flex-row items-center gap-4"
             data-cy="index-settings-row-2"
         >
             <Thumbnail
@@ -60,7 +59,9 @@ const renderRow = (row: PartnerSchools, actions: CardActions) => {
             <TextCell data-cy="index-text-cell-5"> {row.school_name}</TextCell>
             <TextCell data-cy="index-text-cell-6">{row.abbreviation}</TextCell>
             <TextCell muted data-cy="index-text-cell-7">
-                {row.contact_first_name} {row.contact_last_name}
+                {[row.contact_first_name, row.contact_last_name]
+                    .filter(Boolean)
+                    .join(' ') || '—'}
             </TextCell>
             <TextCell muted data-cy="index-text-cell-8">
                 {row.contact_email}
@@ -97,7 +98,8 @@ export default function index() {
                     archivePermission={PERMISSION}
                     deletePermission={PERMISSION}
                     listHeader={listHeader}
-                    renderCard={renderRow}
+                    renderCard={renderRow} // comment this to see the per card view or you may render your own card
+                    // viewType="card"
                     onEditRow={(row) => {
                         modal.setData(row);
                         modal.setOpen(true);

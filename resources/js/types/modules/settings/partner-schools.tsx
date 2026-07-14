@@ -8,10 +8,12 @@ export interface PartnerSchools extends Record<string, unknown> {
     school_name: string;
     abbreviation: string;
     image: string;
-    contact_first_name: string;
-    contact_last_name: string;
+    contact_first_name?: string;
+    contact_last_name?: string;
     contact_email: string;
     physical_address: string;
+    link?: string;
+    description?: string;
     created_at: string;
     updated_at: string;
 }
@@ -121,7 +123,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'contact_first_name',
         label: 'First name',
         type: 'text',
-        required: true,
         placeholder: 'Jane Doe',
         colSpan: 2,
     },
@@ -129,7 +130,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'contact_last_name',
         label: 'Last name',
         type: 'text',
-        required: true,
         placeholder: 'Jane Doe',
         colSpan: 2,
     },
@@ -147,6 +147,20 @@ export const fields: FieldDef<PartnerSchools>[] = [
         type: 'textarea',
         required: true,
         placeholder: 'Baloc Road, Brgy. San Ignacio, San Pablo City',
+        colSpan: 2,
+    },
+    {
+        key: 'link',
+        label: 'Website',
+        type: 'url',
+        placeholder: 'https://school.edu.ph',
+        colSpan: 2,
+    },
+    {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Short description of the school',
         colSpan: 2,
     },
 ];

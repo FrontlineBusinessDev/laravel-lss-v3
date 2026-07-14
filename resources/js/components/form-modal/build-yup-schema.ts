@@ -17,6 +17,9 @@ function baseFor<T>(field: FieldDef<T>): Yup.Schema {
             return Yup.number().transform((v, orig) =>
                 orig === '' || orig === null ? undefined : v,
             );
+        case 'url':
+            // Mirrors the backend's `url` rule so the two agree.
+            return Yup.string().url('Enter a valid URL.');
         case 'checkbox':
             return Yup.boolean();
         case 'file':

@@ -6,12 +6,12 @@
  * Each field is rendered by the shared <DynamicField> (RecordModalField).
  */
 
-import type { ModalComponentProps } from '@/components/modal/ModalCenter';
-import { DynamicField } from '@/components/table/components/RecordModalField';
-import { isFieldDisabled, isFieldVisible } from '@/components/table/utils';
 import { useFormikContext } from 'formik';
 import { Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
+import type { ModalComponentProps } from '@/components/modal/ModalCenter';
+import { DynamicField } from '@/components/table/components/RecordModalField';
+import { isFieldDisabled, isFieldVisible } from '@/components/table/utils';
 import type { FormModalConfig } from './types';
 
 type Values = Record<string, unknown>;
@@ -39,6 +39,10 @@ export function FormModalBody({
     return (
         <form
             onSubmit={formik.handleSubmit}
+            // Yup owns validation. Without this, a native constraint (e.g. an
+            // invalid `type="url"` value) blocks the submit event outright, so
+            // Formik never runs and no styled error renders in the modal.
+            noValidate
             className="flex min-h-0 flex-1 flex-col"
         >
             <div className="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">

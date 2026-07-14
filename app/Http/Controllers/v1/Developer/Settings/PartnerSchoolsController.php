@@ -32,9 +32,11 @@ class PartnerSchoolsController extends BaseController
             'school_name'        => ['required', 'string', 'unique:app_settings_partner_schools,school_name'],
             'abbreviation'       => ['required', 'string'],
             'contact_email'      => ['nullable', 'email', 'unique:app_settings_partner_schools,contact_email'],
-            'contact_first_name' => ['required', 'string'],
-            'contact_last_name'  => ['required', 'string'],
+            'contact_first_name' => ['nullable', 'string'],
+            'contact_last_name'  => ['nullable', 'string'],
             'physical_address'   => ['nullable', 'string'],
+            'link'               => ['nullable', 'url', 'max:2048'],
+            'description'        => ['nullable', 'string'],
             // `image` is handled/validated in storePartnerImage() — only when an
             // actual file is uploaded — so an unchanged edit (which resubmits the
             // existing URL string) isn't rejected or mass-assigned.
@@ -57,9 +59,11 @@ class PartnerSchoolsController extends BaseController
                 'email',
                 Rule::unique('app_settings_partner_schools', 'contact_email')->ignore($model->id),
             ],
-            'contact_first_name' => ['required', 'string'],
-            'contact_last_name'  => ['required', 'string'],
+            'contact_first_name' => ['nullable', 'string'],
+            'contact_last_name'  => ['nullable', 'string'],
             'physical_address'   => ['nullable', 'string'],
+            'link'               => ['nullable', 'url', 'max:2048'],
+            'description'        => ['nullable', 'string'],
             // See storeRules(): the logo is validated/handled in storePartnerImage().
         ];
     }

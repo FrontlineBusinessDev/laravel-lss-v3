@@ -14,6 +14,7 @@ export type ModalMode = 'create' | 'edit';
 export type FieldType =
     | 'text'
     | 'email'
+    | 'url'
     | 'number'
     | 'password'
     | 'date'
