@@ -7,9 +7,9 @@ nixPkgs = ["php84", "nginx", "libmysqlclient", "php84Packages.composer", "nodejs
 cmds = [
   "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
   "php artisan octane:install --server=frankenphp --no-interaction", # Forces the binary download inside the Linux container
-  "npm install"
+  "npm ci"
+#  "npm install"
 ]
-#  "npm ci"
 
 [phases.build]
 cmds = [
