@@ -164,9 +164,7 @@ export async function apiFetchJson<T>(
 ): Promise<ApiEnvelope<T>> {
     const res = await apiFetch(url, init);
 
-    if (res.status === 204) {
-return { data: null as T };
-}
+    if (res.status === 204) return { data: null as T };
 
     const body = (await res.json().catch(() => null)) as
         | (ApiEnvelope<T> & { errors?: Record<string, string[]> })

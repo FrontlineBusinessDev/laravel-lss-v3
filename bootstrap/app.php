@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CronController;
+use App\Http\Controllers\v1\developer\CronController;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+        // 429 - Too Many Requests
         $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e) {
             /** @disregard P1013 */ // this disregard the error below but it works
             $user = auth()?->user() ?? [];
@@ -47,6 +48,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 'title' => 'Too Many Requests',
                 'message' => 'You have exceeded your allowed rate limit. Please try again later.'
             ])->toResponse(request())->setStatusCode(429);
+        });
+        // 404 - Page Not Found
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e) {
+            /** @disregard P1013 */
+            $user = auth()?->user() ?? null;
+            return inertia('pages-errors/404', [
+                'auth' => ['user' => $user ? $user->toInertiaPayload() : null],
+                'title' => 'Page Not Found',
+                'message' => 'The page you are looking for does not exist or has been moved.'
+            ])->toResponse(request())->setStatusCode(404);
         });
     })->withSchedule(function () {
         // Call your controller directly every minute (or change to your preferred frequency)
