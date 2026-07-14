@@ -23,8 +23,8 @@ export default defineConfig({
         }),
         inertia(),
         tailwindcss(),
-        wayfinder({
-            formVariants: true,
-        }),
+        // wayfinder({
+        //     formVariants: true,
+        // }),
     ],
 });
