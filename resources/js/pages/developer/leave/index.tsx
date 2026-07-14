@@ -1,34 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from '@/lib/router-compat';
-import {
-    Search,
-    Eye,
-    CheckCircle2,
-    XCircle,
-    Paperclip,
-    CalendarOff,
-    X,
-} from 'lucide-react';
-import { Dropdown } from '@/components/Dropdown';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { Dropdown } from '@/components/Dropdown';
 import { TextAreaField } from '@/components/FormField';
-import { TooltipIconButton } from '@/components/TooltipIconButton';
 import { useToast } from '@/components/Toast';
+import { TooltipIconButton } from '@/components/TooltipIconButton';
+import { useBatches } from '@/context/BatchesContext';
 import { useNotifications } from '@/context/NotificationsContext';
 import {
-    leaveRecords as initialLeaveRecords,
     currentUser,
+    leaveRecords as initialLeaveRecords,
     TODAY,
 } from '@/data/mockData';
-import { useBatches } from '@/context/BatchesContext';
-import type { LeaveRecord, LeaveType } from '@/types';
+import { useSearchParams } from '@/lib/router-compat';
 import { cn, toDateInputValue } from '@/lib/utils';
 import {
-    LeaveDetailsModal,
     LEAVE_STATUS_LABEL,
     LEAVE_STATUS_STYLE,
+    LeaveDetailsModal,
 } from '@/pages/developer/leave/LeaveDetailsModal';
+import type { LeaveRecord, LeaveType } from '@/types';
+import {
+    CalendarOff,
+    CheckCircle2,
+    Eye,
+    Paperclip,
+    Search,
+    X,
+    XCircle,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const STATUS_OPTIONS = ['All statuses', 'Pending', 'Approved', 'Declined'];
 const LEAVE_TYPE_OPTIONS: (LeaveType | 'All types')[] = [
@@ -38,7 +38,6 @@ const LEAVE_TYPE_OPTIONS: (LeaveType | 'All types')[] = [
     'School-Related Leave',
     'Bereavement Leave',
 ];
-
 interface Filters {
     batch: string;
     status: string;
@@ -55,12 +54,10 @@ const EMPTY_FILTERS: Filters = {
     rangeFrom: '',
     rangeTo: '',
 };
-
 type PendingDecision = {
     kind: 'approve' | 'decline';
     record: LeaveRecord;
 } | null;
-
 export default function LeavePage() {
     const { showToast } = useToast();
     const { notify, resolveForLeave } = useNotifications();
@@ -70,7 +67,6 @@ export default function LeavePage() {
         () => ['All batches', ...batches.map((b) => b.batchNo)],
         [batches],
     );
-
     const [records, setRecords] = useState<LeaveRecord[]>(initialLeaveRecords);
     const [query, setQuery] = useState('');
     const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -87,10 +83,11 @@ export default function LeavePage() {
         if (record) setViewRecord(record);
         const next = new URLSearchParams(searchParams);
         next.delete('highlight');
-        setSearchParams(next, { replace: true });
+        // setSearchParams(next, {
+        //     replace: true,
+        // });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
-
     const filteredSorted = useMemo(() => {
         const q = query.trim().toLowerCase();
         const filtered = records.filter((r) => {
@@ -132,7 +129,6 @@ export default function LeavePage() {
             .sort(byDateSubmittedDesc);
         return [...pending, ...rest];
     }, [records, query, filters]);
-
     const hasActiveFilters =
         query !== '' ||
         Object.entries(filters).some(
@@ -142,13 +138,14 @@ export default function LeavePage() {
         setQuery('');
         setFilters(EMPTY_FILTERS);
     };
-
     function requestDecision(kind: 'approve' | 'decline', record: LeaveRecord) {
         setViewRecord(null);
         setDecisionRemarks('');
-        setPendingDecision({ kind, record });
+        setPendingDecision({
+            kind,
+            record,
+        });
     }
-
     function confirmDecision() {
         if (!pendingDecision) return;
         const { kind, record } = pendingDecision;
@@ -156,7 +153,6 @@ export default function LeavePage() {
             kind === 'approve' ? 'approved' : 'declined';
         const remarks = decisionRemarks.trim();
         const decisionDate = toDateInputValue(TODAY);
-
         setRecords((prev) =>
             prev.map((r) =>
                 r.id === record.id
@@ -188,7 +184,6 @@ export default function LeavePage() {
             createdAt: decisionDate,
             relatedLeaveId: record.id,
         });
-
         showToast(
             `${record.traineeName}\u2019s leave request was ${status}. Trainee notified.`,
             kind === 'approve' ? 'success' : 'error',
@@ -196,32 +191,52 @@ export default function LeavePage() {
         setPendingDecision(null);
         setDecisionRemarks('');
     }
-
     const pendingCount = records.filter((r) => r.status === 'pending').length;
-
     return (
-        <div>
-            <div className="mb-4 flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl font-semibold text-ink">
+        <div data-cy="index-div-1">
+            <div
+                className="mb-4 flex items-center justify-between"
+                data-cy="index-div-2"
+            >
+                <div data-cy="index-div-3">
+                    <h1
+                        className="text-xl font-semibold text-ink"
+                        data-cy="index-h1-leave-management"
+                    >
                         Leave management
                     </h1>
-                    <p className="text-sm text-neutral-500">
+                    <p
+                        className="text-sm text-neutral-500"
+                        data-cy="index-p-pending-of"
+                    >
                         {pendingCount} pending of {records.length} leave
                         requests
                     </p>
                 </div>
             </div>
 
-            <div className="mb-3 flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-3">
-                <div className="flex flex-wrap items-end gap-2">
-                    <div className="relative min-w-[200px] flex-1">
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+            <div
+                className="mb-3 flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-3"
+                data-cy="index-div-6"
+            >
+                <div
+                    className="flex flex-wrap items-end gap-2"
+                    data-cy="index-div-7"
+                >
+                    <div
+                        className="relative min-w-[200px] flex-1"
+                        data-cy="index-div-8"
+                    >
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-search-trainee"
+                        >
                             Search trainee
                         </label>
                         <Search
                             size={14}
                             className="pointer-events-none absolute top-[34px] left-2.5 text-neutral-400"
+                            data-cy="index-search-10"
                         />
                         <input
                             type="text"
@@ -229,48 +244,76 @@ export default function LeavePage() {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             className="h-9 w-full rounded-md border border-neutral-200 pr-2.5 pl-8 text-sm transition-colors hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                            data-cy="index-input-search-by-trainee-name"
                         />
                     </div>
-                    <div className="w-full sm:w-40">
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                    <div className="w-full sm:w-40" data-cy="index-div-12">
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-batch"
+                        >
                             Batch
                         </label>
                         <Dropdown
                             options={batchOptions}
                             value={filters.batch}
                             onChange={(v) =>
-                                setFilters((f) => ({ ...f, batch: v }))
+                                setFilters((f) => ({
+                                    ...f,
+                                    batch: v,
+                                }))
                             }
+                            data-cy="index-dropdown-set-filters"
                         />
                     </div>
-                    <div className="w-full sm:w-36">
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                    <div className="w-full sm:w-36" data-cy="index-div-15">
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-status"
+                        >
                             Status
                         </label>
                         <Dropdown
                             options={STATUS_OPTIONS}
                             value={filters.status}
                             onChange={(v) =>
-                                setFilters((f) => ({ ...f, status: v }))
+                                setFilters((f) => ({
+                                    ...f,
+                                    status: v,
+                                }))
                             }
+                            data-cy="index-dropdown-set-filters-2"
                         />
                     </div>
-                    <div className="w-full sm:w-48">
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                    <div className="w-full sm:w-48" data-cy="index-div-18">
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-leave-type"
+                        >
                             Leave type
                         </label>
                         <Dropdown
                             options={LEAVE_TYPE_OPTIONS}
                             value={filters.leaveType}
                             onChange={(v) =>
-                                setFilters((f) => ({ ...f, leaveType: v }))
+                                setFilters((f) => ({
+                                    ...f,
+                                    leaveType: v,
+                                }))
                             }
+                            data-cy="index-dropdown-set-filters-3"
                         />
                     </div>
                 </div>
-                <div className="flex flex-wrap items-end gap-2">
-                    <div>
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                <div
+                    className="flex flex-wrap items-end gap-2"
+                    data-cy="index-div-21"
+                >
+                    <div data-cy="index-div-22">
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-on-leave-on"
+                        >
                             On leave on
                         </label>
                         <input
@@ -283,10 +326,14 @@ export default function LeavePage() {
                                 }))
                             }
                             className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                            data-cy="index-input-date"
                         />
                     </div>
-                    <div>
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                    <div data-cy="index-div-25">
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-leave-date-from"
+                        >
                             Leave date from
                         </label>
                         <input
@@ -299,10 +346,14 @@ export default function LeavePage() {
                                 }))
                             }
                             className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                            data-cy="index-input-date-2"
                         />
                     </div>
-                    <div>
-                        <label className="mb-1 block text-[11px] font-medium text-neutral-500">
+                    <div data-cy="index-div-28">
+                        <label
+                            className="mb-1 block text-[11px] font-medium text-neutral-500"
+                            data-cy="index-label-leave-date-to"
+                        >
                             Leave date to
                         </label>
                         <input
@@ -315,6 +366,7 @@ export default function LeavePage() {
                                 }))
                             }
                             className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                            data-cy="index-input-date-3"
                         />
                     </div>
                     {hasActiveFilters && (
@@ -324,6 +376,7 @@ export default function LeavePage() {
                             icon={X}
                             onClick={clearFilters}
                             className="ml-auto"
+                            data-cy="index-button-clear-filters"
                         >
                             Clear filters
                         </Button>
@@ -331,109 +384,198 @@ export default function LeavePage() {
                 </div>
             </div>
 
-            <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-neutral-400">
+            <div
+                className="mb-2 flex items-center justify-between"
+                data-cy="index-div-32"
+            >
+                <span
+                    className="text-xs text-neutral-400"
+                    data-cy="index-span-of"
+                >
                     {filteredSorted.length} of {records.length} requests
                 </span>
             </div>
 
-            <div className="hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block">
-                <div className="lss-scrollbar overflow-x-auto">
-                    <table className="w-full min-w-[1080px] border-collapse text-sm">
-                        <thead>
-                            <tr className="bg-neutral-50 text-left text-xs font-medium text-neutral-500">
-                                <th className="px-4 py-2.5 font-medium">
+            <div
+                className="hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
+                data-cy="index-div-34"
+            >
+                <div
+                    className="lss-scrollbar overflow-x-auto"
+                    data-cy="index-div-35"
+                >
+                    <table
+                        className="w-full min-w-[1080px] border-collapse text-sm"
+                        data-cy="index-table-36"
+                    >
+                        <thead data-cy="index-thead-37">
+                            <tr
+                                className="bg-neutral-50 text-left text-xs font-medium text-neutral-500"
+                                data-cy="index-tr-38"
+                            >
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-trainee"
+                                >
                                     Trainee
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-batch"
+                                >
                                     Batch
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-leave-date"
+                                >
                                     Leave date
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-return-date"
+                                >
                                     Return date
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-leave-type"
+                                >
                                     Leave type
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-remarks"
+                                >
                                     Remarks
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-status"
+                                >
                                     Status
                                 </th>
-                                <th className="px-4 py-2.5 font-medium">
+                                <th
+                                    className="px-4 py-2.5 font-medium"
+                                    data-cy="index-th-date-submitted"
+                                >
                                     Date submitted
                                 </th>
-                                <th className="px-4 py-2.5 text-right font-medium">
+                                <th
+                                    className="px-4 py-2.5 text-right font-medium"
+                                    data-cy="index-th-actions"
+                                >
                                     Actions
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody data-cy="index-tbody-48">
                             {filteredSorted.map((r) => (
                                 <tr
                                     key={r.id}
                                     className="border-t border-neutral-100 transition-colors hover:bg-neutral-50"
+                                    data-cy="index-tr-49"
                                 >
-                                    <td className="px-4 py-2.5">
-                                        <div className="flex items-center gap-2">
-                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600">
+                                    <td
+                                        className="px-4 py-2.5"
+                                        data-cy="index-td-50"
+                                    >
+                                        <div
+                                            className="flex items-center gap-2"
+                                            data-cy="index-div-51"
+                                        >
+                                            <span
+                                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600"
+                                                data-cy="index-span-52"
+                                            >
                                                 {r.initials}
                                             </span>
-                                            <span className="font-medium text-ink">
+                                            <span
+                                                className="font-medium text-ink"
+                                                data-cy="index-span-53"
+                                            >
                                                 {r.traineeName}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                    <td
+                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
+                                        data-cy="index-td-54"
+                                    >
                                         {r.batchNo}
                                     </td>
-                                    <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                    <td
+                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
+                                        data-cy="index-td-55"
+                                    >
                                         {r.leaveDate}
                                     </td>
-                                    <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                    <td
+                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
+                                        data-cy="index-td-56"
+                                    >
                                         {r.returnDate}
                                     </td>
-                                    <td className="px-4 py-2.5 text-neutral-600">
+                                    <td
+                                        className="px-4 py-2.5 text-neutral-600"
+                                        data-cy="index-td-57"
+                                    >
                                         {r.leaveType}
                                     </td>
                                     <td
                                         className="max-w-[200px] truncate px-4 py-2.5 text-xs text-neutral-500"
                                         title={r.remarks}
+                                        data-cy="index-td-r-remarks"
                                     >
-                                        <span className="inline-flex items-center gap-1">
+                                        <span
+                                            className="inline-flex items-center gap-1"
+                                            data-cy="index-span-59"
+                                        >
                                             {r.supportingDocuments &&
                                                 r.supportingDocuments.length >
                                                     0 && (
                                                     <Paperclip
                                                         size={11}
                                                         className="shrink-0 text-neutral-400"
+                                                        data-cy="index-paperclip-60"
                                                     />
                                                 )}
                                             {r.remarks}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-2.5">
+                                    <td
+                                        className="px-4 py-2.5"
+                                        data-cy="index-td-61"
+                                    >
                                         <span
                                             className={cn(
                                                 'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
                                                 LEAVE_STATUS_STYLE[r.status],
                                             )}
+                                            data-cy="index-span-62"
                                         >
                                             {LEAVE_STATUS_LABEL[r.status]}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-2.5 font-mono text-xs text-neutral-600">
+                                    <td
+                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
+                                        data-cy="index-td-63"
+                                    >
                                         {r.dateSubmitted}
                                     </td>
-                                    <td className="px-4 py-2.5">
-                                        <div className="flex justify-end gap-0.5">
+                                    <td
+                                        className="px-4 py-2.5"
+                                        data-cy="index-td-64"
+                                    >
+                                        <div
+                                            className="flex justify-end gap-0.5"
+                                            data-cy="index-div-65"
+                                        >
                                             <TooltipIconButton
                                                 icon={Eye}
                                                 label="View details"
                                                 onClick={() => setViewRecord(r)}
+                                                data-cy="index-tooltip-icon-button-view-details"
                                             />
                                             <TooltipIconButton
                                                 icon={CheckCircle2}
@@ -447,6 +589,7 @@ export default function LeavePage() {
                                                         r,
                                                     )
                                                 }
+                                                data-cy="index-tooltip-icon-button-approve"
                                             />
                                             <TooltipIconButton
                                                 icon={XCircle}
@@ -460,20 +603,23 @@ export default function LeavePage() {
                                                         r,
                                                     )
                                                 }
+                                                data-cy="index-tooltip-icon-button-decline"
                                             />
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                             {filteredSorted.length === 0 && (
-                                <tr>
+                                <tr data-cy="index-tr-69">
                                     <td
                                         colSpan={9}
                                         className="px-4 py-10 text-center text-xs text-neutral-400"
+                                        data-cy="index-td-no-leave-requests-match-your-search"
                                     >
                                         <CalendarOff
                                             size={20}
                                             className="mx-auto mb-2 text-neutral-300"
+                                            data-cy="index-calendar-off-71"
                                         />
                                         No leave requests match your search or
                                         filters.
@@ -486,25 +632,42 @@ export default function LeavePage() {
             </div>
 
             {/* Mobile cards */}
-            <div className="flex flex-col gap-2 sm:hidden">
+            <div
+                className="flex flex-col gap-2 sm:hidden"
+                data-cy="index-div-72"
+            >
                 {filteredSorted.map((r) => (
                     <div
                         key={r.id}
                         className="rounded-lg border border-neutral-200 bg-white p-3.5"
+                        data-cy="index-div-73"
                     >
                         <button
                             onClick={() => setViewRecord(r)}
                             className="flex w-full items-start justify-between gap-2 text-left"
+                            data-cy="index-button-set-view-record"
                         >
-                            <div className="flex min-w-0 items-center gap-2">
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600">
+                            <div
+                                className="flex min-w-0 items-center gap-2"
+                                data-cy="index-div-75"
+                            >
+                                <span
+                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600"
+                                    data-cy="index-span-76"
+                                >
                                     {r.initials}
                                 </span>
-                                <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold text-ink">
+                                <div className="min-w-0" data-cy="index-div-77">
+                                    <p
+                                        className="truncate text-sm font-semibold text-ink"
+                                        data-cy="index-p-78"
+                                    >
                                         {r.traineeName}
                                     </p>
-                                    <p className="truncate text-xs text-neutral-500">
+                                    <p
+                                        className="truncate text-xs text-neutral-500"
+                                        data-cy="index-p-79"
+                                    >
                                         {r.batchNo} · {r.leaveType}
                                     </p>
                                 </div>
@@ -514,27 +677,38 @@ export default function LeavePage() {
                                     'shrink-0 rounded-pill px-2 py-0.5 text-[11px] font-medium',
                                     LEAVE_STATUS_STYLE[r.status],
                                 )}
+                                data-cy="index-span-80"
                             >
                                 {LEAVE_STATUS_LABEL[r.status]}
                             </span>
                         </button>
-                        <p className="mt-2 text-xs text-neutral-500">
+                        <p
+                            className="mt-2 text-xs text-neutral-500"
+                            data-cy="index-p-81"
+                        >
                             {r.leaveDate} – {r.returnDate}
                         </p>
                         {r.remarks && (
-                            <p className="mt-1 flex items-center gap-1 truncate text-xs text-neutral-400">
+                            <p
+                                className="mt-1 flex items-center gap-1 truncate text-xs text-neutral-400"
+                                data-cy="index-p-82"
+                            >
                                 {r.supportingDocuments &&
                                     r.supportingDocuments.length > 0 && (
                                         <Paperclip
                                             size={11}
                                             className="shrink-0"
+                                            data-cy="index-paperclip-83"
                                         />
                                     )}
                                 {r.remarks}
                             </p>
                         )}
                         {r.status === 'pending' && (
-                            <div className="mt-2.5 flex gap-2 border-t border-neutral-100 pt-2.5">
+                            <div
+                                className="mt-2.5 flex gap-2 border-t border-neutral-100 pt-2.5"
+                                data-cy="index-div-84"
+                            >
                                 <Button
                                     variant="secondary"
                                     size="sm"
@@ -543,6 +717,7 @@ export default function LeavePage() {
                                     onClick={() =>
                                         requestDecision('approve', r)
                                     }
+                                    data-cy="index-button-request-decision"
                                 >
                                     Approve
                                 </Button>
@@ -554,6 +729,7 @@ export default function LeavePage() {
                                     onClick={() =>
                                         requestDecision('decline', r)
                                     }
+                                    data-cy="index-button-request-decision-2"
                                 >
                                     Decline
                                 </Button>
@@ -562,10 +738,14 @@ export default function LeavePage() {
                     </div>
                 ))}
                 {filteredSorted.length === 0 && (
-                    <div className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-xs text-neutral-400">
+                    <div
+                        className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-xs text-neutral-400"
+                        data-cy="index-div-no-leave-requests-match-your-search"
+                    >
                         <CalendarOff
                             size={20}
                             className="mx-auto mb-2 text-neutral-300"
+                            data-cy="index-calendar-off-88"
                         />
                         No leave requests match your search or filters.
                     </div>
@@ -577,6 +757,7 @@ export default function LeavePage() {
                 onClose={() => setViewRecord(null)}
                 onRequestApprove={(r) => requestDecision('approve', r)}
                 onRequestDecline={(r) => requestDecision('decline', r)}
+                data-cy="index-leave-details-modal-set-view-record"
             />
 
             <ConfirmDialog
@@ -606,7 +787,10 @@ export default function LeavePage() {
                                 : 'Decline'}{' '}
                             the {pendingDecision.record.leaveType.toLowerCase()}{' '}
                             request from{' '}
-                            <span className="font-medium text-ink">
+                            <span
+                                className="font-medium text-ink"
+                                data-cy="index-span-91"
+                            >
                                 {pendingDecision.record.traineeName}
                             </span>{' '}
                             ({pendingDecision.record.leaveDate} to{' '}
@@ -621,6 +805,7 @@ export default function LeavePage() {
                         ''
                     )
                 }
+                data-cy="index-confirm-dialog-set-pending-decision"
             >
                 <TextAreaField
                     label="Remarks"
@@ -632,6 +817,7 @@ export default function LeavePage() {
                     }
                     value={decisionRemarks}
                     onChange={(e) => setDecisionRemarks(e.target.value)}
+                    data-cy="index-text-area-field-remarks"
                 />
             </ConfirmDialog>
         </div>

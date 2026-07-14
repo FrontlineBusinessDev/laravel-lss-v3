@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
 use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
 use App\Http\Controllers\v1\Developer\Batches\BatchesController;
 use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
@@ -116,6 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/trainees', [TraineesController::class, 'index'])->name('trainees.index');
     Route::get('/trainees/{id}', [TraineesController::class, 'show'])->name('trainees.show');
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
@@ -128,6 +130,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
+    Route::crudModule('/announcements', AnnoucementController::class, 'announcements');
     // Users & Roles admin JSON API consumed by the settings DataTableField.
     // Coarse access is gated by the Spatie permission; UserController layers on
     // the creator-scoped role matrix, and RolesController is developer-only.

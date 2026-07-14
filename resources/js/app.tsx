@@ -4,13 +4,13 @@ import { AppProviders, makeQueryClient } from './AppProviders';
 import AppLayout from './layouts/AppLayout';
 import SettingsAcademicLayout from './layouts/settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from './layouts/settings/SettingsPrimaryLayout';
-
 const appName = import.meta.env.VITE_APP_NAME || 'LSS Admin';
-
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: (name) => {
-        const pages = import.meta.glob<{ default: any }>('./pages/**/*.tsx', {
+        const pages = import.meta.glob<{
+            default: any;
+        }>('./pages/**/*.tsx', {
             eager: true,
         });
         const key = Object.keys(pages).find(
@@ -25,7 +25,7 @@ createInertiaApp({
                 return null;
             case name.startsWith('public/'):
                 return null;
-            case name.startsWith('settings/academic'):
+            case name.includes('settings/academic'):
                 return [
                     AppLayout,
                     SettingsPrimaryLayout,
@@ -41,7 +41,10 @@ createInertiaApp({
         // The provider tree and QueryClient options are shared with ssr.tsx via
         // AppProviders so a client render matches the server-rendered HTML.
         const tree = (
-            <AppProviders client={makeQueryClient()}>
+            <AppProviders
+                client={makeQueryClient()}
+                data-cy="app-app-providers-1"
+            >
                 <App {...props} />
             </AppProviders>
         );

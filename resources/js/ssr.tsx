@@ -5,21 +5,18 @@ import { AppProviders, makeQueryClient } from './AppProviders';
 import AppLayout from './layouts/AppLayout';
 import SettingsAcademicLayout from './layouts/settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from './layouts/settings/SettingsPrimaryLayout';
-
 const appName = import.meta.env.VITE_APP_NAME || 'LSS Admin';
-
 createServerHtml((page) =>
     createInertiaApp({
         page,
         render: ReactDOMServer.renderToString,
         title: (title) => (title ? `${title} - ${appName}` : appName),
         resolve: (name) => {
-            const pages = import.meta.glob<{ default: any }>(
-                './pages/**/*.tsx',
-                {
-                    eager: true,
-                },
-            );
+            const pages = import.meta.glob<{
+                default: any;
+            }>('./pages/**/*.tsx', {
+                eager: true,
+            });
             const key = Object.keys(pages).find(
                 (k) => k.toLowerCase() === `./pages/${name}.tsx`.toLowerCase(),
             );
@@ -48,7 +45,10 @@ createServerHtml((page) =>
             // Fresh client per request (no cross-request data leak); shares the
             // exact provider tree + options with app.tsx via AppProviders.
             return (
-                <AppProviders client={makeQueryClient()}>
+                <AppProviders
+                    client={makeQueryClient()}
+                    data-cy="ssr-app-providers-1"
+                >
                     <App {...props} />
                 </AppProviders>
             );

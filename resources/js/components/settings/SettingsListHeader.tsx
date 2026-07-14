@@ -9,24 +9,14 @@ import { GRID } from '@/types/reusable/data-table';
  * column-template override — the exact markup every settings page duplicated.
  */
 export function SettingsListHeader({
-    grid,
-    labels,
+  grid,
+  labels
 }: {
-    grid?: string;
-    labels: string[];
+  grid?: string;
+  labels: string[];
 }) {
-    return (
-        <div
-            className={cn(
-                GRID,
-                grid,
-                'hidden bg-neutral-50 px-4 py-2.5 text-xs font-medium text-neutral-500',
-            )}
-        >
-            {labels.map((label) => (
-                <span key={label}>{label}</span>
-            ))}
-            <span />
-        </div>
-    );
+  return <div className={cn(GRID, grid, 'hidden bg-neutral-50 px-4 py-2.5 text-xs font-medium text-neutral-500')} data-cy="settings-list-header-div-1">
+            {labels.map(label => <span key={label} data-cy="settings-list-header-span-2">{label}</span>)}
+            <span data-cy="settings-list-header-span-3" />
+        </div>;
 }

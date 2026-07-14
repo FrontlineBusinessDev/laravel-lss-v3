@@ -2,7 +2,6 @@ import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { ReactNode } from 'react';
-
 interface LayoutProps {
     children: ReactNode;
 }
@@ -32,7 +31,6 @@ const NAV_LINKS = [
         permission: 'manage settings academic',
     },
 ] as const;
-
 export default function SettingsAcademicLayout({ children }: LayoutProps) {
     const { can } = usePermission(); // Used to permission
     const { url } = usePage(); // Used to automatically highlight the active tab
@@ -47,6 +45,7 @@ export default function SettingsAcademicLayout({ children }: LayoutProps) {
                     'my-2 inline-flex flex-wrap gap-1.5',
                     !showNavigation && 'h-5',
                 )}
+                data-cy="settings-academic-layout-div-1"
             >
                 {showNavigation &&
                     NAV_LINKS.map((link) => {
@@ -62,6 +61,7 @@ export default function SettingsAcademicLayout({ children }: LayoutProps) {
                                         ? 'bg-brand-500 text-white'
                                         : 'border border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300',
                                 )}
+                                data-cy="settings-academic-layout-link-link-href"
                             >
                                 {link.label}
                             </Link>

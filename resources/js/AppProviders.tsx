@@ -34,11 +34,16 @@ export function AppProviders({
     children: ReactNode;
 }) {
     return (
-        <QueryClientProvider client={client}>
-            <SystemToastProvider>
-                <ToastProvider>
-                    <NotificationsProvider>
-                        <BatchesProvider>{children}</BatchesProvider>
+        <QueryClientProvider
+            client={client}
+            // data-cy="app-providers-query-client-provider-1"
+        >
+            <SystemToastProvider data-cy="app-providers-system-toast-provider-2">
+                <ToastProvider data-cy="app-providers-toast-provider-3">
+                    <NotificationsProvider data-cy="app-providers-notifications-provider-4">
+                        <BatchesProvider data-cy="app-providers-batches-provider-5">
+                            {children}
+                        </BatchesProvider>
                     </NotificationsProvider>
                 </ToastProvider>
             </SystemToastProvider>
