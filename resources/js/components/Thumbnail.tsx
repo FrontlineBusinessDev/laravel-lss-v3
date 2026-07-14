@@ -1,14 +1,13 @@
 import { File } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-
 interface ThumbnailProps {
-    /** Image URL. When empty/null the fallback is rendered. */
-    src?: string | null;
-    alt?: string;
-    className?: string;
-    /** Rendered when there is no `src` or the image fails to load. */
-    fallback?: ReactNode;
+  /** Image URL. When empty/null the fallback is rendered. */
+  src?: string | null;
+  alt?: string;
+  className?: string;
+  /** Rendered when there is no `src` or the image fails to load. */
+  fallback?: ReactNode;
 }
 
 /**
@@ -18,50 +17,34 @@ interface ThumbnailProps {
  * placeholder, matching the settings list convention.
  */
 export function Thumbnail({
-    src,
-    alt = '',
-    className,
-    fallback,
+  src,
+  alt = '',
+  className,
+  fallback
 }: ThumbnailProps) {
-    const [errored, setErrored] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  if (!src || errored) {
+    return <>{fallback ?? <span className="text-sm text-slate-400" data-cy="thumbnail-span-1">—</span>}</>;
+  }
 
-    if (!src || errored) {
-        return (
-            <>{fallback ?? <span className="text-sm text-slate-400">—</span>}</>
-        );
-    }
+  // if (isLoading) {
+  //     return <div>12312</div>;
+  // }
 
-    // if (isLoading) {
-    //     return <div>12312</div>;
-    // }
-
-    return (
-        <>
-            {isError ? (
-                <>
-                    <div>
-                        <File className="size-5" />
+  return <>
+            {isError ? <>
+                    <div data-cy="thumbnail-div-2">
+                        <File className="size-5" data-cy="thumbnail-file-3" />
                     </div>
-                </>
-            ) : (
-                <>
-                    <img
-                        src={src}
-                        alt={alt}
-                        onError={() => setErrored(true)}
-                        className={className}
-                        onLoad={() => {
-                            setIsLoading(false);
-                        }}
-                        onErrorCapture={() => {
-                            setIsError(true);
-                            setIsLoading(false);
-                        }}
-                    />
-                </>
-            )}
-        </>
-    );
+                </> : <>
+                    <img src={src} alt={alt} onError={() => setErrored(true)} className={className} onLoad={() => {
+        setIsLoading(false);
+      }} onErrorCapture={() => {
+        setIsError(true);
+        setIsLoading(false);
+      }} data-cy="thumbnail-img-4" />
+                </>}
+        </>;
 }

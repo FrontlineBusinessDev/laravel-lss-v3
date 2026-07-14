@@ -93,14 +93,11 @@ function containsFile(value: unknown): boolean {
     if (!value || typeof value !== 'object') {
         return false;
     }
-
     if (value instanceof File || value instanceof Blob) {
         return true;
     }
-
     return Object.values(value as Record<string, unknown>).some(containsFile);
 }
-
 export function DataTableField<T extends Record<string, unknown>>({
     apiUrl,
     apiQueryKey,
@@ -161,7 +158,10 @@ export function DataTableField<T extends Record<string, unknown>>({
     // a partial-match prefix that catches the on-screen query and all cached
     // siblings. Used by every archive/restore/delete/suspend handler below.
     const invalidateTable = useCallback(
-        () => queryClient.invalidateQueries({ queryKey: [queryKey] }),
+        () =>
+            queryClient.invalidateQueries({
+                queryKey: [queryKey],
+            }),
         [queryClient, queryKey],
     );
 
@@ -218,29 +218,39 @@ export function DataTableField<T extends Record<string, unknown>>({
             // Merge parent-supplied extra filters (multi-select ids, etc.) on
             // top of the toolbar's own column filters. The list query hashes by
             // content, so the fresh object here doesn't cause spurious refetches.
-            filters: { ...debouncedFilters, ...(extraFilters ?? {}) },
+            filters: {
+                ...debouncedFilters,
+                ...(extraFilters ?? {}),
+            },
         },
         createUrl: createUrl ?? apiUrl,
         updateUrl: ({ id }) => {
             if (updateUrl) {
                 return updateUrl(modalState?.row as T);
             }
-
             return `${apiUrl}/${id}`;
         },
         deleteUrl: deleteUrl
-            ? (id) => deleteUrl({ id } as unknown as T)
+            ? (id) =>
+                  deleteUrl({
+                      id,
+                  } as unknown as T)
             : undefined,
         archiveUrl: archiveUrl
-            ? (id) => archiveUrl({ id } as unknown as T)
+            ? (id) =>
+                  archiveUrl({
+                      id,
+                  } as unknown as T)
             : undefined,
         restoreUrl: restoreUrl
-            ? (id) => restoreUrl({ id } as unknown as T)
+            ? (id) =>
+                  restoreUrl({
+                      id,
+                  } as unknown as T)
             : undefined,
         updateMethod,
         onUploadProgress: setUploadProgress,
     });
-
     const rows = crud.data;
     const meta = crud.pageInfo;
     const filterableCols: string[] = [];
@@ -263,11 +273,9 @@ export function DataTableField<T extends Record<string, unknown>>({
     const canCreate =
         (enableCreate ?? resolvedFields.length > 0) &&
         (createPermission ? can(createPermission) : true);
-
     const canEdit =
         (enableEdit ?? resolvedFields.length > 0) &&
         (editPermission ? can(editPermission) : true);
-
     const canArchive = archivePermission ? can(archivePermission) : true;
     const canDelete = deletePermission ? can(deletePermission) : true;
     // ── Modal state ───────────────────────────────────────────────────────────
@@ -276,12 +284,17 @@ export function DataTableField<T extends Record<string, unknown>>({
         row?: T;
     } | null>(null);
     const openCreateModal = () => {
-        setModalState({ mode: 'create' });
+        setModalState({
+            mode: 'create',
+        });
         setModalError(null);
         setUploadProgress(null);
     };
     const openEditModal = (row: T) => {
-        setModalState({ mode: 'edit', row });
+        setModalState({
+            mode: 'edit',
+            row,
+        });
         setModalError(null);
         setUploadProgress(null);
     };
@@ -317,12 +330,13 @@ export function DataTableField<T extends Record<string, unknown>>({
             setSortBy(col);
             setSortDir('asc');
         }
-
         setPage(1);
     };
-
     const handleColumnFilter = (col: string, value: string) => {
-        setColumnFilters((prev) => ({ ...prev, [col]: value }));
+        setColumnFilters((prev) => ({
+            ...prev,
+            [col]: value,
+        }));
     };
 
     // Status filter. The "no constraint" tab (Active/Inactive/All's 'all', or the
@@ -332,24 +346,22 @@ export function DataTableField<T extends Record<string, unknown>>({
     const customStatusScope: string = columnFilters.status ?? '';
     const handleStatusChange = (scope: string) => {
         setColumnFilters((prev) => {
-            const next = { ...prev };
-
+            const next = {
+                ...prev,
+            };
             if (scope === 'all' || scope === '') {
                 delete next.status;
             } else {
                 next.status = scope;
             }
-
             return next;
         });
     };
-
     const clearAllFilters = () => {
         setSearchInput('');
         setColumnFilters({});
         setPage(1);
     };
-
     const hasActiveFilters =
         Boolean(searchInput) || Object.values(columnFilters).some(Boolean);
     const hasActiveColumnFilters = Object.values(columnFilters).some(Boolean);
@@ -359,7 +371,6 @@ export function DataTableField<T extends Record<string, unknown>>({
         if (!modalState) {
             return;
         }
-
         const { mode, row } = modalState;
         const formValues = values as Record<string, unknown>;
         // A custom renderModal fully owns its own field set and value
@@ -369,16 +380,16 @@ export function DataTableField<T extends Record<string, unknown>>({
         // Filtering a custom modal's submission through `fields` would
         // silently drop any field `fields` doesn't happen to declare.
         let payload: Record<string, unknown>;
-
         if (renderModal) {
             // payload = formValues;
             // Extract raw value fields from your custom file uploader state
-            payload = { ...formValues };
+            payload = {
+                ...formValues,
+            };
 
             // Check if our custom image structure exists in the form sub-state
             if (payload.image && typeof payload.image === 'object') {
                 const imgObj = payload.image as Record<string, unknown>;
-
                 if (Array.isArray(imgObj.files) && imgObj.files.length > 0) {
                     // // Extract the raw file reference and map it to your Laravel image key
                     // payload.image = imgObj.files[0];
@@ -416,7 +427,6 @@ export function DataTableField<T extends Record<string, unknown>>({
                         !!val &&
                         val.removedIds?.length > 0 &&
                         val.files?.length === 0;
-
                     if (removed) {
                         payload[`remove_${outKey}`] = true;
                         payload[outKey] = null;
@@ -427,11 +437,9 @@ export function DataTableField<T extends Record<string, unknown>>({
         // Surface the progress bar immediately when the payload carries a file;
         // JSON-only saves leave it null so no idle bar appears.
         const uploading = containsFile(payload);
-
         if (uploading) {
             setUploadProgress(0);
         }
-
         try {
             setModalError(null);
             const saved =
@@ -441,18 +449,15 @@ export function DataTableField<T extends Record<string, unknown>>({
                           id: String(getRowId(row as T)),
                           data: payload as Partial<T>,
                       });
-
             toast({
                 title: `${title ?? 'Record'} ${mode === 'create' ? 'created' : 'updated'}`,
                 variant: 'success',
             });
-
             if (mode === 'create') {
                 onCreated?.(saved);
             } else {
                 onUpdated?.(saved);
             }
-
             closeModal();
         } catch (err) {
             const error =
@@ -466,7 +471,6 @@ export function DataTableField<T extends Record<string, unknown>>({
                 variant: 'error',
             });
             onSaveError?.(error);
-
             throw error;
         } finally {
             // Clear the bar whether the upload succeeded or failed.
@@ -489,7 +493,10 @@ export function DataTableField<T extends Record<string, unknown>>({
             // does a raw fetch that never touches the react-query cache, so the
             // built-in `crud.restore` invalidation wouldn't have run.
             invalidateTable();
-            toast({ title: 'Restored', variant: 'info' });
+            toast({
+                title: 'Restored',
+                variant: 'info',
+            });
         } catch (err) {
             const error =
                 err instanceof Error ? err : new Error('Failed to restore.');
@@ -500,7 +507,6 @@ export function DataTableField<T extends Record<string, unknown>>({
             });
         }
     };
-
     const handleArchive = async (row: T) => {
         try {
             if (onArchive) {
@@ -512,7 +518,10 @@ export function DataTableField<T extends Record<string, unknown>>({
             // Covers both paths: the `onArchive` raw-fetch escape hatch (which
             // bypasses the cache) and the `crud.archive` mutation.
             invalidateTable();
-            toast({ title: 'Archived', variant: 'info' });
+            toast({
+                title: 'Archived',
+                variant: 'info',
+            });
         } catch (err) {
             const error =
                 err instanceof Error ? err : new Error('Failed to archive.');
@@ -523,25 +532,22 @@ export function DataTableField<T extends Record<string, unknown>>({
             });
         }
     };
-
     const { run: runRestore, loading: restoring } =
         useAsyncAction(handleRestore);
     const { run: runArchive, loading: archiving } =
         useAsyncAction(handleArchive);
-
     const confirmDelete = async () => {
         if (!deleteTarget) {
             return;
         }
-
         setDeleting(true);
-
         try {
             const res = await apiFetch(
                 buildDeleteUrl(deleteTarget, apiUrl, deleteUrl),
-                { method: 'DELETE' },
+                {
+                    method: 'DELETE',
+                },
             );
-
             if (!res.ok) {
                 const apiError = await parseApiError(res);
 
@@ -550,16 +556,13 @@ export function DataTableField<T extends Record<string, unknown>>({
                     setInUseEntries(apiError.inUse);
                     setInUseTarget(deleteTarget);
                     setDeleteTarget(null);
-
                     return;
                 }
-
                 toast({
                     title: 'Delete failed',
                     description: apiError.message,
                     variant: 'error',
                 });
-
                 return;
             }
 
@@ -573,12 +576,13 @@ export function DataTableField<T extends Record<string, unknown>>({
                 buildDeleteUrl(deleteTarget, apiUrl, deleteUrl),
             );
             invalidateTable();
-            toast({ title: 'Deleted', variant: 'info' });
-
+            toast({
+                title: 'Deleted',
+                variant: 'info',
+            });
             if (isSelfDelete) {
                 window.location.href = '/login';
             }
-
             setDeleteTarget(null);
         } catch (err) {
             const error =
@@ -592,20 +596,18 @@ export function DataTableField<T extends Record<string, unknown>>({
             setDeleting(false);
         }
     };
-
     const confirmSuspend = async () => {
         if (!suspendTarget) {
             return;
         }
-
         setSuspend(true);
-
         try {
             const res = await apiFetch(
                 buildSuspendUrl(suspendTarget, apiUrl, archiveUrl),
-                { method: 'PATCH' },
+                {
+                    method: 'PATCH',
+                },
             );
-
             if (!res.ok) {
                 const apiError = await parseApiError(res);
 
@@ -614,16 +616,13 @@ export function DataTableField<T extends Record<string, unknown>>({
                     setInUseEntries(apiError.inUse);
                     setInUseTarget(deleteTarget);
                     setDeleteTarget(null);
-
                     return;
                 }
-
                 toast({
                     title: 'Suspend failed',
                     description: apiError.message,
                     variant: 'error',
                 });
-
                 return;
             }
 
@@ -634,8 +633,10 @@ export function DataTableField<T extends Record<string, unknown>>({
             );
             // Refresh the list so the suspended row leaves the active view.
             invalidateTable();
-            toast({ title: 'Suspended', variant: 'info' });
-
+            toast({
+                title: 'Suspended',
+                variant: 'info',
+            });
             if (isSelfSuspend) {
                 window.location.href = '/login';
             } // force logout
@@ -657,19 +658,29 @@ export function DataTableField<T extends Record<string, unknown>>({
     // ── Default card (used when renderCard prop is not supplied) ──────────────
     const defaultCard = (row: T | any) => {
         const [titleCol, ...rest] = columns;
-
         return (
-            <div className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 p-5 shadow-sm transition-shadow hover:shadow-md">
-                <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-base font-semibold">
+            <div
+                className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 p-5 shadow-sm transition-shadow hover:shadow-md"
+                data-cy="data-table-field-div-1"
+            >
+                <div
+                    className="min-w-0 flex-1"
+                    data-cy="data-table-field-div-2"
+                >
+                    <h3
+                        className="truncate text-base font-semibold"
+                        data-cy="data-table-field-h3-3"
+                    >
                         {formatCell(row[titleCol?.key])}
                     </h3>
-                    <dl className="mt-1 space-y-0.5">
+                    <dl
+                        className="mt-1 space-y-0.5"
+                        data-cy="data-table-field-dl-4"
+                    >
                         {rest.map((col) => {
                             const value = col.render
                                 ? col.render(row[col.key], row)
                                 : formatCell(row[col.key]);
-
                             if (
                                 value === '—' ||
                                 value === '' ||
@@ -677,16 +688,22 @@ export function DataTableField<T extends Record<string, unknown>>({
                             ) {
                                 return null;
                             }
-
                             return (
-                                <dd key={col.key} className="truncate text-sm">
+                                <dd
+                                    key={col.key}
+                                    className="truncate text-sm"
+                                    data-cy="data-table-field-dd-5"
+                                >
                                     {value}
                                 </dd>
                             );
                         })}
                     </dl>
                 </div>
-                <div className="flex shrink-0 items-center gap-3 pt-0.5">
+                <div
+                    className="flex shrink-0 items-center gap-3 pt-0.5"
+                    data-cy="data-table-field-div-6"
+                >
                     {(row as Record<string, unknown>).status === 'active' ? (
                         <>
                             {canEdit && (
@@ -695,10 +712,12 @@ export function DataTableField<T extends Record<string, unknown>>({
                                     onClick={() => openEditModal(row)}
                                     title="Edit"
                                     className="rounded-md p-1.5 transition-colors hover:bg-slate-100 hover:dark:bg-slate-100/30"
+                                    data-cy="data-table-field-button-edit"
                                 >
                                     <Pencil
                                         className="size-4.5"
                                         strokeWidth={1.75}
+                                        data-cy="data-table-field-pencil-8"
                                     />
                                 </button>
                             )}
@@ -708,10 +727,12 @@ export function DataTableField<T extends Record<string, unknown>>({
                                     onClick={() => setSuspendTarget(row)}
                                     title="Archive"
                                     className="rounded-md p-1.5 transition-colors hover:bg-slate-100 hover:dark:bg-slate-100/30"
+                                    data-cy="data-table-field-button-archive"
                                 >
                                     <UserRoundX
                                         className="size-4.5"
                                         strokeWidth={1.75}
+                                        data-cy="data-table-field-user-round-x-10"
                                     />
                                 </button>
                             ) : (
@@ -723,13 +744,18 @@ export function DataTableField<T extends Record<string, unknown>>({
                                             disabled={archiving}
                                             title="Archive"
                                             className="rounded-md p-1.5 transition-colors hover:bg-slate-100 hover:dark:bg-slate-100/30"
+                                            data-cy="data-table-field-button-archive-2"
                                         >
                                             {archiving ? (
-                                                <Loader2 className="size-4.5 animate-spin" />
+                                                <Loader2
+                                                    className="size-4.5 animate-spin"
+                                                    data-cy="data-table-field-loader2-12"
+                                                />
                                             ) : (
                                                 <Archive
                                                     className="size-4.5"
                                                     strokeWidth={1.75}
+                                                    data-cy="data-table-field-archive-13"
                                                 />
                                             )}
                                         </button>
@@ -745,13 +771,18 @@ export function DataTableField<T extends Record<string, unknown>>({
                                 disabled={restoring}
                                 title="Restore"
                                 className="rounded-md p-1.5 transition-colors hover:bg-yellow-100 hover:text-yellow-700"
+                                data-cy="data-table-field-button-restore"
                             >
                                 {restoring ? (
-                                    <Loader2 className="size-4.5 animate-spin" />
+                                    <Loader2
+                                        className="size-4.5 animate-spin"
+                                        data-cy="data-table-field-loader2-15"
+                                    />
                                 ) : (
                                     <ArchiveRestore
                                         className="size-4.5"
                                         strokeWidth={1.75}
+                                        data-cy="data-table-field-archive-restore-16"
                                     />
                                 )}
                             </button>
@@ -761,10 +792,12 @@ export function DataTableField<T extends Record<string, unknown>>({
                                     onClick={() => setDeleteTarget(row)}
                                     title="Delete"
                                     className="rounded-md p-1.5 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                    data-cy="data-table-field-button-delete"
                                 >
                                     <Trash2
                                         className="size-4.5"
                                         strokeWidth={1.75}
+                                        data-cy="data-table-field-trash2-18"
                                     />
                                 </button>
                             )}
@@ -783,28 +816,43 @@ export function DataTableField<T extends Record<string, unknown>>({
     // text filters OR the opt-in status filter now lives inside it.
     const showFiltersButton = filterCols.length > 0 || enableStatusFilter;
     const filterPanel = (
-        <div className="mt-3 space-y-4 rounded-xl border border-slate-200 p-4">
+        <div
+            className="mt-3 space-y-4 rounded-xl border border-slate-200 p-4"
+            data-cy="data-table-field-div-19"
+        >
             {/* Active / Inactive / All status filter (opt-in per list) */}
             {enableStatusFilter && (
-                <div>
-                    <span className="mb-1.5 block text-xs font-medium">
+                <div data-cy="data-table-field-div-20">
+                    <span
+                        className="mb-1.5 block text-xs font-medium"
+                        data-cy="data-table-field-span-status"
+                    >
                         Status
                     </span>
                     <StatusFilter
                         value={statusScope}
                         onChange={handleStatusChange}
+                        data-cy="data-table-field-status-filter-status-change"
                     />
                 </div>
             )}
             {filterCols.length > 0 && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+                <div
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4"
+                    data-cy="data-table-field-div-23"
+                >
                     {filterCols.map((col, i) => {
                         if (col.type == 'select' && col.typeData) {
                             return (
-                                <div className="relative block" key={i}>
+                                <div
+                                    className="relative block"
+                                    key={i}
+                                    data-cy="data-table-field-div-24"
+                                >
                                     <label
                                         htmlFor={col.label}
                                         className="mb-1 block text-xs font-medium"
+                                        data-cy="data-table-field-label-col-label"
                                     >
                                         {col.label}
                                     </label>
@@ -819,6 +867,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                                         onChange={(value) =>
                                             handleColumnFilter(col.key, value)
                                         }
+                                        data-cy="data-table-field-dropdown-column-filter"
                                     />
                                 </div>
                             );
@@ -829,13 +878,22 @@ export function DataTableField<T extends Record<string, unknown>>({
                         // (the backend ignores empty values).
                         if (col.type === 'async-select' && col.loadOptions) {
                             const loadWithAll = async (q: string) => [
-                                { value: '', label: 'All' },
+                                {
+                                    value: '',
+                                    label: 'All',
+                                },
                                 ...(await col.loadOptions!(q)),
                             ];
-
                             return (
-                                <label key={col.key} className="block">
-                                    <span className="mb-1 block text-xs font-medium">
+                                <label
+                                    key={col.key}
+                                    className="block"
+                                    data-cy="data-table-field-label-27"
+                                >
+                                    <span
+                                        className="mb-1 block text-xs font-medium"
+                                        data-cy="data-table-field-span-28"
+                                    >
                                         {col.label}
                                     </span>
                                     <AsyncSelectField
@@ -852,14 +910,21 @@ export function DataTableField<T extends Record<string, unknown>>({
                                                     handleColumnFilter(k, ''),
                                             );
                                         }}
+                                        data-cy="data-table-field-async-select-field-all"
                                     />
                                 </label>
                             );
                         }
-
                         return (
-                            <label key={col.key} className="block">
-                                <span className="mb-1 block text-xs font-medium">
+                            <label
+                                key={col.key}
+                                className="block"
+                                data-cy="data-table-field-label-30"
+                            >
+                                <span
+                                    className="mb-1 block text-xs font-medium"
+                                    data-cy="data-table-field-span-31"
+                                >
                                     {col.label}
                                 </span>
                                 <input
@@ -873,6 +938,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                                     }
                                     placeholder={`Filter by ${col.label.toLowerCase()}…`}
                                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
+                                    data-cy="data-table-field-input-text"
                                 />
                             </label>
                         );
@@ -886,18 +952,23 @@ export function DataTableField<T extends Record<string, unknown>>({
     // When `listHeader` is supplied the rows render as a single rounded table
     // shell (header row + rules); otherwise they stack as standalone cards.
     const tableMode = Boolean(listHeader);
-
-    const skeletonNodes = Array.from({ length: 7 }).map((_, i) =>
+    const skeletonNodes = Array.from({
+        length: 7,
+    }).map((_, i) =>
         tableMode ? (
-            <div key={i} className="h-16 animate-pulse bg-gray-400/50" />
+            <div
+                key={i}
+                className="h-16 animate-pulse bg-gray-400/50"
+                data-cy="data-table-field-div-33"
+            />
         ) : (
             <div
                 key={i}
                 className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/40 dark:bg-gray-300/80"
+                data-cy="data-table-field-div-34"
             />
         ),
     );
-
     const emptyState = (
         <div
             className={
@@ -905,19 +976,25 @@ export function DataTableField<T extends Record<string, unknown>>({
                     ? 'px-6 py-12 text-center'
                     : 'rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center'
             }
+            data-cy="data-table-field-div-35"
         >
-            <p className="text-sm">No records found.</p>
+            <p
+                className="text-sm"
+                data-cy="data-table-field-p-no-records-found"
+            >
+                No records found.
+            </p>
             {hasActiveFilters && (
                 <button
                     onClick={clearAllFilters}
                     className="mt-2 text-sm font-medium underline-offset-2 hover:underline"
+                    data-cy="data-table-field-button-clear-all-filters"
                 >
                     Clear filters
                 </button>
             )}
         </div>
     );
-
     const rowNodes = rows.map((row, i) => (
         <React.Fragment key={String(getRowId(row as T) || i)}>
             {renderCard
@@ -928,15 +1005,12 @@ export function DataTableField<T extends Record<string, unknown>>({
                           // CHECK IF RECORD IS ASSOCIATED
                           if (inUseCheck) {
                               const entries = await inUseCheck(row, 'delete');
-
                               if (entries.some((e) => e.count > 0)) {
                                   setInUseEntries(entries);
                                   setInUseTarget(row);
-
                                   return; // blocked — show in-use modal
                               }
                           }
-
                           setDeleteTarget(row);
                       },
                       onEdit: () => openEditModal(row),
@@ -954,12 +1028,22 @@ export function DataTableField<T extends Record<string, unknown>>({
     // plain stack, matching the active presentation.
     const listShell = (children: React.ReactNode) =>
         tableMode ? (
-            <div className="overflow-hidden rounded-2xl border border-[#ecedf1] bg-white shadow-sm">
+            <div
+                className="overflow-hidden rounded-2xl border border-[#ecedf1] bg-white shadow-sm"
+                data-cy="data-table-field-div-39"
+            >
                 {listHeader}
-                <div className="divide-y divide-gray-100">{children}</div>
+                <div
+                    className="divide-y divide-gray-100"
+                    data-cy="data-table-field-div-40"
+                >
+                    {children}
+                </div>
             </div>
         ) : (
-            <div className="space-y-3">{children}</div>
+            <div className="space-y-3" data-cy="data-table-field-div-41">
+                {children}
+            </div>
         );
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -974,12 +1058,20 @@ export function DataTableField<T extends Record<string, unknown>>({
                             'ml-2! inline-flex shrink-0 gap-1.5 rounded-xl bg-brand-400 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-400/90 [@media(min-width:300px)]:float-right',
                             actionsCreateClassName,
                         )}
+                        data-cy="data-table-field-button-button"
                     >
-                        <Plus className="h-4 w-4" strokeWidth={2} />
+                        <Plus
+                            className="h-4 w-4"
+                            strokeWidth={2}
+                            data-cy="data-table-field-plus-43"
+                        />
                         {createLabel ?? 'New'}
                     </button>
                 ))}
-            <div className="2xl:min-w-7x mx-auto mt-2 w-full">
+            <div
+                className="2xl:min-w-7x mx-auto mt-2 w-full"
+                data-cy="data-table-field-div-44"
+            >
                 {/* Page header */}
                 {/* {(title || description || canCreate) && (
                     <div className="mb-6 flex items-center justify-between gap-4">
@@ -994,22 +1086,23 @@ export function DataTableField<T extends Record<string, unknown>>({
                             )}
                         </div>
                     </div>
-                )} */}
+                 )} */}
                 {/* Always-visible status tab bar (opt-in via statusFilterOptions).
-                Used by the ticket history page for lifecycle stages; the generic
-                Active/Inactive/All control still lives inside the filter panel. */}
+                 Used by the ticket history page for lifecycle stages; the generic
+                 Active/Inactive/All control still lives inside the filter panel. */}
                 {statusFilterOptions && statusFilterOptions.length > 0 && (
-                    <div className="mb-4">
+                    <div className="mb-4" data-cy="data-table-field-div-45">
                         <StatusFilter
                             value={customStatusScope}
                             onChange={handleStatusChange}
                             tabs={statusFilterOptions}
+                            data-cy="data-table-field-status-filter-status-change-2"
                         />
                     </div>
                 )}
 
                 {/* Search / sort / filter toolbar (status filter now lives inside
-                the collapsible filter panel) */}
+                 the collapsible filter panel) */}
                 <Toolbar
                     columns={columns}
                     searchInput={searchInput}
@@ -1028,15 +1121,25 @@ export function DataTableField<T extends Record<string, unknown>>({
                     hasActiveColumnFilters={hasActiveColumnFilters}
                     showFiltersButton={showFiltersButton}
                     filterPanel={filterPanel}
+                    data-cy="data-table-field-toolbar-47"
                 />
 
                 {/* Active-filter indicator */}
                 {hasActiveFilters && (
-                    <div className="mb-4 flex items-center justify-between">
-                        <span className="text-xs">Filters applied</span>
+                    <div
+                        className="mb-4 flex items-center justify-between"
+                        data-cy="data-table-field-div-48"
+                    >
+                        <span
+                            className="text-xs"
+                            data-cy="data-table-field-span-filters-applied"
+                        >
+                            Filters applied
+                        </span>
                         <button
                             onClick={clearAllFilters}
                             className="text-xs font-medium underline-offset-2 hover:underline"
+                            data-cy="data-table-field-button-clear-all-filters-2"
                         >
                             Clear all
                         </button>
@@ -1045,11 +1148,17 @@ export function DataTableField<T extends Record<string, unknown>>({
 
                 {/* API error banner */}
                 {isError && (
-                    <div className="mb-4 flex items-center justify-between rounded-xl border border-rose-200 px-4 py-3 text-sm text-rose-700">
-                        <span>⚠ {error?.message}</span>
+                    <div
+                        className="mb-4 flex items-center justify-between rounded-xl border border-rose-200 px-4 py-3 text-sm text-rose-700"
+                        data-cy="data-table-field-div-51"
+                    >
+                        <span data-cy="data-table-field-span-52">
+                            ⚠ {error?.message}
+                        </span>
                         <button
                             onClick={() => refetch()}
                             className="font-medium underline-offset-2 hover:underline"
+                            data-cy="data-table-field-button-refetch"
                         >
                             Retry
                         </button>
@@ -1057,7 +1166,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                 )}
 
                 {/* Record list — rounded table shell or a stack of cards */}
-                <div className="relative">
+                <div className="relative" data-cy="data-table-field-div-54">
                     {isLoading && rows.length === 0
                         ? listShell(skeletonNodes)
                         : rows.length === 0
@@ -1067,7 +1176,9 @@ export function DataTableField<T extends Record<string, unknown>>({
                           : listShell(rowNodes)}
 
                     {/* Subtle loading overlay on subsequent fetches (page change, sort, etc.) */}
-                    {isFetching && !isLoading && <FetchingSpinner />}
+                    {isFetching && !isLoading && (
+                        <FetchingSpinner data-cy="data-table-field-fetching-spinner-55" />
+                    )}
                 </div>
 
                 {/* Pagination bar */}
@@ -1077,6 +1188,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                         page={page}
                         loading={isFetching}
                         onPageChange={setPage}
+                        data-cy="data-table-field-pagination-bar-56"
                     />
                 )}
 
@@ -1113,6 +1225,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                             onClose={closeModal}
                             onSubmit={handleSave}
                             onError={onSaveError}
+                            data-cy="data-table-field-record-modal-close-modal"
                         />
                     ))}
 
@@ -1128,6 +1241,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                         setInUseTarget(null);
                         setInUseEntries([]);
                     }}
+                    data-cy="data-table-field-confirm-in-use-modal-set-in-use-target"
                 />
                 {/* Delete confirmation */}
                 <ConfirmDeleteModal
@@ -1141,6 +1255,7 @@ export function DataTableField<T extends Record<string, unknown>>({
                     onCancel={() => setDeleteTarget(null)}
                     onConfirm={confirmDelete}
                     isSelfDelete={isSelfDelete}
+                    data-cy="data-table-field-confirm-delete-modal-59"
                 />
                 {/* Suspend confirmation */}
                 <ConfirmArchiveAccountModal
@@ -1154,10 +1269,10 @@ export function DataTableField<T extends Record<string, unknown>>({
                     onCancel={() => setSuspendTarget(null)}
                     onConfirm={confirmSuspend}
                     isSelfSuspend={isSelfSuspend}
+                    data-cy="data-table-field-confirm-archive-account-modal-60"
                 />
             </div>
         </>
     );
 }
-
 export default DataTableField;

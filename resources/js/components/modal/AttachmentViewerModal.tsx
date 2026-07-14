@@ -20,173 +20,112 @@ import { createPortal } from 'react-dom';
 
 /** The minimal attachment shape this viewer needs — TicketAttachment and PortalAttachment both satisfy it. */
 export interface ViewableAttachment {
-    id: number;
-    original_name: string;
-    mime_type: string;
-    file_size: number;
-    view_url: string;
-    download_url: string;
+  id: number;
+  original_name: string;
+  mime_type: string;
+  file_size: number;
+  view_url: string;
+  download_url: string;
 }
-
 interface Props {
-    attachment: ViewableAttachment | null;
-    onClose: () => void;
+  attachment: ViewableAttachment | null;
+  onClose: () => void;
 }
-
 function humanSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+export function AttachmentViewerModal({
+  attachment,
+  onClose
+}: Props) {
+  const isImage = attachment?.mime_type.startsWith('image/');
+  const isPdf = attachment?.mime_type === 'application/pdf';
 
-export function AttachmentViewerModal({ attachment, onClose }: Props) {
-    const isImage = attachment?.mime_type.startsWith('image/');
-    const isPdf = attachment?.mime_type === 'application/pdf';
+  // 1. Manage Global Side Effects (Listeners & Body Scroll Lock)
+  useEffect(() => {
+    if (!attachment) return;
 
-    // 1. Manage Global Side Effects (Listeners & Body Scroll Lock)
-    useEffect(() => {
-        if (!attachment) return;
+    // Prevent background scrolling while modal is open
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = originalStyle;
+    };
+  }, [attachment, onClose]);
 
-        // Prevent background scrolling while modal is open
-        const originalStyle = window.getComputedStyle(document.body).overflow;
-        document.body.style.overflow = 'hidden';
+  // SSR Guard & early return if nothing is selected
+  if (!attachment || typeof window === 'undefined') {
+    return null;
+  }
+  const src = attachment.view_url || attachment.download_url;
 
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                onClose();
-            }
-        };
-
-        window.addEventListener('keydown', onKey);
-
-        return () => {
-            window.removeEventListener('keydown', onKey);
-            document.body.style.overflow = originalStyle;
-        };
-    }, [attachment, onClose]);
-
-    // SSR Guard & early return if nothing is selected
-    if (!attachment || typeof window === 'undefined') {
-        return null;
-    }
-
-    const src = attachment.view_url || attachment.download_url;
-
-    // 2. Dynamic Max-Width layout logic based on file type
-    // PDFs need breathing room; text fallbacks/images can be contained tighter.
-    const maxWidthClass = isPdf
-        ? 'max-w-6xl h-[90vh]'
-        : isImage
-          ? 'max-w-4xl'
-          : 'max-w-md';
-
-    return createPortal(
-        <div
-            className="fixed inset-0 z-1000 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm transition-opacity"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Previewing ${attachment.original_name}`}
-            onClick={onClose}
-        >
-            <div
-                className={`flex w-full flex-col overflow-hidden rounded-xl bg-white shadow-2xl transition-all ${maxWidthClass} max-h-[90vh]`}
-                onClick={(e) => e.stopPropagation()}
-            >
+  // 2. Dynamic Max-Width layout logic based on file type
+  // PDFs need breathing room; text fallbacks/images can be contained tighter.
+  const maxWidthClass = isPdf ? 'max-w-6xl h-[90vh]' : isImage ? 'max-w-4xl' : 'max-w-md';
+  return createPortal(<div className="fixed inset-0 z-1000 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm transition-opacity" role="dialog" aria-modal="true" aria-label={`Previewing ${attachment.original_name}`} onClick={onClose} data-cy="attachment-viewer-modal-div-close">
+            <div className={`flex w-full flex-col overflow-hidden rounded-xl bg-white shadow-2xl transition-all ${maxWidthClass} max-h-[90vh]`} onClick={e => e.stopPropagation()} data-cy="attachment-viewer-modal-div-2">
                 {/* Header */}
-                <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-4 py-3">
-                    <div className="min-w-0">
-                        <p
-                            className="truncate text-sm font-semibold text-slate-800"
-                            title={attachment.original_name}
-                        >
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-4 py-3" data-cy="attachment-viewer-modal-div-3">
+                    <div className="min-w-0" data-cy="attachment-viewer-modal-div-4">
+                        <p className="truncate text-sm font-semibold text-slate-800" title={attachment.original_name} data-cy="attachment-viewer-modal-p-attachment-original-name">
                             {attachment.original_name}
                         </p>
-                        <p className="text-[11px] font-medium text-slate-400">
+                        <p className="text-[11px] font-medium text-slate-400" data-cy="attachment-viewer-modal-p-6">
                             {attachment.mime_type} ·{' '}
                             {humanSize(attachment.file_size)}
                         </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-1">
-                        <a
-                            href={src}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Open in new tab"
-                            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                        >
-                            <ExternalLink size={16} />
+                    <div className="flex shrink-0 items-center gap-1" data-cy="attachment-viewer-modal-div-7">
+                        <a href={src} target="_blank" rel="noreferrer" title="Open in new tab" className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700" data-cy="attachment-viewer-modal-a-open-in-new-tab">
+                            <ExternalLink size={16} data-cy="attachment-viewer-modal-external-link-9" />
                         </a>
-                        <a
-                            href={attachment.download_url}
-                            title="Download"
-                            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                        >
-                            <Download size={16} />
+                        <a href={attachment.download_url} title="Download" className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700" data-cy="attachment-viewer-modal-a-download">
+                            <Download size={16} data-cy="attachment-viewer-modal-download-11" />
                         </a>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            title="Close"
-                            className="ml-1 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                        >
-                            <X size={16} />
+                        <button type="button" onClick={onClose} title="Close" className="ml-1 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600" data-cy="attachment-viewer-modal-button-close">
+                            <X size={16} data-cy="attachment-viewer-modal-x-13" />
                         </button>
                     </div>
                 </div>
 
                 {/* Body — rendered dynamically by MIME type */}
-                <div className="flex min-h-75 flex-1 items-center justify-center overflow-auto bg-slate-50">
-                    {isImage ? (
-                        <div className="flex h-full w-full items-center justify-center p-4">
-                            <img
-                                src={src}
-                                alt={attachment.original_name}
-                                className="max-h-[75vh] w-auto max-w-full rounded object-contain shadow-sm select-none"
-                            />
-                        </div>
-                    ) : isPdf ? (
-                        <iframe
-                            src={`${src}#view=FitH`}
-                            title={attachment.original_name}
-                            className="h-full min-h-[60vh] w-full border-0"
-                        />
-                    ) : (
-                        /* Modernized Non-previewable Fallback State */
-                        <div className="flex max-w-sm flex-col items-center gap-4 px-6 py-12 text-center">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                                <FileText size={24} />
+                <div className="flex min-h-75 flex-1 items-center justify-center overflow-auto bg-slate-50" data-cy="attachment-viewer-modal-div-14">
+                    {isImage ? <div className="flex h-full w-full items-center justify-center p-4" data-cy="attachment-viewer-modal-div-15">
+                            <img src={src} alt={attachment.original_name} className="max-h-[75vh] w-auto max-w-full rounded object-contain shadow-sm select-none" data-cy="attachment-viewer-modal-img-16" />
+                        </div> : isPdf ? <iframe src={`${src}#view=FitH`} title={attachment.original_name} className="h-full min-h-[60vh] w-full border-0" data-cy="attachment-viewer-modal-iframe-attachment-original-name" /> : (/* Modernized Non-previewable Fallback State */
+        <div className="flex max-w-sm flex-col items-center gap-4 px-6 py-12 text-center" data-cy="attachment-viewer-modal-div-18">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500" data-cy="attachment-viewer-modal-div-19">
+                                <FileText size={24} data-cy="attachment-viewer-modal-file-text-20" />
                             </div>
-                            <div>
-                                <h3 className="text-sm font-semibold text-slate-900">
+                            <div data-cy="attachment-viewer-modal-div-21">
+                                <h3 className="text-sm font-semibold text-slate-900" data-cy="attachment-viewer-modal-h3-no-preview-available">
                                     No preview available
                                 </h3>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500" data-cy="attachment-viewer-modal-p-we-can-t-display-this-file-type">
                                     We can't display this file type directly in
                                     your browser. Download or open it to view.
                                 </p>
                             </div>
-                            <div className="mt-2 flex w-full gap-2">
-                                <a
-                                    href={src}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    <ExternalLink size={14} /> Open Tab
+                            <div className="mt-2 flex w-full gap-2" data-cy="attachment-viewer-modal-div-24">
+                                <a href={src} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50" data-cy="attachment-viewer-modal-a-src">
+                                    <ExternalLink size={14} data-cy="attachment-viewer-modal-external-link-26" /> Open Tab
                                 </a>
-                                <a
-                                    href={attachment.download_url}
-                                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800"
-                                >
-                                    <Download size={14} /> Download
+                                <a href={attachment.download_url} className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-slate-800" data-cy="attachment-viewer-modal-a-attachment-download-url">
+                                    <Download size={14} data-cy="attachment-viewer-modal-download-28" /> Download
                                 </a>
                             </div>
-                        </div>
-                    )}
+                        </div>)}
                 </div>
             </div>
-        </div>,
-        document.body,
-    );
+        </div>, document.body);
 }

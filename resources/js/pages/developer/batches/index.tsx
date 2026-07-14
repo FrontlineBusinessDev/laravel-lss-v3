@@ -5,7 +5,6 @@ import {
     Ban,
     Link2,
     Pencil,
-    Plus,
     QrCode,
     Trash2,
 } from 'lucide-react';
@@ -29,15 +28,14 @@ import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns, fields } from '@/types/modules/batches/batches';
 import { BatchRegistrationModal } from './BatchRegistrationModal';
 import { CreateBatchModal } from './CreateBatchModal';
-import { Button } from '@/components/Button';
 
 const customGRID =
     'sm:grid-cols-[0.9fr_1.4fr_1.2fr_0.7fr_0.6fr_1fr_1.5fr_2.5rem]!';
-
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
         labels={['Batch Code', 'Program', 'Industry', 'Setup', 'Trainees']}
+        data-cy="index-settings-list-header-1"
     />
 );
 
@@ -49,32 +47,30 @@ const STATUS_BADGE: Record<string, StatusKind> = {
     completed: 'completed',
     terminated: 'terminated',
 };
-
 export default function BatchesListPage() {
     const { toast } = useToast();
     // Escape hatch to the table's refetch, so the custom Terminate action can
     // refresh the list without going through the built-in mutations.
     const refreshRef = useRef<(() => void) | null>(null);
-
     const [qrTarget, setQrTarget] = useState<AppBatches | null>(null);
     const [terminateTarget, setTerminateTarget] = useState<AppBatches | null>(
         null,
     );
     const [terminating, setTerminating] = useState(false);
     const linkActions = useBatchLinkActions();
-
     const confirmTerminate = async () => {
         if (!terminateTarget) {
             return;
         }
-
         setTerminating(true);
-
         try {
             await apiFetchJson(`/batches/${terminateTarget.id}/terminate`, {
                 method: 'PATCH',
             });
-            toast({ title: 'Batch terminated', variant: 'info' });
+            toast({
+                title: 'Batch terminated',
+                variant: 'info',
+            });
             refreshRef.current?.();
             setTerminateTarget(null);
         } catch (err) {
@@ -90,7 +86,6 @@ export default function BatchesListPage() {
             setTerminating(false);
         }
     };
-
     const renderRow = (row: AppBatches, actions: CardActions) => {
         // `inactive` is the archive state; completed/terminated are lifecycle
         // end-states. All non-active rows expose Restore + Delete (like the
@@ -98,7 +93,6 @@ export default function BatchesListPage() {
         const nonActive = row.status !== 'active';
         const badge: StatusKind = STATUS_BADGE[row.status] ?? 'active';
         const linkEnabled = linkActions.isEnabled(row);
-
         const menu: RowMenuAction[] = [
             {
                 label: 'Edit',
@@ -143,7 +137,6 @@ export default function BatchesListPage() {
                       onClick: () => setTerminateTarget(row),
                   },
         ];
-
         return (
             // Clicking anywhere on the row opens the batch detail page. The
             // RowMenu button + items stopPropagation, so menu actions never
@@ -158,28 +151,42 @@ export default function BatchesListPage() {
                     }
                 }}
                 className="cursor-pointer transition-colors hover:bg-neutral-50/70"
+                data-cy="index-div-2"
             >
                 <SettingsRow
                     grid={customGRID}
                     isArchived={nonActive}
-                    badge={<StatusBadge status={badge} />}
+                    badge={
+                        <StatusBadge
+                            status={badge}
+                            data-cy="index-status-badge-4"
+                        />
+                    }
                     menu={menu}
+                    data-cy="index-settings-row-3"
                 >
-                    <TextCell>{row.batch_code}</TextCell>
-                    <TextCell muted>
+                    <TextCell data-cy="index-text-cell-5">
+                        {row.batch_code}
+                    </TextCell>
+                    <TextCell muted data-cy="index-text-cell-6">
                         {row.academic_program?.name ?? '—'}
                     </TextCell>
-                    <TextCell muted>
+                    <TextCell muted data-cy="index-text-cell-7">
                         {row.academic_industry?.name ?? '—'}
                     </TextCell>
-                    <TextCell muted>
+                    <TextCell muted data-cy="index-text-cell-8">
                         {row.setup === 'f2f' ? 'F2F' : 'Online'}
                     </TextCell>
-                    <TextCell muted>
+                    <TextCell muted data-cy="index-text-cell-9">
                         {row.trainees_count ?? 0}{' '}
-                        <span className="md:hidden">Trainee(s)</span>
+                        <span
+                            className="md:hidden"
+                            data-cy="index-span-trainee-s"
+                        >
+                            Trainee(s)
+                        </span>
                     </TextCell>
-                    <TextCell muted>
+                    <TextCell muted data-cy="index-text-cell-11">
                         <Switch
                             checked={linkEnabled}
                             ariaLabel={
@@ -194,26 +201,27 @@ export default function BatchesListPage() {
                                 e.stopPropagation();
                                 void linkActions.toggle(row);
                             }}
+                            data-cy="index-switch-12"
                         />
                     </TextCell>
                 </SettingsRow>
             </div>
         );
     };
-
     return (
         <>
-            <div className="mb-4 flex w-full items-center justify-between gap-2">
-                <div>
-                    <h1 className="text-xl font-semibold text-ink">Batches</h1>
-                    <p className="text-sm text-neutral-500">
-                        Manage Batches data.
-                    </p>
-                </div>
-                <Button variant="primary">
-                    <Plus className="size-5" /> Add Batch
-                </Button>
-            </div>
+            <h1
+                className="text-xl font-semibold text-ink"
+                data-cy="index-h1-batches"
+            >
+                Batches
+            </h1>
+            <p
+                className="mb-4 text-sm text-neutral-500"
+                data-cy="index-p-manage-batches-data"
+            >
+                Manage Batches data.
+            </p>
             <DataTableField<AppBatches>
                 apiUrl="/batches"
                 apiQueryKey="batches"
@@ -238,14 +246,17 @@ export default function BatchesListPage() {
                         batch={m.row}
                         onClose={m.onClose}
                         onSubmit={m.onSubmit}
+                        data-cy="index-create-batch-modal-16"
                     />
                 )}
+                data-cy="index-data-table-field-15"
             />
 
             <BatchRegistrationModal
                 batchId={qrTarget?.id ?? null}
                 batchCode={qrTarget?.batch_code}
                 onClose={() => setQrTarget(null)}
+                data-cy="index-batch-registration-modal-set-qr-target"
             />
 
             {/* Terminate confirmation */}
@@ -258,13 +269,18 @@ export default function BatchesListPage() {
                         ? `Set ${terminateTarget.batch_code} to terminated? You can restore it later.`
                         : undefined
                 }
+                data-cy="index-modal-terminate-batch"
             >
-                <div className="mt-2 flex justify-end gap-2">
+                <div
+                    className="mt-2 flex justify-end gap-2"
+                    data-cy="index-div-19"
+                >
                     <button
                         type="button"
                         onClick={() => setTerminateTarget(null)}
                         disabled={terminating}
                         className="rounded-md border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
+                        data-cy="index-button-button"
                     >
                         Cancel
                     </button>
@@ -273,6 +289,7 @@ export default function BatchesListPage() {
                         onClick={confirmTerminate}
                         disabled={terminating}
                         className="rounded-md bg-danger-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-600/90 disabled:opacity-60"
+                        data-cy="index-button-button-2"
                     >
                         {terminating ? 'Terminating…' : 'Terminate'}
                     </button>

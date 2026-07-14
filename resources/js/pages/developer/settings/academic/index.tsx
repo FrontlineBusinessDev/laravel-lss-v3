@@ -7,21 +7,28 @@ export default function index() {
     const { can } = usePermission();
     // 1. Define the preference hierarchy for redirection
     const targets = [
-        { permission: 'manage settings academic', href: '/settings/academic' },
+        {
+            permission: 'manage settings academic',
+            href: '/settings/academic',
+        },
         {
             permission: 'manage settings partner schools',
             href: '/settings/partner-schools',
         },
-        { permission: 'manage users', href: '/settings/users' },
+        {
+            permission: 'manage users',
+            href: '/settings/users',
+        },
     ];
 
     // 2. Find the first module the user actually has access to
     const fallbackTarget = targets.find((target) => can(target.permission));
-
     useEffect(() => {
         // 3. If a valid destination is found, redirect them immediately
         if (fallbackTarget) {
-            router.visit(fallbackTarget.href, { replace: true });
+            router.visit(fallbackTarget.href, {
+                replace: true,
+            });
         }
     }, [fallbackTarget]);
 
@@ -32,6 +39,7 @@ export default function index() {
                 status="403"
                 title="Access Denied"
                 description="You don't have permission to manage any configuration modules under Settings."
+                data-cy="index-error-fallback-access-denied"
             />
         );
     }
