@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Auth;
+namespace App\Http\Controllers\v1\Developer\Auth;
 
-use App\Http\Controllers\v1\developer\Controller;
+use App\Http\Controllers\v1\Developer\Controller;
 use App\Http\Responses\InertiaPageResponse;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;

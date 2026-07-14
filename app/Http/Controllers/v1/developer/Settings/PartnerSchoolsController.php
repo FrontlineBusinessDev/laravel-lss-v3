@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Settings;
+namespace App\Http\Controllers\v1\Developer\Settings;
 
-use App\Http\Controllers\v1\developer\BaseController;
+use App\Http\Controllers\v1\Developer\BaseController;
 use App\Models\PartnerSchools;
 use App\Support\Statuses;
 use App\Traits\HandlesFileUploads;

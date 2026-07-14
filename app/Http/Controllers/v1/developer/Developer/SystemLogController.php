@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Developer;
+namespace App\Http\Controllers\v1\Developer\Developer;
 
-use App\Http\Controllers\v1\developer\BaseController;
+use App\Http\Controllers\v1\Developer\BaseController;
 use App\Models\AppLogger;
 
 /**

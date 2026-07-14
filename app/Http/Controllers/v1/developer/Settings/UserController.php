@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Settings;
+namespace App\Http\Controllers\v1\Developer\Settings;
 
-use App\Http\Controllers\v1\developer\BaseController;
+use App\Http\Controllers\v1\Developer\BaseController;
 use App\Http\Resources\UserResource;
 use App\Mail\UserInviteMail;
 use App\Models\User;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Lss;
+namespace App\Http\Controllers\v1\Developer\Lss;
 
-use App\Http\Controllers\v1\developer\Controller;
+use App\Http\Controllers\v1\Developer\Controller;
 use App\Models\Trainees;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Batches;
+namespace App\Http\Controllers\v1\Developer\Batches;
 
-use App\Http\Controllers\v1\developer\BaseController;
+use App\Http\Controllers\v1\Developer\BaseController;
 use App\Models\Batches;
 use App\Support\QrCode;
 use Illuminate\Database\Eloquent\Builder;

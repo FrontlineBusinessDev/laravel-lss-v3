@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\v1\developer\Settings;
+namespace App\Http\Controllers\v1\Developer\Settings;
 
-use App\Http\Controllers\v1\developer\Controller;
+use App\Http\Controllers\v1\Developer\Controller;
 use App\Http\Responses\InertiaPageResponse;
 use App\Support\Permissions;
 use Illuminate\Http\Request;
