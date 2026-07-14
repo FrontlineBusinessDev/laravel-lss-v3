@@ -1,31 +1,19 @@
 # OCTANE BUILD FOR PRODUCTION READY APPLICATIONS
 
-[phases.setup]
-nixPkgs = [
-  "php84", 
-  "php84Packages.composer", 
-  "php84Packages.pcntl", 
-  "php84Packages.posix", 
-  "php84Packages.pdo_mysql", 
-  "libmysqlclient", 
-  "nodejs_22"
-]
-
 [phases.install]
 cmds = [
   "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
   "php artisan octane:install --server=frankenphp --no-interaction", # Forces the binary download inside the Linux container
   "npm ci"
-#  "npm install"
 ]
 
 [phases.build]
 cmds = [
   "npm run build",
-#  "php artisan config:cache",
-#  "php artisan route:cache",
-#  "php artisan view:cache",
-#  "php artisan event:cache"
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache",
+  "php artisan event:cache"
 ]
 
 [start]
