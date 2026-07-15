@@ -171,17 +171,18 @@ export function useCardTableController<T extends Record<string, unknown>>(
     const canDelete = deletePermission ? can(deletePermission) : true;
 
     // ── Filter handlers ───────────────────────────────────────────────────────
-    const handleColumnFilter = (col: string, value: string) =>
+    const handleColumnFilter = (col: string, value: string) => {
         setColumnFilters((prev) => ({ ...prev, [col]: value }));
+    };
     const handleStatusChange = (scope: string) =>
         setColumnFilters((prev) => {
             const next = { ...prev };
 
             if (scope === 'all' || scope === '') {
-delete next.status;
-} else {
-next.status = scope;
-}
+                delete next.status;
+            } else {
+                next.status = scope;
+            }
 
             return next;
         });

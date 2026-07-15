@@ -15,7 +15,7 @@ import {
     selectableCitations,
 } from '@/pages/developer/certificates/certificateUtils';
 
-export function CertificateTab({ trainee }: { trainee: Trainee }) {
+export default function CertificateTab({ trainee }: { trainee: Trainee }) {
     const { showToast } = useToast();
     const [certificate, setCertificate] = useState(
         trainee.certificate ?? {
