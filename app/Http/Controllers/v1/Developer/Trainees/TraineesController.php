@@ -38,14 +38,6 @@ class TraineesController extends BaseController
     protected array $inUseRelations = ['documents'];
 
     /**
-     * The id is looked up client-side against resources/js/data/mockData.ts
-     * — no trainees table exists yet.
-     */
-    // public function show(string $id): Response
-    // {
-    //     return Inertia::render('trainees/detail', ['id' => $id])->asCsr();
-    // }
-    /**
      * Eager-load the industry/program relations so the list serializes their
      * names (as `academic_industry` / `academic_program`) instead of the
      * frontend having to display raw foreign-key ids.

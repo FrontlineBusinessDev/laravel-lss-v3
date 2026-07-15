@@ -32,6 +32,7 @@ use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 
@@ -119,7 +120,14 @@ Route::middleware('auth')->group(function () {
     // Registered before `{id}` so the static segment wins the route match.
     Route::get('/trainees/pagination-search', [TraineesController::class, 'paginationSearch'])
         ->name('trainees.pagination-search');
-    Route::get('/trainees/{id}', [TraineesController::class, 'show'])->name('trainees.show');
+    Route::get('/trainees/{id}', [TraineesViewController::class, 'show'])->name('trainees.personalInformationTab');
+    Route::get('/trainees/{id}/academic-information', [TraineesViewController::class, 'show'])->name('trainees.academicInfoTab');
+    Route::get('/trainees/{id}/documents', [TraineesViewController::class, 'show'])->name('trainees.documents');
+    Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'show'])->name('trainees.learningOutcomes');
+    Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'show'])->name('trainees.paymentDetails');
+    Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'show'])->name('trainees.ratings');
+    Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'show'])->name('trainees.certificate');
+    Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'show'])->name('trainees.biometrics');
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');

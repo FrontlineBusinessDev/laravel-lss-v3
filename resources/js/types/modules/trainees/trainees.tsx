@@ -2,11 +2,14 @@ import { ColumnDef } from '@/types/reusable/data-table';
 import { FieldDef, loadLookupOptions } from '@/types/reusable/fields';
 export interface AppTrainees extends Record<string, unknown> {
     id: number;
+    status: string;
     batch_id: number;
     school_id: number;
     public_url_id: string;
     first_name: string;
     last_name: string;
+    full_name?: string;
+    initials?: string;
     email: string;
     birthday: string;
     birth_place: string;
@@ -17,6 +20,8 @@ export interface AppTrainees extends Record<string, unknown> {
     required_hours: number;
     date_completed: string | null;
     address: string;
+    batchNo?: string;
+    school?: string;
     created_at: string;
     updated_at: string;
 }
