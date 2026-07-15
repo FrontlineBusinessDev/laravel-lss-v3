@@ -85,148 +85,117 @@ export function RecordModal<T extends object>({
                     ? err
                     : new Error('Failed to save record.');
 
-            const setValue = (key: string, value: unknown) => {
-                setValues((prev) => ({ ...prev, [key]: value }));
-                setFieldErrors((prev) => ({ ...prev, [key]: '' })); // clear per-field error
-            };
+            // Map Laravel validation errors ({ field: [msg, ...] }) back to fields
+            const apiErrors = (
+                error as Error & { errors?: Record<string, string[]> }
+            ).errors;
 
-            /** Runs required-check + custom validators. Returns false when any fail. */
-            const validate = (): boolean => {
-                const errs = collectErrors(visibleFields, values);
-                setFieldErrors(errs);
+            if (apiErrors) {
+                setFieldErrors((prev) => ({
+                    ...prev,
+                    ...mapApiErrors(apiErrors),
+                }));
+            }
 
-                return Object.keys(errs).length === 0;
-            };
-
-            const handleSubmit = async (e: React.FormEvent) => {
-                e.preventDefault();
-                setFormError(null);
-                if (!validate()) return;
-                setSubmitting(true);
-
-                try {
-                    await onSubmit(values);
-                } catch (err: unknown) {
-                    const error =
-                        err instanceof Error
-                            ? err
-                            : new Error('Failed to save record.');
-
-                    // Map Laravel validation errors ({ field: [msg, ...] }) back to fields
-                    const apiErrors = (
-                        error as Error & { errors?: Record<string, string[]> }
-                    ).errors;
-
-                    if (apiErrors) {
-                        setFieldErrors((prev) => ({
-                            ...prev,
-                            ...mapApiErrors(apiErrors),
-                        }));
-                    }
-
-                    setFormError(error.message);
-                    onError?.(error);
-                } finally {
-                    setSubmitting(false);
-                }
-            };
-
-            return (
-                <Modal
-                    open
-                    onClose={onClose}
-                    title={title}
-                    maxWidth={520}
-                    data-cy="record-modal-modal-title"
-                >
-                    {' '}
-                    <form
-                        onSubmit={handleSubmit}
-                        className="space-y-4"
-                        data-cy="record-modal-form-submit"
-                    >
-                        {' '}
-                        <div
-                            className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-                            data-cy="record-modal-div-3"
-                        >
-                            {visibleFields.map((f) => (
-                                <div
-                                    key={f.key}
-                                    className={
-                                        f.colSpan === 2 ? 'sm:col-span-2' : ''
-                                    }
-                                    data-cy="record-modal-div-4"
-                                >
-                                    <DynamicField
-                                        field={f}
-                                        value={values[f.key]}
-                                        error={fieldErrors[f.key]}
-                                        disabled={
-                                            submitting ||
-                                            isFieldDisabled(f, mode, row)
-                                        }
-                                        initialLabel={
-                                            mode === 'edit' && row
-                                                ? f.initialLabel?.(row)
-                                                : undefined
-                                        }
-                                        onChange={(v) => setValue(f.key, v)}
-                                        data-cy={`record-modal-dynamic-field-set-value-${f.key}`}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                        {/* General form error (non-field API errors) */}
-                        {formError && (
-                            <p
-                                className="rounded-md bg-danger-50 px-3 py-2 text-xs text-danger-600"
-                                data-cy="record-modal-p-6"
-                            >
-                                {formError}
-                            </p>
-                        )}
-                        {/* Live upload progress (only while a file is uploading) */}
-                        {uploadProgress != null && (
-                            <UploadProgress
-                                value={uploadProgress}
-                                data-cy="record-modal-upload-progress-7"
-                            />
-                        )}
-                        {/* Footer actions */}
-                        <div
-                            className="flex items-center justify-end gap-2 pt-2"
-                            data-cy="record-modal-div-8"
-                        >
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                disabled={submitting}
-                                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
-                                data-cy="record-modal-button-button"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
-                                data-cy="record-modal-button-submit"
-                            >
-                                {submitting && (
-                                    <Loader2
-                                        className="h-4 w-4 animate-spin"
-                                        data-cy="record-modal-loader2-11"
-                                    />
-                                )}
-                                {mode === 'create' ? 'Create' : 'Save changes'}
-                            </button>
-                        </div>
-                    </form>
-                </Modal>
-            );
+            setFormError(error.message);
+            onError?.(error);
+        } finally {
+            setSubmitting(false);
         }
     };
+
+    return (
+        <Modal
+            open
+            onClose={onClose}
+            title={title}
+            maxWidth={520}
+            data-cy="record-modal-modal-title"
+        >
+            {' '}
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-4"
+                data-cy="record-modal-form-submit"
+            >
+                {' '}
+                <div
+                    className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    data-cy="record-modal-div-3"
+                >
+                    {visibleFields.map((f) => (
+                        <div
+                            key={f.key}
+                            className={f.colSpan === 2 ? 'sm:col-span-2' : ''}
+                            data-cy="record-modal-div-4"
+                        >
+                            <DynamicField
+                                field={f}
+                                value={values[f.key]}
+                                error={fieldErrors[f.key]}
+                                disabled={
+                                    submitting ||
+                                    isFieldDisabled(f, mode, row)
+                                }
+                                initialLabel={
+                                    mode === 'edit' && row
+                                        ? f.initialLabel?.(row)
+                                        : undefined
+                                }
+                                onChange={(v) => setValue(f.key, v)}
+                                data-cy={`record-modal-dynamic-field-set-value-${f.key}`}
+                            />
+                        </div>
+                    ))}
+                </div>
+                {/* General form error (non-field API errors) */}
+                {formError && (
+                    <p
+                        className="rounded-md bg-danger-50 px-3 py-2 text-xs text-danger-600"
+                        data-cy="record-modal-p-6"
+                    >
+                        {formError}
+                    </p>
+                )}
+                {/* Live upload progress (only while a file is uploading) */}
+                {uploadProgress != null && (
+                    <UploadProgress
+                        value={uploadProgress}
+                        data-cy="record-modal-upload-progress-7"
+                    />
+                )}
+                {/* Footer actions */}
+                <div
+                    className="flex items-center justify-end gap-2 pt-2"
+                    data-cy="record-modal-div-8"
+                >
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        disabled={submitting}
+                        className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
+                        data-cy="record-modal-button-button"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
+                        data-cy="record-modal-button-submit"
+                    >
+                        {submitting && (
+                            <Loader2
+                                className="h-4 w-4 animate-spin"
+                                data-cy="record-modal-loader2-11"
+                            />
+                        )}
+                        {mode === 'create' ? 'Create' : 'Save changes'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
+    );
 }
 /** Live upload progress bar (generic file uploads; CreateBatchModal lacks this). */
 function UploadProgress({ value }: { value: number }) {

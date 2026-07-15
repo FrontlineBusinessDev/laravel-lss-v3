@@ -1,5 +1,3 @@
-import { partnerSchoolService } from '@/api-service-layer/admin/partner-school';
-import { FormModal } from '@/components/form-modal';
 import { useGlobalModal } from '@/components/global-modal';
 import {
     AddRecordButton,
@@ -11,13 +9,12 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { tableListInvalidateKeys } from '@/components/table/utils';
 import { Thumbnail } from '@/components/Thumbnail';
-import { useToast } from '@/hooks/use-toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import type { StatusKind } from '@/types';
 import type { PartnerSchools } from '@/types/modules/settings/partner-schools';
-import { columns, fields } from '@/types/modules/settings/partner-schools';
+import { columns } from '@/types/modules/settings/partner-schools';
+import PartnerSchoolModal from './PartnerSchoolModal';
 
 const PERMISSION = 'manage settings partner schools';
 const customGRID = 'sm:grid-cols-[3rem_1fr_1.6fr_2.2fr_1.2fr_0.9fr_2.5rem]';
@@ -71,9 +68,7 @@ const renderRow = (row: PartnerSchools, actions: CardActions) => {
 };
 
 export default function index() {
-    const { toast } = useToast();
     const modal = useGlobalModal<PartnerSchools | null>('partnerSchool', null);
-    const isEdit = modal.data !== null;
 
     return (
         <>
@@ -106,38 +101,10 @@ export default function index() {
                     }}
                     data-cy="index-data-table-field-10"
                 />
-                <FormModal<PartnerSchools>
+                <PartnerSchoolModal
                     open={modal.open}
                     onClose={() => modal.setOpen(false)}
-                    title={
-                        isEdit ? 'Edit Partner School' : 'Add Partner School'
-                    }
-                    mode={isEdit ? 'edit' : 'create'}
-                    row={modal.data ?? undefined}
-                    fields={fields}
-                    submitLabel={isEdit ? 'Update School' : 'Create School'}
-                    cancelLabel={'Cancel'}
-                    mutationFn={(payload) =>
-                        isEdit && modal.data
-                            ? partnerSchoolService.update(
-                                  modal.data.id,
-                                  payload as Partial<PartnerSchools>,
-                              )
-                            : partnerSchoolService.create(
-                                  payload as Partial<PartnerSchools>,
-                              )
-                    }
-                    invalidateKeys={tableListInvalidateKeys(
-                        'settings-partner-schools',
-                    )}
-                    onSuccess={() =>
-                        toast({
-                            title: isEdit
-                                ? 'Partner school updated'
-                                : 'Partner school created',
-                            variant: 'success',
-                        })
-                    }
+                    row={modal.data}
                 />
             </SettingsPrimaryLayout>
         </>

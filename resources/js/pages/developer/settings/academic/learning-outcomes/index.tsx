@@ -1,5 +1,3 @@
-import { academicLearningOutcomesService } from '@/api-service-layer/admin/academic';
-import { FormModal } from '@/components/form-modal';
 import { useGlobalModal } from '@/components/global-modal';
 import {
     AddRecordButton,
@@ -11,14 +9,10 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
 import type { StatusKind } from '@/types';
 import type { AcademicLearningOutcomes } from '@/types/modules/settings/academic/learning-outcomes';
-import {
-    columns,
-    fields,
-} from '@/types/modules/settings/academic/learning-outcomes';
+import { columns } from '@/types/modules/settings/academic/learning-outcomes';
+import AcademicLearningOutcomesModal from './AcademicLearningOutcomesModal';
 
 const PERMISSION = 'manage settings academic';
 const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
@@ -58,12 +52,10 @@ const renderRow = (row: AcademicLearningOutcomes, actions: CardActions) => {
 };
 
 export default function Index() {
-    const { toast } = useToast();
     const modal = useGlobalModal<AcademicLearningOutcomes | null>(
         'academicLearningOutcomes',
         null,
     );
-    const isEdit = modal.data !== null;
 
     return (
         <>
@@ -93,38 +85,10 @@ export default function Index() {
                 }}
                 data-cy="index-data-table-field-7"
             />
-            <FormModal<AcademicLearningOutcomes>
+            <AcademicLearningOutcomesModal
                 open={modal.open}
                 onClose={() => modal.setOpen(false)}
-                title={
-                    isEdit ? 'Edit Learning Outcomes' : 'Add Learning Outcomes'
-                }
-                mode={isEdit ? 'edit' : 'create'}
-                row={modal.data ?? undefined}
-                fields={fields}
-                submitLabel={isEdit ? 'Update' : 'Create'}
-                cancelLabel={'Cancel'}
-                mutationFn={(payload) =>
-                    isEdit && modal.data
-                        ? academicLearningOutcomesService.update(
-                              modal.data.id,
-                              payload as Partial<AcademicLearningOutcomes>,
-                          )
-                        : academicLearningOutcomesService.create(
-                              payload as Partial<AcademicLearningOutcomes>,
-                          )
-                }
-                invalidateKeys={tableListInvalidateKeys(
-                    'settings-academic/learning-outcomes',
-                )}
-                onSuccess={() =>
-                    toast({
-                        title: isEdit
-                            ? 'Learning outcome updated'
-                            : 'Learning outcome created',
-                        variant: 'success',
-                    })
-                }
+                row={modal.data}
             />
         </>
     );

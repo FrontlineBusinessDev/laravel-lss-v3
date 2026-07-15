@@ -8,8 +8,6 @@ import {
     UserRoundX,
 } from 'lucide-react';
 import { userService } from '@/api-service-layer/admin/user';
-import type { UserInput } from '@/api-service-layer/admin/user';
-import { FormModal } from '@/components/form-modal';
 import { useGlobalModal } from '@/components/global-modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import {
@@ -19,9 +17,8 @@ import {
     TextCell,
 } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
-import type { CardActions, ColumnDef, FieldDef } from '@/components/table';
+import type { CardActions, ColumnDef } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
@@ -29,17 +26,10 @@ import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
 import type { StatusKind } from '@/types';
 import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
+import type { UserRow } from './UserModal';
+import UserModal from './UserModal';
 
 const PERMISSION = 'manage users';
-
-/** Row shape returned by UserResource. Index signature satisfies DataTableField. */
-interface UserRow extends Record<string, unknown> {
-    id: number;
-    name: string;
-    email: string;
-    role: string | null;
-    status: string;
-}
 
 const columns: ColumnDef<UserRow>[] = [
     {
@@ -65,18 +55,6 @@ const columns: ColumnDef<UserRow>[] = [
 
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-/** Creator-scoped role matrix (mirrors UserController::assignableRoles). */
-function roleOptions(actorRole: string) {
-    const roles =
-        actorRole === 'developer'
-            ? ['developer', 'admin', 'trainer']
-            : actorRole === 'admin'
-              ? ['admin', 'trainer']
-              : [];
-
-    return roles.map((r) => ({ value: r, label: cap(r) }));
-}
-
 const listHeader = (
     <SettingsListHeader
         labels={['Name', 'Email', 'Role', 'Status']}
@@ -89,7 +67,6 @@ export default function index() {
     const { toast } = useToast();
     const currentUserId = usePage().props.auth?.user?.id;
     const modal = useGlobalModal<UserRow | null>('settingsUser', null);
-    const isEdit = modal.data !== null;
 
     // Admin action: queue the reset/setup email for a user. Archived accounts
     // are blocked server-side, so the menu item is disabled for them below.
@@ -110,43 +87,6 @@ export default function index() {
             });
         }
     };
-
-    const fields: FieldDef<UserRow>[] = [
-        {
-            key: 'first_name',
-            label: 'First name',
-            type: 'text',
-            required: true,
-            placeholder: 'Juan',
-            colSpan: 2,
-        },
-        {
-            key: 'last_name',
-            label: 'Last name',
-            type: 'text',
-            required: true,
-            placeholder: 'Dela Cruz',
-            colSpan: 2,
-        },
-        {
-            key: 'email',
-            label: 'Email address',
-            type: 'email',
-            required: true,
-            placeholder: 'name@frontlinebusiness.com.ph',
-            colSpan: 2,
-            disabled: (mode) => mode === 'edit',
-        },
-        {
-            key: 'role',
-            label: 'Role',
-            type: 'select',
-            required: true,
-            colSpan: 2,
-            options: roleOptions(role),
-            defaultValue: roleOptions(role)[0]?.value,
-        },
-    ];
 
     const renderRow = (row: UserRow, actions: CardActions) => {
         const isSelf = row.id === currentUserId;
@@ -267,34 +207,11 @@ export default function index() {
                         }}
                         data-cy="index-data-table-field-12"
                     />
-                    <FormModal<UserRow>
+                    <UserModal
                         open={modal.open}
                         onClose={() => modal.setOpen(false)}
-                        title={isEdit ? 'Edit user' : 'Add user'}
-                        mode={isEdit ? 'edit' : 'create'}
-                        row={modal.data ?? undefined}
-                        fields={fields}
-                        submitLabel={isEdit ? 'Save changes' : 'Create'}
-                        cancelLabel={'Cancel'}
-                        mutationFn={(payload) =>
-                            (isEdit && modal.data
-                                ? userService.update(
-                                      modal.data.id,
-                                      payload as UserInput,
-                                  )
-                                : userService.create(
-                                      payload as UserInput,
-                                  )) as Promise<UserRow>
-                        }
-                        invalidateKeys={tableListInvalidateKeys(
-                            'settings-users',
-                        )}
-                        onSuccess={() =>
-                            toast({
-                                title: isEdit ? 'User updated' : 'User created',
-                                variant: 'success',
-                            })
-                        }
+                        row={modal.data}
+                        actorRole={role}
                     />
                 </SettingsUsersLayout>
             </SettingsPrimaryLayout>

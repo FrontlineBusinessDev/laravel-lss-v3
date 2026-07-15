@@ -11,7 +11,6 @@ class LssLoginResponse implements LoginResponseContract
         if ($request->wantsJson()) {
             return response()->json(['two_factor' => false]);
         }
-
         return redirect()->intended(route('dashboard'));
     }
 }

@@ -40,9 +40,13 @@ export const columns: ColumnDef<AcademicLevel>[] = [
 export const fields: FieldDef<AcademicLevel>[] = [
     {
         key: 'status',
-        label: 'Active',
-        type: 'checkbox',
-        defaultValue: true,
+        label: 'Status',
+        type: 'select',
+        options: [
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+        ],
+        defaultValue: 'active',
     },
     {
         key: 'name',

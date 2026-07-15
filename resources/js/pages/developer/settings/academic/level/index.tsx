@@ -1,5 +1,3 @@
-import { academicLevelService } from '@/api-service-layer/admin/academic';
-import { FormModal } from '@/components/form-modal';
 import { useGlobalModal } from '@/components/global-modal';
 import {
     AddRecordButton,
@@ -11,11 +9,10 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
 import type { StatusKind } from '@/types';
 import type { AcademicLevel } from '@/types/modules/settings/academic/level';
-import { columns, fields } from '@/types/modules/settings/academic/level';
+import { columns } from '@/types/modules/settings/academic/level';
+import AcademicLevelModal from './AcademicLevelModal';
 
 const PERMISSION = 'manage settings academic';
 const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
@@ -49,9 +46,7 @@ const renderRow = (row: AcademicLevel, actions: CardActions) => {
 };
 
 export default function index() {
-    const { toast } = useToast();
     const modal = useGlobalModal<AcademicLevel | null>('academicLevel', null);
-    const isEdit = modal.data !== null;
 
     return (
         <>
@@ -81,34 +76,10 @@ export default function index() {
                 }}
                 data-cy="index-data-table-field-7"
             />
-            <FormModal<AcademicLevel>
+            <AcademicLevelModal
                 open={modal.open}
                 onClose={() => modal.setOpen(false)}
-                title={isEdit ? 'Edit Level' : 'Add Level'}
-                mode={isEdit ? 'edit' : 'create'}
-                row={modal.data ?? undefined}
-                fields={fields}
-                submitLabel={isEdit ? 'Update Level' : 'Create Level'}
-                cancelLabel={'Cancel'}
-                mutationFn={(payload) =>
-                    isEdit && modal.data
-                        ? academicLevelService.update(
-                              modal.data.id,
-                              payload as Partial<AcademicLevel>,
-                          )
-                        : academicLevelService.create(
-                              payload as Partial<AcademicLevel>,
-                          )
-                }
-                invalidateKeys={tableListInvalidateKeys(
-                    'settings-academic/level',
-                )}
-                onSuccess={() =>
-                    toast({
-                        title: isEdit ? 'Level updated' : 'Level created',
-                        variant: 'success',
-                    })
-                }
+                row={modal.data}
             />
         </>
     );

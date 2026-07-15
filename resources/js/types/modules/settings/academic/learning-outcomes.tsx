@@ -61,9 +61,13 @@ export const columns: ColumnDef<AcademicLearningOutcomes>[] = [
 export const fields: FieldDef<AcademicLearningOutcomes>[] = [
     {
         key: 'status',
-        label: 'Active',
-        type: 'checkbox',
-        defaultValue: true,
+        label: 'Status',
+        type: 'select',
+        options: [
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+        ],
+        defaultValue: 'active',
     },
     {
         key: 'academic_industry_id',

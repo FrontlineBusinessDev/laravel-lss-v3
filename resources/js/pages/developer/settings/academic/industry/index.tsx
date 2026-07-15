@@ -1,5 +1,3 @@
-import { academicIndustryService } from '@/api-service-layer/admin/academic';
-import { FormModal } from '@/components/form-modal';
 import { useGlobalModal } from '@/components/global-modal';
 import {
     AddRecordButton,
@@ -11,11 +9,10 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
 import type { StatusKind } from '@/types';
 import type { AcademicIndustry } from '@/types/modules/settings/academic/industry';
-import { columns, fields } from '@/types/modules/settings/academic/industry';
+import { columns } from '@/types/modules/settings/academic/industry';
+import AcademicIndustryModal from './AcademicIndustryModal';
 
 const PERMISSION = 'manage settings academic';
 const customGRID = 'sm:grid-cols-[1.6fr_2.2fr_1fr_2.5rem]';
@@ -48,12 +45,10 @@ const renderRow = (row: AcademicIndustry, actions: CardActions) => {
 };
 
 export default function index() {
-    const { toast } = useToast();
     const modal = useGlobalModal<AcademicIndustry | null>(
         'academicIndustry',
         null,
     );
-    const isEdit = modal.data !== null;
 
     return (
         <>
@@ -83,34 +78,10 @@ export default function index() {
                 }}
                 data-cy="index-data-table-field-6"
             />
-            <FormModal<AcademicIndustry>
+            <AcademicIndustryModal
                 open={modal.open}
                 onClose={() => modal.setOpen(false)}
-                title={isEdit ? 'Edit Industry' : 'Add Industry'}
-                mode={isEdit ? 'edit' : 'create'}
-                row={modal.data ?? undefined}
-                fields={fields}
-                submitLabel={isEdit ? 'Update Industry' : 'Create Industry'}
-                cancelLabel={'Cancel'}
-                mutationFn={(payload) =>
-                    isEdit && modal.data
-                        ? academicIndustryService.update(
-                              modal.data.id,
-                              payload as Partial<AcademicIndustry>,
-                          )
-                        : academicIndustryService.create(
-                              payload as Partial<AcademicIndustry>,
-                          )
-                }
-                invalidateKeys={tableListInvalidateKeys(
-                    'settings-academic/industry',
-                )}
-                onSuccess={() =>
-                    toast({
-                        title: isEdit ? 'Industry updated' : 'Industry created',
-                        variant: 'success',
-                    })
-                }
+                row={modal.data}
             />
         </>
     );

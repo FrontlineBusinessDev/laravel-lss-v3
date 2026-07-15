@@ -58,7 +58,7 @@ export function useCardTableController<T extends Record<string, unknown>>(
         columns,
         fields,
         updateUrl,
-        updateMethod = 'PUT',
+        updateMethod = 'POST',
         enableEdit,
         restoreUrl,
         archiveUrl,

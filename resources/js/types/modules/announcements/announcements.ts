@@ -55,7 +55,11 @@ export const fields: FieldDef<Announcements>[] = [
     {
         key: 'status',
         label: 'Status',
-        type: 'checkbox',
+        type: 'select',
+        options: [
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+        ],
         required: true,
         colSpan: 2,
     },

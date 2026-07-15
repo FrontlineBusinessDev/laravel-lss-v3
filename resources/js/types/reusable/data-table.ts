@@ -86,7 +86,7 @@ export interface DataTableProps<T> {
         | string
         | ((payload: Partial<Record<string, unknown>>) => string);
     updateUrl?: (row: T) => string;
-    updateMethod?: 'PUT' | 'PATCH';
+    updateMethod?: 'POST' | 'PUT' | 'PATCH';
     enableCreate?: boolean;
     /** Label for the default create button (defaults to "New"). */
     createLabel?: string;

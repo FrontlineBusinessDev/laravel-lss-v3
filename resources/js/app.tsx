@@ -1,10 +1,10 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { AppProviders, makeQueryClient } from './AppProviders';
-import AppLayout from './layouts/AppLayout';
-import SettingsAcademicLayout from './layouts/settings/SettingsAcademicLayout';
-import SettingsPrimaryLayout from './layouts/settings/SettingsPrimaryLayout';
+import { ResolvedLayout } from './layouts/ResolvedLayout';
+
 const appName = import.meta.env.VITE_APP_NAME || 'LSS Admin';
+
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     resolve: (name) => {
@@ -15,25 +15,10 @@ createInertiaApp({
             (k) => k.toLowerCase() === `./pages/${name}.tsx`.toLowerCase(),
         );
         if (!key) throw new Error(`Page not found: ./pages/${name}.tsx`);
-        return pages[key];
-    },
-    layout: (name) => {
-        switch (true) {
-            case name === 'welcome' || name.startsWith('auth/'):
-                return null;
-            case name.startsWith('public/'):
-                return null;
-            case name.includes('settings/academic'):
-                return [
-                    AppLayout,
-                    SettingsPrimaryLayout,
-                    SettingsAcademicLayout,
-                ];
-            case name.startsWith('settings/'):
-                return [AppLayout];
-            default:
-                return [AppLayout];
-        }
+        const page = pages[key];
+        // Set the layout on the page default export if it doesn't already have a custom layout.
+        page.default.layout = page.default.layout || ResolvedLayout(name);
+        return page;
     },
     setup({ el, App, props }) {
         // The provider tree and QueryClient options are shared with ssr.tsx via
@@ -46,7 +31,6 @@ createInertiaApp({
                 <App {...props} />
             </AppProviders>
         );
-
         // Hydrate only when the server actually rendered markup (SSR enabled).
         // With SSR off, Inertia ships an empty #app div, so hydrateRoot would
         // report "Hydration failed …"; use createRoot instead. This keeps the

@@ -27,7 +27,9 @@ export interface Batch {
 
 export interface Trainee {
     id: string;
-    name: string;
+    first_name: string;
+    last_name: string;
+    name?: string;
     initials: string;
     school: string;
     batchNo: string;

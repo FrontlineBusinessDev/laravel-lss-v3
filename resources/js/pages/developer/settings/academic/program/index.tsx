@@ -1,5 +1,3 @@
-import { academicProgramService } from '@/api-service-layer/admin/academic';
-import { FormModal } from '@/components/form-modal';
 import { useGlobalModal } from '@/components/global-modal';
 import {
     AddRecordButton,
@@ -11,11 +9,10 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
 import type { StatusKind } from '@/types';
 import type { AcademicProgram } from '@/types/modules/settings/academic/program';
-import { columns, fields } from '@/types/modules/settings/academic/program';
+import { columns } from '@/types/modules/settings/academic/program';
+import AcademicProgramModal from './AcademicProgramModal';
 
 const PERMISSION = 'manage settings academic';
 const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
@@ -51,12 +48,10 @@ const renderRow = (row: AcademicProgram, actions: CardActions) => {
 };
 
 export default function index() {
-    const { toast } = useToast();
     const modal = useGlobalModal<AcademicProgram | null>(
         'academicProgram',
         null,
     );
-    const isEdit = modal.data !== null;
 
     return (
         <>
@@ -86,34 +81,10 @@ export default function index() {
                 }}
                 data-cy="index-data-table-field-7"
             />
-            <FormModal<AcademicProgram>
+            <AcademicProgramModal
                 open={modal.open}
                 onClose={() => modal.setOpen(false)}
-                title={isEdit ? 'Edit Program' : 'Add Program'}
-                mode={isEdit ? 'edit' : 'create'}
-                row={modal.data ?? undefined}
-                fields={fields}
-                submitLabel={isEdit ? 'Update Program' : 'Create Program'}
-                cancelLabel={'Cancel'}
-                mutationFn={(payload) =>
-                    isEdit && modal.data
-                        ? academicProgramService.update(
-                              modal.data.id,
-                              payload as Partial<AcademicProgram>,
-                          )
-                        : academicProgramService.create(
-                              payload as Partial<AcademicProgram>,
-                          )
-                }
-                invalidateKeys={tableListInvalidateKeys(
-                    'settings-academic/program',
-                )}
-                onSuccess={() =>
-                    toast({
-                        title: isEdit ? 'Program updated' : 'Program created',
-                        variant: 'success',
-                    })
-                }
+                row={modal.data}
             />
         </>
     );

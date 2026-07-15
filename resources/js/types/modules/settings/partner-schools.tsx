@@ -98,9 +98,13 @@ export const fields: FieldDef<PartnerSchools>[] = [
     },
     {
         key: 'status',
-        label: 'Active',
-        type: 'checkbox',
-        defaultValue: true,
+        label: 'Status',
+        type: 'select',
+        options: [
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+        ],
+        defaultValue: 'active',
         colSpan: 2,
     },
     {
@@ -137,7 +141,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'contact_email',
         label: 'Email',
         type: 'email',
-        required: true,
         placeholder: 'JaneDoe@gmail.com',
         colSpan: 2,
     },
@@ -145,7 +148,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'physical_address',
         label: 'Physical Address',
         type: 'textarea',
-        required: true,
         placeholder: 'Baloc Road, Brgy. San Ignacio, San Pablo City',
         colSpan: 2,
     },

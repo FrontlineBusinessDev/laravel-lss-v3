@@ -25,10 +25,13 @@ class Trainees extends Model
         'birth_place',
         'gender',
         'mobile_number',
+        'landline_number',
         'emergency_contact_name',
         'emergency_contact_number',
         'required_hours',
+        'completed_hours',
         'date_completed',
+        'termination_remarks',
         'address',
     ];
 
@@ -36,6 +39,7 @@ class Trainees extends Model
         'birthday' => 'date',
         'date_completed' => 'date',
         'required_hours' => 'decimal:2',
+        'completed_hours' => 'decimal:2',
     ];
 
     public function batch(): BelongsTo

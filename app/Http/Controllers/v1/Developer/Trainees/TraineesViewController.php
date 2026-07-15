@@ -5,12 +5,11 @@ namespace App\Http\Controllers\v1\Developer\Trainees;
 use App\Http\Controllers\v1\Developer\BaseController;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\Trainees;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TraineesViewController extends BaseController
 {
+    use AuthorizesRequests;
     protected string $model = Trainees::class;
     protected string $view = 'developer/trainees/show/PersonalInfoTab';
 
@@ -75,24 +74,26 @@ class TraineesViewController extends BaseController
         $trainee = Trainees::query()
             ->with([
                 'school:id,school_name',
-                'batch:id,batch_code,academic_industry_id,academic_program_id,academic_level_id',
+                'batch:id,batch_code,date_started,setup,academic_industry_id,academic_program_id,academic_level_id',
                 'batch.academicIndustry:id,name',
                 'batch.academicProgram:id,name,course_name',
-                'batch.academicLevel:id,name,name',
+                'batch.academicLevel:id,name,year_level',
+                'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
             ])
             ->findOrFail($id);
 
         $initials = strtoupper(mb_substr($trainee['first_name'], 0, 1)) . strtoupper(mb_substr($trainee['last_name'], 0, 1));
-        $initials = 'JD'; // Hardcode this temporarily to test
+        $name = $trainee['first_name'] . " " . $trainee['last_name'];
         $this->authorize('view', $trainee);
         /** @disregard P1013 */
         $user = auth()->user();
         return InertiaPageResponse::csr($view, [
             'user' => $user,
-            'record' => [
-                'trainee' => $trainee,
-            ],
-            'initials' => $initials,
+            'trainee' => [
+                ...$trainee->toArray(),
+                'initials' => $initials,
+                'name' => $name,
+            ]
         ]);
     }
 }

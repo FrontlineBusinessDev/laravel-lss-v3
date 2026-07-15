@@ -1,15 +1,15 @@
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { AppTrainees } from '@/types/modules/trainees/trainees';
+import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Mail, Phone } from 'lucide-react';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 export default function TraineesDetailLayout({
     trainee,
     children,
 }: {
-    trainee: AppTrainees;
+    trainee: TraineeDetail;
     children: ReactNode;
 }) {
     const { toast } = useToast();
@@ -88,7 +88,7 @@ export default function TraineesDetailLayout({
                                 className="text-lg font-semibold text-ink"
                                 data-cy="detail-span-9"
                             >
-                                {trainee.full_name}
+                                {trainee.name}
                             </span>
                             <span
                                 className={
@@ -120,7 +120,8 @@ export default function TraineesDetailLayout({
                                 {trainee.mobile_number}
                             </span>
                             <span data-cy="detail-span-16">
-                                {trainee.batchNo} · {trainee.school}
+                                {trainee.batch?.batch_code ?? '—'} ·{' '}
+                                {trainee.school?.school_name ?? '—'}
                             </span>
                         </p>
                     </div>
@@ -131,10 +132,11 @@ export default function TraineesDetailLayout({
                 className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
                 data-cy="detail-div-17"
             >
-                {TABS.map((t) => {
+                {TABS.map((t, key) => {
                     const active = path === t.href;
                     return (
                         <Link
+                            key={key}
                             href={t.href}
                             className={cn(
                                 'pb-2.5 text-xs font-medium whitespace-nowrap transition-colors',

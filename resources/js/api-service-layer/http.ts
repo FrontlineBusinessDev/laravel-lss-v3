@@ -5,8 +5,10 @@
  * search-active / lookup / {id}/in-use / store / update / archive / restore /
  * destroy), so each concrete service is a thin, strongly-typed binding.
  *
- * File-bearing payloads are auto-serialized to FormData (with Laravel's PUT
- * spoofing) and real upload progress is forwarded to Axios.
+ * File-bearing payloads are auto-serialized to FormData and real upload
+ * progress is forwarded to Axios. Update always sends a real POST — the
+ * backing `Route::crudModule` only registers `POST /{id}` for update (files
+ * can't ride a multipart PUT/PATCH body), so no `_method` spoofing is used.
  */
 
 import type { AxiosResponse } from 'axios';
@@ -31,8 +33,6 @@ export interface WriteOptions {
 export interface CrudResourceOptions {
     /** Resource route prefix, e.g. '/settings/partner-schools'. */
     baseUrl: string;
-    /** HTTP verb for update; PUT is spoofed to POST when sending files. */
-    updateMethod?: 'PUT' | 'PATCH';
 }
 
 /** Serializes params into a `?query` suffix, or '' when there are none. */
@@ -70,14 +70,13 @@ function progressConfig(opts?: WriteOptions) {
 export function createCrudResource<T, TInput = Partial<T>>(
     options: CrudResourceOptions,
 ) {
-    const { baseUrl, updateMethod = 'PUT' } = options;
+    const { baseUrl } = options;
 
     const write = (
         url: string,
         method: 'POST',
         payload: unknown,
         opts?: WriteOptions,
-        spoof?: 'PUT' | 'PATCH',
     ): Promise<AxiosResponse> => {
         const useForm = hasBinaryFiles(payload);
 
@@ -86,11 +85,6 @@ export function createCrudResource<T, TInput = Partial<T>>(
         }
 
         const body = buildFormData(payload as Record<string, unknown>);
-
-        // Laravel can't read multipart bodies on PUT/PATCH — spoof via POST.
-        if (spoof) {
-            body.append('_method', spoof);
-        }
 
         return http.request({
             url,
@@ -140,21 +134,13 @@ export function createCrudResource<T, TInput = Partial<T>>(
         create: async (data: TInput, opts?: WriteOptions): Promise<T> =>
             unwrap<T>(await write(baseUrl, 'POST', data, opts)),
 
-        /** PUT /{id} (POST-spoofed for files) — update a record. */
+        /** POST /{id} (also handles file uploads) — update a record. */
         update: async (
             id: string | number,
             data: TInput,
             opts?: WriteOptions,
         ): Promise<T> =>
-            unwrap<T>(
-                await write(
-                    `${baseUrl}/${id}`,
-                    'POST',
-                    data,
-                    opts,
-                    updateMethod,
-                ),
-            ),
+            unwrap<T>(await write(`${baseUrl}/${id}`, 'POST', data, opts)),
 
         /** PATCH /{id}/archive — soft-delete (suspend). */
         archive: async (id: string | number): Promise<T> =>

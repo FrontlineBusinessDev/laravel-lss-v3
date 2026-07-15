@@ -111,7 +111,7 @@ export function DataTableField<T extends Record<string, unknown>>({
     renderModal,
     createUrl,
     updateUrl,
-    updateMethod = 'PUT',
+    updateMethod = 'POST',
     enableCreate,
     createLabel,
     enableEdit,

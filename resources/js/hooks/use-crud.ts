@@ -5,7 +5,7 @@
  *
  *   GET    {baseUrl}/pagination-search
  *   POST   {baseUrl}
- *   PUT    {baseUrl}/{id}
+ *   POST   {baseUrl}/{id}          (update — also handles file uploads)
  *   PATCH  {baseUrl}/{id}/archive
  *   PATCH  {baseUrl}/{id}/restore
  *   DELETE {baseUrl}/{id}
@@ -288,7 +288,7 @@ export function useCrud<T extends { id?: number | string }>(
         archiveUrl,
         restoreUrl,
         createMethod = 'POST',
-        updateMethod = 'PUT',
+        updateMethod = 'POST',
         queryKey = 'crud',
         queryParams = {},
         onError,
@@ -413,7 +413,9 @@ export function useCrud<T extends { id?: number | string }>(
         onError: handleError,
     });
 
-    // Mutation: Update — the crudModule route macro only registers PUT.
+    // Mutation: Update — the crudModule route macro only registers
+    // `POST {baseUrl}/{id}` (files can't ride a multipart PUT/PATCH body), so
+    // this always sends a real POST rather than spoofing via `_method`.
     const update = useMutation<
         T,
         Error,
@@ -427,20 +429,12 @@ export function useCrud<T extends { id?: number | string }>(
                     : (updateUrl ?? `${baseUrl}/${id}`);
 
             const useForm = hasBinaryFiles(data);
-            let finalMethod = updateMethod;
-            let body: string | FormData;
-
-            if (useForm) {
-                body = buildFormData(data as Record<string, unknown>);
-                // Laravel PUT Fix: Append spoof parameter & toggle network layer to POST
-                body.append('_method', updateMethod);
-                finalMethod = 'POST';
-            } else {
-                body = JSON.stringify(data);
-            }
+            const body = useForm
+                ? buildFormData(data as Record<string, unknown>)
+                : JSON.stringify(data);
 
             const response = await apiFetchJson<T>(resolvedUrl, {
-                method: finalMethod,
+                method: updateMethod,
                 body,
                 // Leave headers empty; let custom apiFetch handle it
                 headers: {},

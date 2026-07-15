@@ -115,19 +115,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/batches/{id}', [BatchViewController::class, 'trainees'])->name('batches.show');
     Route::get('/batches/{id}/activity-log', [BatchViewController::class, 'activityLog'])->name('batches.activity-log');
     Route::get('/batches/{id}/financial', [BatchViewController::class, 'financial'])->name('batches.financial');
-    Route::get('/trainees', [TraineesController::class, 'index'])->name('trainees.index');
-    // Read-only listing endpoint backing the trainees index DataTableCardField.
-    // Registered before `{id}` so the static segment wins the route match.
-    Route::get('/trainees/pagination-search', [TraineesController::class, 'paginationSearch'])
-        ->name('trainees.pagination-search');
-    Route::get('/trainees/{id}', [TraineesViewController::class, 'show'])->name('trainees.personalInformationTab');
-    Route::get('/trainees/{id}/academic-information', [TraineesViewController::class, 'show'])->name('trainees.academicInfoTab');
-    Route::get('/trainees/{id}/documents', [TraineesViewController::class, 'show'])->name('trainees.documents');
-    Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'show'])->name('trainees.learningOutcomes');
-    Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'show'])->name('trainees.paymentDetails');
-    Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'show'])->name('trainees.ratings');
-    Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'show'])->name('trainees.certificate');
-    Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'show'])->name('trainees.biometrics');
+    // Registered before the show/tab routes below so crudModule's static
+    // segments (pagination-search, search-active, lookup) win the route
+    // match against the `{id}` wildcard used by the tab views.
+    Route::crudModule('/trainees', TraineesController::class, 'trainees');
+    Route::get('/trainees/{id}', [TraineesViewController::class, 'personalInformationTab'])->name('trainees.personalInformationTab');
+    Route::get('/trainees/{id}/academic-information', [TraineesViewController::class, 'academicInfoTab'])->name('trainees.academicInfoTab');
+    Route::get('/trainees/{id}/documents', [TraineesViewController::class, 'documents'])->name('trainees.documents');
+    Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'learningOutcomes'])->name('trainees.learningOutcomes');
+    Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
+    Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
+    Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
+    Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');

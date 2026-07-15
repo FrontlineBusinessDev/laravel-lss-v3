@@ -68,10 +68,13 @@ class TraineesController extends BaseController
             'birth_place' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:male,female'],
             'mobile_number' => ['required', 'string', 'max:50'],
+            'landline_number' => ['nullable', 'string', 'max:50'],
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_number' => ['required', 'string', 'max:50'],
             'required_hours' => ['required', 'numeric', 'min:0', 'max:999.99'],
+            'completed_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'date_completed' => ['nullable', 'date'],
+            'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
         ];
     }
@@ -89,10 +92,13 @@ class TraineesController extends BaseController
             'birth_place' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:male,female'],
             'mobile_number' => ['required', 'string', 'max:50'],
+            'landline_number' => ['nullable', 'string', 'max:50'],
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_number' => ['required', 'string', 'max:50'],
             'required_hours' => ['required', 'numeric', 'min:0', 'max:999.99'],
+            'completed_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'date_completed' => ['nullable', 'date'],
+            'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
         ];
     }

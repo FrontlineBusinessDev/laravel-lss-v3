@@ -316,14 +316,6 @@ export function AsyncSelectField({
                     </div>,
                     document.body,
                 )}
-            {error && (
-                <p
-                    className="mt-1 text-xs text-rose-600"
-                    data-cy="use-async-select-field-p-14"
-                >
-                    {error}
-                </p>
-            )}
         </div>
     );
 }
