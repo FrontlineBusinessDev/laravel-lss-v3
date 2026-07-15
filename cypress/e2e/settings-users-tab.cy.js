@@ -1,26 +1,40 @@
 describe('Settings - Users - Users Tab Page', () => {
     beforeEach(() => {
         cy.session('admin', () => {
-            cy.login();
+            cy.login(); //login in system
         });
 
         cy.visit('/settings/users');
     });
 
-    // Check Users tab page display
+    // check users tab page display
     it('should display the Users tab page correctly', () => {
 
-        cy.get('[data-cy="settings-primary-layout-h1-settings"]')
-            .should('be.visible')
-            .and('have.text', 'Settings');
+      cy.verifySettingsModuleHeader(); //settings module title
 
-        cy.get(
-            '[data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"]',
-        )
-            .should('be.visible')
-            .and(
-                'have.text',
-                'Manage user accounts, partner schools, and academic reference data',
-            );
+        //elements inside settings > users tab
+        cy.get('[data-cy="add-record-button"]')
+        .should('be.visible');
+
+        cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+        cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').should('be.visible');
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').should('be.visible');
+        cy.get('[data-cy="toolbar-button-button"]').click();
+
+        cy.get('[data-cy="dropdown-button-button"]')
+            .eq(0)
+            .click();
+
+        cy.get('[data-cy="dropdown-button-button"]')
+            .eq(1)
+            .click();
+
+        cy.get('[data-cy="dropdown-button-button"]')
+            .eq(2)
+            .click();
+
     });
+
+  
 });
