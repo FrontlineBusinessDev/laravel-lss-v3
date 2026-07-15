@@ -17,11 +17,7 @@ export type {
     LookupOption,
     WriteOptions,
 } from './http';
-export {
-    buildFormData,
-    buildQueryString,
-    hasBinaryFiles,
-} from './form-data';
+export { buildFormData, buildQueryString, hasBinaryFiles } from './form-data';
 
 // Role mapping (developer === admin)
 export {
@@ -33,7 +29,6 @@ export {
 export type { AppRole } from './roles';
 
 // Resource services (canonical admin implementations)
-export * from './admin/department';
 export * from './admin/partner-school';
 export * from './admin/academic';
 export * from './admin/user';
