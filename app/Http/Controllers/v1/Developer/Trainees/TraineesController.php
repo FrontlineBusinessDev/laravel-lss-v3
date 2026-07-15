@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Developer\Trainees;
 
 use App\Http\Controllers\v1\Developer\BaseController;
 use App\Models\Trainees;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 
@@ -12,8 +13,25 @@ class TraineesController extends BaseController
     protected string $model = Trainees::class;
     protected string $view = 'developer/trainees/index';
     protected array $searchable = ['first_name', 'last_name', 'email', 'mobile_number'];
-    protected array $filterable = ['batch_id', 'gender', 'school_id'];
-    protected array $sortable = ['id', 'last_name', 'date_completed', 'required_hours'];
+    protected array $filterable = [
+        'status',
+        'first_name',
+        'last_name',
+        'email',
+        'batch_id',
+        'gender',
+        'school_id',
+        'academic_industry_id',
+        'academic_level_id',
+        'academic_program_id'
+    ];
+    protected array $sortable = [
+        'status',
+        'id',
+        'last_name',
+        'date_completed',
+        'required_hours'
+    ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
     // Guards deletion if the trainee has uploaded files/documents attached
@@ -27,6 +45,23 @@ class TraineesController extends BaseController
     // {
     //     return Inertia::render('trainees/detail', ['id' => $id])->asCsr();
     // }
+    /**
+     * Eager-load the industry/program relations so the list serializes their
+     * names (as `academic_industry` / `academic_program`) instead of the
+     * frontend having to display raw foreign-key ids.
+     *
+     * @return Builder<Model>
+     */
+    protected function newQuery(): Builder
+    {
+        return parent::newQuery()->with([
+            'school:id,school_name',
+            'batch:id,batch_code,academic_industry_id,academic_program_id,academic_level_id',
+            'batch.academicIndustry:id,name',
+            'batch.academicProgram:id,name,course_name',
+            'batch.academicLevel:id,name,name',
+        ]);
+    }
 
     protected function storeRules(): array
     {

@@ -67,8 +67,8 @@ const renderRow = (row: AppTrainees) => {
             <span
                 className={
                     completed
-                        ? 'inline-flex w-fit items-center rounded-pill bg-success-50 px-2.5 py-0.5 text-xs font-medium leading-5 text-success-800'
-                        : 'inline-flex w-fit items-center rounded-pill bg-amber-50 px-2.5 py-0.5 text-xs font-medium leading-5 text-amber-700'
+                        ? 'inline-flex w-fit items-center rounded-pill bg-success-50 px-2.5 py-0.5 text-xs leading-5 font-medium text-success-800'
+                        : 'inline-flex w-fit items-center rounded-pill bg-amber-50 px-2.5 py-0.5 text-xs leading-5 font-medium text-amber-700'
                 }
                 data-cy="index-status-badge"
             >

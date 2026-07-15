@@ -42,6 +42,7 @@ export interface FileFieldValue {
 export interface FieldOption {
     value: string;
     label: string;
+    columnNameShow?: string;
 }
 /**
  * Fetches active options from a `crudModule` `/lookup` endpoint and maps them
@@ -51,15 +52,26 @@ export interface FieldOption {
 export async function loadLookupOptions(
     baseUrl: string,
     query: string,
+    columnNameShow?: string,
 ): Promise<FieldOption[]> {
     const res = await apiFetchJson<LookupItem[]>(
         `${baseUrl}/lookup?status=active&q=${encodeURIComponent(query)}`,
     );
 
-    return (res.data ?? []).map((item) => ({
-        value: String(item.id),
-        label: item.name,
-    }));
+    return (res.data ?? []).map((item) => {
+        // Determine the label: use the dynamic property if provided,
+        // otherwise default to 'name'.
+        const displayKey =
+            columnNameShow && item.hasOwnProperty(columnNameShow)
+                ? columnNameShow
+                : 'name';
+
+        return {
+            value: String(item.id),
+            label: String(item[displayKey as keyof LookupItem] ?? ''),
+            columnNameShow: columnNameShow,
+        };
+    });
 }
 /**
  * Wraps a fixed option list in the async `loadOptions` signature so Setup and

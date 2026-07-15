@@ -24,6 +24,7 @@ class PartnerSchoolsController extends BaseController
     protected array $sortable   = ['id', 'school_name', 'status', 'contact_email', 'created_at'];
     // Transforms the stored path into a temporary (presigned) URL on list responses.
     protected array $fileFields = ['image'];
+    protected array $activeColumns = ['id', 'school_name'];
 
     protected function storeRules(?Model $record = null): array
     {
