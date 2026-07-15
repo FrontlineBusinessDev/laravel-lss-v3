@@ -93,12 +93,12 @@ export const columns: ColumnDef<AppTrainees>[] = [
         searchable: true,
         filterable: true,
     },
-    {
-        key: 'required_hours',
-        label: 'Required Hours',
-        searchable: true,
-        filterable: true,
-    },
+    // {
+    //     key: 'required_hours',
+    //     label: 'Required Hours',
+    //     searchable: true,
+    //     filterable: true,
+    // },
     {
         key: 'date_completed',
         label: 'Status',
