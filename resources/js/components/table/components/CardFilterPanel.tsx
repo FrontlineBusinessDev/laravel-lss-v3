@@ -110,6 +110,7 @@ export function CardFilterPanel<T>({
                                     }
                                     placeholder={`Filter by ${col.label.toLowerCase()}…`}
                                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
+                                    data-cy={`data-input-${col.key}`}
                                 />
                             </label>
                         );

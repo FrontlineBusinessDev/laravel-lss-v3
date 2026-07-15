@@ -172,7 +172,7 @@ export function RecordModal<T extends object>({
                                                 : undefined
                                         }
                                         onChange={(v) => setValue(f.key, v)}
-                                        data-cy="record-modal-dynamic-field-set-value"
+                                        data-cy={`record-modal-dynamic-field-set-value-${f.key}`}
                                     />
                                 </div>
                             ))}
