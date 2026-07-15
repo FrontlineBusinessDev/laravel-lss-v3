@@ -22,29 +22,11 @@ createServerHtml((page) =>
                 (k) => k.toLowerCase() === `./pages/${name}.tsx`.toLowerCase(),
             );
             if (!key) throw new Error(`Page not found: ./pages/${name}.tsx`);
-            const page = pages[key];
-            // Set the layout on the page default export if it doesn't already have a custom layout.
-            page.default.layout = page.default.layout || ResolvedLayout(name);
-            return page;
+            return pages[key];
         },
-        // layout: (name) => {
-        //     switch (true) {
-        //         case name === 'welcome' || name.startsWith('auth/'):
-        //             return null;
-        //         case name.startsWith('public/'):
-        //             return null;
-        //         case name.startsWith('settings/academic'):
-        //             return [
-        //                 AppLayout,
-        //                 SettingsPrimaryLayout,
-        //                 SettingsAcademicLayout,
-        //             ];
-        //         case name.startsWith('settings/'):
-        //             return [AppLayout];
-        //         default:
-        //             return [AppLayout];
-        //     }
-        // },
+        // Same default-layout resolution as app.tsx so SSR markup matches the
+        // client render. Pages exporting their own `layout` keep it.
+        layout: (name) => ResolvedLayout(name),
         setup: ({ App, props }) => {
             // Fresh client per request (no cross-request data leak); shares the
             // exact provider tree + options with app.tsx via AppProviders.

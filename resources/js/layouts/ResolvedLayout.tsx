@@ -3,7 +3,6 @@ import SettingsAcademicLayout from './settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from './settings/SettingsPrimaryLayout';
 
 export const ResolvedLayout = (name: string) => {
-    console.log(name);
     // PUBLIC
     if (
         name === 'welcome' ||

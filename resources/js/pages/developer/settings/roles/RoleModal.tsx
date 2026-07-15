@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/Button';
+import { Field, inputCls } from '@/components/form/Field';
 import { Modal } from '@/components/Modal';
 import { cn } from '@/lib/utils';
 export type PermissionModules = Record<string, string[]>;
@@ -67,39 +68,32 @@ export function RoleModal({
             maxWidth={560}
             data-cy="role-modal-modal-title"
         >
-            <label
-                className="mb-1 block text-xs font-medium text-neutral-600"
-                data-cy="role-modal-label-role-name"
+            <Field
+                label="Role name"
+                required
+                error={nameError ?? undefined}
+                data-cy="role-modal-field-role-name"
             >
-                Role name
-            </label>
-            <input
-                type="text"
-                value={name}
-                disabled={isProtectedName}
-                placeholder="e.g. Program coordinator"
-                onChange={(e) => {
-                    setName(e.target.value);
-                    setNameError(null);
-                }}
-                className="mb-1 h-9 w-full rounded-md border border-neutral-200 px-3 text-sm shadow-card transition-colors hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none disabled:bg-neutral-50 disabled:text-neutral-400"
-                data-cy="role-modal-input-e-g-program-coordinator"
-            />
+                <input
+                    type="text"
+                    value={name}
+                    disabled={isProtectedName}
+                    placeholder="e.g. Program coordinator"
+                    onChange={(e) => {
+                        setName(e.target.value);
+                        setNameError(null);
+                    }}
+                    className={inputCls}
+                    data-cy="role-modal-input-e-g-program-coordinator"
+                />
+            </Field>
             {isProtectedName && (
                 <p
-                    className="mb-3 text-[11px] text-neutral-400"
+                    className="mt-1 text-[11px] text-neutral-400"
                     data-cy="role-modal-p-core-role-names-are-fixed-you"
                 >
                     Core role names are fixed; you can still adjust their
                     permissions.
-                </p>
-            )}
-            {nameError && (
-                <p
-                    className="mb-3 text-xs font-medium text-danger-600"
-                    data-cy="role-modal-p-5"
-                >
-                    {nameError}
                 </p>
             )}
 

@@ -1,16 +1,16 @@
-import { useRef, useState } from 'react';
+import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { cn } from '@/lib/utils';
+import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import {
-    Link2,
     CheckCircle2,
     Circle,
-    UploadCloud,
-    FileText,
-    X,
     ExternalLink,
+    FileText,
+    Link2,
+    UploadCloud,
+    X,
 } from 'lucide-react';
-import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
-import { cn } from '@/lib/utils';
-import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { useRef, useState } from 'react';
 const MAX_FILE_SIZE_MB = 10;
 const ACCEPTED_TYPES = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
 const ACCEPTED_LABEL = 'PDF, DOC, DOCX, JPG, or PNG';

@@ -87,10 +87,7 @@ export function DynamicField<T>({
     }
     if (field.type === 'checkbox') {
         return (
-            <div
-                data-cy="record-modal-field-div-checkbox-wrapper"
-                className="relative"
-            >
+            <div data-cy="record-modal-field-div-checkbox-wrapper">
                 <label
                     className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5"
                     data-cy="record-modal-field-label-5"
@@ -110,14 +107,14 @@ export function DynamicField<T>({
                         {field.label}
                     </span>
                 </label>
-                {/* {error && (
+                {error && (
                     <p
-                        className="absolute top-0 mt-1 text-xs text-danger-600"
+                        className="mt-1 text-xs text-danger-600"
                         data-cy="record-modal-field-p-checkbox-error"
                     >
                         {error}
                     </p>
-                )} */}
+                )}
             </div>
         );
     }

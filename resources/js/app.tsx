@@ -15,11 +15,12 @@ createInertiaApp({
             (k) => k.toLowerCase() === `./pages/${name}.tsx`.toLowerCase(),
         );
         if (!key) throw new Error(`Page not found: ./pages/${name}.tsx`);
-        const page = pages[key];
-        // Set the layout on the page default export if it doesn't already have a custom layout.
-        page.default.layout = page.default.layout || ResolvedLayout(name);
-        return page;
+        return pages[key];
     },
+    // Default layout(s) per page name; pages exporting their own `layout`
+    // keep it. Passed as Inertia's `layout` option instead of mutating the
+    // page module inside `resolve`, which persists across navigations.
+    layout: (name) => ResolvedLayout(name),
     setup({ el, App, props }) {
         // The provider tree and QueryClient options are shared with ssr.tsx via
         // AppProviders so a client render matches the server-rendered HTML.
