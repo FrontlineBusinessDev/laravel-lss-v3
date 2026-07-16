@@ -149,7 +149,7 @@ export function CardFilterPanel<T>({
                                                     e.target.value,
                                                 )
                                             }
-                                            className="w-full rounded-lg border border-slate-200 px-2 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
+                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-900/10"
                                             data-cy={`data-input-${toKey}`}
                                         />
                                     </div>

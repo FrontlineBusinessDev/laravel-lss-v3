@@ -175,7 +175,7 @@ export function AsyncMultiSelectField({
                     if (!open) updatePosition();
                     setOpen((o) => !o);
                 }}
-                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${error ? 'border-rose-300' : 'border-slate-200'} ${disabled ? 'cursor-not-allowed bg-slate-50/20' : 'text-slate-900 hover:border-slate-300'} dark:text-white`}
+                className={`flex w-full items-center justify-between rounded-xl border bg-white px-3 py-2.5 text-left text-sm ${error ? 'border-rose-300' : 'border-slate-200'} ${disabled ? 'cursor-not-allowed bg-slate-50/20' : 'text-slate-900 hover:border-slate-300'} dark:text-white`}
                 data-cy="use-async-multi-select-field-button-button"
             >
                 <span

@@ -21,8 +21,8 @@ export function useAsyncAction<TArgs extends unknown[]>(
 
     const run = async (...args: TArgs) => {
         if (loading) {
-return;
-} // prevent double-fire
+            return;
+        } // prevent double-fire
 
         setLoading(true);
 

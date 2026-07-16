@@ -47,7 +47,7 @@ export function StatusFilter({
                     key={tab.value}
                     type="button"
                     onClick={() => onChange(tab.value)}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${value === tab.value ? 'brand-400 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                    className={`rounded-lg bg-white px-3 py-2 text-sm font-medium transition-colors ${value === tab.value ? 'text-brand-400' : 'text-slate-600 hover:bg-slate-50'}`}
                     data-cy="status-filter-button-button"
                 >
                     {tab.label}
