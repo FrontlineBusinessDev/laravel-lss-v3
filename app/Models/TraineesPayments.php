@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TraineesPayments extends Model
 {
-    protected $table = 'app_trainee_payments';
+    protected $table = 'app_trainees_payments';
     protected $fillable = ['trainee_id', 'amount_paid', 'payment_date', 'reference_no', 'notes'];
 
     public function trainee()

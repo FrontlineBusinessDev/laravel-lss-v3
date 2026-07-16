@@ -16,7 +16,7 @@ class Trainees extends Model
     protected $guarded = [];
     protected $table = 'app_trainees';
 
-    protected $appends = ['avatar_url', 'initials'];
+    protected $appends = ['avatar_url', 'initials', 'total_paid', 'outstanding_balance'];
 
     protected $fillable = [
         'status',
@@ -39,6 +39,15 @@ class Trainees extends Model
         'date_completed',
         'termination_remarks',
         'address',
+        'override_rate_per_hour',
+        'override_hours_discount_percent',
+        'override_group_discount_percent',
+        'applied_rate_per_hour',
+        'hours_discount_percent',
+        'group_discount_percent',
+        'gross_amount',
+        'total_discount_amount',
+        'net_amount_required',
     ];
 
     protected $casts = [
@@ -46,6 +55,15 @@ class Trainees extends Model
         'date_completed' => 'date',
         'required_hours' => 'decimal:2',
         'completed_hours' => 'decimal:2',
+        'override_rate_per_hour' => 'decimal:2',
+        'override_hours_discount_percent' => 'decimal:2',
+        'override_group_discount_percent' => 'decimal:2',
+        'applied_rate_per_hour' => 'decimal:2',
+        'hours_discount_percent' => 'decimal:2',
+        'group_discount_percent' => 'decimal:2',
+        'gross_amount' => 'decimal:2',
+        'total_discount_amount' => 'decimal:2',
+        'net_amount_required' => 'decimal:2',
     ];
 
     public function batch(): BelongsTo

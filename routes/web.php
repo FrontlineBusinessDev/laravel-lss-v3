@@ -29,10 +29,14 @@ use App\Http\Controllers\v1\Developer\Settings\AcademicIndustryController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicLearningOutcomesController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicLevelController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicProgramController;
+use App\Http\Controllers\v1\Developer\Settings\GroupDiscountController;
+use App\Http\Controllers\v1\Developer\Settings\HoursDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
+use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -90,6 +94,28 @@ Route::prefix('settings')->name('settings.')->group(function () {
         Route::crudModule('/level', AcademicLevelController::class, 'level');
         Route::crudModule('/program', AcademicProgramController::class, 'program');
     });
+    // Rates & discount matrices: its own top-level Settings section (sibling
+    // to Academic/Users/Partner Schools), with a "Default Rates" landing page
+    // plus 2 further sub-pages.
+    Route::prefix('rates')->name('rates.')->group(function () {
+        Route::get('/', [RatesController::class, 'index'])->name('default.index');
+        Route::put('/', [RatesController::class, 'updateRates'])->name('default.update');
+        // No status column on these two tables, so no archive/restore routes.
+        Route::prefix('hours-discounts')->name('hours-discounts.')->group(function () {
+            Route::get('/', [HoursDiscountController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [HoursDiscountController::class, 'paginationSearch'])->name('pagination-search');
+            Route::post('/', [HoursDiscountController::class, 'store'])->name('store');
+            Route::post('/{id}', [HoursDiscountController::class, 'update'])->name('update');
+            Route::delete('/{id}', [HoursDiscountController::class, 'destroy'])->name('destroy');
+        });
+        Route::prefix('group-discounts')->name('group-discounts.')->group(function () {
+            Route::get('/', [GroupDiscountController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [GroupDiscountController::class, 'paginationSearch'])->name('pagination-search');
+            Route::post('/', [GroupDiscountController::class, 'store'])->name('store');
+            Route::post('/{id}', [GroupDiscountController::class, 'update'])->name('update');
+            Route::delete('/{id}', [GroupDiscountController::class, 'destroy'])->name('destroy');
+        });
+    });
 });
 
 /**
@@ -130,6 +156,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/trainees/{id}/avatar', [TraineesController::class, 'updateAvatar'])->name('trainees.updateAvatar');
     Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
     Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
+    Route::post('/trainees/{id}/payments', [TraineePaymentsController::class, 'storePayment'])->name('trainees.payments.store');
+    Route::delete('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'deletePayment'])->name('trainees.payments.destroy');
+    Route::patch('/trainees/{id}/billing-overrides', [TraineesController::class, 'updateBillingOverrides'])->name('trainees.updateBillingOverrides');
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');

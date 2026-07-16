@@ -62,6 +62,16 @@ export interface AppTraineeLearningOutcome {
     status: 'active' | 'inactive';
 }
 
+export interface AppTraineePayment {
+    id: number;
+    trainee_id: number;
+    amount_paid: string;
+    payment_date: string;
+    reference_no: string | null;
+    notes: string | null;
+    created_at: string;
+}
+
 export interface TraineeDetail {
     id: number;
     status: string;
@@ -92,6 +102,21 @@ export interface TraineeDetail {
     batch: AppTraineeBatch;
     documents: AppTraineeDocument[];
     outcomes: AppTraineeLearningOutcome[];
+    // `decimal:2` casts — Eloquent serializes these as strings in JSON. Null
+    // override_* means "not overridden"; BillingService falls back to the
+    // computed rate/discount tier lookup in that case.
+    override_rate_per_hour: string | null;
+    override_hours_discount_percent: string | null;
+    override_group_discount_percent: string | null;
+    applied_rate_per_hour: string;
+    hours_discount_percent: string;
+    group_discount_percent: string;
+    gross_amount: string;
+    total_discount_amount: string;
+    net_amount_required: string;
+    total_paid: string;
+    outstanding_balance: string;
+    payments: AppTraineePayment[];
     created_at: string;
     updated_at: string;
 }

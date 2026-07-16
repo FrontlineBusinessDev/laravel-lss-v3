@@ -52,7 +52,7 @@ class TraineesController extends BaseController
     {
         return parent::newQuery()->with([
             'school:id,school_name',
-            'batch:id,batch_code,academic_industry_id,academic_program_id,academic_level_id',
+            'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
             'batch.academicProgram:id,name,course_name',
             'batch.academicLevel:id,name,name',
@@ -146,6 +146,26 @@ class TraineesController extends BaseController
         $model->update(['avatar_path' => null]);
 
         return $this->sendResponse($model, 'Profile picture removed successfully.');
+    }
+
+    /**
+     * Set or clear a single billing override field. Kept separate from
+     * update() so the Payment Details override toggles (one field at a
+     * time) don't force a full personal-info form resubmit.
+     */
+    public function updateBillingOverrides(Request $request, int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+        $validated = $request->validate([
+            'override_rate_per_hour' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'override_hours_discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'override_group_discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        $model->update($validated);
+
+        return $this->sendResponse($model, 'Billing override updated successfully.');
     }
 
     /**

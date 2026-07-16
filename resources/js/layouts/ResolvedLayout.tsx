@@ -1,5 +1,6 @@
 import AppLayout from './AppLayout';
 import SettingsAcademicLayout from './settings/SettingsAcademicLayout';
+import SettingsRatesLayout from './settings/SettingsRatesLayout';
 import SettingsPrimaryLayout from './settings/SettingsPrimaryLayout';
 
 export const ResolvedLayout = (name: string) => {
@@ -12,6 +13,10 @@ export const ResolvedLayout = (name: string) => {
         name.startsWith('pages-errors/')
     ) {
         return null;
+    }
+    // SETTINGS RATES (top-level, sibling to Academic)
+    if (name.includes('settings/rates')) {
+        return [AppLayout, SettingsPrimaryLayout, SettingsRatesLayout];
     }
     // SETTINGS ACADEMIC
     if (name.includes('settings/academic')) {

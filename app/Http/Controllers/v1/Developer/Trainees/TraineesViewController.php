@@ -81,6 +81,7 @@ class TraineesViewController extends BaseController
                 'batch.academicLevel:id,name,year_level',
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
                 'learningOutcomes:id,learning_outcomes',
+                'payments',
             ])
             ->findOrFail($id);
 

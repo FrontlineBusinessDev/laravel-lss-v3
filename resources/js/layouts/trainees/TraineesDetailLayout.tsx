@@ -1,10 +1,13 @@
+import { ApiError } from '@/api-service-layer/client';
 import { Avatar } from '@/components/Avatar';
+import { AvatarCropModal } from '@/components/AvatarCropModal';
 import { useToast } from '@/hooks/use-toast';
+import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
-import { Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Mail, Phone } from 'lucide-react';
-import { ReactNode } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { ArrowLeft, Camera, Mail, Phone, Trash2 } from 'lucide-react';
+import { ReactNode, useRef, useState, type ChangeEvent } from 'react';
 
 export default function TraineesDetailLayout({
     trainee,
@@ -17,6 +20,76 @@ export default function TraineesDetailLayout({
     const { url } = usePage();
     const path = url.split('?')[0];
     const displayStatus = trainee.status;
+
+    const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+    const [avatarProgress, setAvatarProgress] = useState<number | null>(null);
+    const [deletingAvatar, setDeletingAvatar] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    const pickAvatar = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast({
+                title: 'Image too large',
+                description: 'Please choose an image under 5MB.',
+                variant: 'error',
+            });
+            return;
+        }
+        setAvatarSrc(URL.createObjectURL(file));
+    };
+
+    const closeAvatarModal = () => {
+        if (avatarSrc) URL.revokeObjectURL(avatarSrc);
+        setAvatarSrc(null);
+        setAvatarProgress(null);
+    };
+
+    const saveAvatar = async (blob: Blob) => {
+        const form = new FormData();
+        form.append('avatar_path', blob, 'avatar.jpg');
+        setAvatarProgress(0);
+        try {
+            await apiFetchJson(`/trainees/${trainee.id}/avatar`, {
+                method: 'POST',
+                body: form,
+                onUploadProgress: setAvatarProgress,
+            });
+            toast({ title: 'Profile picture updated', variant: 'success' });
+            closeAvatarModal();
+            router.reload({ only: ['trainee'] });
+        } catch (error) {
+            toast({
+                title: 'Failed to upload profile picture',
+                description:
+                    error instanceof ApiError ? error.message : undefined,
+                variant: 'error',
+            });
+            setAvatarProgress(null);
+        }
+    };
+
+    const deleteAvatar = async () => {
+        setDeletingAvatar(true);
+        try {
+            await apiFetchJson(`/trainees/${trainee.id}/avatar`, {
+                method: 'DELETE',
+            });
+            toast({ title: 'Profile picture removed', variant: 'success' });
+            router.reload({ only: ['trainee'] });
+        } catch (error) {
+            toast({
+                title: 'Failed to remove profile picture',
+                description:
+                    error instanceof ApiError ? error.message : undefined,
+                variant: 'error',
+            });
+        } finally {
+            setDeletingAvatar(false);
+        }
+    };
 
     const TABS = [
         {
@@ -74,19 +147,48 @@ export default function TraineesDetailLayout({
                 data-cy="detail-div-4"
             >
                 <div className="flex items-center gap-3" data-cy="detail-div-5">
-                    {/* <div
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700"
+                    <div
+                        className="relative h-14 w-14 shrink-0"
                         data-cy="detail-div-6"
                     >
-                        {trainee.initials}
-                    </div> */}
-                    <Avatar
-                        src={trainee.avatar_url}
-                        name={trainee.name}
-                        initials={trainee.initials}
-                        size="lg"
-                        data-cy="personal-info-tab-avatar"
-                    />
+                        <Avatar
+                            src={trainee.avatar_url}
+                            name={trainee.name}
+                            initials={trainee.initials}
+                            size="lg"
+                            isLoading={avatarProgress !== null}
+                            data-cy="detail-avatar"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/50 text-white opacity-0 transition-opacity hover:opacity-100"
+                            aria-label="Change profile picture"
+                            data-cy="detail-button-change-avatar"
+                        >
+                            <Camera size={16} data-cy="detail-icon-camera" />
+                        </button>
+                        {trainee.avatar_url && (
+                            <button
+                                type="button"
+                                onClick={deleteAvatar}
+                                disabled={deletingAvatar}
+                                className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-danger-600 shadow ring-1 ring-neutral-200 transition-colors hover:bg-danger-50 disabled:opacity-50"
+                                aria-label="Remove profile picture"
+                                data-cy="detail-button-delete-avatar"
+                            >
+                                <Trash2 size={12} data-cy="detail-icon-trash" />
+                            </button>
+                        )}
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={pickAvatar}
+                            data-cy="detail-input-avatar-file"
+                        />
+                    </div>
                     <div data-cy="detail-div-7">
                         <div
                             className="mb-0.5 flex items-center gap-2"
@@ -161,6 +263,13 @@ export default function TraineesDetailLayout({
             </div>
 
             {children}
+
+            <AvatarCropModal
+                imageSrc={avatarSrc}
+                uploadProgress={avatarProgress}
+                onClose={closeAvatarModal}
+                onSave={saveAvatar}
+            />
         </>
     );
 }

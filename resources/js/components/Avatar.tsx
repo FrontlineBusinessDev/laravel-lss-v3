@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import BarLoading from './spinners/BarLoading';
+import { useEffect, useState } from 'react';
+import { SkeletonLoader } from './spinners/SkeletonLoader';
 
 export type AvatarSize = 'sm' | 'md' | 'lg';
 
@@ -10,6 +10,7 @@ interface AvatarProps {
     initials?: string;
     size?: AvatarSize;
     className?: string;
+    isLoading?: boolean;
     'data-cy'?: string;
 }
 
@@ -39,27 +40,36 @@ export function Avatar({
     initials,
     size = 'md',
     className,
+    isLoading = false,
     'data-cy': dataCy = 'avatar',
 }: AvatarProps) {
     const sizeClass = SIZE_CLASSES[size];
-    const [isLoading, setIsLoading] = useState(true);
+    const [imgLoaded, setImgLoaded] = useState(false);
+
+    useEffect(() => {
+        setImgLoaded(false);
+    }, [src]);
 
     if (src) {
+        const showShimmer = !imgLoaded || isLoading;
         return (
-            <div className="relative">
-                <div className="absolute z-10 h-full w-full rounded-full">
-                    <BarLoading />
-                </div>
-                {/* {isLoading && <BarLoading/> } */}
+            <div className={cn('relative shrink-0', sizeClass)}>
+                {showShimmer && (
+                    <SkeletonLoader
+                        variant="circle"
+                        className={cn('absolute inset-0 z-10', sizeClass)}
+                    />
+                )}
                 <img
                     src={src}
                     alt={name}
                     className={cn(
-                        'shrink-0 rounded-full object-cover',
-                        sizeClass,
+                        'h-full w-full rounded-full object-cover',
                         className,
                     )}
                     loading="lazy"
+                    onLoad={() => setImgLoaded(true)}
+                    onError={() => setImgLoaded(true)}
                     data-cy={`${dataCy}-img`}
                 />
             </div>
