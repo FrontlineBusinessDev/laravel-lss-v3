@@ -255,7 +255,7 @@ export function AsyncSelectField({
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder={placeholder}
-                                className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-slate-400 focus:outline-none dark:text-white"
+                                className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-neutral-900 focus:border-slate-400 focus:outline-none"
                                 data-cy="use-async-select-field-input-placeholder"
                             />
                         </div>

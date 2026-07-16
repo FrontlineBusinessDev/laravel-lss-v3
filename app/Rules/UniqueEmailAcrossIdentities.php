@@ -3,7 +3,6 @@
 namespace App\Rules;
 
 use App\Models\Trainers;
-use App\Models\Clients;
 use App\Models\Trainees;
 use App\Models\User;
 use Closure;
@@ -22,7 +21,8 @@ use Illuminate\Support\Facades\DB;
  */
 class UniqueEmailAcrossIdentities implements ValidationRule
 {
-    private const TABLES = ['app_trainees', 'app_traineers', 'users'];
+    // 'app_traineers'
+    private const TABLES = ['app_trainees', 'users'];
 
     /**
      * @param  array<string,int>  $ignore  Table name => id to exclude from that table's check.
@@ -36,16 +36,9 @@ class UniqueEmailAcrossIdentities implements ValidationRule
      */
     public static function forTrainer(?Trainers $trainer = null): self
     {
-        if (! $trainer) {
-            return new self;
-        }
-
+        if (! $trainer) return new self;
         $ignore = ['app_trainers' => $trainer->id];
-
-        if ($trainer->user_id) {
-            $ignore['users'] = $trainer->user_id;
-        }
-
+        if ($trainer->user_id) $ignore['users'] = $trainer->user_id;
         return new self($ignore);
     }
 
@@ -55,16 +48,9 @@ class UniqueEmailAcrossIdentities implements ValidationRule
      */
     public static function forTrainee(?Trainees $trainee = null): self
     {
-        if (! $trainee) {
-            return new self;
-        }
-
+        if (! $trainee) return new self;
         $ignore = ['app_trainees' => $trainee->id];
-
-        if ($trainee->user_id) {
-            $ignore['users'] = $trainee->user_id;
-        }
-
+        if ($trainee->user_id) $ignore['users'] = $trainee->user_id;
         return new self($ignore);
     }
 
@@ -92,11 +78,7 @@ class UniqueEmailAcrossIdentities implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $email = strtolower(trim((string) $value));
-
-        if ($email === '') {
-            return;
-        }
-
+        if ($email === '') return;
         foreach (self::TABLES as $table) {
             $exists = DB::table($table)
                 ->whereRaw('LOWER(email) = ?', [$email])
@@ -105,10 +87,8 @@ class UniqueEmailAcrossIdentities implements ValidationRule
                     fn($query) => $query->where('id', '!=', $this->ignore[$table]),
                 )
                 ->exists();
-
             if ($exists) {
                 $fail('This email address is already in use by an existing account.');
-
                 return;
             }
         }

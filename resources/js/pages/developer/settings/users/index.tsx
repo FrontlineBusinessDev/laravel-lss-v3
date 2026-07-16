@@ -92,13 +92,16 @@ export default function index() {
         const isSelf = row.id === currentUserId;
         const isArchived = row.status !== 'active';
         const badge: StatusKind = isArchived ? 'suspended' : 'active';
+        const isTrainee = row.role === 'trainee';
         const menu: RowMenuAction[] = [
-            {
-                label: 'Edit user',
-                icon: Pencil,
-                onClick: actions.onEdit,
-                disabled: !actions.canEdit,
-            },
+            isTrainee
+                ? null
+                : {
+                      label: 'Edit user',
+                      icon: Pencil,
+                      onClick: actions.onEdit,
+                      disabled: !actions.canEdit,
+                  },
             {
                 label: 'Send password reset',
                 icon: KeyRound,

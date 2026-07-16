@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\v1\Developer;
 
 use App\Http\Responses\InertiaPageResponse;
+use App\Rules\UniqueEmailAcrossIdentities;
+use App\Mail\UserInviteMail;
 use App\Models\Batches;
 use App\Models\PartnerSchools;
 use App\Models\Trainees;
+use App\Models\User;
 use App\Support\OgImage;
+use App\Support\PasswordSetupUrl;
 use App\Support\QrCode;
 use App\Support\Statuses;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -170,7 +175,8 @@ class PublicRegistrationController extends Controller
 
         $validated = $request->validate($this->storeRules());
 
-        DB::transaction(function () use ($request, $validated, $batch) {
+        $newUser =  null;
+        DB::transaction(function () use ($request, $validated, $batch, &$newUser) {
             $trainee = Trainees::create([
                 'batch_id' => $batch->id,
                 'school_id' => $validated['school_id'],
@@ -188,16 +194,21 @@ class PublicRegistrationController extends Controller
                 'required_hours' => $validated['required_hours'],
                 'address' => $validated['address'],
             ]);
-
             // Resume is required; the rest are optional.
             $this->storeDocument($request->file('resume'), $trainee, 'resume');
-
+            // Documents that are not required
             foreach (self::OPTIONAL_DOCUMENTS as $type => $field) {
                 if ($request->hasFile($field)) {
                     $this->storeDocument($request->file($field), $trainee, $type);
                 }
             }
+            // CREATE TRAINEE ACCOUNT AND LINKED IT 
+            $newUser = $this->createAndLinkUserAccount($trainee);
+            return $trainee;
         });
+
+        // Sent after commit: never email an invite for a transaction that could still roll back.
+        if ($newUser) $this->sendAccountInvite($newUser);
 
         return redirect()
             ->route('public.register', $token)
@@ -225,11 +236,10 @@ class PublicRegistrationController extends Controller
     protected function storeRules(): array
     {
         $file = ['file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'];
-
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:app_trainees,email'],
+            'email' => ['required', 'email', 'max:255', new UniqueEmailAcrossIdentities],
             'birthday' => ['required', 'date', 'before:today'],
             'birth_place' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(['male', 'female'])],
@@ -265,5 +275,42 @@ class PublicRegistrationController extends Controller
             'mime_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
         ]);
+    }
+
+    /**
+     * Create and link a new user account to the trainee.
+     * Returns the created user so the caller can email the invite once the
+     * transaction commits, or null when the trainee is already linked.
+     */
+    private function createAndLinkUserAccount(Trainees $trainee): ?User
+    {
+        if ($trainee->user_id) return null;
+        // Passwordless onboarding: leave the password NULL so the account is
+        // flagged as "awaiting setup" (User::needsPasswordSetup) and the trainee
+        // chooses their own password via the invite link / create-password step.
+        // Mirrors UsersController — do NOT generate a placeholder password here,
+        // or the trainee would be routed to the sign-in step instead.
+        $role = \App\Models\Role::where('name', 'trainee')->first();
+        $user = User::create([
+            'first_name' => $trainee->first_name,
+            'last_name' => $trainee->last_name,
+            'email' => $trainee->email,
+            'status' => Statuses::ACTIVE,
+            'role_id' => $role->id,
+        ]);
+        // Keep Spatie's model_has_roles pivot in sync with role_id so access
+        // checks (isTrainee/hasRole) work for auto-created trainee accounts.
+        $user->syncRoles(['trainee']);
+        $trainee->update(['user_id' => $user->id]);
+        return $user;
+    }
+
+    /**
+     * Email the client a link to set their account password.
+     */
+    private function sendAccountInvite(User $user): void
+    {
+        $resetUrl = PasswordSetupUrl::generate($user);
+        Mail::to($user->email)->send(new UserInviteMail($user, $resetUrl));
     }
 }

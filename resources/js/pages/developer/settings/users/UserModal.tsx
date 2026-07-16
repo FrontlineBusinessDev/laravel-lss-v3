@@ -89,7 +89,9 @@ export default function UserModal({ open, onClose, row, actorRole }: Props) {
             mutationFn={(payload) =>
                 (isEdit && row
                     ? userService.update(row.id, payload as UserInput)
-                    : userService.create(payload as UserInput)) as Promise<UserRow>
+                    : userService.create(
+                          payload as UserInput,
+                      )) as Promise<UserRow>
             }
             invalidateKeys={tableListInvalidateKeys('settings-users')}
             onSuccess={() =>

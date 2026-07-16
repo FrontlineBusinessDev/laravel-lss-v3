@@ -5,9 +5,11 @@ import BatchDetailLayout from '@/layouts/batches/BatchDetailLayout';
 import { cn } from '@/lib/utils';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
-import { columns } from '@/types/modules/batches/trainees';
 import type { TraineeRow } from '@/types/modules/batches/trainees';
+import { columns } from '@/types/modules/batches/trainees';
 import { GRID } from '@/types/reusable/data-table';
+import { Link } from '@inertiajs/react';
+
 const TRAINEE_GRID = 'sm:grid-cols-[1.8fr_1.4fr_0.9fr_0.9fr_2.5rem]!';
 const TRAINEE_STATUS: Record<string, StatusKind> = {
     active: 'active',
@@ -38,14 +40,17 @@ export default function BatchTraineesPage({ record, registrationUrl }: Props) {
             data-cy="trainees-settings-list-header-1"
         />
     );
+
     const renderRow = (row: TraineeRow) => {
         const name = `${row.first_name} ${row.last_name}`.trim();
         const badge = TRAINEE_STATUS[row.status] ?? 'active';
 
         return (
-            <div
+            <Link
+                href={`/trainees/${row.id}`}
                 className={cn(
                     'flex flex-col gap-1 px-4 py-3',
+                    'hover:bg-slate-50',
                     GRID,
                     TRAINEE_GRID,
                     row.status !== 'active' && 'opacity-60',
@@ -74,7 +79,7 @@ export default function BatchTraineesPage({ record, registrationUrl }: Props) {
                 </TextCell>
                 <StatusBadge status={badge} data-cy="trainees-status-badge-8" />
                 <div data-cy="trainees-div-9" />
-            </div>
+            </Link>
         );
     };
 

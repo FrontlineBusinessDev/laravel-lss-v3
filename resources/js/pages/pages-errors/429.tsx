@@ -2,19 +2,28 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
 type Error429Props = {
-  title: string;
-  message?: string;
+    title: string;
+    message?: string;
 };
-export default function Error429({
-  title,
-  message
-}: Error429Props) {
-  return <div className="flex min-h-[calc(100dvh-300px)] flex-col items-center justify-center bg-background text-foreground" data-cy="429-div-1">
+export default function Error429({ title, message }: Error429Props) {
+    return (
+        <div
+            className="bg-background text-foreground flex min-h-[calc(100dvh-300px)] flex-col items-center justify-center"
+            data-cy="429-div-1"
+        >
             <Head title={title} data-cy="429-head-title" />
-            <h1 className="text-6xl font-bold" data-cy="429-h1-429">429</h1>
-            <p className="mt-4 text-2xl font-semibold" data-cy="429-p-4">{title}</p>
-            <p className="mt-2 max-w-md text-center text-gray-600" data-cy="429-p-5">
+            <h1 className="text-6xl font-bold" data-cy="429-h1-429">
+                429
+            </h1>
+            <p className="mt-4 text-2xl font-semibold" data-cy="429-p-4">
+                {title}
+            </p>
+            <p
+                className="mt-2 max-w-md text-center text-gray-600"
+                data-cy="429-p-5"
+            >
                 {message || 'Too many requests. Please slow down.'}
             </p>
-        </div>;
+        </div>
+    );
 }
