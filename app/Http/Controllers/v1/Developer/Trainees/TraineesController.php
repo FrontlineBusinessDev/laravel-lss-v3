@@ -36,6 +36,16 @@ class TraineesController extends BaseController
         'date_completed',
         'required_hours'
     ];
+    // batch_id/school_id/academic_*_id are FK ids — must match exactly, not LIKE
+    // (a LIKE '%3%' would also match ids 13, 23, 30-39, etc.).
+    protected array $exactFilters = [
+        'status',
+        'batch_id',
+        'school_id',
+        'academic_industry_id',
+        'academic_level_id',
+        'academic_program_id',
+    ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
     // Guards deletion if the trainee has uploaded files/documents attached

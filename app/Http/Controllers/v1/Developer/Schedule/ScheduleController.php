@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\v1\Developer\Lss;
+namespace App\Http\Controllers\v1\Developer\Schedule;
 
 use App\Http\Controllers\v1\Developer\Controller;
 use Inertia\Inertia;

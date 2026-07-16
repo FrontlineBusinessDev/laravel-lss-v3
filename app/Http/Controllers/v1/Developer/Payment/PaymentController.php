@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\v1\Developer\Lss;
+namespace App\Http\Controllers\v1\Developer\Payment;
 
 use App\Http\Controllers\v1\Developer\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class AnnouncementController extends Controller
+class PaymentController extends Controller
 {
     /**
      * Static frontend page. Data for this module lives client-side in
@@ -14,6 +14,6 @@ class AnnouncementController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/announcements/index')->asCsr();
+        return Inertia::render('developer/payments/index')->asCsr();
     }
 }

@@ -2,9 +2,11 @@ import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { ReactNode } from 'react';
+
 interface LayoutProps {
     children: ReactNode;
 }
+
 const NAV_LINKS = [
     {
         id: 'Users',

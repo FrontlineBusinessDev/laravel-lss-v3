@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\v1\Developer\Lss;
+namespace App\Http\Controllers\v1\Developer\Evaluation;
 
 use App\Http\Controllers\v1\Developer\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class LeaveController extends Controller
+class EvaluationController extends Controller
 {
     /**
      * Static frontend page. Data for this module lives client-side in
@@ -14,6 +14,6 @@ class LeaveController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/leave/index')->asCsr();
+        return Inertia::render('developer/evaluation/index')->asCsr();
     }
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\v1\Developer\Lss;
+namespace App\Http\Controllers\v1\Developer\Seminar;
 
 use App\Http\Controllers\v1\Developer\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class RatingController extends Controller
+class SeminarController extends Controller
 {
     /**
      * Static frontend page. Data for this module lives client-side in
@@ -14,6 +14,6 @@ class RatingController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/ratings/index')->asCsr();
+        return Inertia::render('developer/seminars/index')->asCsr();
     }
 }

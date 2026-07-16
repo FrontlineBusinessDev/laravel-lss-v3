@@ -4,23 +4,70 @@ import { Modal } from '@/components/Modal';
 import { RatingInput } from '@/components/RatingInput';
 import { StatCard } from '@/components/StatCard';
 import { useToast } from '@/components/Toast';
-import { useBatches } from '@/context/BatchesContext';
-import {
-    currentUser,
-    taskRatingRecords as initialRatings,
-    taskRecords,
-    TODAY,
-} from '@/data/mockData';
-import { toDateInputValue } from '@/lib/utils';
-import type { TaskRating } from '@/types';
+import { apiFetchJson } from '@/lib/apiFetch';
+import type { TaskRating, TaskRatingHistoryEntry } from '@/types';
 import { ClipboardList, History, Printer } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RatingSheetPrint } from './RatingSheetPrint';
 
+interface BatchOption {
+    id: number;
+    batch_code: string;
+}
+interface PersonRef {
+    id: number;
+    first_name: string;
+    last_name: string;
+}
+interface ApiTaskRating {
+    id: number;
+    batch_id: number;
+    task_name: string;
+    trainee_id: number;
+    rating: number;
+    comments: string | null;
+    rated_at: string;
+    trainee: PersonRef | null;
+    evaluator: PersonRef | null;
+}
+interface ApiHistoryEntry {
+    rating: number;
+    comments: string | null;
+    rated_at: string;
+    evaluator: PersonRef | null;
+}
+function personName(p: PersonRef | null): string {
+    return p ? `${p.first_name} ${p.last_name}`.trim() : '—';
+}
+function toTaskRating(r: ApiTaskRating): TaskRating {
+    return {
+        id: String(r.id),
+        batchNo: '',
+        taskName: r.task_name,
+        traineeId: String(r.trainee_id),
+        traineeName: personName(r.trainee),
+        rating: r.rating,
+        comments: r.comments ?? '',
+        evaluator: personName(r.evaluator),
+        ratedAt: r.rated_at?.slice(0, 10),
+        history: [],
+    };
+}
+function toHistoryEntry(h: ApiHistoryEntry): TaskRatingHistoryEntry {
+    return {
+        rating: h.rating,
+        comments: h.comments ?? '',
+        evaluator: personName(h.evaluator),
+        ratedAt: h.rated_at?.slice(0, 10),
+    };
+}
+
 export default function TaskRatingPage() {
-    const { batches, trainees } = useBatches();
     const { showToast } = useToast();
-    const [ratings, setRatings] = useState<TaskRating[]>(initialRatings);
+    const [batches, setBatches] = useState<BatchOption[]>([]);
+    const [batchTrainees, setBatchTrainees] = useState<PersonRef[]>([]);
+    const [taskOptions, setTaskOptions] = useState<string[]>([]);
+    const [ratings, setRatings] = useState<ApiTaskRating[]>([]);
     const [batchNo, setBatchNo] = useState('');
     const [taskName, setTaskName] = useState('');
     const [draftByTrainee, setDraftByTrainee] = useState<
@@ -32,31 +79,47 @@ export default function TaskRatingPage() {
             }
         >
     >({});
-    const [historyFor, setHistoryFor] = useState<TaskRating | null>(null);
-    const taskOptions = useMemo(() => {
-        if (!batchNo) return [];
-        return [
-            ...new Set(
-                taskRecords
-                    .filter((t) => t.batchNo === batchNo)
-                    .map((t) => t.task),
-            ),
-        ];
-    }, [batchNo]);
-    const batchTrainees = useMemo(
-        () => trainees.filter((t) => t.batchNo === batchNo && !t.archived),
-        [batchNo],
+    const [historyFor, setHistoryFor] = useState<ApiTaskRating | null>(null);
+    const [history, setHistory] = useState<TaskRatingHistoryEntry[]>([]);
+
+    useEffect(() => {
+        apiFetchJson<BatchOption[]>('/batches/lookup?status=active&per_page=50').then((res) =>
+            setBatches(res.data ?? []),
+        );
+    }, []);
+
+    const batchId = useMemo(
+        () => batches.find((b) => b.batch_code === batchNo)?.id,
+        [batches, batchNo],
     );
-    const ratingsForTask = useMemo(
-        () =>
-            ratings.filter(
-                (r) => r.batchNo === batchNo && r.taskName === taskName,
-            ),
-        [ratings, batchNo, taskName],
-    );
+
+    useEffect(() => {
+        if (!batchId) {
+            setTaskOptions([]);
+            setBatchTrainees([]);
+            return;
+        }
+        apiFetchJson<string[]>(`/ratings/task-rating/task-options?batch_id=${batchId}`).then((res) =>
+            setTaskOptions(res.data ?? []),
+        );
+        apiFetchJson<PersonRef[]>(`/ratings/task-rating/trainees?batch_id=${batchId}`).then((res) =>
+            setBatchTrainees(res.data ?? []),
+        );
+    }, [batchId]);
+
+    useEffect(() => {
+        if (!batchId || !taskName) {
+            setRatings([]);
+            return;
+        }
+        apiFetchJson<ApiTaskRating[]>(
+            `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
+        ).then((res) => setRatings(res.data ?? []));
+    }, [batchId, taskName]);
+
+    const ratingsForTask = useMemo(() => ratings.map(toTaskRating), [ratings]);
     const average = ratingsForTask.length
-        ? ratingsForTask.reduce((sum, r) => sum + r.rating, 0) /
-          ratingsForTask.length
+        ? ratingsForTask.reduce((sum, r) => sum + r.rating, 0) / ratingsForTask.length
         : 0;
     function draftFor(traineeId: string, existing?: TaskRating) {
         return (
@@ -82,63 +145,45 @@ export default function TaskRatingPage() {
             },
         }));
     }
-    function saveRating(traineeId: string, traineeName: string) {
-        const existing = ratings.find(
-            (r) =>
-                r.batchNo === batchNo &&
-                r.taskName === taskName &&
-                r.traineeId === traineeId,
-        );
+    async function saveRating(traineeId: string, traineeName: string) {
+        if (!batchId) return;
+        const existing = ratingsForTask.find((r) => r.traineeId === traineeId);
         const draft = draftFor(traineeId, existing);
         if (!draft.rating) {
-            showToast(
-                'Enter a rating between 1 and 100 before saving.',
-                'error',
-            );
+            showToast('Enter a rating between 1 and 100 before saving.', 'error');
             return;
         }
-        const ratedAt = toDateInputValue(TODAY);
-        const historyEntry = {
-            rating: draft.rating,
-            comments: draft.comments,
-            evaluator: currentUser.name,
-            ratedAt,
-        };
-        setRatings((prev) => {
-            if (existing) {
-                return prev.map((r) =>
-                    r.id === existing.id
-                        ? {
-                              ...r,
-                              rating: draft.rating,
-                              comments: draft.comments,
-                              evaluator: currentUser.name,
-                              ratedAt,
-                              history: [...r.history, historyEntry],
-                          }
-                        : r,
-                );
-            }
-            const created: TaskRating = {
-                id: `rt-${Date.now()}`,
-                batchNo,
-                taskName,
-                traineeId,
-                traineeName,
-                rating: draft.rating,
-                comments: draft.comments,
-                evaluator: currentUser.name,
-                ratedAt,
-                history: [historyEntry],
-            };
-            return [...prev, created];
-        });
-        showToast(
-            existing
-                ? `Rating updated for ${traineeName}.`
-                : `Rating saved for ${traineeName}.`,
-            'success',
-        );
+        try {
+            await apiFetchJson('/ratings/task-rating', {
+                method: 'POST',
+                body: JSON.stringify({
+                    batch_id: batchId,
+                    task_name: taskName,
+                    trainee_id: Number(traineeId),
+                    rating: draft.rating,
+                    comments: draft.comments,
+                }),
+            });
+            const res = await apiFetchJson<ApiTaskRating[]>(
+                `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
+            );
+            setRatings(res.data ?? []);
+            showToast(
+                existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
+                'success',
+            );
+        } catch {
+            showToast('Failed to save rating.', 'error');
+        }
+    }
+    async function openHistory(rating: ApiTaskRating) {
+        setHistoryFor(rating);
+        try {
+            const res = await apiFetchJson<ApiHistoryEntry[]>(`/ratings/task-rating/${rating.id}/history`);
+            setHistory((res.data ?? []).map(toHistoryEntry));
+        } catch {
+            setHistory([]);
+        }
     }
     const canPrint = !!taskName && ratingsForTask.length > 0;
     return (
@@ -181,7 +226,7 @@ export default function TaskRatingPage() {
                     <Dropdown
                         options={[
                             'Select batch',
-                            ...batches.map((b) => b.batchNo),
+                            ...batches.map((b) => b.batch_code),
                         ]}
                         value={batchNo}
                         placeholder="Select batch"
@@ -323,13 +368,18 @@ export default function TaskRatingPage() {
                                 </thead>
                                 <tbody data-cy="task-rating-page-tbody-28">
                                     {batchTrainees.map((tr) => {
-                                        const existing = ratingsForTask.find(
-                                            (r) => r.traineeId === tr.id,
+                                        const traineeId = String(tr.id);
+                                        const existingApi = ratings.find(
+                                            (r) => r.trainee_id === tr.id,
                                         );
-                                        const draft = draftFor(tr.id, existing);
+                                        const existing = existingApi
+                                            ? toTaskRating(existingApi)
+                                            : undefined;
+                                        const draft = draftFor(traineeId, existing);
+                                        const name = personName(tr);
                                         return (
                                             <tr
-                                                key={tr.id}
+                                                key={traineeId}
                                                 className="border-t border-neutral-100 align-top"
                                                 data-cy="task-rating-page-tr-29"
                                             >
@@ -341,13 +391,7 @@ export default function TaskRatingPage() {
                                                         className="font-medium text-ink"
                                                         data-cy="task-rating-page-div-31"
                                                     >
-                                                        {tr.name}
-                                                    </div>
-                                                    <div
-                                                        className="text-xs text-neutral-400"
-                                                        data-cy="task-rating-page-div-32"
-                                                    >
-                                                        {tr.school}
+                                                        {name}
                                                     </div>
                                                 </td>
                                                 <td
@@ -358,7 +402,7 @@ export default function TaskRatingPage() {
                                                         value={draft.rating}
                                                         onChange={(v) =>
                                                             setDraft(
-                                                                tr.id,
+                                                                traineeId,
                                                                 {
                                                                     rating: v,
                                                                 },
@@ -388,7 +432,7 @@ export default function TaskRatingPage() {
                                                         value={draft.comments}
                                                         onChange={(e) =>
                                                             setDraft(
-                                                                tr.id,
+                                                                traineeId,
                                                                 {
                                                                     comments:
                                                                         e.target
@@ -415,8 +459,8 @@ export default function TaskRatingPage() {
                                                             variant="primary"
                                                             onClick={() =>
                                                                 saveRating(
-                                                                    tr.id,
-                                                                    tr.name,
+                                                                    traineeId,
+                                                                    name,
                                                                 )
                                                             }
                                                             data-cy="task-rating-page-button-save-rating"
@@ -425,25 +469,21 @@ export default function TaskRatingPage() {
                                                                 ? 'Update'
                                                                 : 'Save'}
                                                         </Button>
-                                                        {existing &&
-                                                            existing.history
-                                                                .length > 0 && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    icon={
-                                                                        History
-                                                                    }
-                                                                    onClick={() =>
-                                                                        setHistoryFor(
-                                                                            existing,
-                                                                        )
-                                                                    }
-                                                                    data-cy="task-rating-page-button-set-history-for"
-                                                                >
-                                                                    History
-                                                                </Button>
-                                                            )}
+                                                        {existingApi && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                icon={History}
+                                                                onClick={() =>
+                                                                    openHistory(
+                                                                        existingApi,
+                                                                    )
+                                                                }
+                                                                data-cy="task-rating-page-button-set-history-for"
+                                                            >
+                                                                History
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -471,13 +511,18 @@ export default function TaskRatingPage() {
                         data-cy="task-rating-page-div-44"
                     >
                         {batchTrainees.map((tr) => {
-                            const existing = ratingsForTask.find(
-                                (r) => r.traineeId === tr.id,
+                            const traineeId = String(tr.id);
+                            const existingApi = ratings.find(
+                                (r) => r.trainee_id === tr.id,
                             );
-                            const draft = draftFor(tr.id, existing);
+                            const existing = existingApi
+                                ? toTaskRating(existingApi)
+                                : undefined;
+                            const draft = draftFor(traineeId, existing);
+                            const name = personName(tr);
                             return (
                                 <div
-                                    key={tr.id}
+                                    key={traineeId}
                                     className="rounded-lg border border-neutral-200 bg-white p-3.5"
                                     data-cy="task-rating-page-div-45"
                                 >
@@ -489,13 +534,7 @@ export default function TaskRatingPage() {
                                             className="font-medium text-ink"
                                             data-cy="task-rating-page-div-47"
                                         >
-                                            {tr.name}
-                                        </div>
-                                        <div
-                                            className="text-xs text-neutral-400"
-                                            data-cy="task-rating-page-div-48"
-                                        >
-                                            {tr.school}
+                                            {name}
                                         </div>
                                     </div>
                                     <div
@@ -506,7 +545,7 @@ export default function TaskRatingPage() {
                                             value={draft.rating}
                                             onChange={(v) =>
                                                 setDraft(
-                                                    tr.id,
+                                                    traineeId,
                                                     {
                                                         rating: v,
                                                     },
@@ -530,7 +569,7 @@ export default function TaskRatingPage() {
                                         value={draft.comments}
                                         onChange={(e) =>
                                             setDraft(
-                                                tr.id,
+                                                traineeId,
                                                 {
                                                     comments: e.target.value,
                                                 },
@@ -550,26 +589,25 @@ export default function TaskRatingPage() {
                                             variant="primary"
                                             className="flex-1"
                                             onClick={() =>
-                                                saveRating(tr.id, tr.name)
+                                                saveRating(traineeId, name)
                                             }
                                             data-cy="task-rating-page-button-save-rating-2"
                                         >
                                             {existing ? 'Update' : 'Save'}
                                         </Button>
-                                        {existing &&
-                                            existing.history.length > 0 && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    icon={History}
-                                                    onClick={() =>
-                                                        setHistoryFor(existing)
-                                                    }
-                                                    data-cy="task-rating-page-button-set-history-for-2"
-                                                >
-                                                    History
-                                                </Button>
-                                            )}
+                                        {existingApi && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                icon={History}
+                                                onClick={() =>
+                                                    openHistory(existingApi)
+                                                }
+                                                data-cy="task-rating-page-button-set-history-for-2"
+                                            >
+                                                History
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -590,7 +628,7 @@ export default function TaskRatingPage() {
             <Modal
                 open={!!historyFor}
                 onClose={() => setHistoryFor(null)}
-                title={`Rating history \u2013 ${historyFor?.traineeName ?? ''}`}
+                title={`Rating history – ${historyFor ? personName(historyFor.trainee) : ''}`}
                 maxWidth={480}
                 data-cy="task-rating-page-modal-set-history-for"
             >
@@ -603,9 +641,9 @@ export default function TaskRatingPage() {
                             className="mb-1 text-xs text-neutral-500"
                             data-cy="task-rating-page-p-59"
                         >
-                            {historyFor.taskName} · {historyFor.batchNo}
+                            {historyFor.task_name} · {batchNo}
                         </p>
-                        {[...historyFor.history].reverse().map((h, i) => (
+                        {history.map((h, i) => (
                             <div
                                 key={i}
                                 className="rounded-md border border-neutral-200 p-3"

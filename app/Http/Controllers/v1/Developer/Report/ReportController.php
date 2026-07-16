@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\v1\Developer\Lss;
+namespace App\Http\Controllers\v1\Developer\Report;
 
 use App\Http\Controllers\v1\Developer\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class BiometricsController extends Controller
+class ReportController extends Controller
 {
     /**
      * Static frontend page. Data for this module lives client-side in
@@ -14,6 +14,6 @@ class BiometricsController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/biometrics/index')->asCsr();
+        return Inertia::render('developer/reports/index')->asCsr();
     }
 }

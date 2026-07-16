@@ -25,7 +25,7 @@ class Permissions
     const MANAGE_ANNOUNCEMENTS = 'manage announcement';
     const MANAGE_LEAVE = 'manage leave';
     const MANAGE_BIOMETRICS = 'manage biometrics';
-    const MANAGE_TASKS = 'manage tracks';
+    const MANAGE_TASKS = 'manage tasks';
     const MANAGE_RATINGS = 'manage ratings';
     const MANAGE_EVALUATION = 'manage evaluation';
     const MANAGE_PAYMENTS = 'manage payments';

@@ -1,29 +1,6 @@
 <?php
 
-use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
-use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
-use App\Http\Controllers\v1\Developer\Batches\BatchesController;
-use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
-use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
-use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
-use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
-use App\Http\Controllers\v1\Developer\Developer\SystemLogController;
 use App\Http\Controllers\v1\Developer\HomeController;
-use App\Http\Controllers\v1\Developer\Lss\AnnouncementController;
-use App\Http\Controllers\v1\Developer\Lss\BiometricsController;
-use App\Http\Controllers\v1\Developer\Lss\CertificateController;
-use App\Http\Controllers\v1\Developer\Lss\DashboardController;
-use App\Http\Controllers\v1\Developer\Lss\EvaluationController;
-use App\Http\Controllers\v1\Developer\Lss\LeaveController;
-use App\Http\Controllers\v1\Developer\Lss\PaymentController;
-use App\Http\Controllers\v1\Developer\Lss\RatingController;
-use App\Http\Controllers\v1\Developer\Lss\ReportController;
-use App\Http\Controllers\v1\Developer\Lss\ScheduleController;
-use App\Http\Controllers\v1\Developer\Lss\SeminarController;
-// use App\Http\Controllers\Lss\BatchController;
-// use App\Http\Controllers\v1\Developer\Lss\TraineeController;
-use App\Http\Controllers\v1\Developer\Lss\TaskController;
-use App\Http\Controllers\v1\Developer\PublicRegistrationController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicIndustryController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicLearningOutcomesController;
@@ -36,8 +13,31 @@ use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
+use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
+use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
+use App\Http\Controllers\v1\Developer\Batches\BatchesController;
+use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
+use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
+use App\Http\Controllers\v1\Developer\Developer\SystemLogController;
+use App\Http\Controllers\v1\Developer\Biometrics\BiometricsController;
+use App\Http\Controllers\v1\Developer\Certificate\CertificateController;
+use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
+use App\Http\Controllers\v1\Developer\Leave\LeaveController;
+use App\Http\Controllers\v1\Developer\Payment\PaymentController;
+use App\Http\Controllers\v1\Developer\Report\ReportController;
+use App\Http\Controllers\v1\Developer\Schedule\ScheduleController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarController;
+use App\Http\Controllers\v1\Developer\Tasks\DailyTaskController;
+use App\Http\Controllers\v1\Developer\Tasks\TasksController;
+use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
+use App\Http\Controllers\v1\Developer\Ratings\RatingController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
+use App\Http\Controllers\v1\Developer\PublicRegistrationController;
+use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 
@@ -166,8 +166,41 @@ Route::middleware('auth')->group(function () {
     // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
-    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-    Route::get('/ratings', [RatingController::class, 'index'])->name('ratings.index');
+
+    // Tasks module — Task Management (default) + Daily Task Sheet, real DB-backed.
+    Route::middleware('permission:' . Permissions::MANAGE_TASKS)->group(function () {
+        Route::prefix('tasks')->name('tasks.')->group(function () {
+            Route::get('/', [TasksController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [TasksController::class, 'paginationSearch'])->name('pagination-search');
+            Route::get('/trainers', [TasksController::class, 'trainers'])->name('trainers');
+            Route::post('/', [TasksController::class, 'store'])->name('store');
+            Route::post('/{id}', [TasksController::class, 'update'])->name('update');
+            Route::patch('/{id}/complete', [TasksController::class, 'completeAction'])->name('complete');
+            Route::patch('/{id}/lock', [TasksController::class, 'lockAction'])->name('lock');
+            Route::patch('/{id}/remarks', [TasksController::class, 'updateRemarks'])->name('remarks');
+            Route::patch('/{id}/time-spent', [TasksController::class, 'updateTimeSpent'])->name('time-spent');
+            Route::delete('/{id}', [TasksController::class, 'destroy'])->name('destroy');
+        });
+        Route::prefix('daily-task')->name('daily-task.')->group(function () {
+            Route::get('/', [DailyTaskController::class, 'index'])->name('index');
+            Route::get('/list', [DailyTaskController::class, 'list'])->name('list');
+        });
+    });
+
+    // Ratings module — Task Rating (default, real DB-backed) + Behavioral Rating
+    // (still mock/CSR-only, route added only so it's reachable from the sub-nav tab).
+    Route::middleware('permission:' . Permissions::MANAGE_RATINGS)->group(function () {
+        Route::get('/ratings', [TaskRatingController::class, 'index'])->name('ratings.index');
+        Route::get('/behavioral-rating', [RatingController::class, 'index'])->name('behavioral-rating.index');
+        Route::prefix('ratings/task-rating')->name('ratings.task-rating.')->group(function () {
+            Route::get('/task-options', [TaskRatingController::class, 'taskOptions'])->name('task-options');
+            Route::get('/trainees', [TaskRatingController::class, 'trainees'])->name('trainees');
+            Route::get('/', [TaskRatingController::class, 'forTask'])->name('index');
+            Route::post('/', [TaskRatingController::class, 'store'])->name('store');
+            Route::get('/{id}/history', [TaskRatingController::class, 'history'])->name('history');
+        });
+    });
+
     Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
