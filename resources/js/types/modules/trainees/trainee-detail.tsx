@@ -68,6 +68,7 @@ export interface TraineeDetail {
     batch_id: number;
     school_id: number;
     avatar_path: string | null;
+    avatar_url: string | null;
     public_url_id: string;
     first_name: string;
     last_name: string;

@@ -10,6 +10,7 @@ export interface AppTrainees extends Record<string, unknown> {
     last_name: string;
     full_name?: string;
     initials?: string;
+    avatar_url?: string | null;
     email: string;
     birthday: string;
     birth_place: string;

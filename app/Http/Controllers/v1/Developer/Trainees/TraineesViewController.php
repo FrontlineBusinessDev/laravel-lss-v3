@@ -13,8 +13,6 @@ class TraineesViewController extends BaseController
     use AuthorizesRequests;
     protected string $model = Trainees::class;
     protected string $view = 'developer/trainees/show/PersonalInfoTab';
-    // Transforms the stored avatar path into a temporary (presigned) URL for display.
-    protected array $fileFields = ['avatar_path'];
 
     /** PersonalInformationTab tab — the default batch landing page (GET /trainees/{id}). */
     public function personalInformationTab(int|string $id): mixed
@@ -86,12 +84,10 @@ class TraineesViewController extends BaseController
             ])
             ->findOrFail($id);
 
-        $initials = strtoupper(mb_substr($trainee['first_name'], 0, 1)) . strtoupper(mb_substr($trainee['last_name'], 0, 1));
         $name = $trainee['first_name'] . " " . $trainee['last_name'];
         $this->authorize('view', $trainee);
         /** @disregard P1013 */
         $user = auth()->user();
-        $this->transformFileUrls($trainee);
 
         $documentsController = new TraineeDocumentsController();
         $documents = $trainee->documents->map(fn($document) => $documentsController->transform($document));
@@ -114,7 +110,6 @@ class TraineesViewController extends BaseController
             'user' => $user,
             'trainee' => [
                 ...$trainee->toArray(),
-                'initials' => $initials,
                 'name' => $name,
                 'outcomes' => $outcomes,
                 'documents' => $documents,

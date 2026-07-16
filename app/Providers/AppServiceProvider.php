@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Trainees;
+use App\Observers\TraineeObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        /** LISTENT TO PAYMENT */
+        Trainees::observe(TraineeObserver::class);
         /**
          * REUSABLE API
          */

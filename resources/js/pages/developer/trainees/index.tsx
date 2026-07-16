@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 import { ChevronRight } from 'lucide-react';
+import { Avatar } from '@/components/Avatar';
 import { SettingsListHeader, TextCell } from '@/components/settings';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { cn } from '@/lib/utils';
@@ -16,10 +17,6 @@ const listHeader = (
         data-cy="index-settings-list-header-1"
     />
 );
-
-function initialsOf(first: string, last: string): string {
-    return `${first?.[0] ?? ''}${last?.[0] ?? ''}`.toUpperCase() || '—';
-}
 
 const renderRow = (row: AppTrainees) => {
     const name = `${row.first_name} ${row.last_name}`.trim();
@@ -48,12 +45,13 @@ const renderRow = (row: AppTrainees) => {
                 className="flex items-center gap-2.5 font-medium text-ink"
                 data-cy="index-div-name"
             >
-                <span
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700"
-                    data-cy="index-span-initials"
-                >
-                    {initialsOf(row.first_name, row.last_name)}
-                </span>
+                <Avatar
+                    src={row.avatar_url}
+                    name={name}
+                    initials={row.initials}
+                    size="sm"
+                    data-cy="index-avatar"
+                />
                 <span className="truncate" data-cy="index-span-name">
                     {name}
                 </span>

@@ -16,9 +16,6 @@ class TraineesController extends BaseController
 {
     protected string $model = Trainees::class;
     protected string $view = 'developer/trainees/index';
-    // Transforms the stored avatar path into a temporary (presigned) URL on responses.
-    protected array $fileFields = ['avatar_path'];
-    protected array $fileFieldFolders = ['avatar_path' => 'trainee-avatars'];
     protected array $searchable = ['first_name', 'last_name', 'email', 'mobile_number'];
     protected array $filterable = [
         'status',
@@ -133,7 +130,22 @@ class TraineesController extends BaseController
 
         $model->update(['avatar_path' => $path]);
 
-        return $this->sendResponse($this->transformFileUrls($model), 'Profile picture updated successfully.');
+        return $this->sendResponse($model, 'Profile picture updated successfully.');
+    }
+
+    /** Remove the trainee's profile picture: deletes the stored file and clears avatar_path. */
+    public function destroyAvatar(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        if ($model->avatar_path) {
+            $this->deleteStoredFile($model->avatar_path, config('filesystems.default'));
+        }
+
+        $model->update(['avatar_path' => null]);
+
+        return $this->sendResponse($model, 'Profile picture removed successfully.');
     }
 
     /**

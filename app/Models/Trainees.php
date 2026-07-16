@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Trainees extends Model
 {
     use HasFactory;
-
+    protected $guarded = [];
     protected $table = 'app_trainees';
+
+    protected $appends = ['avatar_url', 'initials'];
 
     protected $fillable = [
         'status',
@@ -48,6 +52,10 @@ class Trainees extends Model
     {
         return $this->belongsTo(Batches::class, 'batch_id');
     }
+    public function payments()
+    {
+        return $this->hasMany(TraineesPayments::class, 'trainee_id');
+    }
 
     public function school(): BelongsTo
     {
@@ -70,5 +78,38 @@ class Trainees extends Model
             ->withPivot('status')
             ->using(TraineeLearningOutcome::class)
             ->withTimestamps();
+    }
+    /** Presigned (or public) URL for the stored avatar, null when none is set. */
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?string {
+                if (! $this->avatar_path) {
+                    return null;
+                }
+                try {
+                    return Storage::temporaryUrl($this->avatar_path, now()->addMinutes(60));
+                } catch (\RuntimeException $e) {
+                    return Storage::url($this->avatar_path);
+                }
+            },
+        );
+    }
+    /** Two-letter initials derived from first/last name, e.g. "John Doe" -> "JD". */
+    protected function initials(): Attribute
+    {
+        return Attribute::make(
+            get: fn(): string => strtoupper(mb_substr($this->first_name ?? '', 0, 1))
+                . strtoupper(mb_substr($this->last_name ?? '', 0, 1)),
+        );
+    }
+    /** Calculations & Accessors */
+    public function getTotalPaidAttribute()
+    {
+        return $this->payments()->sum('amount_paid');
+    }
+    public function getOutstandingBalanceAttribute()
+    {
+        return max(0, $this->net_amount_required - $this->total_paid);
     }
 }

@@ -1,3 +1,4 @@
+import { Avatar } from '@/components/Avatar';
 import { SettingsListHeader, TextCell } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
@@ -17,17 +18,6 @@ const TRAINEE_STATUS: Record<string, StatusKind> = {
     completed: 'completed',
     terminated: 'terminated',
 };
-function initialsOf(name: string): string {
-    return (
-        name
-            .split(/\s+/)
-            .filter(Boolean)
-            .map((w) => w[0])
-            .slice(0, 2)
-            .join('')
-            .toUpperCase() || '—'
-    );
-}
 interface Props {
     record: AppBatches;
     registrationUrl: string;
@@ -61,12 +51,13 @@ export default function BatchTraineesPage({ record, registrationUrl }: Props) {
                     className="flex items-center gap-2 font-medium text-ink"
                     data-cy="trainees-div-3"
                 >
-                    <span
-                        className="flex size-6.5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700"
-                        data-cy="trainees-span-4"
-                    >
-                        {initialsOf(name)}
-                    </span>
+                    <Avatar
+                        src={row.avatar_url}
+                        name={name}
+                        initials={row.initials}
+                        size="sm"
+                        data-cy="trainees-avatar-4"
+                    />
                     <span className="truncate" data-cy="trainees-span-5">
                         {name}
                     </span>

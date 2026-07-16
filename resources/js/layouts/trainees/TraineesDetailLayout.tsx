@@ -1,3 +1,4 @@
+import { Avatar } from '@/components/Avatar';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
@@ -73,12 +74,19 @@ export default function TraineesDetailLayout({
                 data-cy="detail-div-4"
             >
                 <div className="flex items-center gap-3" data-cy="detail-div-5">
-                    <div
+                    {/* <div
                         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700"
                         data-cy="detail-div-6"
                     >
                         {trainee.initials}
-                    </div>
+                    </div> */}
+                    <Avatar
+                        src={trainee.avatar_url}
+                        name={trainee.name}
+                        initials={trainee.initials}
+                        size="lg"
+                        data-cy="personal-info-tab-avatar"
+                    />
                     <div data-cy="detail-div-7">
                         <div
                             className="mb-0.5 flex items-center gap-2"
