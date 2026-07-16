@@ -24,7 +24,7 @@ export interface ColumnDef<T = object> {
     exactFilters?: boolean;
     // | { label: string; value: unknown }[];
     render?: (value: unknown, row: T) => ReactNode;
-    /** Async option loader for a `type: 'async-select'` filterable column. */
+    /** Async option loader for a `type: 'async-select'`/`'async-multi-select'` filterable column. */
     loadOptions?: (query: string) => Promise<FieldOption[]>;
     /**
      * When this column's filter changes, also clear these column filters

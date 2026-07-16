@@ -3,7 +3,7 @@ import { Printer, X, Info } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Dropdown } from '@/components/Dropdown';
 import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
 import { DailyTaskSheetPrint } from '@/pages/developer/tasks/DailyTaskSheetPrint';
@@ -70,7 +70,7 @@ const EMPTY_FILTERS: ReportFilters = {
 };
 export default function DailyTaskSheetPage() {
   const {
-    showToast
+    toast
   } = useToast();
   const [rows, setRows] = useState<ApiDailyTaskRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,10 +96,10 @@ export default function DailyTaskSheetPage() {
       if (batch) params.set('batch_id', String(batch.id));
       trainees.filter(t => filters.trainees.includes(personLabel(t))).forEach(t => params.append('trainee_ids[]', String(t.id)));
       trainers.filter(t => filters.trainers.includes(personLabel(t))).forEach(t => params.append('trainer_ids[]', String(t.id)));
-      const res = await apiFetchJson<ApiDailyTaskRow[]>(`/daily-task/list?${params.toString()}`);
+      const res = await apiFetchJson<ApiDailyTaskRow[]>(`/tasks/daily-task/list?${params.toString()}`);
       setRows(res.data ?? []);
     } catch {
-      showToast('Failed to load the daily task sheet.', 'error');
+      toast({ description: 'Failed to load the daily task sheet.', variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -129,7 +129,7 @@ export default function DailyTaskSheetPage() {
         time_spent: value
       } : r));
     } catch {
-      showToast('Failed to update time spent.', 'error');
+      toast({ description: 'Failed to update time spent.', variant: 'error' });
     }
   }
   async function updateRemarks(id: number, value: string) {
@@ -140,9 +140,9 @@ export default function DailyTaskSheetPage() {
           remarks: value
         })
       });
-      showToast('Remarks saved.', 'success');
+      toast({ description: 'Remarks saved.', variant: 'success' });
     } catch {
-      showToast('Failed to save remarks.', 'error');
+      toast({ description: 'Failed to save remarks.', variant: 'error' });
     }
   }
   const reportRows = useMemo(() => rows.map(toRecord), [rows]);

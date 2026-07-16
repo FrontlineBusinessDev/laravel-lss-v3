@@ -8,7 +8,7 @@ interface LayoutProps {
 
 const NAV_LINKS = [
     { id: 'Task Rating', label: 'Task Rating', href: '/ratings' },
-    { id: 'Behavioral Rating', label: 'Behavioral Rating', href: '/behavioral-rating' },
+    { id: 'Behavioral Rating', label: 'Behavioral Rating', href: '/ratings/behavioral-rating' },
 ] as const;
 
 export default function RatingsPrimaryLayout({ children }: LayoutProps) {
@@ -33,7 +33,10 @@ export default function RatingsPrimaryLayout({ children }: LayoutProps) {
                 data-cy="ratings-primary-layout-div-4"
             >
                 {NAV_LINKS.map((link) => {
-                    const isActive = url.startsWith(link.href);
+                    const isActive =
+                        link.href === '/ratings'
+                            ? url === '/ratings'
+                            : url.startsWith(link.href);
                     return (
                         <Link
                             key={link.id}

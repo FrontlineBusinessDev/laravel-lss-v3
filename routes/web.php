@@ -180,18 +180,20 @@ Route::middleware('auth')->group(function () {
             Route::patch('/{id}/remarks', [TasksController::class, 'updateRemarks'])->name('remarks');
             Route::patch('/{id}/time-spent', [TasksController::class, 'updateTimeSpent'])->name('time-spent');
             Route::delete('/{id}', [TasksController::class, 'destroy'])->name('destroy');
-        });
-        Route::prefix('daily-task')->name('daily-task.')->group(function () {
-            Route::get('/', [DailyTaskController::class, 'index'])->name('index');
-            Route::get('/list', [DailyTaskController::class, 'list'])->name('list');
+            Route::prefix('daily-task')->name('daily-task.')->group(function () {
+                Route::get('/', [DailyTaskController::class, 'index'])->name('index');
+                Route::get('/list', [DailyTaskController::class, 'list'])->name('list');
+            });
         });
     });
 
     // Ratings module — Task Rating (default, real DB-backed) + Behavioral Rating
     // (still mock/CSR-only, route added only so it's reachable from the sub-nav tab).
     Route::middleware('permission:' . Permissions::MANAGE_RATINGS)->group(function () {
-        Route::get('/ratings', [TaskRatingController::class, 'index'])->name('ratings.index');
-        Route::get('/behavioral-rating', [RatingController::class, 'index'])->name('behavioral-rating.index');
+        Route::prefix('ratings')->name('ratings.')->group(function () {
+            Route::get('/', [TaskRatingController::class, 'index'])->name('index');
+            Route::get('/behavioral-rating', [RatingController::class, 'index'])->name('behavioral-rating.index');
+        });
         Route::prefix('ratings/task-rating')->name('ratings.task-rating.')->group(function () {
             Route::get('/task-options', [TaskRatingController::class, 'taskOptions'])->name('task-options');
             Route::get('/trainees', [TaskRatingController::class, 'trainees'])->name('trainees');

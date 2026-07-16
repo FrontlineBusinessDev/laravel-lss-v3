@@ -3,7 +3,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
 import { RatingInput } from '@/components/RatingInput';
 import { StatCard } from '@/components/StatCard';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { TaskRating, TaskRatingHistoryEntry } from '@/types';
 import { ClipboardList, History, Printer } from 'lucide-react';
@@ -63,7 +63,7 @@ function toHistoryEntry(h: ApiHistoryEntry): TaskRatingHistoryEntry {
 }
 
 export default function TaskRatingPage() {
-    const { showToast } = useToast();
+    const { toast } = useToast();
     const [batches, setBatches] = useState<BatchOption[]>([]);
     const [batchTrainees, setBatchTrainees] = useState<PersonRef[]>([]);
     const [taskOptions, setTaskOptions] = useState<string[]>([]);
@@ -150,7 +150,7 @@ export default function TaskRatingPage() {
         const existing = ratingsForTask.find((r) => r.traineeId === traineeId);
         const draft = draftFor(traineeId, existing);
         if (!draft.rating) {
-            showToast('Enter a rating between 1 and 100 before saving.', 'error');
+            toast({ description: 'Enter a rating between 1 and 100 before saving.', variant: 'error' });
             return;
         }
         try {
@@ -168,12 +168,12 @@ export default function TaskRatingPage() {
                 `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
             );
             setRatings(res.data ?? []);
-            showToast(
-                existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
-                'success',
-            );
+            toast({
+                description: existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
+                variant: 'success',
+            });
         } catch {
-            showToast('Failed to save rating.', 'error');
+            toast({ description: 'Failed to save rating.', variant: 'error' });
         }
     }
     async function openHistory(rating: ApiTaskRating) {

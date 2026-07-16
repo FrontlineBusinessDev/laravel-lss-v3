@@ -8,7 +8,7 @@ interface LayoutProps {
 
 const NAV_LINKS = [
     { id: 'Task Management', label: 'Task Management', href: '/tasks' },
-    { id: 'Daily Task Sheet', label: 'Daily Task Sheet', href: '/daily-task' },
+    { id: 'Daily Task Sheet', label: 'Daily Task Sheet', href: '/tasks/daily-task' },
 ] as const;
 
 export default function TasksPrimaryLayout({ children }: LayoutProps) {
@@ -33,7 +33,10 @@ export default function TasksPrimaryLayout({ children }: LayoutProps) {
                 data-cy="tasks-primary-layout-div-4"
             >
                 {NAV_LINKS.map((link) => {
-                    const isActive = url.startsWith(link.href);
+                    const isActive =
+                        link.href === '/tasks'
+                            ? url === '/tasks'
+                            : url.startsWith(link.href);
                     return (
                         <Link
                             key={link.id}

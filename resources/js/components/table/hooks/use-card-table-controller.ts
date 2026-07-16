@@ -23,6 +23,11 @@ import { useDebouncedValue, useTableRefresh } from './index';
 /** Upper bound fetched in client-pagination mode before local slicing. */
 const CLIENT_FETCH_SIZE = 100;
 
+/** Truthiness check for a filter value that may be a scalar or an array (multi-select) — an empty array isn't "active". */
+function isFilterValueActive(value: string | string[]): boolean {
+    return Array.isArray(value) ? value.length > 0 : Boolean(value);
+}
+
 function normalizeQueryKey(apiQueryKey: string | string[]): string[] {
     return Array.isArray(apiQueryKey)
         ? apiQueryKey.map(String)
@@ -98,9 +103,9 @@ export function useCardTableController<T extends Record<string, unknown>>(
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
     const [searchInput, setSearchInput] = useState('');
-    const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
-        {},
-    );
+    const [columnFilters, setColumnFilters] = useState<
+        Record<string, string | string[]>
+    >({});
     const [sortBy, setSortBy] = useState<string>(
         defaultSortBy ?? columns[0]?.key ?? 'id',
     );
@@ -171,7 +176,7 @@ export function useCardTableController<T extends Record<string, unknown>>(
     const canDelete = deletePermission ? can(deletePermission) : true;
 
     // ── Filter handlers ───────────────────────────────────────────────────────
-    const handleColumnFilter = (col: string, value: string) => {
+    const handleColumnFilter = (col: string, value: string | string[]) => {
         setColumnFilters((prev) => ({ ...prev, [col]: value }));
     };
     const handleStatusChange = (scope: string) =>
@@ -231,11 +236,14 @@ export function useCardTableController<T extends Record<string, unknown>>(
         sortDir,
         filtersOpen,
         setFiltersOpen,
-        statusScope: columnFilters.status ?? 'all',
-        customStatusScope: columnFilters.status ?? '',
+        statusScope: (columnFilters.status as string) ?? 'all',
+        customStatusScope: (columnFilters.status as string) ?? '',
         hasActiveFilters:
-            Boolean(searchInput) || Object.values(columnFilters).some(Boolean),
-        hasActiveColumnFilters: Object.values(columnFilters).some(Boolean),
+            Boolean(searchInput) ||
+            Object.values(columnFilters).some(isFilterValueActive),
+        hasActiveColumnFilters: Object.values(columnFilters).some(
+            isFilterValueActive,
+        ),
         handleColumnFilter,
         handleStatusChange,
         handleSortBy,
