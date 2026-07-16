@@ -1,4 +1,7 @@
+import { AttachmentViewerModal, type ViewableAttachment } from '@/components/modal/AttachmentViewerModal';
+import { useToast } from '@/hooks/use-toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { apiFetchJson, ApiError } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import {
@@ -7,8 +10,8 @@ import {
     ExternalLink,
     FileText,
     Link2,
+    Trash2,
     UploadCloud,
-    X,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 const MAX_FILE_SIZE_MB = 10;
@@ -43,34 +46,49 @@ const EXPECTED_DOCUMENTS: { type: string; label: string; optional: boolean }[] =
     ];
 
 interface DocState {
+    id?: number;
     link?: string;
+    savedLink?: string;
     submittedAt?: string;
     fileName?: string;
     fileSize?: number;
+    mimeType?: string;
+    viewUrl?: string;
+    downloadUrl?: string;
     mode: Mode;
     error?: string;
+    uploading?: boolean;
 }
+
+function toDocState(doc: TraineeDetail['documents'][number]): DocState {
+    return {
+        id: doc.id,
+        link: doc.url_link ?? undefined,
+        savedLink: doc.url_link ?? undefined,
+        submittedAt: doc.created_at?.slice(0, 10),
+        fileName: doc.original_name ?? doc.file_name ?? undefined,
+        fileSize: doc.file_size ?? undefined,
+        mimeType: doc.mime_type ?? undefined,
+        viewUrl: doc.view_url ?? undefined,
+        downloadUrl: doc.download_url ?? undefined,
+        mode: doc.file_path ? 'upload' : 'link',
+    };
+}
+
 export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
+    const { toast } = useToast();
     const [docs, setDocs] = useState<Record<string, DocState>>(() =>
         Object.fromEntries(
             EXPECTED_DOCUMENTS.map(({ type }) => {
                 const row = trainee.documents.find(
                     (d) => d.document_type === type,
                 );
-                return [
-                    type,
-                    {
-                        link: row?.url_link ?? undefined,
-                        submittedAt: row?.created_at?.slice(0, 10),
-                        fileName:
-                            row?.original_name ?? row?.file_name ?? undefined,
-                        mode: (row?.file_path ? 'upload' : 'link') as Mode,
-                    },
-                ];
+                return [type, row ? toDocState(row) : { mode: 'link' as Mode }];
             }),
         ),
     );
     const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+    const [previewing, setPreviewing] = useState<ViewableAttachment | null>(null);
     const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
     const submittedCount = EXPECTED_DOCUMENTS.filter(
         ({ type }) => docs[type]?.link || docs[type]?.fileName,
@@ -78,25 +96,11 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
     const setMode = (key: string, mode: Mode) => {
         setDocs((prev) => ({
             ...prev,
-            [key]: {
-                ...prev[key],
-                mode,
-                error: undefined,
-            },
+            [key]: { ...prev[key], mode, error: undefined },
         }));
     };
     const setLink = (key: string, link: string) => {
-        setDocs((prev) => ({
-            ...prev,
-            [key]: {
-                ...prev[key],
-                link,
-                submittedAt: link
-                    ? (prev[key]?.submittedAt ??
-                      new Date().toISOString().slice(0, 10))
-                    : undefined,
-            },
-        }));
+        setDocs((prev) => ({ ...prev, [key]: { ...prev[key], link } }));
     };
     const validateFile = (file: File) => {
         const ext = '.' + file.name.split('.').pop()?.toLowerCase();
@@ -106,43 +110,95 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
             return `File exceeds the ${MAX_FILE_SIZE_MB}MB limit.`;
         return null;
     };
-    const handleFile = (key: string, file: File | undefined) => {
-        if (!file) return;
-        const error = validateFile(file);
-        if (error) {
+    const upload = async (key: string, body: FormData) => {
+        setDocs((prev) => ({
+            ...prev,
+            [key]: { ...prev[key], uploading: true, error: undefined },
+        }));
+        try {
+            const res = await apiFetchJson<TraineeDetail['documents'][number]>(
+                `/trainees/${trainee.id}/documents`,
+                { method: 'POST', body },
+            );
+            setDocs((prev) => ({
+                ...prev,
+                [key]: {
+                    ...toDocState(res.data),
+                    mode: prev[key]?.mode ?? 'upload',
+                },
+            }));
+            toast({ title: 'Document saved', variant: 'success' });
+        } catch (err) {
             setDocs((prev) => ({
                 ...prev,
                 [key]: {
                     ...prev[key],
-                    error,
-                    fileName: undefined,
-                    fileSize: undefined,
+                    uploading: false,
+                    error:
+                        err instanceof ApiError
+                            ? err.message
+                            : 'Upload failed. Please try again.',
                 },
+            }));
+        }
+    };
+    const handleFile = (key: string, file: File | undefined) => {
+        if (!file) return;
+        const error = validateFile(file);
+        if (error) {
+            setDocs((prev) => ({ ...prev, [key]: { ...prev[key], error } }));
+            return;
+        }
+        const form = new FormData();
+        form.append('document_type', key);
+        form.append('file', file);
+        upload(key, form);
+    };
+    const saveLink = (key: string) => {
+        const link = docs[key]?.link?.trim();
+        if (!link) return;
+        const form = new FormData();
+        form.append('document_type', key);
+        form.append('url_link', link);
+        upload(key, form);
+    };
+    const removeFile = async (key: string) => {
+        const id = docs[key]?.id;
+        if (!id) {
+            setDocs((prev) => ({
+                ...prev,
+                [key]: { mode: prev[key]?.mode ?? 'upload' },
             }));
             return;
         }
-        setDocs((prev) => ({
-            ...prev,
-            [key]: {
-                ...prev[key],
-                fileName: file.name,
-                fileSize: file.size,
-                link: undefined,
-                submittedAt: new Date().toISOString().slice(0, 10),
-                error: undefined,
-            },
-        }));
-        // note: in production this uploads directly to the FBS Google Drive (contact@frontlinebusiness.com.ph)
+        try {
+            await apiFetchJson(`/trainees/${trainee.id}/documents/${id}`, {
+                method: 'DELETE',
+            });
+            setDocs((prev) => ({
+                ...prev,
+                [key]: { mode: prev[key]?.mode ?? 'upload' },
+            }));
+            toast({ title: 'Document removed', variant: 'success' });
+        } catch (err) {
+            toast({
+                title: 'Failed to remove document',
+                description: err instanceof ApiError ? err.message : undefined,
+                variant: 'error',
+            });
+        }
     };
-    const removeFile = (key: string) => {
-        setDocs((prev) => ({
-            ...prev,
-            [key]: {
-                ...prev[key],
-                fileName: undefined,
-                fileSize: undefined,
-            },
-        }));
+    const openPreview = (key: string) => {
+        const doc = docs[key];
+        if (!doc?.id || !doc.fileName) return;
+        setPreviewing({
+            id: doc.id,
+            original_name: doc.fileName,
+            mime_type: doc.mimeType ?? 'application/octet-stream',
+            file_size: doc.fileSize ?? 0,
+            view_url: doc.viewUrl ?? '',
+            download_url: doc.downloadUrl ?? '',
+        });
     };
     const formatSize = (bytes: number) =>
         bytes >= 1024 * 1024
@@ -170,8 +226,8 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                 className="text-xs text-neutral-500"
                                 data-cy="documents-tab-p-paste-a-document-link-or-upload"
                             >
-                                Paste a document link or upload a file directly
-                                — uploads are saved to the FBS Google Drive.
+                                Paste a document link or upload a file
+                                directly.
                             </p>
                         </div>
                         <span
@@ -291,38 +347,64 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
 
                                     {state.mode === 'link' ? (
                                         <div
-                                            className="relative"
+                                            className="flex items-center gap-2"
                                             data-cy="documents-tab-div-21"
                                         >
-                                            <Link2
-                                                size={13}
-                                                className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-neutral-400"
-                                                data-cy="documents-tab-link2-22"
-                                            />
-                                            <input
-                                                type="text"
-                                                value={state.link ?? ''}
-                                                onChange={(e) =>
-                                                    setLink(
-                                                        item.type,
-                                                        e.target.value,
-                                                    )
+                                            <div className="relative flex-1" data-cy="documents-tab-div-21-input">
+                                                <Link2
+                                                    size={13}
+                                                    className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-neutral-400"
+                                                    data-cy="documents-tab-link2-22"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={state.link ?? ''}
+                                                    onChange={(e) =>
+                                                        setLink(
+                                                            item.type,
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    placeholder="Paste document link (e.g. Google Drive URL)"
+                                                    className="h-9 w-full rounded-md border border-neutral-200 bg-white pr-2.5 pl-8 text-xs text-ink transition-colors hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                                    data-cy="documents-tab-input-text"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => saveLink(item.type)}
+                                                disabled={
+                                                    state.uploading ||
+                                                    !state.link?.trim() ||
+                                                    state.link === state.savedLink
                                                 }
-                                                placeholder="Paste document link (e.g. Google Drive URL)"
-                                                className="h-9 w-full rounded-md border border-neutral-200 bg-white pr-2.5 pl-8 text-xs text-ink transition-colors hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                                data-cy="documents-tab-input-text"
-                                            />
+                                                className="h-9 shrink-0 rounded-md bg-brand-500 px-3 text-xs font-medium text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                                data-cy="documents-tab-button-save-link"
+                                            >
+                                                {state.uploading ? 'Saving…' : 'Save'}
+                                            </button>
                                         </div>
                                     ) : (
                                         <div data-cy="documents-tab-div-24">
-                                            {state.fileName ? (
+                                            {state.uploading ? (
+                                                <div
+                                                    className="flex items-center justify-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-5 text-xs text-neutral-500"
+                                                    data-cy="documents-tab-div-uploading"
+                                                >
+                                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-300 border-t-brand-600" />
+                                                    Uploading…
+                                                </div>
+                                            ) : state.fileName ? (
                                                 <div
                                                     className="flex items-center justify-between gap-2 rounded-md border border-success-100 bg-success-50 px-3 py-2.5"
                                                     data-cy="documents-tab-div-25"
                                                 >
-                                                    <div
-                                                        className="flex min-w-0 items-center gap-2"
-                                                        data-cy="documents-tab-div-26"
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openPreview(item.type)
+                                                        }
+                                                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                                        data-cy="documents-tab-button-preview"
                                                     >
                                                         <FileText
                                                             size={15}
@@ -334,7 +416,7 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                                             data-cy="documents-tab-div-28"
                                                         >
                                                             <div
-                                                                className="truncate text-xs font-medium text-ink"
+                                                                className="truncate text-xs font-medium text-ink hover:underline"
                                                                 data-cy="documents-tab-div-29"
                                                             >
                                                                 {state.fileName}
@@ -350,7 +432,7 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                                                     : ''}
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </button>
                                                     <button
                                                         onClick={() =>
                                                             removeFile(
@@ -361,7 +443,7 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                                         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-white hover:text-danger-600"
                                                         data-cy="documents-tab-button-remove-file"
                                                     >
-                                                        <X
+                                                        <Trash2
                                                             size={13}
                                                             data-cy="documents-tab-x-32"
                                                         />
@@ -478,6 +560,10 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                     </div>
                 </div>
             </TraineesDetailLayout>
+            <AttachmentViewerModal
+                attachment={previewing}
+                onClose={() => setPreviewing(null)}
+            />
         </>
     );
 }

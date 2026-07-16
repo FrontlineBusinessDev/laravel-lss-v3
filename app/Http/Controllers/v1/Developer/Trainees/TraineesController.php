@@ -3,15 +3,22 @@
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
 use App\Http\Controllers\v1\Developer\BaseController;
+use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class TraineesController extends BaseController
 {
     protected string $model = Trainees::class;
     protected string $view = 'developer/trainees/index';
+    // Transforms the stored avatar path into a temporary (presigned) URL on responses.
+    protected array $fileFields = ['avatar_path'];
+    protected array $fileFieldFolders = ['avatar_path' => 'trainee-avatars'];
     protected array $searchable = ['first_name', 'last_name', 'email', 'mobile_number'];
     protected array $filterable = [
         'status',
@@ -101,5 +108,57 @@ class TraineesController extends BaseController
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
         ];
+    }
+
+    /**
+     * Upload/replace the trainee's cropped profile picture. Kept separate
+     * from update() so the personal-info save (all fields required) doesn't
+     * force a full form resubmit every time the avatar changes.
+     */
+    public function updateAvatar(Request $request, int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+        $request->validate([
+            'avatar_path' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ]);
+
+        $disk = config('filesystems.default');
+        $folder = env('AWS_S3_STORAGE', 'laravel-ls-system') . '/trainee-avatars';
+        $path = Storage::disk($disk)->putFile($folder, $request->file('avatar_path'), 'private');
+
+        if ($model->avatar_path) {
+            $this->deleteStoredFile($model->avatar_path, $disk);
+        }
+
+        $model->update(['avatar_path' => $path]);
+
+        return $this->sendResponse($this->transformFileUrls($model), 'Profile picture updated successfully.');
+    }
+
+    /**
+     * Toggle a single learning outcome's achieved status for this trainee.
+     * The outcome must belong to the trainee's batch industry.
+     */
+    public function updateLearningOutcomeStatus(Request $request, int|string $id, int|string $outcomeId): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+        ]);
+
+        $outcome = AcademicLearningOutcomes::findOrFail($outcomeId);
+        abort_if(
+            $outcome->academic_industry_id !== $model->batch?->academic_industry_id,
+            403,
+            'This learning outcome does not belong to the trainee\'s industry.',
+        );
+
+        $model->learningOutcomes()->syncWithoutDetaching([
+            $outcome->id => ['status' => $validated['status']],
+        ]);
+
+        return $this->sendResponse(['status' => $validated['status']], 'Learning outcome updated successfully.');
     }
 }

@@ -1,13 +1,15 @@
 import { traineeService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
+import { AvatarCropModal } from '@/components/AvatarCropModal';
 import { Button } from '@/components/Button';
 import { SelectField, TextField } from '@/components/FormField';
 import { useToast } from '@/hooks/use-toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { apiFetchJson } from '@/lib/apiFetch';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { router } from '@inertiajs/react';
-import { Check, Pencil, X } from 'lucide-react';
-import { useState } from 'react';
+import { Camera, Check, Pencil, X } from 'lucide-react';
+import { useRef, useState, type ChangeEvent } from 'react';
 
 function Field({ label, value }: { label: string; value: string }) {
     return (
@@ -51,6 +53,9 @@ export default function PersonalInfoTab({ trainee }: Props) {
     const { toast } = useToast();
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
+    const [avatarProgress, setAvatarProgress] = useState<number | null>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
     const [saved, setSaved] = useState<FormState>({
         first_name: trainee.first_name,
         last_name: trainee.last_name,
@@ -104,6 +109,51 @@ export default function PersonalInfoTab({ trainee }: Props) {
         }
     };
 
+    const pickAvatar = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            toast({
+                title: 'Image too large',
+                description: 'Please choose an image under 5MB.',
+                variant: 'error',
+            });
+            return;
+        }
+        setAvatarSrc(URL.createObjectURL(file));
+    };
+
+    const closeAvatarModal = () => {
+        if (avatarSrc) URL.revokeObjectURL(avatarSrc);
+        setAvatarSrc(null);
+        setAvatarProgress(null);
+    };
+
+    const saveAvatar = async (blob: Blob) => {
+        const form = new FormData();
+        form.append('avatar_path', blob, 'avatar.jpg');
+        setAvatarProgress(0);
+        try {
+            await apiFetchJson(`/trainees/${trainee.id}/avatar`, {
+                method: 'POST',
+                body: form,
+                onUploadProgress: setAvatarProgress,
+            });
+            toast({ title: 'Profile picture updated', variant: 'success' });
+            closeAvatarModal();
+            router.reload({ only: ['trainee'] });
+        } catch (error) {
+            toast({
+                title: 'Failed to upload profile picture',
+                description:
+                    error instanceof ApiError ? error.message : undefined,
+                variant: 'error',
+            });
+            setAvatarProgress(null);
+        }
+    };
+
     return (
         <>
             <TraineesDetailLayout trainee={trainee}>
@@ -120,10 +170,43 @@ export default function PersonalInfoTab({ trainee }: Props) {
                             data-cy="personal-info-tab-div-6"
                         >
                             <div
-                                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-50 text-base font-semibold text-brand-700"
+                                className="relative h-14 w-14 shrink-0"
                                 data-cy="personal-info-tab-div-7"
                             >
-                                {trainee.initials}
+                                {trainee.avatar_path ? (
+                                    <img
+                                        src={trainee.avatar_path}
+                                        alt={trainee.name}
+                                        className="h-14 w-14 rounded-full object-cover"
+                                        data-cy="personal-info-tab-img-avatar"
+                                    />
+                                ) : (
+                                    <div
+                                        className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-base font-semibold text-brand-700"
+                                        data-cy="personal-info-tab-div-initials"
+                                    >
+                                        {trainee.initials}
+                                    </div>
+                                )}
+                                {editing && (
+                                    <button
+                                        type="button"
+                                        onClick={() => avatarInputRef.current?.click()}
+                                        className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/50 text-white opacity-0 transition-opacity hover:opacity-100"
+                                        aria-label="Change profile picture"
+                                        data-cy="personal-info-tab-button-change-avatar"
+                                    >
+                                        <Camera size={16} data-cy="personal-info-tab-icon-camera" />
+                                    </button>
+                                )}
+                                <input
+                                    ref={avatarInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={pickAvatar}
+                                    data-cy="personal-info-tab-input-avatar-file"
+                                />
                             </div>
                             <div data-cy="personal-info-tab-div-8">
                                 <div
@@ -353,6 +436,12 @@ export default function PersonalInfoTab({ trainee }: Props) {
                     )}
                 </div>
             </TraineesDetailLayout>
+            <AvatarCropModal
+                imageSrc={avatarSrc}
+                uploadProgress={avatarProgress}
+                onClose={closeAvatarModal}
+                onSave={saveAvatar}
+            />
         </>
     );
 }

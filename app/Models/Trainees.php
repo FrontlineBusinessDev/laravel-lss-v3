@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Trainees extends Model
@@ -17,6 +18,7 @@ class Trainees extends Model
         'status',
         'batch_id',
         'school_id',
+        'avatar_path',
         'public_url_id',
         'first_name',
         'last_name',
@@ -55,5 +57,18 @@ class Trainees extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(TraineeDocument::class, 'trainee_id');
+    }
+
+    public function learningOutcomes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            AcademicLearningOutcomes::class,
+            'app_trainees_learning_outcomes',
+            'trainee_id',
+            'learning_outcome_id',
+        )
+            ->withPivot('status')
+            ->using(TraineeLearningOutcome::class)
+            ->withTimestamps();
     }
 }

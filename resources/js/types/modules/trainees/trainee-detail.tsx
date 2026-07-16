@@ -52,6 +52,14 @@ export interface AppTraineeDocument {
     url_link: string | null;
     file_size: number | null;
     created_at: string;
+    view_url: string | null;
+    download_url: string | null;
+}
+
+export interface AppTraineeLearningOutcome {
+    id: number;
+    title: string;
+    status: 'active' | 'inactive';
 }
 
 export interface TraineeDetail {
@@ -59,6 +67,7 @@ export interface TraineeDetail {
     status: string;
     batch_id: number;
     school_id: number;
+    avatar_path: string | null;
     public_url_id: string;
     first_name: string;
     last_name: string;
@@ -81,6 +90,7 @@ export interface TraineeDetail {
     school: AppTraineeSchool;
     batch: AppTraineeBatch;
     documents: AppTraineeDocument[];
+    outcomes: AppTraineeLearningOutcome[];
     created_at: string;
     updated_at: string;
 }

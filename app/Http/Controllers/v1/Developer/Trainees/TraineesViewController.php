@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Developer\Trainees;
 
 use App\Http\Controllers\v1\Developer\BaseController;
 use App\Http\Responses\InertiaPageResponse;
+use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -12,6 +13,8 @@ class TraineesViewController extends BaseController
     use AuthorizesRequests;
     protected string $model = Trainees::class;
     protected string $view = 'developer/trainees/show/PersonalInfoTab';
+    // Transforms the stored avatar path into a temporary (presigned) URL for display.
+    protected array $fileFields = ['avatar_path'];
 
     /** PersonalInformationTab tab — the default batch landing page (GET /trainees/{id}). */
     public function personalInformationTab(int|string $id): mixed
@@ -79,6 +82,7 @@ class TraineesViewController extends BaseController
                 'batch.academicProgram:id,name,course_name',
                 'batch.academicLevel:id,name,year_level',
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
+                'learningOutcomes:id,learning_outcomes',
             ])
             ->findOrFail($id);
 
@@ -87,12 +91,33 @@ class TraineesViewController extends BaseController
         $this->authorize('view', $trainee);
         /** @disregard P1013 */
         $user = auth()->user();
+        $this->transformFileUrls($trainee);
+
+        $documentsController = new TraineeDocumentsController();
+        $documents = $trainee->documents->map(fn($document) => $documentsController->transform($document));
+
+        // Full outcome catalog for the trainee's industry, each flagged with
+        // this trainee's achieved status (defaults to 'inactive' if never toggled).
+        $achievedStatuses = $trainee->learningOutcomes->pluck('pivot.status', 'id');
+        $outcomes = AcademicLearningOutcomes::query()
+            ->where('academic_industry_id', $trainee->batch?->academic_industry_id)
+            ->where('status', self::STATUS_ACTIVE)
+            ->orderBy('learning_outcomes')
+            ->get(['id', 'learning_outcomes'])
+            ->map(fn($outcome) => [
+                'id' => $outcome->id,
+                'title' => $outcome->learning_outcomes,
+                'status' => $achievedStatuses->get($outcome->id, 'inactive'),
+            ]);
+
         return InertiaPageResponse::csr($view, [
             'user' => $user,
             'trainee' => [
                 ...$trainee->toArray(),
                 'initials' => $initials,
                 'name' => $name,
+                'outcomes' => $outcomes,
+                'documents' => $documents,
             ]
         ]);
     }
