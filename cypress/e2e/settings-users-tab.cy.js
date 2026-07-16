@@ -24,19 +24,11 @@ describe('Settings - Users - Users Tab Page', () => {
             .and('contain.text', 'Name')
             .and('contain.text', 'Email');
 
-        cy.get('[data-cy="toolbar-select-rows-per-page"] option')
-            .should('have.length', 5)
-            .then(($options) => {
-                expect($options.eq(0)).to.contain.text('10 / page');
-                expect($options.eq(1)).to.contain.text('15 / page');
-                expect($options.eq(2)).to.contain.text('25 / page');
-                expect($options.eq(3)).to.contain.text('50 / page');
-                expect($options.eq(4)).to.contain.text('100 / page');
-            });
-
-        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.filterPerPage();
 
         // status filter
+        cy.get('[data-cy="toolbar-button-button"]').click();
+
         cy.get('[data-cy="dropdown-button-button"]').eq(0).click();
 
         cy.get('[data-cy="dropdown-div-4"]')
@@ -81,6 +73,27 @@ describe('Settings - Users - Users Tab Page', () => {
 
     //CREATE
     it('should create a user', () => {
+        //esc key
+        cy.get('[data-cy="add-record-button"]').click();
+
+        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+            .eq(0)
+            .type('Herlyn');
+
+        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+            .eq(1)
+            .type('Torres');
+
+        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+            .eq(2)
+            .type('torresherlynmae@gmail.com');
+
+        cy.get('[data-cy="record-modal-field-select-change"]').select(
+            'Developer',
+        );
+
+        cy.get('body').type('{esc}');
+
         //close btn
         cy.get('[data-cy="add-record-button"]').click();
 

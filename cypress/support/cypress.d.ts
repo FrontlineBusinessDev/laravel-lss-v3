@@ -3,6 +3,7 @@ declare global {
         interface Chainable {
             login(): Chainable<void>;
             verifySettingsModuleHeader(): Chainable<void>;
+            filterPerPage(): Chainable<void>;
         }
     }
 }
