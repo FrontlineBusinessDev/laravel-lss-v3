@@ -13,10 +13,15 @@ class HomeController extends Controller
      */
     public function index(Request $request): RedirectResponse
     {
-        if ($request->user() === null) {
+        $user = $request->user();
+        if ($user === null) {
             return redirect()->route('login');
         }
 
-        return redirect()->route('dashboard');
+        return match (true) {
+            $user->hasRole('trainer') => redirect()->route('trainer.dashboard'),
+            $user->hasRole('trainee') => redirect()->route('trainee.dashboard'),
+            default => redirect()->route('dashboard'),
+        };
     }
 }

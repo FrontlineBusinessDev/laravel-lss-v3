@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { usePermission } from '@/hooks/use-permissions';
 import { NavLink, useNavigate } from '@/lib/router-compat';
 import { cn } from '@/lib/utils';
+import type { NavigationItem } from '@/types/reusable/navigation';
 import { router } from '@inertiajs/react';
 import {
     BadgeCheck,
@@ -13,6 +14,7 @@ import {
     FileBarChart,
     Fingerprint,
     GraduationCap,
+    IdCard,
     LayoutDashboard,
     ListChecks,
     LogOut,
@@ -114,15 +116,42 @@ const DEVELOPER_ITEMS = [
         icon: ScrollText,
     },
 ];
+
+// Trainer's nav is scoped to its own /trainer/* placeholder pages, kept
+// separate from the shared admin routes above (see routes/web.php).
+const TRAINER_ITEMS: NavigationItem[] = [
+    { to: '/trainer/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/trainer/batches', label: 'Batches', icon: UsersRound },
+    { to: '/trainer/trainees', label: 'Trainees', icon: User },
+    { to: '/trainer/tasks', label: 'Tasks', icon: ListChecks },
+    { to: '/trainer/schedule', label: 'Schedule', icon: CalendarDays },
+    { to: '/trainer/announcements', label: 'Announcements', icon: Megaphone },
+    { to: '/trainer/ratings', label: 'Ratings', icon: Star },
+];
+
+// Trainee's nav is scoped to its own /trainee/* placeholder pages.
+const TRAINEE_ITEMS: NavigationItem[] = [
+    { to: '/trainee/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/trainee/tasks', label: 'Tasks', icon: ListChecks },
+    { to: '/trainee/announcements', label: 'Announcements', icon: Megaphone },
+    { to: '/trainee/leave', label: 'Leave', icon: CalendarOff },
+    { to: '/trainee/biometrics', label: 'Biometrics', icon: Fingerprint },
+    { to: '/trainee/evaluations', label: 'Evaluation', icon: ClipboardList },
+    { to: '/trainee/my-info', label: 'My Info', icon: IdCard },
+];
 interface SidebarProps {
     mobileOpen: boolean;
     onCloseMobile: () => void;
 }
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
     const { hasRole } = usePermission();
-    const navItems = hasRole('developer')
-        ? [...NAV_ITEMS, ...DEVELOPER_ITEMS]
-        : NAV_ITEMS;
+    const navItems = hasRole('trainer')
+        ? TRAINER_ITEMS
+        : hasRole('trainee')
+          ? TRAINEE_ITEMS
+          : hasRole('developer')
+            ? [...NAV_ITEMS, ...DEVELOPER_ITEMS]
+            : NAV_ITEMS;
     return (
         <>
             {mobileOpen && (

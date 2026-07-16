@@ -36,6 +36,20 @@ use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
+use App\Http\Controllers\v1\Trainer\Announcements\AnnouncementsController as TrainerAnnouncementsController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchesController as TrainerBatchesController;
+use App\Http\Controllers\v1\Trainer\Dashboard\DashboardController as TrainerDashboardController;
+use App\Http\Controllers\v1\Trainer\Ratings\RatingsController as TrainerRatingsController;
+use App\Http\Controllers\v1\Trainer\Schedule\ScheduleController as TrainerScheduleController;
+use App\Http\Controllers\v1\Trainer\Tasks\TasksController as TrainerTasksController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineesController as TrainerTraineesController;
+use App\Http\Controllers\v1\Trainee\Announcements\AnnouncementsController as TraineeAnnouncementsController;
+use App\Http\Controllers\v1\Trainee\Biometrics\BiometricsController as TraineeBiometricsController;
+use App\Http\Controllers\v1\Trainee\Dashboard\DashboardController as TraineeDashboardController;
+use App\Http\Controllers\v1\Trainee\Evaluations\EvaluationsController as TraineeEvaluationsController;
+use App\Http\Controllers\v1\Trainee\Leave\LeaveController as TraineeLeaveController;
+use App\Http\Controllers\v1\Trainee\MyInfo\MyInfoController as TraineeMyInfoController;
+use App\Http\Controllers\v1\Trainee\Tasks\TasksController as TraineeTasksController;
 use App\Http\Controllers\v1\Developer\PublicRegistrationController;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
@@ -231,5 +245,31 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:developer')->group(function () {
         Route::get('/system-log', [SystemLogController::class, 'index'])->name('system-log.index');
         Route::get('/system-log/pagination-search', [SystemLogController::class, 'paginationSearch'])->name('system-log.pagination-search');
+    });
+
+    // Trainer-only placeholder module — role-gated, deliberately NOT reusing
+    // the shared /tasks, /batches, /trainees, /schedule, /ratings,
+    // /announcements routes above (trainer already holds those `manage *`
+    // permissions via RoleSeeder, so route-level role gating keeps this
+    // surface separate while the real trainer experience is built out).
+    Route::middleware('role:trainer')->prefix('trainer')->name('trainer.')->group(function () {
+        Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/batches', [TrainerBatchesController::class, 'index'])->name('batches');
+        Route::get('/trainees', [TrainerTraineesController::class, 'index'])->name('trainees');
+        Route::get('/tasks', [TrainerTasksController::class, 'index'])->name('tasks');
+        Route::get('/schedule', [TrainerScheduleController::class, 'index'])->name('schedule');
+        Route::get('/announcements', [TrainerAnnouncementsController::class, 'index'])->name('announcements');
+        Route::get('/ratings', [TrainerRatingsController::class, 'index'])->name('ratings');
+    });
+
+    // Trainee-only placeholder module — same rationale as above.
+    Route::middleware('role:trainee')->prefix('trainee')->name('trainee.')->group(function () {
+        Route::get('/dashboard', [TraineeDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/tasks', [TraineeTasksController::class, 'index'])->name('tasks');
+        Route::get('/announcements', [TraineeAnnouncementsController::class, 'index'])->name('announcements');
+        Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
+        Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
+        Route::get('/evaluations', [TraineeEvaluationsController::class, 'index'])->name('evaluations');
+        Route::get('/my-info', [TraineeMyInfoController::class, 'index'])->name('my-info');
     });
 });
