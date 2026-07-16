@@ -1,33 +1,49 @@
-import { useState } from 'react';
-import { evaluationQuestions as initialQuestions, evaluationResponses as initialResponses, questionSetsByCategory, currentUser } from '@/data/mockData';
-import type { EvaluationQuestion, EvaluationResponse } from '@/types';
-import { cn } from '@/lib/utils';
-import { OverviewTab } from './OverviewTab';
-import { TrainersQuestionnaireTab } from './TrainersQuestionnaireTab';
-import { SeminarQuestionnaireTab } from './SeminarQuestionnaireTab';
-const TABS = ['Overview', 'Trainers questionnaire', 'Seminar questionnaire'] as const;
-export default function EvaluationPage() {
-  const [tab, setTab] = useState<typeof TABS[number]>('Overview');
-  const [questions, setQuestions] = useState<EvaluationQuestion[]>(initialQuestions);
-  const [responses, setResponses] = useState<EvaluationResponse[]>(initialResponses);
-  const [trainerSets, setTrainerSets] = useState<string[]>(questionSetsByCategory.Trainer);
-  const [seminarSets, setSeminarSets] = useState<string[]>(questionSetsByCategory.Seminar);
-  return <div data-cy="index-div-1">
-      <div className="mb-4" data-cy="index-div-2">
-        <h1 className="text-xl font-semibold text-ink" data-cy="index-h1-evaluation">Evaluation</h1>
-        <p className="text-sm text-neutral-500" data-cy="index-p-trainee-to-trainer-and-participant-to-speaker-feedback-questionnaires">Trainee-to-trainer and participant-to-speaker feedback questionnaires</p>
-      </div>
+import { ErrorFallback } from '@/components/ErrorFallBack';
+import { usePermission } from '@/hooks/use-permissions';
+import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
+export default function index() {
+    const { can } = usePermission();
+    // 1. Define the preference hierarchy for redirection
+    const targets = [
+        {
+            permission: 'manage users',
+            href: '/evaluation',
+        },
+        {
+            permission: 'tainers questionnaire',
+            href: '/evaluation/tainers-questionnaire',
+        },
+        {
+            permission: 'manage settings academic',
+            href: '/settings/academic',
+        },
+    ];
 
-      <div className="mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5 lss-scrollbar" data-cy="index-div-5">
-        {TABS.map(t => <button key={t} onClick={() => setTab(t)} className={cn('shrink-0 whitespace-nowrap pb-2.5 text-xs font-medium transition-colors', tab === t ? 'border-b-2 border-brand-500 text-ink font-semibold' : 'text-neutral-500 hover:text-neutral-700')} data-cy="index-button-set-tab">
-            {t}
-          </button>)}
-      </div>
+    // 2. Find the first module the user actually has access to
+    const fallbackTarget = targets.find((target) => can(target.permission));
+    useEffect(() => {
+        // 3. If a valid destination is found, redirect them immediately
+        if (fallbackTarget) {
+            router.visit(fallbackTarget.href, {
+                replace: true,
+            });
+        }
+    }, [fallbackTarget]);
 
-      {tab === 'Overview' && <OverviewTab questions={questions} responses={responses} onChangeResponses={setResponses} data-cy="index-overview-tab-7" />}
+    // 4. If no permissions match, break the chain and show your 404 / Access Denied UI
+    if (!fallbackTarget) {
+        return (
+            <ErrorFallback
+                status="403"
+                title="Access Denied"
+                description="You don't have permission to manage any configuration modules under Settings."
+                data-cy="index-error-fallback-access-denied"
+            />
+        );
+    }
 
-      {tab === 'Trainers questionnaire' && <TrainersQuestionnaireTab questions={questions} onChange={setQuestions} currentUserName={currentUser.name} sets={trainerSets} onAddSet={name => setTrainerSets(prev => [...prev, name])} data-cy="index-trainers-questionnaire-tab-set-questions" />}
-
-      {tab === 'Seminar questionnaire' && <SeminarQuestionnaireTab questions={questions} onChange={setQuestions} currentUserName={currentUser.name} sets={seminarSets} onAddSet={name => setSeminarSets(prev => [...prev, name])} data-cy="index-seminar-questionnaire-tab-set-questions" />}
-    </div>;
+    // Return a blank loading state while the useEffect redirect kicks in
+    return null;
+    // return <AcademicTab />;
 }
