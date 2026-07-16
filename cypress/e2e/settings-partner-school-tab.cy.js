@@ -29,5 +29,15 @@ describe('Settings - Partner School Tab Page', () => {
 
         //pages
         cy.filterPerPage();
+
+        //filter
+        cy.get('[data-cy="toolbar-button-button"]').click();
+
+        //status
+        cy.get('[data-cy="dropdown-button-button"]').click();
+
+        cy.contains('All Status').should('be.visible');
+        cy.contains('Active').should('be.visible');
+        cy.contains('Inactive').should('be.visible');
     });
 });
