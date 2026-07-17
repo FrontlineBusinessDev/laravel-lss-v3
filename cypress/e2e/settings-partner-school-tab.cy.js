@@ -7,7 +7,10 @@ describe('Settings - Partner School Tab Page', () => {
         cy.visit('/settings/partner-schools');
     });
 
+    //check partner school display
     it('should display Partner School Page correctly', () => {
+        cy.viewport(1280, 720);
+
         //check settings title
         cy.verifySettingsModuleHeader();
 
@@ -21,8 +24,8 @@ describe('Settings - Partner School Tab Page', () => {
             .and('contain.text', 'School Name')
             .and('contain.text', 'Abbreviation')
             .and('contain.text', 'Logo')
-            .and('contain.text', 'First Name')
-            .and('contain.text', 'Last Name')
+            .and('contain.text', 'First name')
+            .and('contain.text', 'Last name')
             .and('contain.text', 'Email')
             .and('contain.text', 'Address')
             .and('contain.text', 'Joined');
@@ -39,5 +42,44 @@ describe('Settings - Partner School Tab Page', () => {
         cy.contains('All Status').should('be.visible');
         cy.contains('Active').should('be.visible');
         cy.contains('Inactive').should('be.visible');
+
+        //filter input fields
+        cy.get('[data-cy="data-input-school_name"]').should('be.visible');
+        cy.get('[data-cy="data-input-abbreviation"]').should('be.visible');
+        cy.get('[data-cy="data-input-contact_first_name"]').should(
+            'be.visible',
+        );
+        cy.get('[data-cy="data-input-contact_last_name"]').should('be.visible');
+        cy.get('[data-cy="data-input-contact_email"]').should('be.visible');
+        cy.get('[data-cy="data-input-physical_address"]').should('be.visible');
+
+        //table column
+        cy.get('[data-cy="settings-list-header-div-1"]')
+            .should('contain.text', 'Logo')
+            .and('contain.text', 'School Name')
+            .and('contain.text', 'Abbreviation')
+            .and('contain.text', 'Contact Name')
+            .and('contain.text', 'Email')
+            .and('contain.text', 'Status');
+
+        //actions
+        cy.get('[data-cy="row-menu-button-row-actions"]').first().click();
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(0)
+            .should('contain.text', 'Edit');
+
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(1)
+            .should('contain.text', 'Archive');
+    });
+
+    //create
+    it('should create partner school', () => {
+        cy.viewport(1200, 720);
+
+        //esc key
+        cy.get('[data-cy="add-record-button"]').click();
+        
+
     });
 });

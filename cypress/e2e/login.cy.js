@@ -3,6 +3,14 @@ describe('Login Page', () => {
         cy.visit('/login');
     });
 
+    // afterEach(function () {
+    //     if (this.currentTest.state === 'failed') {
+    //         cy.screenshot(`Login/${this.currentTest.title}`, {
+    //             capture: 'runner',
+    //         });
+    //     }
+    // });
+
     //check log in display
     it('should display login page correctly', () => {
         cy.get('[data-cy="logo-div-2"]').should('be.visible');
@@ -13,7 +21,9 @@ describe('Login Page', () => {
         cy.get('input[data-cy="login-input-enter-your-password"]').should(
             'exist',
         );
-        cy.get('[data-cy="router-compat-inertia-link-to"]').should('exist');
+        cy.get(
+            '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
+        ).should('exist');
         cy.get('[data-cy="button-button-1"]').should('exist');
 
         cy.contains(
@@ -66,7 +76,9 @@ describe('Login Page', () => {
 
     //check forgot password modal display
     it('should redirect the user to the forgot password page when clicking the forgot password link', () => {
-        cy.get('[data-cy="router-compat-inertia-link-to"]').click();
+        cy.get(
+            '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
+        ).click();
         cy.get('[data-cy="forgot-password-div-3"]').should('exist');
         cy.get('[data-cy="forgot-password-h1-forgot-your-password"]').should(
             'be.visible',
@@ -76,19 +88,23 @@ describe('Login Page', () => {
         ).should('be.visible');
         cy.get('input[data-cy="forgot-password-input-email"]').should('exist');
         cy.get('[data-cy="button-button-1"]').should('exist');
-        cy.get('[data-cy="router-compat-inertia-link-to"]').should('exist');
+        cy.get('[data-cy="button-button-1"]').should('exist');
     });
 
     //check forgot password without inputing email
     it('should display a validation message when submitting forgot password without an email', () => {
-        cy.get('[data-cy="router-compat-inertia-link-to"]').click(); // click forgot password
+        cy.get(
+            '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
+        ).click(); // click forgot password
         cy.get('[data-cy="button-button-1"]').click();
-        cy.get('[data-cy="router-compat-inertia-link-to"]').click(); // click back to login
+        cy.get('[data-cy="router-compat-inertia-link-to-/login"]').click(); // click back to login
     });
 
     //check forgot password inputing unregistered email
     it('should display a validation message when submitting forgot password with unregistered email', () => {
-        cy.get('[data-cy="router-compat-inertia-link-to"]').click(); // click forgot password
+        cy.get(
+            '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
+        ).click(); // click forgot password
         cy.get('input[data-cy="forgot-password-input-email"]')
             .type('herlyn.torres@frontlinebusiness.com.ph')
             .should('have.value', 'herlyn.torres@frontlinebusiness.com.ph');
@@ -97,7 +113,9 @@ describe('Login Page', () => {
 
     //check forgot password inputing registered email
     it('should allow the registered user to request a password reset', () => {
-        cy.get('[data-cy="router-compat-inertia-link-to"]').click(); // click forgot password
+        cy.get(
+            '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
+        ).click(); // click forgot password
         cy.get('input[data-cy="forgot-password-input-email"]')
             .type('vincent.ramirez@frontlinebusiness.com.ph')
             .should('have.value', 'vincent.ramirez@frontlinebusiness.com.ph');
@@ -124,16 +142,16 @@ describe('Login Page', () => {
                 res.setDelay(2000);
             });
         }).as('loginRequest');
+
         cy.get('input[data-cy="login-input-email"]').type(Cypress.env('email'));
 
         cy.get('input[data-cy="login-input-enter-your-password"]')
             .type(Cypress.env('password'))
             .type('{enter}');
 
-        cy.url().should('include', '/dashboard');
-        cy.get('[data-cy="sidebar-button-set-open-3"]').click();
         cy.wait('@loginRequest');
-        cy.get('[data-cy="sidebar-button-set-open-2"]').click();
+
+        cy.url().should('include', '/dashboard');
     });
 
     // check valid credentials

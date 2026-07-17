@@ -7,8 +7,11 @@ describe('Settings - Users - Users Tab Page', () => {
         cy.visit('/settings/users');
     });
 
+ 
+
     // check users tab page display
     it('should display the Users tab page correctly', () => {
+        cy.viewport(1280, 720);
         cy.verifySettingsModuleHeader(); //settings module title
 
         //elements inside settings > users tab
@@ -73,6 +76,7 @@ describe('Settings - Users - Users Tab Page', () => {
 
     //CREATE
     it('should create a user', () => {
+        cy.viewport(1280, 720);
         //esc key
         cy.get('[data-cy="add-record-button"]').click();
 
