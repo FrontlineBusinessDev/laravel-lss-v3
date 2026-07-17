@@ -139,4 +139,15 @@ export interface DataTableProps<T> {
      * ignores it.
      */
     onEditRow?: (row: T) => void;
+    /**
+     * Fires whenever the (debounced) search or column filters settle, with
+     * the values currently driving the table's fetch. Lets a page mirror the
+     * table's own filter state into an independent request — e.g. an
+     * unpaginated export/print fetch that must reflect the same filters
+     * without being capped by the table's page size.
+     */
+    onFiltersChange?: (
+        filters: Record<string, string | string[]>,
+        search: string,
+    ) => void;
 }

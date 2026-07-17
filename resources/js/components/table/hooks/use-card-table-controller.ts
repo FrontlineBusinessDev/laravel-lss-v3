@@ -82,6 +82,7 @@ export function useCardTableController<T extends Record<string, unknown>>(
         viewType = 'table',
         paginationMode = 'server',
         onEditRow,
+        onFiltersChange,
     } = props;
 
     const { can } = usePermission();
@@ -126,6 +127,11 @@ export function useCardTableController<T extends Record<string, unknown>>(
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setPage(1);
     }, [debouncedSearch, debouncedFilters, extraFiltersKey, perPage]);
+
+    useEffect(() => {
+        onFiltersChange?.(debouncedFilters, debouncedSearch);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedFilters, debouncedSearch]);
 
     // ── Data fetching ─────────────────────────────────────────────────────────
     const crud = useCrud<T>({

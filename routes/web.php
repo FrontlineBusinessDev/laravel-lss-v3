@@ -201,6 +201,7 @@ Route::middleware('auth')->group(function () {
             Route::prefix('daily-task')->name('daily-task.')->group(function () {
                 Route::get('/', [DailyTaskController::class, 'index'])->name('index');
                 Route::get('/list', [DailyTaskController::class, 'list'])->name('list');
+                Route::get('/pagination-search', [DailyTaskController::class, 'paginationSearch'])->name('pagination-search');
             });
         });
     });

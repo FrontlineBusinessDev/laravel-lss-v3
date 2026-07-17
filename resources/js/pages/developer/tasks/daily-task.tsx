@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Printer, X, Info } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Printer, Info } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { Dropdown } from '@/components/Dropdown';
-import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
+import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { cn } from '@/lib/utils';
 import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
 import { DailyTaskSheetPrint } from '@/pages/developer/tasks/DailyTaskSheetPrint';
+import type { FieldOption } from '@/types/reusable/fields';
+import { loadLookupOptions } from '@/types/reusable/fields';
+import type { ColumnDef } from '@/types/reusable/data-table';
 import type { TaskRecord } from '@/types';
 
 interface ApiDailyTaskRow {
@@ -22,10 +25,7 @@ interface ApiDailyTaskRow {
     date: string;
     on_leave: boolean;
     leave_reason: string | null;
-}
-interface BatchOption {
-    id: number;
-    batch_code: string;
+    [key: string]: unknown;
 }
 interface PersonOption {
     id: number;
@@ -53,111 +53,138 @@ function toRecord(r: ApiDailyTaskRow): TaskRecord {
     };
 }
 
-/** Draft vs. applied filter state, per the Filter / Cancel workflow. */
-interface ReportFilters {
-    dateFrom: string;
-    dateTo: string;
-    batch: string;
-    trainees: string[];
-    trainers: string[];
+async function loadTraineeOptions(q: string): Promise<FieldOption[]> {
+    const res = await apiFetchJson<PersonOption[]>(
+        `/trainees/lookup?status=active&per_page=50&q=${encodeURIComponent(q)}`,
+    );
+    return (res.data ?? []).map((p) => ({
+        value: String(p.id),
+        label: personLabel(p),
+    }));
 }
-const EMPTY_FILTERS: ReportFilters = {
-    dateFrom: '',
-    dateTo: '',
-    batch: '',
-    trainees: [],
-    trainers: [],
-};
+async function loadTrainerOptions(q: string): Promise<FieldOption[]> {
+    const res = await apiFetchJson<PersonOption[]>('/tasks/trainers');
+    const needle = q.trim().toLowerCase();
+    return (res.data ?? [])
+        .filter((p) => !needle || personLabel(p).toLowerCase().includes(needle))
+        .map((p) => ({ value: String(p.id), label: personLabel(p) }));
+}
+
+const GRID =
+    'sm:grid sm:grid-cols-[0.8fr_1.2fr_1.6fr_0.7fr_0.9fr_1.4fr_1fr_1fr_0.8fr] sm:items-center sm:gap-3';
+
+const columns: ColumnDef<ApiDailyTaskRow>[] = [
+    { key: 'batch_code', label: 'Batch' },
+    { key: 'task', label: 'Task' },
+    { key: 'description', label: 'Description', sortable: false },
+    { key: 'time_goal', label: 'Time goal', sortable: false },
+    { key: 'time_spent', label: 'Time spent', sortable: false },
+    { key: 'remarks', label: 'Remarks', sortable: false },
+    { key: 'trainee', label: 'Trainee', sortable: false },
+    { key: 'trainer', label: 'Trainer', sortable: false },
+    {
+        key: 'date',
+        label: 'Date',
+        filterable: true,
+        sortable: true,
+        type: 'date-range',
+    },
+    {
+        key: 'batch_id',
+        label: 'Batch',
+        filterable: true,
+        sortable: false,
+        type: 'async-select',
+        loadOptions: (q) => loadLookupOptions('/batches', q, 'batch_code'),
+    },
+    {
+        key: 'trainee_id',
+        label: 'Trainee',
+        filterable: true,
+        sortable: false,
+        type: 'async-multi-select',
+        loadOptions: loadTraineeOptions,
+    },
+    {
+        key: 'trainer_id',
+        label: 'Trainer',
+        filterable: true,
+        sortable: false,
+        type: 'async-multi-select',
+        loadOptions: loadTrainerOptions,
+    },
+];
+
+const listHeader = (
+    <div
+        className={cn('hidden bg-neutral-50 px-4 py-2.5 text-left text-xs font-medium text-neutral-500', GRID)}
+        data-cy="daily-task-list-header"
+    >
+        <span>Batch</span>
+        <span>Task</span>
+        <span>Description</span>
+        <span>Time goal</span>
+        <span>Time spent</span>
+        <span>Remarks</span>
+        <span>Trainee</span>
+        <span>Trainer</span>
+        <span>Date</span>
+    </div>
+);
+
 export default function DailyTaskSheetPage() {
     const { toast } = useToast();
-    const [rows, setRows] = useState<ApiDailyTaskRow[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [batches, setBatches] = useState<BatchOption[]>([]);
-    const [trainees, setTrainees] = useState<PersonOption[]>([]);
-    const [trainers, setTrainers] = useState<PersonOption[]>([]);
-    const [draftFilters, setDraftFilters] =
-        useState<ReportFilters>(EMPTY_FILTERS);
-    const [appliedFilters, setAppliedFilters] =
-        useState<ReportFilters>(EMPTY_FILTERS);
-
-    useEffect(() => {
-        apiFetchJson<BatchOption[]>(
-            '/batches/lookup?status=active&per_page=50',
-        ).then((res) => setBatches(res.data ?? []));
-        apiFetchJson<PersonOption[]>(
-            '/trainees/lookup?status=active&per_page=50',
-        ).then((res) => setTrainees(res.data ?? []));
-        apiFetchJson<PersonOption[]>('/tasks/trainers').then((res) =>
-            setTrainers(res.data ?? []),
-        );
-    }, []);
+    const [reportRows, setReportRows] = useState<TaskRecord[]>([]);
+    const [refreshTable, setRefreshTable] = useState<() => void>(() => () => {});
+    const [activeFilters, setActiveFilters] = useState<{
+        filters: Record<string, string | string[]>;
+        search: string;
+    }>({ filters: {}, search: '' });
 
     const loadReport = useCallback(
-        async (filters: ReportFilters) => {
-            setLoading(true);
+        async (filters: Record<string, string | string[]>) => {
             try {
                 const params = new URLSearchParams();
-                if (filters.dateFrom) params.set('date_from', filters.dateFrom);
-                if (filters.dateTo) params.set('date_to', filters.dateTo);
-                const batch = batches.find(
-                    (b) => b.batch_code === filters.batch,
+                const dateFrom = filters.date_from;
+                const dateTo = filters.date_to;
+                if (typeof dateFrom === 'string' && dateFrom) params.set('date_from', dateFrom);
+                if (typeof dateTo === 'string' && dateTo) params.set('date_to', dateTo);
+                const batchId = filters.batch_id;
+                if (typeof batchId === 'string' && batchId) params.set('batch_id', batchId);
+                (Array.isArray(filters.trainee_id) ? filters.trainee_id : []).forEach((id) =>
+                    params.append('trainee_ids[]', id),
                 );
-                if (batch) params.set('batch_id', String(batch.id));
-                trainees
-                    .filter((t) => filters.trainees.includes(personLabel(t)))
-                    .forEach((t) =>
-                        params.append('trainee_ids[]', String(t.id)),
-                    );
-                trainers
-                    .filter((t) => filters.trainers.includes(personLabel(t)))
-                    .forEach((t) =>
-                        params.append('trainer_ids[]', String(t.id)),
-                    );
+                (Array.isArray(filters.trainer_id) ? filters.trainer_id : []).forEach((id) =>
+                    params.append('trainer_ids[]', id),
+                );
+
                 const res = await apiFetchJson<ApiDailyTaskRow[]>(
                     `/tasks/daily-task/list?${params.toString()}`,
                 );
-                setRows(res.data ?? []);
+                setReportRows((res.data ?? []).map(toRecord));
             } catch {
                 toast({
                     description: 'Failed to load the daily task sheet.',
                     variant: 'error',
                 });
-            } finally {
-                setLoading(false);
             }
             // eslint-disable-next-line react-hooks/exhaustive-deps
         },
-        [batches, trainees, trainers],
+        [],
     );
 
-    const applyFilters = () => {
-        setAppliedFilters(draftFilters);
-        loadReport(draftFilters);
-    };
-    const cancelFilters = () => {
-        setDraftFilters(EMPTY_FILTERS);
-        setAppliedFilters(EMPTY_FILTERS);
-        setRows([]);
-    };
+    useEffect(() => {
+        loadReport(activeFilters.filters);
+    }, [activeFilters, loadReport]);
 
     async function updateTimeSpent(id: number, value: number) {
         try {
             await apiFetchJson(`/tasks/${id}/time-spent`, {
                 method: 'PATCH',
-                body: JSON.stringify({
-                    time_spent: value,
-                }),
+                body: JSON.stringify({ time_spent: value }),
             });
-            setRows((prev) =>
-                prev.map((r) =>
-                    r.id === id
-                        ? {
-                              ...r,
-                              time_spent: value,
-                          }
-                        : r,
-                ),
-            );
+            refreshTable();
+            loadReport(activeFilters.filters);
         } catch {
             toast({
                 description: 'Failed to update time spent.',
@@ -169,197 +196,93 @@ export default function DailyTaskSheetPage() {
         try {
             await apiFetchJson(`/tasks/${id}/remarks`, {
                 method: 'PATCH',
-                body: JSON.stringify({
-                    remarks: value,
-                }),
+                body: JSON.stringify({ remarks: value }),
             });
             toast({ description: 'Remarks saved.', variant: 'success' });
+            refreshTable();
+            loadReport(activeFilters.filters);
         } catch {
             toast({ description: 'Failed to save remarks.', variant: 'error' });
         }
     }
-    const reportRows = useMemo(() => rows.map(toRecord), [rows]);
+
+    function renderRow(row: ApiDailyTaskRow) {
+        return (
+            <div className={cn('px-4 py-3 text-sm', GRID)} data-cy="daily-task-row">
+                <span className="font-mono text-xs text-neutral-600">{row.batch_code}</span>
+                <span className="font-medium text-ink">{row.task}</span>
+                <span className="max-w-[200px] truncate text-xs text-neutral-500" title={row.description ?? ''}>
+                    {row.description}
+                </span>
+                <span className="font-mono text-xs text-neutral-600">{row.time_goal}h</span>
+                <span>
+                    {row.on_leave ? (
+                        <span className="font-mono text-xs text-neutral-400">0h</span>
+                    ) : (
+                        <input
+                            type="number"
+                            min={0}
+                            defaultValue={row.time_spent}
+                            onBlur={(e) => updateTimeSpent(row.id, Number(e.target.value))}
+                            className="h-8 w-16 rounded-md border border-neutral-200 px-2 font-mono text-xs focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                            data-cy="daily-task-input-time-spent"
+                        />
+                    )}
+                </span>
+                <span className="max-w-[220px]">
+                    {row.on_leave ? (
+                        <span
+                            className="inline-flex items-center rounded-pill bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600"
+                            title={row.leave_reason ?? ''}
+                        >
+                            {row.leave_reason}
+                        </span>
+                    ) : (
+                        <input
+                            type="text"
+                            defaultValue={row.remarks ?? ''}
+                            placeholder="Add remarks..."
+                            onBlur={(e) => {
+                                if (e.target.value.trim() !== (row.remarks ?? '').trim()) {
+                                    updateRemarks(row.id, e.target.value);
+                                }
+                            }}
+                            className="h-8 w-full min-w-[140px] rounded-md border border-transparent px-2 text-xs text-neutral-600 transition-colors hover:border-neutral-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                            data-cy="daily-task-input-remarks"
+                        />
+                    )}
+                </span>
+                <span className="text-neutral-600">{row.trainee}</span>
+                <span className="text-neutral-600">{row.trainer}</span>
+                <span className="font-mono text-xs text-neutral-600">{row.date?.slice(0, 10)}</span>
+            </div>
+        );
+    }
+
     const totalTimeSpent = reportRows.reduce((sum, t) => sum + t.timeSpent, 0);
     const dateRangeLabel =
-        appliedFilters.dateFrom || appliedFilters.dateTo
-            ? `${appliedFilters.dateFrom || 'Start'} – ${appliedFilters.dateTo || 'Present'}`
+        activeFilters.filters.date_from || activeFilters.filters.date_to
+            ? `${activeFilters.filters.date_from || 'Start'} – ${activeFilters.filters.date_to || 'Present'}`
             : 'All dates';
     const printGeneratedAt = new Date().toLocaleString('en-PH', {
         dateStyle: 'medium',
         timeStyle: 'short',
     });
+
     return (
         <TasksPrimaryLayout data-cy="daily-task-tasks-primary-layout-1">
             <div data-cy="daily-task-div-1">
                 <div
-                    className="no-print mb-3 flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-3"
-                    data-cy="daily-task-div-58"
+                    className="no-print mb-3 flex items-start gap-1.5 rounded-lg border border-neutral-200 bg-white p-3 text-[11px] text-neutral-400"
+                    data-cy="daily-task-div-showing-completed-tasks-only-open-or"
                 >
-                    <div
-                        className="flex flex-wrap items-end gap-2"
-                        data-cy="daily-task-div-59"
-                    >
-                        <div data-cy="daily-task-div-60">
-                            <label
-                                className="mb-1 block text-[11px] font-medium text-neutral-500"
-                                data-cy="daily-task-label-date-from"
-                            >
-                                Date from
-                            </label>
-                            <input
-                                type="date"
-                                value={draftFilters.dateFrom}
-                                onChange={(e) =>
-                                    setDraftFilters((f) => ({
-                                        ...f,
-                                        dateFrom: e.target.value,
-                                    }))
-                                }
-                                className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                data-cy="daily-task-input-date"
-                            />
-                        </div>
-                        <div data-cy="daily-task-div-63">
-                            <label
-                                className="mb-1 block text-[11px] font-medium text-neutral-500"
-                                data-cy="daily-task-label-date-to"
-                            >
-                                Date to
-                            </label>
-                            <input
-                                type="date"
-                                value={draftFilters.dateTo}
-                                onChange={(e) =>
-                                    setDraftFilters((f) => ({
-                                        ...f,
-                                        dateTo: e.target.value,
-                                    }))
-                                }
-                                className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                data-cy="daily-task-input-date-2"
-                            />
-                        </div>
-                        <div
-                            className="w-full sm:w-44"
-                            data-cy="daily-task-div-66"
-                        >
-                            <label
-                                className="mb-1 block text-[11px] font-medium text-neutral-500"
-                                data-cy="daily-task-label-batch"
-                            >
-                                Batch
-                            </label>
-                            <Dropdown
-                                options={[
-                                    'Batch',
-                                    ...batches.map((b) => b.batch_code),
-                                ]}
-                                value={draftFilters.batch}
-                                placeholder="Batch"
-                                onChange={(v) =>
-                                    setDraftFilters((f) => ({
-                                        ...f,
-                                        batch: v === 'Batch' ? '' : v,
-                                    }))
-                                }
-                                data-cy="daily-task-dropdown-batch-2"
-                            />
-                        </div>
-                        <div
-                            className="w-full sm:w-52"
-                            data-cy="daily-task-div-69"
-                        >
-                            <label
-                                className="mb-1 block text-[11px] font-medium text-neutral-500"
-                                data-cy="daily-task-label-trainee"
-                            >
-                                Trainee
-                            </label>
-                            <MultiSelectDropdown
-                                options={trainees.map(personLabel)}
-                                value={draftFilters.trainees}
-                                placeholder="Trainee"
-                                onChange={(v) =>
-                                    setDraftFilters((f) => ({
-                                        ...f,
-                                        trainees: v,
-                                    }))
-                                }
-                                data-cy="daily-task-multi-select-dropdown-trainee"
-                            />
-                        </div>
-                        <div
-                            className="w-full sm:w-52"
-                            data-cy="daily-task-div-72"
-                        >
-                            <label
-                                className="mb-1 block text-[11px] font-medium text-neutral-500"
-                                data-cy="daily-task-label-trainer"
-                            >
-                                Trainer
-                            </label>
-                            <MultiSelectDropdown
-                                options={trainers.map(personLabel)}
-                                value={draftFilters.trainers}
-                                placeholder="Trainer"
-                                onChange={(v) =>
-                                    setDraftFilters((f) => ({
-                                        ...f,
-                                        trainers: v,
-                                    }))
-                                }
-                                data-cy="daily-task-multi-select-dropdown-trainer"
-                            />
-                        </div>
-                        <div
-                            className="ml-auto flex gap-2"
-                            data-cy="daily-task-div-75"
-                        >
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={X}
-                                onClick={cancelFilters}
-                                data-cy="daily-task-button-cancel-filters"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={applyFilters}
-                                data-cy="daily-task-button-apply-filters"
-                            >
-                                Filter
-                            </Button>
-                        </div>
-                    </div>
-                    <div
-                        className="flex items-start gap-1.5 text-[11px] text-neutral-400"
-                        data-cy="daily-task-div-showing-completed-tasks-only-open-or"
-                    >
-                        <Info
-                            size={12}
-                            className="mt-0.5 shrink-0"
-                            data-cy="daily-task-info-79"
-                        />
-                        {
-                            'Showing completed tasks only. Open or locked tasks aren’t part of the Daily Task Sheet report.'
-                        }
-                    </div>
+                    <Info size={12} className="mt-0.5 shrink-0" />
+                    {'Showing completed tasks only. Open or locked tasks aren’t part of the Daily Task Sheet report.'}
                 </div>
 
-                <div
-                    className="no-print mb-3 flex items-center justify-between"
-                    data-cy="daily-task-div-80"
-                >
-                    <span
-                        className="text-xs text-neutral-500"
-                        data-cy="daily-task-span-record"
-                    >
-                        {loading
-                            ? 'Loading…'
-                            : `${reportRows.length} record${reportRows.length === 1 ? '' : 's'}`}
+                <div className="no-print mb-3 flex items-center justify-between" data-cy="daily-task-div-80">
+                    <span className="text-xs text-neutral-500" data-cy="daily-task-span-record">
+                        {`${reportRows.length} record${reportRows.length === 1 ? '' : 's'}`}
                     </span>
                     <Button
                         variant="secondary"
@@ -373,224 +296,22 @@ export default function DailyTaskSheetPage() {
                     </Button>
                 </div>
 
-                <div
-                    className="no-print overflow-hidden rounded-lg border border-neutral-200 bg-white"
-                    data-cy="daily-task-div-83"
-                >
-                    <div
-                        className="lss-scrollbar overflow-x-auto"
-                        data-cy="daily-task-div-84"
-                    >
-                        <table
-                            className="w-full min-w-[1020px] border-collapse text-sm"
-                            data-cy="daily-task-table-85"
-                        >
-                            <thead data-cy="daily-task-thead-86">
-                                <tr
-                                    className="bg-neutral-50 text-left text-xs font-medium text-neutral-500"
-                                    data-cy="daily-task-tr-87"
-                                >
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-batch-2"
-                                    >
-                                        Batch
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-task-2"
-                                    >
-                                        Task
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-description-2"
-                                    >
-                                        Description
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-time-goal-2"
-                                    >
-                                        Time goal
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-time-spent"
-                                    >
-                                        Time spent
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-remarks"
-                                    >
-                                        Remarks
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-trainee-2"
-                                    >
-                                        Trainee
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-trainer-2"
-                                    >
-                                        Trainer
-                                    </th>
-                                    <th
-                                        className="px-4 py-2.5 font-medium"
-                                        data-cy="daily-task-th-date-2"
-                                    >
-                                        Date
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody data-cy="daily-task-tbody-97">
-                                {reportRows.map((t) => (
-                                    <tr
-                                        key={t.id}
-                                        className="border-t border-neutral-100"
-                                        data-cy="daily-task-tr-98"
-                                    >
-                                        <td
-                                            className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                            data-cy="daily-task-td-99"
-                                        >
-                                            {t.batchNo}
-                                        </td>
-                                        <td
-                                            className="px-4 py-2.5 font-medium text-ink"
-                                            data-cy="daily-task-td-100"
-                                        >
-                                            {t.task}
-                                        </td>
-                                        <td
-                                            className="max-w-[200px] truncate px-4 py-2.5 text-xs text-neutral-500"
-                                            title={t.description}
-                                            data-cy="daily-task-td-t-description-2"
-                                        >
-                                            {t.description}
-                                        </td>
-                                        <td
-                                            className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                            data-cy="daily-task-td-h-2"
-                                        >
-                                            {t.timeGoal}h
-                                        </td>
-                                        <td
-                                            className="px-4 py-2.5"
-                                            data-cy="daily-task-td-103"
-                                        >
-                                            {t.onLeave ? (
-                                                <span
-                                                    className="font-mono text-xs text-neutral-400"
-                                                    data-cy="daily-task-span-0h"
-                                                >
-                                                    0h
-                                                </span>
-                                            ) : (
-                                                <input
-                                                    type="number"
-                                                    min={0}
-                                                    value={t.timeSpent}
-                                                    onChange={(e) =>
-                                                        updateTimeSpent(
-                                                            Number(t.id),
-                                                            Number(
-                                                                e.target.value,
-                                                            ),
-                                                        )
-                                                    }
-                                                    className="h-8 w-16 rounded-md border border-neutral-200 px-2 font-mono text-xs focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                                    data-cy="daily-task-input-number"
-                                                />
-                                            )}
-                                        </td>
-                                        <td
-                                            className="max-w-[220px] px-4 py-2.5"
-                                            data-cy="daily-task-td-106"
-                                        >
-                                            {t.onLeave ? (
-                                                <span
-                                                    className="inline-flex items-center rounded-pill bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600"
-                                                    title={t.leaveReason ?? ''}
-                                                    data-cy="daily-task-span-107"
-                                                >
-                                                    {t.leaveReason}
-                                                </span>
-                                            ) : (
-                                                <input
-                                                    type="text"
-                                                    defaultValue={
-                                                        t.remarks ?? ''
-                                                    }
-                                                    placeholder="Add remarks..."
-                                                    onBlur={(e) => {
-                                                        if (
-                                                            e.target.value.trim() !==
-                                                            (
-                                                                t.remarks ?? ''
-                                                            ).trim()
-                                                        )
-                                                            updateRemarks(
-                                                                Number(t.id),
-                                                                e.target.value,
-                                                            );
-                                                    }}
-                                                    className="h-8 w-full min-w-[140px] rounded-md border border-transparent px-2 text-xs text-neutral-600 transition-colors hover:border-neutral-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                                    data-cy="daily-task-input-add-remarks"
-                                                />
-                                            )}
-                                        </td>
-                                        <td
-                                            className="px-4 py-2.5 text-neutral-600"
-                                            data-cy="daily-task-td-109"
-                                        >
-                                            {t.trainee}
-                                        </td>
-                                        <td
-                                            className="px-4 py-2.5 text-neutral-600"
-                                            data-cy="daily-task-td-110"
-                                        >
-                                            {t.trainer}
-                                        </td>
-                                        <td
-                                            className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                            data-cy="daily-task-td-111"
-                                        >
-                                            {t.date}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {!loading && reportRows.length === 0 && (
-                                    <tr data-cy="daily-task-tr-112">
-                                        <td
-                                            colSpan={9}
-                                            className="px-4 py-10 text-center text-xs text-neutral-400"
-                                            data-cy="daily-task-td-no-completed-records-match-your-filters"
-                                        >
-                                            No completed records match your
-                                            filters.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                <div className="no-print">
+                    <DataTableCardField<ApiDailyTaskRow>
+                        apiUrl="/tasks/daily-task"
+                        apiQueryKey="daily-task-sheet"
+                        columns={columns}
+                        defaultSortBy="date"
+                        listHeader={listHeader}
+                        renderCard={(row) => renderRow(row)}
+                        onRefreshRef={(fn) => setRefreshTable(() => fn)}
+                        onFiltersChange={(filters, search) => setActiveFilters({ filters, search })}
+                    />
                 </div>
 
-                <div
-                    className="no-print mt-3 flex justify-end text-xs text-neutral-500"
-                    data-cy="daily-task-div-total-time-spent-filtered"
-                >
+                <div className="no-print mt-3 flex justify-end text-xs text-neutral-500" data-cy="daily-task-div-total-time-spent-filtered">
                     Total time spent (filtered):{' '}
-                    <span
-                        className="ml-1 font-mono font-semibold text-ink"
-                        data-cy="daily-task-span-h"
-                    >
-                        {totalTimeSpent}h
-                    </span>
+                    <span className="ml-1 font-mono font-semibold text-ink">{totalTimeSpent}h</span>
                 </div>
 
                 <DailyTaskSheetPrint
