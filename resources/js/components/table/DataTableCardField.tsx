@@ -124,7 +124,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
 
     return (
         <div className="2xl:min-w-7x mx-auto mt-2 w-full">
-            {statusFilterOptions && statusFilterOptions.length > 0 && (
+            {/* {statusFilterOptions && statusFilterOptions.length > 0 && (
                 <div className="mb-4">
                     <StatusFilter
                         value={c.customStatusScope}
@@ -132,7 +132,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                         tabs={statusFilterOptions}
                     />
                 </div>
-            )}
+            )} */}
 
             {enableViewToggle && (
                 <div className="mb-3 flex justify-end">
@@ -165,6 +165,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                         columnFilters={c.columnFilters}
                         onStatusChange={c.handleStatusChange}
                         onColumnFilter={c.handleColumnFilter}
+                        statusFilterOptions={statusFilterOptions}
                     />
                 }
             />

@@ -287,7 +287,10 @@ export default function TasksPage() {
                     </span>
                 </div>
                 <div data-cy="index-div-priority">
-                    <TaskPriorityBadge priority={row.priority} data-cy="index-badge-priority" />
+                    <TaskPriorityBadge
+                        priority={row.priority}
+                        data-cy="index-badge-priority"
+                    />
                 </div>
                 <TextCell muted data-cy="index-text-cell-batch">
                     {row.batch?.batch_code ?? '—'}
@@ -327,21 +330,7 @@ export default function TasksPage() {
                     className="mb-4 flex items-center justify-between"
                     data-cy="index-div-2"
                 >
-                    <div data-cy="index-div-heading">
-                        {/* <h2
-                            className="text-sm font-semibold text-ink"
-                            data-cy="index-h2-task-management"
-                        >
-                            Task management
-                        </h2>
-                        <p
-                            className="text-xs text-neutral-500"
-                            data-cy="index-p-editable-any-status"
-                        >
-                            Tasks can be edited at any time, regardless of
-                            status.
-                        </p> */}
-                    </div>
+                    <div data-cy="index-div-heading"></div>
                     <Button
                         variant="primary"
                         icon={Plus}

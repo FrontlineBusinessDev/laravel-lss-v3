@@ -9,13 +9,14 @@ import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { Dropdown } from '../../Dropdown';
-import { StatusFilter } from './StatusFilter';
+import { StatusFilter, StatusFilterTab } from './StatusFilter';
 
 interface CardFilterPanelProps<T> {
     filterCols: ColumnDef<T>[];
     enableStatusFilter: boolean;
     statusScope: string;
     columnFilters: Record<string, string | string[]>;
+    statusFilterOptions?: StatusFilterTab[];
     onStatusChange: (scope: string) => void;
     onColumnFilter: (col: string, value: string | string[]) => void;
 }
@@ -27,6 +28,7 @@ export function CardFilterPanel<T>({
     columnFilters,
     onStatusChange,
     onColumnFilter,
+    statusFilterOptions,
 }: CardFilterPanelProps<T>) {
     return (
         <div className="mt-3 space-y-4 rounded-xl border border-slate-200 p-4">
@@ -38,6 +40,7 @@ export function CardFilterPanel<T>({
                     <StatusFilter
                         value={statusScope}
                         onChange={onStatusChange}
+                        tabs={statusFilterOptions}
                     />
                 </div>
             )}
