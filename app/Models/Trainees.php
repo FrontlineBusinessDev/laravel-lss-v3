@@ -20,6 +20,7 @@ class Trainees extends Model
 
     protected $fillable = [
         'status',
+        'user_id',
         'batch_id',
         'school_id',
         'avatar_path',
@@ -69,6 +70,11 @@ class Trainees extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(Batches::class, 'batch_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
     public function payments()
     {

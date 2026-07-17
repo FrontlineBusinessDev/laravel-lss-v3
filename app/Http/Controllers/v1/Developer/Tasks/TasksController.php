@@ -22,8 +22,8 @@ class TasksController extends BaseController
     protected string $model = Task::class;
     protected string $view = 'developer/tasks/index';
     protected array $searchable = ['task'];
-    protected array $filterable = ['status', 'batch_id', 'trainee_id', 'trainer_id', 'date_from', 'date_to'];
-    protected array $exactFilters = ['status', 'batch_id', 'trainee_id', 'trainer_id'];
+    protected array $filterable = ['status', 'priority', 'batch_id', 'trainee_id', 'trainer_id', 'date_from', 'date_to'];
+    protected array $exactFilters = ['status', 'priority', 'batch_id', 'trainee_id', 'trainer_id'];
     protected array $sortable = ['date', 'status', 'created_at'];
     protected string $sortBy = 'date';
     protected array $activeColumns = ['id', 'task'];
@@ -70,7 +70,7 @@ class TasksController extends BaseController
             $query->where('app_tasks.status', $status);
         }
 
-        foreach (['batch_id', 'trainee_id', 'trainer_id'] as $col) {
+        foreach (['priority', 'batch_id', 'trainee_id', 'trainer_id'] as $col) {
             $value = $filters[$col] ?? null;
             if ($value === null || $value === '') {
                 continue;
@@ -143,6 +143,7 @@ class TasksController extends BaseController
             'task' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'time_goal' => ['required', 'numeric', 'min:0.5'],
+            'priority' => ['nullable', 'in:high,medium,low'],
         ];
     }
 
@@ -157,6 +158,7 @@ class TasksController extends BaseController
             'task' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'time_goal' => ['required', 'numeric', 'min:0.5'],
+            'priority' => ['nullable', 'in:high,medium,low'],
         ];
     }
 
@@ -181,6 +183,7 @@ class TasksController extends BaseController
                     'task' => $validated['task'],
                     'description' => $validated['description'] ?? null,
                     'time_goal' => $validated['time_goal'],
+                    'priority' => $validated['priority'] ?? null,
                     'status' => 'open',
                     'time_spent' => 0,
                 ])->id;

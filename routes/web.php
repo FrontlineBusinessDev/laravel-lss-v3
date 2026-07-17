@@ -265,7 +265,15 @@ Route::middleware('auth')->group(function () {
     // Trainee-only placeholder module — same rationale as above.
     Route::middleware('role:trainee')->prefix('trainee')->name('trainee.')->group(function () {
         Route::get('/dashboard', [TraineeDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/tasks', [TraineeTasksController::class, 'index'])->name('tasks');
+        Route::middleware('permission:' . Permissions::MANAGE_OWN_TASKS)
+            ->prefix('tasks')->name('tasks.')->group(function () {
+                Route::get('/', [TraineeTasksController::class, 'index'])->name('index');
+                Route::get('/pagination-search', [TraineeTasksController::class, 'paginationSearch'])->name('pagination-search');
+                Route::patch('/{id}/run', [TraineeTasksController::class, 'runAction'])->name('run');
+                Route::patch('/{id}/stop', [TraineeTasksController::class, 'stopAction'])->name('stop');
+                Route::patch('/{id}/complete', [TraineeTasksController::class, 'completeAction'])->name('complete');
+                Route::patch('/{id}/remarks', [TraineeTasksController::class, 'updateRemarks'])->name('remarks');
+            });
         Route::get('/announcements', [TraineeAnnouncementsController::class, 'index'])->name('announcements');
         Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
         Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');

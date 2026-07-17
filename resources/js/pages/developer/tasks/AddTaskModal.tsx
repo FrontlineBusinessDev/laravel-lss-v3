@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/Button';
-import { TextField, TextAreaField } from '@/components/FormField';
+import { TextField, TextAreaField, SelectField } from '@/components/FormField';
 import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
 import { toDateInputValue } from '@/lib/utils';
+import type { TaskPriority } from '@/types/task';
+
+const PRIORITY_SELECT_OPTIONS = ['', 'High', 'Medium', 'Low'];
 
 interface PersonOption {
   id: number;
@@ -23,6 +26,7 @@ export interface TaskCreatePayload {
   task: string;
   description: string;
   time_goal: number;
+  priority: TaskPriority | '';
 }
 export interface TaskUpdatePayload {
   mode: 'edit';
@@ -34,6 +38,7 @@ export interface TaskUpdatePayload {
   task: string;
   description: string;
   time_goal: number;
+  priority: TaskPriority | '';
 }
 export type TaskSavePayload = TaskCreatePayload | TaskUpdatePayload;
 
@@ -44,6 +49,7 @@ export interface EditableTaskRow {
   task: string;
   description: string | null;
   time_goal: string | number;
+  priority: TaskPriority | null;
   batch: { id: number; batch_code: string } | null;
   trainee: { id: number; first_name: string; last_name: string } | null;
   trainer: { id: number; first_name: string; last_name: string } | null;
@@ -59,6 +65,7 @@ interface FormValues {
   task: string;
   description: string;
   timeGoal: string;
+  priority: string;
 }
 interface AddTaskModalProps {
   open: boolean;
@@ -80,7 +87,8 @@ function emptyValues(): FormValues {
     trainerLabel: '',
     task: '',
     description: '',
-    timeGoal: ''
+    timeGoal: '',
+    priority: ''
   };
 }
 function valuesFromRow(row: EditableTaskRow): FormValues {
@@ -93,7 +101,8 @@ function valuesFromRow(row: EditableTaskRow): FormValues {
     trainerLabel: row.trainer ? personLabel(row.trainer) : '',
     task: row.task,
     description: row.description ?? '',
-    timeGoal: String(Number(row.time_goal))
+    timeGoal: String(Number(row.time_goal)),
+    priority: row.priority ? row.priority[0].toUpperCase() + row.priority.slice(1) : ''
   };
 }
 
@@ -158,7 +167,8 @@ export function AddTaskModal({
       trainer_id: Number(values.trainerId),
       task: values.task.trim(),
       description: values.description.trim(),
-      time_goal: Number(values.timeGoal)
+      time_goal: Number(values.timeGoal),
+      priority: (values.priority.toLowerCase() as TaskPriority | '')
     };
     if (isEdit && editingTask) {
       onSave({ mode: 'edit', id: editingTask.id, trainee_id: Number(values.traineeIds[0]), ...shared });
@@ -231,6 +241,8 @@ export function AddTaskModal({
 
       <TextField label="Time goal (hours)" type="number" min={0} step="0.5" placeholder="8" value={values.timeGoal} onChange={e => set('timeGoal', e.target.value)} data-cy="add-task-modal-text-field-8" />
       {errors.timeGoal && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-14">{errors.timeGoal}</p>}
+
+      <SelectField label="Priority" options={PRIORITY_SELECT_OPTIONS} value={values.priority} onChange={e => set('priority', e.target.value)} data-cy="add-task-modal-select-field-priority" />
 
       <div className="mt-2 flex gap-2" data-cy="add-task-modal-div-15">
         <Button variant="secondary" className="flex-1" onClick={onClose} data-cy="add-task-modal-button-close">
