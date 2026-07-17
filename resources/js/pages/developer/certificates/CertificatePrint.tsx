@@ -1,13 +1,18 @@
 import { Award } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
+import type { CertificateTemplate, TemplateElement } from './types';
+
 export interface CertificateDoc {
-  key: string;
+  key: string | number;
   recipientName: string;
-  subtitle: string; // e.g. "College OJT \u2014 Information Technology" or seminar topic
+  subtitle: string; // e.g. "College OJT — Information Technology" or seminar topic
   citationText: string;
   certificateNo: string;
-  issuedDate?: string;
+  issuedDate?: string | null;
+  /** When set, the certificate renders using this template's positioned layout instead of the plain layout below. */
+  template?: CertificateTemplate | null;
 }
+
 interface CertificateSheetProps {
   doc: CertificateDoc;
   /** 'print': hidden on screen, rendered only inside the print media query.
@@ -17,19 +22,70 @@ interface CertificateSheetProps {
   breakAfter?: boolean;
 }
 
+function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
+  if (el.token === 'recipientName') return doc.recipientName;
+  if (el.token === 'subtitle') return doc.subtitle;
+  if (el.token === 'citationText') return doc.citationText;
+  if (el.token === 'certificateNo') return `Certificate No. ${doc.certificateNo}`;
+  if (el.token === 'issuedDate') return doc.issuedDate ? `Issued ${doc.issuedDate}` : 'Not yet issued';
+  return el.text ?? '';
+}
+
+function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; template: CertificateTemplate }) {
+  const aspect = template.orientation === 'portrait' ? '1 / 1.4142' : '1.4142 / 1';
+  return (
+    <div className="relative w-full max-w-2xl border-[3px] border-brand-700 bg-white shadow-card" style={{ aspectRatio: aspect }} data-cy="certificate-print-template-div-1">
+      {template.layout.map((el) => (
+        <div
+          key={el.id}
+          className="absolute overflow-hidden"
+          style={{
+            left: `${el.x}%`,
+            top: `${el.y}%`,
+            width: `${el.width}%`,
+            height: el.height ? `${el.height}%` : undefined,
+            fontSize: el.fontSize ? `${el.fontSize}px` : undefined,
+            fontWeight: el.fontWeight,
+            textAlign: el.align ?? 'left',
+            color: el.color,
+          }}
+          data-cy="certificate-print-template-element"
+        >
+          {el.type === 'line' && <div className="h-px w-full bg-ink" />}
+          {el.type === 'qr' && (
+            <div className="flex h-full w-full items-center justify-center border border-dashed border-neutral-300 text-[9px] text-neutral-400">
+              QR
+            </div>
+          )}
+          {(el.type === 'text' || el.type === 'image') && <span>{resolveElementText(el, doc)}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
  * A single certificate document. Shared by the "preview before printing" modal
  * and the hidden print layout so both are guaranteed to look identical, and by
  * the trainee-level Certificate tab so the design stays consistent everywhere
  * a certificate is rendered in the system.
  */
-export function CertificateSheet({
-  doc,
-  variant = 'preview',
-  breakAfter
-}: CertificateSheetProps) {
-  const wrapperClass = variant === 'print' ? `hidden print:flex print-area bg-white text-ink items-center justify-center p-10 ${breakAfter ? 'cert-page-break' : ''}` : 'flex items-center justify-center bg-neutral-50 p-4 sm:p-8 rounded-lg border border-dashed border-neutral-300';
-  return <div className={wrapperClass} data-cy="certificate-print-div-1">
+export function CertificateSheet({ doc, variant = 'preview', breakAfter }: CertificateSheetProps) {
+  const wrapperClass =
+    variant === 'print'
+      ? `hidden print:flex print-area bg-white text-ink items-center justify-center p-10 ${breakAfter ? 'cert-page-break' : ''}`
+      : 'flex items-center justify-center bg-neutral-50 p-4 sm:p-8 rounded-lg border border-dashed border-neutral-300';
+
+  if (doc.template) {
+    return (
+      <div className={wrapperClass} data-cy="certificate-print-div-1">
+        <TemplateRenderedSheet doc={doc} template={doc.template} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={wrapperClass} data-cy="certificate-print-div-1">
       <div className="relative w-full max-w-2xl border-[3px] border-brand-700 bg-white p-6 sm:p-10 shadow-card" data-cy="certificate-print-div-2">
         <div className="absolute inset-2 border border-brand-200" aria-hidden="true" data-cy="certificate-print-div-3" />
         <div className="relative flex flex-col items-center text-center" data-cy="certificate-print-div-4">
@@ -61,16 +117,17 @@ export function CertificateSheet({
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }
 
 /** Renders one certificate per document for the hidden print layout, each on its own page. */
-export function CertificateBatchPrint({
-  docs
-}: {
-  docs: CertificateDoc[];
-}) {
-  return <>
-      {docs.map((doc, i) => <CertificateSheet key={doc.key} doc={doc} variant="print" breakAfter={i < docs.length - 1} data-cy="certificate-print-certificate-sheet-20" />)}
-    </>;
+export function CertificateBatchPrint({ docs }: { docs: CertificateDoc[] }) {
+  return (
+    <>
+      {docs.map((doc, i) => (
+        <CertificateSheet key={doc.key} doc={doc} variant="print" breakAfter={i < docs.length - 1} data-cy="certificate-print-certificate-sheet-20" />
+      ))}
+    </>
+  );
 }

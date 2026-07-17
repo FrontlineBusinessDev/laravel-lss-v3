@@ -40,7 +40,11 @@ export default function DailyTaskSheetTab() {
 
     const renderRow = (row: ApiTask, _actions: CardActions) => {
         const menu: RowMenuAction[] = [
-            { label: 'Open', icon: FolderOpen, onClick: () => setViewTask(row) },
+            {
+                label: 'Open',
+                icon: FolderOpen,
+                onClick: () => setViewTask(row),
+            },
         ];
 
         return (
@@ -67,14 +71,20 @@ export default function DailyTaskSheetTab() {
                 <TextCell muted data-cy="daily-task-sheet-text-cell-time-spent">
                     {Number(row.time_spent)}h
                 </TextCell>
-                <TextCell muted data-cy="daily-task-sheet-text-cell-completed-at">
+                <TextCell
+                    muted
+                    data-cy="daily-task-sheet-text-cell-completed-at"
+                >
                     {formatDate(row.completed_at)}
                 </TextCell>
                 <div
                     className="flex items-center justify-end sm:justify-self-end"
                     data-cy="daily-task-sheet-div-actions"
                 >
-                    <RowMenu actions={menu} data-cy="daily-task-sheet-row-menu" />
+                    <RowMenu
+                        actions={menu}
+                        data-cy="daily-task-sheet-row-menu"
+                    />
                 </div>
             </div>
         );
@@ -101,8 +111,14 @@ export default function DailyTaskSheetTab() {
                 data-cy="daily-task-sheet-modal-view-task"
             >
                 {viewTask && (
-                    <div className="flex flex-col gap-3 text-sm" data-cy="daily-task-sheet-div-view">
-                        <p className="text-neutral-600" data-cy="daily-task-sheet-p-description">
+                    <div
+                        className="flex flex-col gap-3 text-sm"
+                        data-cy="daily-task-sheet-div-view"
+                    >
+                        <p
+                            className="text-neutral-600"
+                            data-cy="daily-task-sheet-p-description"
+                        >
                             {viewTask.description ?? 'No description.'}
                         </p>
                         <div
@@ -110,25 +126,33 @@ export default function DailyTaskSheetTab() {
                             data-cy="daily-task-sheet-div-details"
                         >
                             <div>
-                                <span className="text-neutral-500">Category/Project</span>
+                                <span className="text-neutral-500">
+                                    Category/Project
+                                </span>
                                 <div className="font-medium text-ink">
                                     {viewTask.batch?.batch_code ?? '—'}
                                 </div>
                             </div>
                             <div>
-                                <span className="text-neutral-500">Completed on</span>
+                                <span className="text-neutral-500">
+                                    Completed on
+                                </span>
                                 <div className="font-mono font-medium text-ink">
                                     {formatDate(viewTask.completed_at)}
                                 </div>
                             </div>
                             <div>
-                                <span className="text-neutral-500">Time goal</span>
+                                <span className="text-neutral-500">
+                                    Time goal
+                                </span>
                                 <div className="font-mono font-medium text-ink">
                                     {Number(viewTask.time_goal)}h
                                 </div>
                             </div>
                             <div>
-                                <span className="text-neutral-500">Time spent</span>
+                                <span className="text-neutral-500">
+                                    Time spent
+                                </span>
                                 <div className="font-mono font-medium text-ink">
                                     {Number(viewTask.time_spent)}h
                                 </div>
@@ -139,7 +163,9 @@ export default function DailyTaskSheetTab() {
                                 <span className="mb-1 block text-xs font-medium text-neutral-600">
                                     Remarks
                                 </span>
-                                <p className="text-neutral-600">{viewTask.remarks}</p>
+                                <p className="text-neutral-600">
+                                    {viewTask.remarks}
+                                </p>
                             </div>
                         )}
                     </div>

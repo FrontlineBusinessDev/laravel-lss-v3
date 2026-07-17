@@ -20,7 +20,10 @@ use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
 use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
 use App\Http\Controllers\v1\Developer\Developer\SystemLogController;
 use App\Http\Controllers\v1\Developer\Biometrics\BiometricsController;
-use App\Http\Controllers\v1\Developer\Certificate\CertificateController;
+use App\Http\Controllers\v1\Developer\Certificate\CitationController;
+use App\Http\Controllers\v1\Developer\Certificate\CertificateTemplateController;
+use App\Http\Controllers\v1\Developer\Certificate\SeminarCertificateController;
+use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
 use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveController;
@@ -227,8 +230,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/seminars', [SeminarController::class, 'index'])->name('seminars.index');
-    Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');
+    Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // ==========================================
+    // CERTIFICATES MODULE GROUP — Trainees / Seminar / Citations are distinct
+    // routes sharing CertificatesPrimaryLayout, matching the settings pattern.
+    // ==========================================
+    Route::prefix('certificates')->name('certificates.')->group(function () {
+        Route::get('/', fn() => redirect()->route('certificates.trainees.index'))->name('index');
+        Route::get('/trainees', [TraineeCertificateController::class, 'index'])->name('trainees.index');
+        Route::get('/trainees/pagination-search', [TraineeCertificateController::class, 'paginationSearch'])->name('trainees.pagination-search');
+        Route::post('/trainees/{trainee}/issue', [TraineeCertificateController::class, 'issue'])->name('trainees.issue');
+
+        Route::get('/seminar', [SeminarCertificateController::class, 'index'])->name('seminar.index');
+        Route::get('/seminar/pagination-search', [SeminarCertificateController::class, 'paginationSearch'])->name('seminar.pagination-search');
+        Route::post('/seminar/{participant}/issue', [SeminarCertificateController::class, 'issue'])->name('seminar.issue');
+    });
+    // Citations page (index/paginationSearch render the CSR shell + serve the
+    // DataTableCardField feed) and Templates JSON API — both come free from
+    // BaseController via crudModule, same as the settings sub-modules.
+    Route::crudModule('/certificates/citations', CitationController::class, 'certificates.citations');
+    Route::crudModule('/certificates/templates', CertificateTemplateController::class, 'certificates.templates');
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
     Route::crudModule('/announcements', AnnoucementController::class, 'announcements');
@@ -274,6 +297,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('permission:' . Permissions::MANAGE_OWN_TASKS)
             ->prefix('tasks')->name('tasks.')->group(function () {
                 Route::get('/', [TraineeTasksController::class, 'index'])->name('index');
+                Route::get('/daily-task', [TraineeTasksController::class, 'dailyTask'])->name('daily-task');
                 Route::get('/pagination-search', [TraineeTasksController::class, 'paginationSearch'])->name('pagination-search');
                 Route::patch('/{id}/run', [TraineeTasksController::class, 'runAction'])->name('run');
                 Route::patch('/{id}/stop', [TraineeTasksController::class, 'stopAction'])->name('stop');

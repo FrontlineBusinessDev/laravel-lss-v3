@@ -91,6 +91,11 @@ class Trainees extends Model
         return $this->hasMany(TraineeDocument::class, 'trainee_id');
     }
 
+    public function certificate()
+    {
+        return $this->hasOne(TraineeCertificate::class, 'trainee_id');
+    }
+
     public function learningOutcomes(): BelongsToMany
     {
         return $this->belongsToMany(

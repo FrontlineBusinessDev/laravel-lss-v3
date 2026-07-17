@@ -26,6 +26,11 @@ class TasksController
         return Inertia::render('trainee/tasks/index')->asCsr();
     }
 
+    public function dailyTask(): Response
+    {
+        return Inertia::render('trainee/tasks/daily-task')->asCsr();
+    }
+
     /**
      * Serves both dashboard tabs from one endpoint via a `view` param:
      * 'open' (default, "Tasks" tab) or 'completed' ("Daily Task Sheet" tab).

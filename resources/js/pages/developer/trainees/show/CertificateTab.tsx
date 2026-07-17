@@ -7,14 +7,30 @@ import {
     CertificateBatchPrint,
     CertificateSheet,
 } from '@/pages/developer/certificates/CertificatePrint';
-import {
-    renderCitation,
-    selectableCitations,
-    tokensForTrainee,
-} from '@/pages/developer/certificates/certificateUtils';
 import type { Trainee } from '@/types';
 import { Info, Printer, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+
+/** Local (mock-data-shaped) citation helpers for this trainee-detail sub-tab — kept independent of the real /certificates module's citation utils, which operate on the new API row shapes. */
+function selectableMockCitations(citationId: string) {
+    return certificateCitations.filter(
+        (c) =>
+            (c.status === 'active' || c.id === citationId) &&
+            (c.appliesTo === 'Trainee' || c.appliesTo === 'Both'),
+    );
+}
+function renderMockCitation(bodyText: string, trainee: Trainee): string {
+    const tokens: Record<string, string | number> = {
+        name: trainee.name ?? '',
+        school: trainee.school,
+        program: trainee.programType,
+        industry: trainee.industry,
+        hours: trainee.requiredHrs,
+    };
+    return bodyText.replace(/{{\s*(\w+)\s*}}/g, (_match, key: string) =>
+        key in tokens ? String(tokens[key]) : '—',
+    );
+}
 
 export default function CertificateTab({ trainee }: { trainee: Trainee }) {
     const { showToast } = useToast();
@@ -34,15 +50,11 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
     const [regenerating, setRegenerating] = useState(false);
     const [printing, setPrinting] = useState(false);
     const canIssue = trainee.completedHrs >= trainee.requiredHrs;
-    const options = selectableCitations(
-        certificateCitations,
-        'Trainee',
-        citationId,
-    );
+    const options = selectableMockCitations(citationId);
     const selectedCitation =
         options.find((c) => c.id === citationId) ?? options[0];
     const citationText = selectedCitation
-        ? renderCitation(selectedCitation.bodyText, tokensForTrainee(trainee))
+        ? renderMockCitation(selectedCitation.bodyText, trainee)
         : `This is to certify that ${trainee.name} has completed ${trainee.requiredHrs} hours of training in ${trainee.industry} under the ${trainee.programType} program.`;
     const handleGenerate = () => {
         setRegenerating(true);

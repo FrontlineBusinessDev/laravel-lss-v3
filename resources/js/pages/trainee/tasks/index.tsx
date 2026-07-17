@@ -15,7 +15,7 @@ import type { ColumnDef } from '@/types/reusable/data-table';
 import { loadLookupOptions } from '@/types/reusable/fields';
 import { TASK_PRIORITY_OPTIONS, type ApiTask } from '@/types/task';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import DailyTaskSheetTab from '@/pages/trainee/tasks/DailyTaskSheetTab';
+import TraineeTasksPrimaryLayout from '@/layouts/tasks/TraineeTasksPrimaryLayout';
 
 const DUE_BUCKET_OPTIONS = [
     { label: 'Overdue', value: 'overdue' },
@@ -65,9 +65,6 @@ const columns: ColumnDef<ApiTask>[] = [
 export default function TraineeTasksPage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'tasks' | 'daily-sheet'>(
-        'tasks',
-    );
     const [viewTask, setViewTask] = useState<ApiTask | null>(null);
 
     const invalidateOpenTasks = () =>
@@ -167,48 +164,15 @@ export default function TraineeTasksPage() {
     };
 
     return (
-        <TraineeLayout title="Tasks" data-cy="trainee-tasks-layout">
-            <div className="mb-4 flex gap-2" data-cy="trainee-tasks-div-tabs">
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('tasks')}
-                    className={cn(
-                        'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                        activeTab === 'tasks'
-                            ? 'bg-brand-500 text-white'
-                            : 'border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
-                    )}
-                    data-cy="trainee-tasks-button-tab-tasks"
-                >
-                    Tasks
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('daily-sheet')}
-                    className={cn(
-                        'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                        activeTab === 'daily-sheet'
-                            ? 'bg-brand-500 text-white'
-                            : 'border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
-                    )}
-                    data-cy="trainee-tasks-button-tab-daily-sheet"
-                >
-                    Daily Task Sheet
-                </button>
-            </div>
-
-            {activeTab === 'tasks' ? (
-                <DataTableCardField<ApiTask>
-                    apiUrl="/trainee/tasks"
-                    apiQueryKey="trainee-tasks-open"
-                    columns={columns}
-                    renderCard={renderRow}
-                    extraFilters={{ view: 'open' }}
-                    data-cy="trainee-tasks-data-table-card-field"
-                />
-            ) : (
-                <DailyTaskSheetTab data-cy="trainee-tasks-daily-task-sheet-tab" />
-            )}
+        <TraineeTasksPrimaryLayout data-cy="trainee-tasks-layout">
+            <DataTableCardField<ApiTask>
+                apiUrl="/trainee/tasks"
+                apiQueryKey="trainee-tasks-open"
+                columns={columns}
+                renderCard={renderRow}
+                extraFilters={{ view: 'open' }}
+                data-cy="trainee-tasks-data-table-card-field"
+            />
 
             <Modal
                 open={!!viewTask}
@@ -281,6 +245,6 @@ export default function TraineeTasksPage() {
                     </div>
                 )}
             </Modal>
-        </TraineeLayout>
+        </TraineeTasksPrimaryLayout>
     );
 }
