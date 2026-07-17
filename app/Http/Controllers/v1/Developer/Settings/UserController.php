@@ -78,7 +78,8 @@ class UserController extends BaseController
     protected function updateRules(Model $model): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'email',
