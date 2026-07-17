@@ -165,7 +165,7 @@ export function CardFilterPanel<T>({
                             const asyncValue = columnFilters[col.key];
 
                             return (
-                                <label key={col.key} className="block">
+                                <label key={col.key} className="block min-w-50">
                                     <span className="mb-1 block text-xs font-medium">
                                         {col.label}
                                     </span>
