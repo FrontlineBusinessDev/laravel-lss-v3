@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@/lib/router-compat';
 import { router } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';
-import { Menu, LogOut, UserCog } from 'lucide-react';
+import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
+import { Menu, LogOut, UserCog, KeyRound } from 'lucide-react';
 import { LogoMark } from './Logo';
 import { NotificationBell } from './NotificationBell';
 export function TopBar({
@@ -17,6 +18,7 @@ export function TopBar({
     role
   } = useAuth();
   const [open, setOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -53,6 +55,13 @@ export function TopBar({
             </button>
             <button onClick={() => {
           setOpen(false);
+          setChangePasswordOpen(true);
+        }} className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50" data-cy="top-bar-button-change-password">
+              <KeyRound size={14} className="shrink-0" data-cy="top-bar-key-round-16" />
+              Change password
+            </button>
+            <button onClick={() => {
+          setOpen(false);
           router.post('/logout');
         }} className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-danger-600 transition-colors hover:bg-danger-50" data-cy="top-bar-button-set-open-3">
               <LogOut size={14} className="shrink-0" data-cy="top-bar-log-out-17" />
@@ -60,5 +69,7 @@ export function TopBar({
             </button>
           </div>}
       </div>
+
+      <ChangePasswordModal open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} />
     </header>;
 }

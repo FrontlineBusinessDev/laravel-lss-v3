@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
 use App\Http\Controllers\v1\Developer\BaseController;
+use App\Mail\UserInviteMail;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
+use App\Support\PasswordSetupUrl;
+use App\Support\TraineeAccountLinker;
+use App\Support\TraineeCascadeDeleter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -48,8 +54,10 @@ class TraineesController extends BaseController
     ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
-    // Guards deletion if the trainee has uploaded files/documents attached
-    protected array $inUseRelations = ['documents'];
+    // Informational only: surfaced by inUse() so the frontend can warn before
+    // the type-to-confirm delete modal, since destroy() below cascades rather
+    // than hard-blocking on these relations.
+    protected array $inUseRelations = ['documents', 'tasks', 'leaveRequests', 'taskRatings'];
 
     /**
      * Eager-load the industry/program relations so the list serializes their
@@ -115,6 +123,58 @@ class TraineesController extends BaseController
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
         ];
+    }
+
+    /**
+     * Cascading hard-delete: documents/tasks/leave-requests/ratings are all
+     * restrictOnDelete FKs, so the DB would reject deleting a trainee that
+     * still has any of them. Per product decision this is destructive by
+     * design — TraineeCascadeDeleter removes everything under the trainee
+     * (payments/certificate/learning-outcomes cascade via DB FKs already).
+     */
+    public function destroy(int|string $id): JsonResponse
+    {
+        return DB::transaction(function () use ($id) {
+            $trainee = $this->newQuery()->lockForUpdate()->findOrFail($id);
+            $this->authorize('delete', $trainee);
+
+            abort_if($trainee->status === self::STATUS_ACTIVE, 422, 'Set to inactive before deleting.');
+
+            TraineeCascadeDeleter::delete($trainee);
+
+            return response()->json(null, 204);
+        });
+    }
+
+    /**
+     * Enable login for the trainee: creates a User account the first time
+     * (mirrors self-registration) and emails an invite, or simply reactivates
+     * a previously unlinked account on subsequent calls.
+     */
+    public function linkAccount(int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('linkAccount', $trainee);
+
+        [$user, $isNewAccount] = TraineeAccountLinker::link($trainee);
+
+        if ($isNewAccount) {
+            $resetUrl = PasswordSetupUrl::generate($user);
+            Mail::to($user->email)->queue(new UserInviteMail($user, $resetUrl));
+        }
+
+        return $this->sendResponse($trainee->fresh('user'), 'Account linked successfully.');
+    }
+
+    /** Disable login for the trainee without severing the account link. */
+    public function unlinkAccount(int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('unlinkAccount', $trainee);
+
+        TraineeAccountLinker::unlink($trainee);
+
+        return $this->sendResponse($trainee->fresh('user'), 'Account unlinked successfully.');
     }
 
     /**

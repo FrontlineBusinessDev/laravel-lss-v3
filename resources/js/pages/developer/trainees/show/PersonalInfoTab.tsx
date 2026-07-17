@@ -3,11 +3,93 @@ import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { SelectField, TextField } from '@/components/FormField';
 import { useToast } from '@/hooks/use-toast';
+import { apiFetchJson } from '@/lib/apiFetch';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { router } from '@inertiajs/react';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, KeyRound, Pencil, Unlink, X } from 'lucide-react';
 import { useState } from 'react';
+
+function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
+    const { toast } = useToast();
+    const [busy, setBusy] = useState(false);
+    const isLinked = trainee.user !== null;
+    const canLogin = trainee.user?.status === 'active';
+
+    const toggle = async () => {
+        setBusy(true);
+        try {
+            await apiFetchJson(
+                `/trainees/${trainee.id}/${canLogin ? 'unlink-account' : 'link-account'}`,
+                { method: 'PATCH' },
+            );
+            toast({
+                title: canLogin ? 'Account unlinked' : 'Account linked',
+                description: canLogin
+                    ? 'This trainee can no longer log in.'
+                    : isLinked
+                      ? 'This trainee can log in again.'
+                      : 'An invite email was sent to set up their password.',
+                variant: 'success',
+            });
+            router.reload({ only: ['trainee'] });
+        } catch (error) {
+            toast({
+                title: 'Action failed',
+                description:
+                    error instanceof ApiError ? error.message : undefined,
+                variant: 'error',
+            });
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <div
+            className="mt-4 flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between"
+            data-cy="personal-info-tab-account-section"
+        >
+            <div data-cy="personal-info-tab-account-info">
+                <div className="text-xs text-neutral-500">Account access</div>
+                <div className="mt-1 text-sm text-ink">
+                    {isLinked ? (
+                        <>
+                            {trainee.user!.email} —{' '}
+                            <span
+                                className={
+                                    canLogin
+                                        ? 'text-success-700'
+                                        : 'text-neutral-500'
+                                }
+                            >
+                                {canLogin
+                                    ? 'Can log in'
+                                    : 'Login disabled'}
+                            </span>
+                        </>
+                    ) : (
+                        'No account linked yet.'
+                    )}
+                </div>
+            </div>
+            <Button
+                variant={canLogin ? 'danger' : 'secondary'}
+                size="sm"
+                icon={canLogin ? Unlink : KeyRound}
+                disabled={busy}
+                onClick={() => void toggle()}
+                data-cy="personal-info-tab-button-toggle-account"
+            >
+                {canLogin
+                    ? 'Unlink account'
+                    : isLinked
+                      ? 'Link account'
+                      : 'Create & link account'}
+            </Button>
+        </div>
+    );
+}
 
 function Field({ label, value }: { label: string; value: string }) {
     return (
@@ -323,6 +405,7 @@ export default function PersonalInfoTab({ trainee }: Props) {
                     )}
                 </div>
             </div>
+            <AccountLinkSection trainee={trainee} />
         </TraineesDetailLayout>
     );
 }

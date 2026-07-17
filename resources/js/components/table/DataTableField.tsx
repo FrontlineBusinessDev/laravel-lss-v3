@@ -118,6 +118,7 @@ export function DataTableField<T extends Record<string, unknown>>({
     restoreUrl,
     archiveUrl,
     deleteUrl,
+    deleteConfirmText,
     modalTitle,
     onRestore,
     onArchive,
@@ -1286,6 +1287,11 @@ export function DataTableField<T extends Record<string, unknown>>({
                     label={
                         deleteTarget
                             ? formatCell(deleteTarget[columns[0]?.key])
+                            : undefined
+                    }
+                    confirmText={
+                        deleteTarget
+                            ? deleteConfirmText?.(deleteTarget)
                             : undefined
                     }
                     onCancel={() => setDeleteTarget(null)}

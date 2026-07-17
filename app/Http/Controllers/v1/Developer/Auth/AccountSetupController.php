@@ -4,10 +4,13 @@ namespace App\Http\Controllers\v1\Developer\Auth;
 
 use App\Http\Controllers\v1\Developer\Controller;
 use App\Http\Responses\InertiaPageResponse;
+use App\Mail\PasswordChangedMail;
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -44,15 +47,17 @@ class AccountSetupController extends Controller
 
         // Broker verifies the user + single-use token, then invokes the callback
         // to persist the hash; the token is invalidated on success (no replay).
+        $resetUser = null;
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, string $password): void {
+            function (User $user, string $password) use (&$resetUser): void {
                 $user->forceFill([
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
                 event(new PasswordReset($user));
+                $resetUser = $user;
             },
         );
 
@@ -60,6 +65,10 @@ class AccountSetupController extends Controller
             throw ValidationException::withMessages([
                 'email' => [__($status)],
             ]);
+        }
+
+        if ($resetUser) {
+            Mail::to($resetUser->email)->queue(new PasswordChangedMail($resetUser));
         }
 
         return redirect()->route('login')->with('status', __($status));

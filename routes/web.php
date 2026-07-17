@@ -15,6 +15,8 @@ use App\Http\Controllers\v1\Developer\Settings\SettingController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
 use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
 use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
+use App\Http\Controllers\v1\Developer\Auth\ChangePasswordController;
+use App\Http\Controllers\v1\Developer\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Developer\Batches\BatchesController;
 use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
 use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
@@ -78,16 +80,17 @@ Route::post('/register/{token}', [PublicRegistrationController::class, 'store'])
 // (content-type/length) before fetching it, and a HEAD-less route 405s them.
 Route::match(['get', 'head'], '/register/{token}/qr', [PublicRegistrationController::class, 'qr'])->name('public.register.qr');
 
-// Static pages only (no password-reset backend wired up yet — see
-// FortifyServiceProvider / config/fortify.php, only the `login` feature
-// is enabled for this build).
 Route::middleware('guest')->group(function () {
     Route::inertia('/forgot-password', 'auth/forgot-password')->name('password.request');
-    Route::inertia('/reset-password', 'auth/reset-password')->name('password.reset');
+    // Public "forgot password" — mints a broker token and emails a reset link
+    // via the same /invitation/{token} completion route the admin-invite flow
+    // uses (no Fortify resetPasswords feature needed — see ForgotPasswordController).
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'send'])->name('password.email');
 
     // Admin-triggered password reset / first-time account setup completion. The
-    // emailed link (App\Support\PasswordSetupUrl) lands here with a single-use
-    // broker token; GET renders the set-password page, POST persists it.
+    // emailed link (App\Support\PasswordSetupUrl / PasswordResetUrl) lands here
+    // with a single-use broker token; GET renders the set-password page, POST
+    // persists it. Shared by both the admin-invite and forgot-password flows.
     Route::get('/invitation/{token}', [AccountSetupController::class, 'edit'])->name('password.setup');
     Route::post('/invitation/{token}', [AccountSetupController::class, 'update'])->name('password.setup.store');
 });
@@ -144,6 +147,8 @@ Route::prefix('settings')->name('settings.')->group(function () {
  */
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Self-service change password (avatar menu, any authenticated user).
+    Route::put('/user/password', [ChangePasswordController::class, 'update'])->name('user.password.update');
     // Batches CRUD (index/pagination-search/lookup/store/update/archive/restore/destroy)
     // plus the Terminate transition and the QR/registration-link endpoint.
     Route::crudModule('/batches', BatchesController::class, 'batches');
@@ -177,6 +182,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'updatePayment'])->name('trainees.payments.update');
     Route::delete('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'deletePayment'])->name('trainees.payments.destroy');
     Route::patch('/trainees/{id}/billing-overrides', [TraineesController::class, 'updateBillingOverrides'])->name('trainees.updateBillingOverrides');
+    Route::patch('/trainees/{id}/link-account', [TraineesController::class, 'linkAccount'])->name('trainees.linkAccount');
+    Route::patch('/trainees/{id}/unlink-account', [TraineesController::class, 'unlinkAccount'])->name('trainees.unlinkAccount');
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');

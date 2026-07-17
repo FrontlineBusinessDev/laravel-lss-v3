@@ -4,7 +4,11 @@ namespace App\Http\Controllers\v1\Developer\Batches;
 
 use App\Http\Controllers\v1\Developer\BaseController;
 use App\Models\Batches;
+use App\Models\LeaveRequest;
+use App\Models\Task;
+use App\Models\TaskRating;
 use App\Support\QrCode;
+use App\Support\TraineeCascadeDeleter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -125,6 +129,40 @@ class BatchesController extends BaseController
             'Record created successfully.',
             201,
         );
+    }
+
+    /**
+     * Cascading hard-delete: a batch's trainee/task/leave-request/rating FKs
+     * are all restrictOnDelete, so the DB rejects deleting a batch that still
+     * has any of them. Per product decision, batch delete is destructive —
+     * it removes every trainee under the batch (and everything under each
+     * trainee, via TraineeCascadeDeleter) rather than blocking on them.
+     * Runs under one locked transaction so a concurrent write can't leave
+     * orphaned rows if something fails partway through.
+     */
+    public function destroy(int|string $id): JsonResponse
+    {
+        return DB::transaction(function () use ($id) {
+            $batch = $this->newQuery()->lockForUpdate()->findOrFail($id);
+            $this->authorize('delete', $batch);
+
+            abort_if($batch->status === self::STATUS_ACTIVE, 422, 'Set to inactive before deleting.');
+
+            foreach ($batch->trainees()->get() as $trainee) {
+                TraineeCascadeDeleter::delete($trainee);
+            }
+
+            // Belt-and-suspenders: any batch-scoped rows left without a
+            // trainee (shouldn't normally exist, but restrictOnDelete would
+            // otherwise reject the batch delete below).
+            Task::where('batch_id', $batch->id)->delete();
+            LeaveRequest::where('batch_id', $batch->id)->delete();
+            TaskRating::where('batch_id', $batch->id)->delete();
+
+            $batch->delete();
+
+            return response()->json(null, 204);
+        });
     }
 
     /**

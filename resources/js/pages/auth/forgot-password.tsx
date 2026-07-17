@@ -3,12 +3,27 @@ import { Link } from '@/lib/router-compat';
 import { Mail, ArrowLeft, CircleCheck } from 'lucide-react';
 import { AuthLayout } from '@/components/AuthLayout';
 import { Button } from '@/components/Button';
+import { apiFetchJson } from '@/lib/apiFetch';
+
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  function handleSubmit(e: FormEvent) {
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setSent(true);
+    setSubmitting(true);
+    try {
+      await apiFetchJson('/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      setSent(true);
+    } finally {
+      setSubmitting(false);
+    }
   }
+
   return <AuthLayout data-cy="forgot-password-auth-layout-1">
       <div className="mb-4 flex justify-center" data-cy="forgot-password-div-2">
         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50" data-cy="forgot-password-div-3">
@@ -26,16 +41,16 @@ export default function ForgotPasswordPage() {
               <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-neutral-600" data-cy="forgot-password-label-email">
                 Email
               </label>
-              <input id="email" type="email" required placeholder="name@frontlinebusiness.com.ph" className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100" data-cy="forgot-password-input-email" />
+              <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@frontlinebusiness.com.ph" className="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100" data-cy="forgot-password-input-email" />
             </div>
-            <Button type="submit" variant="primary" className="w-full h-10 text-sm" data-cy="forgot-password-button-submit">
-              Send reset link
+            <Button type="submit" variant="primary" className="w-full h-10 text-sm" disabled={submitting} data-cy="forgot-password-button-submit">
+              {submitting ? 'Sending…' : 'Send reset link'}
             </Button>
           </form>
         </> : <>
           <h1 className="mb-1 text-center text-xl font-semibold text-ink" data-cy="forgot-password-h1-check-your-email">Check your email</h1>
           <p className="mb-2 text-center text-sm leading-relaxed text-neutral-500" data-cy="forgot-password-p-we-sent-a-password-reset-link">
-            We sent a password reset link to your inbox. It expires in 30 minutes.
+            If an account exists for {email}, we've sent a password reset link to your inbox.
           </p>
         </>}
 

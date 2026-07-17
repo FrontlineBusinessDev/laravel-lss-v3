@@ -128,9 +128,19 @@ class UserController extends BaseController
         return $validated;
     }
 
+    /**
+     * New accounts get an unusable random password (see beforeSave()), so an
+     * invite email with a password-setup link is queued automatically here —
+     * no manual "Send password reset" follow-up click is required.
+     */
     protected function afterCreate(Model $model): void
     {
         $this->syncPendingRole($model);
+
+        if ($model instanceof User) {
+            $resetUrl = PasswordSetupUrl::generate($model);
+            Mail::to($model->email)->queue(new UserInviteMail($model, $resetUrl));
+        }
     }
 
     protected function afterUpdate(Model $model): void

@@ -94,6 +94,8 @@ export interface DataTableProps<T> {
     restoreUrl?: (row: T) => string;
     archiveUrl?: (row: T) => string;
     deleteUrl?: (row: T) => string;
+    /** When set, the delete modal requires typing this exact value before Delete unlocks (GitHub-style). */
+    deleteConfirmText?: (row: T) => string;
     modalTitle?: (state: ModalState<T>) => string;
     onRestore?: (row: T, url: string) => Promise<void>;
     onArchive?: (row: T, url: string) => Promise<void>;

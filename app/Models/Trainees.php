@@ -108,6 +108,21 @@ class Trainees extends Model
             ->using(TraineeLearningOutcome::class)
             ->withTimestamps();
     }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'trainee_id');
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'trainee_id');
+    }
+
+    public function taskRatings(): HasMany
+    {
+        return $this->hasMany(TaskRating::class, 'trainee_id');
+    }
     /** Presigned (or public) URL for the stored avatar, null when none is set. */
     protected function avatarUrl(): Attribute
     {

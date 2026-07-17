@@ -13,6 +13,7 @@ use App\Support\OgImage;
 use App\Support\PasswordSetupUrl;
 use App\Support\QrCode;
 use App\Support\Statuses;
+use App\Support\TraineeAccountLinker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -202,8 +203,8 @@ class PublicRegistrationController extends Controller
                     $this->storeDocument($request->file($field), $trainee, $type);
                 }
             }
-            // CREATE TRAINEE ACCOUNT AND LINKED IT 
-            $newUser = $this->createAndLinkUserAccount($trainee);
+            // CREATE TRAINEE ACCOUNT AND LINKED IT
+            $newUser = TraineeAccountLinker::createAndLink($trainee);
             return $trainee;
         });
 
@@ -275,34 +276,6 @@ class PublicRegistrationController extends Controller
             'mime_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
         ]);
-    }
-
-    /**
-     * Create and link a new user account to the trainee.
-     * Returns the created user so the caller can email the invite once the
-     * transaction commits, or null when the trainee is already linked.
-     */
-    private function createAndLinkUserAccount(Trainees $trainee): ?User
-    {
-        if ($trainee->user_id) return null;
-        // Passwordless onboarding: leave the password NULL so the account is
-        // flagged as "awaiting setup" (User::needsPasswordSetup) and the trainee
-        // chooses their own password via the invite link / create-password step.
-        // Mirrors UsersController — do NOT generate a placeholder password here,
-        // or the trainee would be routed to the sign-in step instead.
-        $role = \App\Models\Role::where('name', 'trainee')->first();
-        $user = User::create([
-            'first_name' => $trainee->first_name,
-            'last_name' => $trainee->last_name,
-            'email' => $trainee->email,
-            'status' => Statuses::ACTIVE,
-            'role_id' => $role->id,
-        ]);
-        // Keep Spatie's model_has_roles pivot in sync with role_id so access
-        // checks (isTrainee/hasRole) work for auto-created trainee accounts.
-        $user->syncRoles(['trainee']);
-        $trainee->update(['user_id' => $user->id]);
-        return $user;
     }
 
     /**

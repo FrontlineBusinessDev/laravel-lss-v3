@@ -72,9 +72,19 @@ export interface AppTraineePayment {
     created_at: string;
 }
 
+export interface AppTraineeUser {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    status: string;
+}
+
 export interface TraineeDetail {
     id: number;
     status: string;
+    user_id: number | null;
+    user: AppTraineeUser | null;
     batch_id: number;
     school_id: number;
     avatar_path: string | null;

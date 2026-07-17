@@ -1,3 +1,4 @@
+import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
 import { useAuth } from '@/hooks/use-auth';
 import { usePermission } from '@/hooks/use-permissions';
 import { NavLink, useNavigate } from '@/lib/router-compat';
@@ -15,6 +16,7 @@ import {
     Fingerprint,
     GraduationCap,
     IdCard,
+    KeyRound,
     LayoutDashboard,
     ListChecks,
     LogOut,
@@ -239,6 +241,7 @@ function UserMenu() {
     const navigate = useNavigate();
     const { displayName, email, initials, role } = useAuth();
     const [open, setOpen] = useState(false);
+    const [changePasswordOpen, setChangePasswordOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (!open) return;
@@ -300,6 +303,21 @@ function UserMenu() {
                     <button
                         onClick={() => {
                             setOpen(false);
+                            setChangePasswordOpen(true);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                        data-cy="sidebar-button-change-password"
+                    >
+                        <KeyRound
+                            size={14}
+                            className="shrink-0"
+                            data-cy="sidebar-key-round-22"
+                        />
+                        Change password
+                    </button>
+                    <button
+                        onClick={() => {
+                            setOpen(false);
                             router.post('/logout');
                         }}
                         className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-danger-600 transition-colors hover:bg-danger-50"
@@ -350,6 +368,11 @@ function UserMenu() {
                     data-cy="sidebar-chevrons-up-down-29"
                 />
             </button>
+
+            <ChangePasswordModal
+                open={changePasswordOpen}
+                onClose={() => setChangePasswordOpen(false)}
+            />
         </div>
     );
 }

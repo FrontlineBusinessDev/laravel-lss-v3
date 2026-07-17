@@ -82,6 +82,7 @@ class TraineesViewController extends BaseController
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
                 'learningOutcomes:id,learning_outcomes',
                 'payments',
+                'user:id,first_name,last_name,email,status',
             ])
             ->findOrFail($id);
 

@@ -37,6 +37,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
         listHeader,
         enableViewToggle = false,
         children,
+        deleteConfirmText,
     } = props;
 
     const c = useCardTableController<T>(props);
@@ -230,6 +231,11 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                 label={
                     c.deleteTarget
                         ? formatCell(c.deleteTarget[columns[0]?.key])
+                        : undefined
+                }
+                confirmText={
+                    c.deleteTarget
+                        ? deleteConfirmText?.(c.deleteTarget)
                         : undefined
                 }
                 onCancel={() => c.setDeleteTarget(null)}

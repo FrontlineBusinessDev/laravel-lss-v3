@@ -18,6 +18,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
+import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
@@ -62,6 +63,7 @@ export default function BatchDetailLayout({
     const [editOpen, setEditOpen] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
     const [confirm, setConfirm] = useState<Confirm | null>(null);
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const isActive = batch.status === 'active';
     const badge = STATUS_BADGE[batch.status] ?? 'active';
@@ -254,19 +256,7 @@ export default function BatchDetailLayout({
                                 size="sm"
                                 icon={Trash2}
                                 disabled={busy}
-                                onClick={() =>
-                                    setConfirm({
-                                        title: 'Delete batch',
-                                        description: `Delete ${batch.batch_code} permanently? This cannot be undone.`,
-                                        run: () =>
-                                            mutate(
-                                                'DELETE',
-                                                `/batches/${batch.id}`,
-                                                'Batch deleted',
-                                                () => router.visit('/batches'),
-                                            ),
-                                    })
-                                }
+                                onClick={() => setDeleteOpen(true)}
                                 data-cy="batch-detail-layout-button-set-confirm-2"
                             >
                                 Delete
@@ -442,6 +432,23 @@ export default function BatchDetailLayout({
                     </button>
                 </div>
             </Modal>
+
+            <ConfirmDeleteModal
+                open={deleteOpen}
+                busy={busy}
+                label={batch.batch_code}
+                confirmText={batch.batch_code}
+                onCancel={() => setDeleteOpen(false)}
+                onConfirm={() =>
+                    void mutate(
+                        'DELETE',
+                        `/batches/${batch.id}`,
+                        'Batch deleted',
+                        () => router.visit('/batches'),
+                    )
+                }
+                data-cy="batch-detail-layout-confirm-delete-modal"
+            />
         </div>
     );
 }

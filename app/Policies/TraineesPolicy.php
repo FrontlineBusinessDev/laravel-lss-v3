@@ -45,4 +45,14 @@ class TraineesPolicy
     {
         return $user->can(Permissions::MANAGE_TRAINEES);
     }
+
+    public function linkAccount(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_TRAINEES);
+    }
+
+    public function unlinkAccount(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_TRAINEES);
+    }
 }

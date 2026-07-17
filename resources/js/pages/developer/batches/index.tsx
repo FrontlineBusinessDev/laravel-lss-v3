@@ -282,6 +282,7 @@ export default function BatchesListPage() {
                 editPermission={PERMISSION}
                 archivePermission={PERMISSION}
                 deletePermission={PERMISSION}
+                deleteConfirmText={(row) => row.batch_code}
                 listHeader={listHeader}
                 renderCard={renderRow}
                 onRefreshRef={(fn) => (refreshRef.current = fn)}
