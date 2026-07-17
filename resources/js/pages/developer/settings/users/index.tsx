@@ -181,19 +181,20 @@ export default function index() {
 
     return (
         <>
-            <SettingsPrimaryLayout data-cy="index-settings-primary-layout-10">
+            <SettingsPrimaryLayout
+                data-cy="index-settings-primary-layout-10"
+                actionNode={
+                    <AddRecordButton
+                        label="Add user"
+                        permission={PERMISSION}
+                        onClick={() => {
+                            modal.setData(null);
+                            modal.setOpen(true);
+                        }}
+                    />
+                }
+            >
                 <SettingsUsersLayout data-cy="index-settings-users-layout-11">
-                    <div className="float-right">
-                        <div></div>
-                        <AddRecordButton
-                            label="Add user"
-                            permission={PERMISSION}
-                            onClick={() => {
-                                modal.setData(null);
-                                modal.setOpen(true);
-                            }}
-                        />
-                    </div>
                     <DataTableCardField<UserRow>
                         apiUrl="/settings/users"
                         apiQueryKey="settings-users"

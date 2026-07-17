@@ -72,9 +72,9 @@ export default function index() {
 
     return (
         <>
-            <SettingsPrimaryLayout data-cy="index-settings-primary-layout-9">
-                <div className="flex w-full items-center justify-between">
-                    <div></div>
+            <SettingsPrimaryLayout
+                data-cy="index-settings-primary-layout-9"
+                actionNode={
                     <AddRecordButton
                         label="Add Partner School"
                         permission={PERMISSION}
@@ -83,7 +83,8 @@ export default function index() {
                             modal.setOpen(true);
                         }}
                     />
-                </div>
+                }
+            >
                 <DataTableCardField<PartnerSchools>
                     apiUrl="/settings/partner-schools"
                     apiQueryKey="settings-partner-schools"

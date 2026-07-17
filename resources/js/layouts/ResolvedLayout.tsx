@@ -15,13 +15,13 @@ export const ResolvedLayout = (name: string) => {
         return null;
     }
     // SETTINGS RATES (top-level, sibling to Academic)
-    if (name.includes('settings/rates')) {
-        return [AppLayout, SettingsPrimaryLayout, SettingsRatesLayout];
-    }
-    // SETTINGS ACADEMIC
-    if (name.includes('settings/academic')) {
-        return [AppLayout, SettingsPrimaryLayout, SettingsAcademicLayout];
-    }
+    // if (name.includes('settings/rates')) {
+    //     return [AppLayout, SettingsPrimaryLayout, SettingsRatesLayout];
+    // }
+    // // SETTINGS ACADEMIC
+    // if (name.includes('settings/academic')) {
+    //     return [AppLayout, SettingsPrimaryLayout, SettingsAcademicLayout];
+    // }
     // DEFAULT
     return [AppLayout];
 };

@@ -148,15 +148,17 @@ export default function index({
 
     return (
         <>
-            <SettingsPrimaryLayout data-cy="index-settings-primary-layout-7">
+            <SettingsPrimaryLayout
+                data-cy="index-settings-primary-layout-7"
+                actionNode={
+                    <AddRecordButton
+                        label="Add role"
+                        permission={PERMISSION}
+                        onClick={openCreate}
+                    />
+                }
+            >
                 <SettingsUsersLayout data-cy="index-settings-users-layout-8">
-                    <div className="float-right">
-                        <AddRecordButton
-                            label="Add role"
-                            permission={PERMISSION}
-                            onClick={openCreate}
-                        />
-                    </div>
                     <DataTableCardField<RoleRow>
                         apiUrl="/settings/roles"
                         apiQueryKey="settings-roles"
