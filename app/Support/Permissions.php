@@ -10,6 +10,7 @@ class Permissions
     const MANAGE_SETTINGS = 'manage settings';
     const MANAGE_SETTINGS_PARTNER_SCHOOLS = 'manage settings partner schools';
     const MANAGE_SETTINGS_ACADEMIC = 'manage settings academic';
+    const MANAGE_SETTINGS_RATES = 'manage settings rates';
     /**
      * USER & ROLE MANAGEMENT
      */
@@ -24,7 +25,7 @@ class Permissions
     const MANAGE_ANNOUNCEMENTS = 'manage announcement';
     const MANAGE_LEAVE = 'manage leave';
     const MANAGE_BIOMETRICS = 'manage biometrics';
-    const MANAGE_TASKS = 'manage tracks';
+    const MANAGE_TASKS = 'manage tasks';
     const MANAGE_RATINGS = 'manage ratings';
     const MANAGE_EVALUATION = 'manage evaluation';
     const MANAGE_PAYMENTS = 'manage payments';
@@ -53,6 +54,7 @@ class Permissions
                 self::MANAGE_SETTINGS,
                 self::MANAGE_SETTINGS_PARTNER_SCHOOLS,
                 self::MANAGE_SETTINGS_ACADEMIC,
+                self::MANAGE_SETTINGS_RATES,
             ],
             'User & Role Management' => [
                 self::VIEW_USERS,

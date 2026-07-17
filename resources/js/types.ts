@@ -27,7 +27,9 @@ export interface Batch {
 
 export interface Trainee {
     id: string;
-    name: string;
+    first_name: string;
+    last_name: string;
+    name?: string;
     initials: string;
     school: string;
     batchNo: string;
@@ -258,18 +260,20 @@ export type AnnouncementAudience =
     | 'Trainees with incomplete documents'
     | 'Custom group';
 
-export interface Announcement {
-    id: string;
-    title: string;
-    body: string;
-    postedBy: string;
-    postedAt: string;
-    audience: AnnouncementAudience;
-    batchNo?: string; // when audience === 'Specific batch'
-    groupTraineeNames?: string[]; // when audience === 'Custom group'
-    recipientCount: number;
-    status: Extract<StatusKind, 'active' | 'archived'>;
-}
+// export interface Announcement {
+//     id: string;
+//     title: string;
+//     body: string;
+//     postedBy: string;
+//     postedAt: string;
+//     subject: string;
+//     description: string;
+//     audience: AnnouncementAudience;
+//     batchNo?: string; // when audience === 'Specific batch'
+//     groupTraineeNames?: string[]; // when audience === 'Custom group'
+//     recipientCount: number;
+//     status: Extract<StatusKind, 'active' | 'archived'>;
+// }
 
 export interface CalendarEvent {
     id: string;

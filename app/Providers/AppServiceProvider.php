@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Trainees;
+use App\Observers\TraineeObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        /** LISTENT TO PAYMENT */
+        Trainees::observe(TraineeObserver::class);
         /**
          * REUSABLE API
          */
@@ -37,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
                 Route::get('/lookup', [$controller, 'lookup'])->name('lookup');
                 Route::get('/{id}/in-use', [$controller, 'inUse'])->name('in-use');
                 Route::post('/', [$controller, 'store'])->name('store');
-                Route::put('/{id}', [$controller, 'update'])->name('update');
+                Route::post('/{id}', [$controller, 'update'])->name('update'); // post is needed for files uploading
                 Route::patch('/{id}/archive', [$controller, 'archive'])->name('archive');
                 Route::patch('/{id}/restore', [$controller, 'restore'])->name('restore');
                 Route::delete('/{id}', [$controller, 'destroy'])->name('destroy');
@@ -63,13 +67,13 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(
-            fn (): ?Password => app()->isProduction()
+            fn(): ?Password => app()->isProduction()
                 ? Password::min(12)
-                    ->mixedCase()
-                    ->letters()
-                    ->numbers()
-                    ->symbols()
-                    ->uncompromised()
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()
                 : null,
         );
     }

@@ -23,7 +23,6 @@ export const formatDate = (d: Date) =>
         day: 'numeric',
         year: 'numeric',
     });
-
 export function Field({
     label,
     error,
@@ -38,20 +37,30 @@ export function Field({
     children: ReactNode;
 }) {
     return (
-        <div>
-            <label className={labelCls}>
+        <div data-cy="field-div-1" className="relative">
+            <label className={labelCls} data-cy="field-label-2">
                 {label}
-                {required && <span className="ml-0.5 text-danger-600">*</span>}
+                {required && (
+                    <span
+                        className="ml-0.5 text-danger-600"
+                        data-cy="field-span-3"
+                    >
+                        *
+                    </span>
+                )}
             </label>
             {children}
-            {helpText && !error && (
-                <p className="mt-1 text-xs text-neutral-500">{helpText}</p>
+            {error && (
+                <p
+                    className="absolute top-0.5 right-0 mt-1 text-xs text-danger-600"
+                    data-cy="field-p-5"
+                >
+                    {error}
+                </p>
             )}
-            {error && <p className="mt-1 text-xs text-danger-600">{error}</p>}
         </div>
     );
 }
-
 export function ReadonlyField({
     label,
     value,
@@ -62,10 +71,13 @@ export function ReadonlyField({
     mono?: boolean;
 }) {
     return (
-        <div>
-            <label className={labelCls}>{label}</label>
+        <div data-cy="field-div-6">
+            <label className={labelCls} data-cy="field-label-7">
+                {label}
+            </label>
             <div
                 className={`flex h-9 items-center rounded-md border border-neutral-200 bg-neutral-50 px-2.5 text-sm text-neutral-500 ${mono ? 'font-mono' : ''}`}
+                data-cy="field-div-8"
             >
                 {value}
             </div>

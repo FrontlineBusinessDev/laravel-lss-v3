@@ -13,6 +13,8 @@ export interface TraineeRow extends Record<string, unknown> {
     first_name: string;
     last_name: string;
     email: string;
+    avatar_url?: string | null;
+    initials?: string;
     required_hours: string | number | null;
     school?: { id: number; school_name: string } | null;
 }

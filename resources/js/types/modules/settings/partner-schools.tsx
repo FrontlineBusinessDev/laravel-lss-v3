@@ -2,17 +2,18 @@ import { Thumbnail } from '@/components/Thumbnail';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import type { FieldDef } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
-
 export interface PartnerSchools extends Record<string, unknown> {
     id: number;
     status: string;
     school_name: string;
     abbreviation: string;
     image: string;
-    contact_first_name: string;
-    contact_last_name: string;
+    contact_first_name?: string;
+    contact_last_name?: string;
     contact_email: string;
     physical_address: string;
+    link?: string;
+    description?: string;
     created_at: string;
     updated_at: string;
 }
@@ -51,6 +52,7 @@ export const columns: ColumnDef<PartnerSchools>[] = [
                 src={value as string}
                 alt="School logo"
                 className="h-10 w-10 rounded-lg border border-slate-200 object-cover"
+                data-cy="partner-schools-thumbnail-1"
             />
         ),
     },
@@ -78,14 +80,17 @@ export const columns: ColumnDef<PartnerSchools>[] = [
         filterable: true,
         searchable: true,
     },
-    { key: 'created_at', label: 'Joined' },
+    {
+        key: 'created_at',
+        label: 'Joined',
+    },
 ];
 
 // ─── Fields: drives the Create / Edit modal form ────────────────────────────
 export const fields: FieldDef<PartnerSchools>[] = [
     {
         key: 'image',
-        label: 'Primary Image',
+        label: 'School Logo',
         type: 'file',
         accept: 'image/*',
         maxSizeMB: 2,
@@ -93,9 +98,14 @@ export const fields: FieldDef<PartnerSchools>[] = [
     },
     {
         key: 'status',
-        label: 'Active',
-        type: 'checkbox',
-        defaultValue: true,
+        label: 'Status',
+        type: 'select',
+        options: [
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+        ],
+        defaultValue: 'active',
+        colSpan: 2,
     },
     {
         key: 'school_name',
@@ -117,7 +127,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'contact_first_name',
         label: 'First name',
         type: 'text',
-        required: true,
         placeholder: 'Jane Doe',
         colSpan: 2,
     },
@@ -125,7 +134,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'contact_last_name',
         label: 'Last name',
         type: 'text',
-        required: true,
         placeholder: 'Jane Doe',
         colSpan: 2,
     },
@@ -133,7 +141,6 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'contact_email',
         label: 'Email',
         type: 'email',
-        required: true,
         placeholder: 'JaneDoe@gmail.com',
         colSpan: 2,
     },
@@ -141,8 +148,21 @@ export const fields: FieldDef<PartnerSchools>[] = [
         key: 'physical_address',
         label: 'Physical Address',
         type: 'textarea',
-        required: true,
         placeholder: 'Baloc Road, Brgy. San Ignacio, San Pablo City',
+        colSpan: 2,
+    },
+    {
+        key: 'link',
+        label: 'Website',
+        type: 'url',
+        placeholder: 'https://school.edu.ph',
+        colSpan: 2,
+    },
+    {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Short description of the school',
         colSpan: 2,
     },
 ];

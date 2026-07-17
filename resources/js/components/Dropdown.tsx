@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type DropdownOption = string | { label: string; value: string };
-
+type DropdownOption =
+    | string
+    | {
+          label: string;
+          value: string;
+      };
 interface DropdownProps {
     options: DropdownOption[];
     value?: string;
@@ -15,9 +18,18 @@ interface DropdownProps {
 }
 
 /** Normalizes `string | {label,value}` options to a `{label,value}` pair. */
-const toOption = (opt: DropdownOption): { label: string; value: string } =>
-    typeof opt === 'string' ? { label: opt, value: opt } : opt;
-
+const toOption = (
+    opt: DropdownOption,
+): {
+    label: string;
+    value: string;
+} =>
+    typeof opt === 'string'
+        ? {
+              label: opt,
+              value: opt,
+          }
+        : opt;
 export function Dropdown({
     options,
     value,
@@ -27,7 +39,11 @@ export function Dropdown({
 }: DropdownProps) {
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(value ?? '');
-    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+    const [coords, setCoords] = useState({
+        top: 0,
+        left: 0,
+        width: 0,
+    });
     const normalized = options.map(toOption);
     // Label shown on the trigger for the current value (falls back to placeholder
     // or the first option's label so the button is never blank).
@@ -40,13 +56,16 @@ export function Dropdown({
     useEffect(() => {
         if (value !== undefined) setSelected(value);
     }, [value]);
-
     useEffect(() => {
         if (!open) return;
         const place = () => {
             const r = btnRef.current?.getBoundingClientRect();
             if (!r) return;
-            setCoords({ top: r.bottom + 6, left: r.left, width: r.width });
+            setCoords({
+                top: r.bottom + 6,
+                left: r.left,
+                width: r.width,
+            });
         };
         place();
         const onDown = (e: MouseEvent) => {
@@ -70,7 +89,6 @@ export function Dropdown({
             document.removeEventListener('keydown', onKey);
         };
     }, [open]);
-
     return (
         <>
             <button
@@ -89,14 +107,18 @@ export function Dropdown({
                         'text-neutral-400',
                     className,
                 )}
+                data-cy="dropdown-button-button"
             >
-                <span className="truncate">{selectedLabel}</span>
+                <span className="truncate" data-cy="dropdown-span-2">
+                    {selectedLabel}
+                </span>
                 <ChevronDown
                     size={14}
                     className={cn(
                         'shrink-0 text-neutral-400 transition-transform duration-150',
                         open && 'rotate-180 text-brand-500',
                     )}
+                    data-cy="dropdown-chevron-down-3"
                 />
             </button>
             {open &&
@@ -111,6 +133,7 @@ export function Dropdown({
                             minWidth: coords.width,
                         }}
                         className="lss-scrollbar z-60 max-h-64 animate-scaleIn overflow-auto rounded-lg border border-neutral-200 bg-white p-1 shadow-popover"
+                        data-cy="dropdown-div-4"
                     >
                         {normalized.map((opt) => (
                             <button
@@ -127,12 +150,19 @@ export function Dropdown({
                                     selected === opt.value &&
                                         'bg-brand-50 text-brand-700',
                                 )}
+                                data-cy="dropdown-button-set-selected"
                             >
-                                <span className="truncate">{opt.label}</span>
+                                <span
+                                    className="truncate"
+                                    data-cy="dropdown-span-6"
+                                >
+                                    {opt.label}
+                                </span>
                                 {selected === opt.value && (
                                     <Check
                                         size={13}
                                         className="shrink-0 text-brand-600"
+                                        data-cy="dropdown-check-7"
                                     />
                                 )}
                             </button>

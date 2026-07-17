@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "vite build && vite build --ssr",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
@@ -11,7 +11,9 @@
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
         "types:check": "tsc --noEmit",
-        "dev:php": "php artisan serve"
+        "dev:php": "php artisan serve",
+        "test:e2e": "cypress open",
+        "test:e2e:headless": "cypress run"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
@@ -19,6 +21,7 @@
         "@stylistic/eslint-plugin": "^5.10.0",
         "@types/node": "^22.13.5",
         "babel-plugin-react-compiler": "^1.0.0",
+        "cypress": "^15.18.1",
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^10.0.1",
         "eslint-import-resolver-typescript": "^4.4.4",
@@ -50,21 +53,25 @@
         "@types/react": "^19.2.17",
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^5.2.0",
+        "axios": "^1.18.1",
         "boneyard-js": "^1.8.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
+        "formik": "^2.4.9",
         "globals": "^15.14.0",
         "laravel-vite-plugin": "^3.0.0",
         "lucide-react": "^0.475.0",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
+        "react-easy-crop": "^6.2.2",
         "sonner": "^2.0.0",
         "tailwind-merge": "^3.0.1",
         "tailwindcss": "^4.0.0",
         "tw-animate-css": "^1.4.0",
         "typescript": "^5.7.2",
-        "vite": "^8.0.0"
+        "vite": "^8.0.0",
+        "yup": "^1.7.1"
     },
     "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
@@ -73,5 +80,8 @@
         "@tailwindcss/oxide-win32-x64-msvc": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1",
         "lightningcss-win32-x64-msvc": "^1.29.1"
+    },
+    "engines": {
+        "node": "^20.19.0 || ^22.0.0 || >=24"
     }
 }

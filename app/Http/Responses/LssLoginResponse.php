@@ -12,6 +12,13 @@ class LssLoginResponse implements LoginResponseContract
             return response()->json(['two_factor' => false]);
         }
 
-        return redirect()->intended(route('dashboard'));
+        $user = $request->user();
+        $target = match (true) {
+            $user->hasRole('trainer') => route('trainer.dashboard'),
+            $user->hasRole('trainee') => route('trainee.dashboard'),
+            default => route('dashboard'),
+        };
+
+        return redirect()->intended($target);
     }
 }

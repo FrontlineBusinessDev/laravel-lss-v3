@@ -3,7 +3,7 @@
  * The full prop surface + supporting contracts for <DataTableField>.
  */
 
-import type { ReactNode } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import type { CardActions } from '@/types/reusable/card';
 import type { FieldDef, FieldOption, ModalMode } from '@/types/reusable/fields';
 import type { PaginationMeta } from '@/types/reusable/pagination';
@@ -24,7 +24,7 @@ export interface ColumnDef<T = object> {
     exactFilters?: boolean;
     // | { label: string; value: unknown }[];
     render?: (value: unknown, row: T) => ReactNode;
-    /** Async option loader for a `type: 'async-select'` filterable column. */
+    /** Async option loader for a `type: 'async-select'`/`'async-multi-select'` filterable column. */
     loadOptions?: (query: string) => Promise<FieldOption[]>;
     /**
      * When this column's filter changes, also clear these column filters
@@ -38,6 +38,12 @@ export interface StatusFilterTab {
     value: string;
     label: string;
 }
+
+/** Presentation mode for <DataTableCardField>: a table or a stack of cards. */
+export type TableViewType = 'table' | 'card';
+
+/** Whether paging is driven by the server or sliced from the fetched set. */
+export type PaginationMode = 'server' | 'client';
 
 /** Create/edit modal state owned by DataTableField. */
 export interface ModalState<T> {
@@ -72,7 +78,7 @@ export interface DataTableProps<T> {
     fields?: FieldDef<T>[];
     title?: string;
     description?: string;
-    actions?: ReactNode;
+    actions?: ReactNode | boolean;
     actionsCreateClassName?: string;
     renderCard?: (row: T, actions: CardActions) => ReactNode;
     renderModal?: (props: RenderModalProps<T>) => ReactNode;
@@ -80,7 +86,7 @@ export interface DataTableProps<T> {
         | string
         | ((payload: Partial<Record<string, unknown>>) => string);
     updateUrl?: (row: T) => string;
-    updateMethod?: 'PUT' | 'PATCH';
+    updateMethod?: 'POST' | 'PUT' | 'PATCH';
     enableCreate?: boolean;
     /** Label for the default create button (defaults to "New"). */
     createLabel?: string;
@@ -110,4 +116,27 @@ export interface DataTableProps<T> {
     editPermission?: string;
     archivePermission?: string;
     deletePermission?: string;
+    localModalState?: { mode: ModalMode; row?: T } | null;
+    setLocalModalState?: Dispatch<
+        SetStateAction<{ mode: ModalMode; row?: T } | null>
+    >;
+    /** Initial presentation mode. Defaults to 'table'. */
+    viewType?: TableViewType;
+    /** Show a Table/Card segmented toggle in the toolbar row. */
+    enableViewToggle?: boolean;
+    /** Server-driven paging (default) or client-side slicing of the fetched set. */
+    paginationMode?: PaginationMode;
+    /**
+     * Custom row/card renderer. When provided, the default row/card output is
+     * bypassed. In table view the column headers are still rendered above it;
+     * in card view all table chrome is hidden and only this content shows.
+     */
+    children?: ReactNode;
+    /**
+     * When provided, a row's Edit action bubbles up to the caller (e.g. to open
+     * a page-owned <FormModal>) instead of DataTableCardField managing an
+     * internal edit modal. Only consumed by DataTableCardField; DataTableField
+     * ignores it.
+     */
+    onEditRow?: (row: T) => void;
 }

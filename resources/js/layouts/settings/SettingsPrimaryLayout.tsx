@@ -6,6 +6,7 @@ import { ReactNode } from 'react';
 interface LayoutProps {
     children: ReactNode;
 }
+
 const NAV_LINKS = [
     {
         id: 'Users',
@@ -25,21 +26,37 @@ const NAV_LINKS = [
         href: '/settings/academic',
         permission: 'manage settings academic',
     },
+    {
+        id: 'Rates',
+        label: 'Rates',
+        href: '/settings/rates',
+        permission: 'manage settings rates',
+    },
 ] as const;
-
 export default function SettingsPrimaryLayout({ children }: LayoutProps) {
     const { can } = usePermission(); // Used to permission
     const { url } = usePage(); // Used to automatically highlight the active tab
 
     return (
         <>
-            <div>
-                <h1 className="text-xl font-semibold text-ink">Settings</h1>
-                <p className="mb-4 text-sm text-neutral-500">
+            <div data-cy="settings-primary-layout-div-1">
+                <h1
+                    className="text-xl font-semibold text-ink"
+                    data-cy="settings-primary-layout-h1-settings"
+                >
+                    Settings
+                </h1>
+                <p
+                    className="mb-4 text-sm text-neutral-500"
+                    data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"
+                >
                     Manage user accounts, partner schools, and academic
                     reference data
                 </p>
-                <div className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5">
+                <div
+                    className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
+                    data-cy="settings-primary-layout-div-4"
+                >
                     {NAV_LINKS.map((link) => {
                         // 2. Filter tabs out dynamically based on user permissions
                         if (!can(link.permission)) return null;
@@ -55,6 +72,7 @@ export default function SettingsPrimaryLayout({ children }: LayoutProps) {
                                         ? 'border-b-2 border-brand-500 font-semibold text-ink'
                                         : 'text-neutral-500 hover:text-neutral-700',
                                 )}
+                                data-cy="settings-primary-layout-link-link-href"
                             >
                                 {link.label}
                             </Link>

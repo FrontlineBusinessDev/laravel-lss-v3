@@ -15,10 +15,8 @@ class InertiaPageResponse
     public static function csr(string $component, array $props = [])
     {
         Config::set('inertia.ssr.enabled', false);
-
         return Inertia::render($component, $props);
     }
-
     /**
      * Render a page with SSR (Server-Side Rendering)
      * Use for public/SEO-critical pages
@@ -26,10 +24,8 @@ class InertiaPageResponse
     public static function ssr(string $component, array $props = [])
     {
         Config::set('inertia.ssr.enabled', true);
-
         return Inertia::render($component, $props);
     }
-
     /**
      * Render a page with automatic strategy based on component
      */

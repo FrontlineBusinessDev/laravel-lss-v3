@@ -84,6 +84,7 @@
     --animate-scaleIn: scaleIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
     --animate-slideDown: slideDown 0.14s ease-out;
     --animate-slideInLeft: slideInLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    --animate-slideInRight: slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 
     @keyframes fadeIn {
         from {
@@ -116,6 +117,14 @@
     @keyframes slideInLeft {
         from {
             transform: translateX(-100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
         }
         to {
             transform: translateX(0);

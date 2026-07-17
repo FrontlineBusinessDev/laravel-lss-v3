@@ -33,6 +33,6 @@ class TraineeDocument extends Model
      */
     public function trainee(): BelongsTo
     {
-        return $this->belongsTo(Trainee::class, 'trainee_id');
+        return $this->belongsTo(Trainees::class, 'trainee_id');
     }
 }

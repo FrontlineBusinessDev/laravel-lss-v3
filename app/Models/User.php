@@ -36,6 +36,7 @@ class User extends Authenticatable
         'email',
         'password',
         'status',
+        'role_id',
     ];
 
     /**
@@ -50,7 +51,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
     protected function casts(): array
     {
         return [
@@ -58,24 +58,33 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
     public function getNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
     }
-
     public function isActive(): bool
     {
         return $this->status === 'active';
     }
-
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
     }
-
     public function scopeInactive($query)
     {
         return $query->where('status', 'inactive');
+    }
+    /**
+     * Prepare the user data payload for Inertia.
+     */
+    public function toInertiaPayload(): array
+    {
+        return [
+            'id' => $this->id,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
+            // Add any other fields your layout needs (e.g., 'avatar', 'role')
+        ];
     }
 }

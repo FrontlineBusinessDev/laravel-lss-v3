@@ -14,7 +14,6 @@ import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { FileUploadField } from '@/hooks/use-file-upload-field';
 import type { FieldDef } from '../types';
 import type { FileFieldValue } from '@/types/reusable/fields';
-
 interface DynamicFieldProps<T> {
     field: FieldDef<T>;
     value: unknown;
@@ -24,7 +23,6 @@ interface DynamicFieldProps<T> {
     initialLabel?: string;
     onChange: (value: unknown) => void;
 }
-
 export function DynamicField<T>({
     field,
     value,
@@ -40,6 +38,7 @@ export function DynamicField<T>({
                 required={field.required}
                 helpText={field.helpText}
                 error={error}
+                data-cy="record-modal-field-field-field-label"
             >
                 <FileUploadField
                     value={
@@ -57,14 +56,19 @@ export function DynamicField<T>({
                     preview={field.preview}
                     disabled={disabled}
                     error={error}
+                    data-cy="record-modal-field-file-upload-field-change"
                 />
             </Field>
         );
     }
-
     if (field.type === 'async-select') {
         return (
-            <Field label={field.label} required={field.required} error={error}>
+            <Field
+                label={field.label}
+                required={field.required}
+                error={error}
+                data-cy="record-modal-field-field-field-label-2"
+            >
                 <AsyncSelectField
                     value={value}
                     onChange={onChange}
@@ -76,40 +80,58 @@ export function DynamicField<T>({
                     minSearchLength={field.minSearchLength}
                     disabled={disabled}
                     error={error}
+                    data-cy="record-modal-field-async-select-field-field-placeholder"
                 />
             </Field>
         );
     }
-
     if (field.type === 'checkbox') {
         return (
-            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5">
-                <input
-                    type="checkbox"
-                    checked={Boolean(value)}
-                    disabled={disabled}
-                    onChange={(e) => onChange(e.target.checked)}
-                    className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-100"
-                />
-                <span className="text-sm font-medium text-neutral-700">
-                    {field.label}
-                </span>
-            </label>
+            <div data-cy="record-modal-field-div-checkbox-wrapper">
+                <label
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5"
+                    data-cy="record-modal-field-label-5"
+                >
+                    <input
+                        type="checkbox"
+                        checked={Boolean(value)}
+                        disabled={disabled}
+                        onChange={(e) => onChange(e.target.checked)}
+                        className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-100"
+                        data-cy="record-modal-field-input-checkbox"
+                    />
+                    <span
+                        className="text-sm font-medium text-neutral-700"
+                        data-cy="record-modal-field-span-7"
+                    >
+                        {field.label}
+                    </span>
+                </label>
+                {error && (
+                    <p
+                        className="mt-1 text-xs text-danger-600"
+                        data-cy="record-modal-field-p-checkbox-error"
+                    >
+                        {error}
+                    </p>
+                )}
+            </div>
         );
     }
-
     return (
         <Field
             label={field.label}
             required={field.required}
             helpText={field.helpText}
             error={error}
+            data-cy="record-modal-field-field-field-label-3"
         >
             <FieldControl
                 field={field}
                 value={value}
                 disabled={disabled}
                 onChange={onChange}
+                data-cy="record-modal-field-field-control-change"
             />
         </Field>
     );
@@ -136,10 +158,10 @@ function FieldControl<T>({
                 placeholder={field.placeholder}
                 onChange={(e) => onChange(e.target.value)}
                 className={textareaCls}
+                data-cy="record-modal-field-textarea-field-placeholder"
             />
         );
     }
-
     if (field.type === 'select') {
         return (
             <select
@@ -147,20 +169,28 @@ function FieldControl<T>({
                 disabled={disabled}
                 onChange={(e) => onChange(e.target.value)}
                 className={inputCls}
+                data-cy="record-modal-field-select-change"
             >
-                <option value="" disabled>
+                <option
+                    value=""
+                    disabled
+                    data-cy="record-modal-field-option-12"
+                >
                     {field.placeholder ??
                         `Select ${field.label.toLowerCase()}…`}
                 </option>
                 {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
+                    <option
+                        key={opt.value}
+                        value={opt.value}
+                        data-cy="record-modal-field-option-13"
+                    >
                         {opt.label}
                     </option>
                 ))}
             </select>
         );
     }
-
     return (
         <input
             type={field.type ?? 'text'}
@@ -175,6 +205,7 @@ function FieldControl<T>({
                 )
             }
             className={inputCls}
+            data-cy="record-modal-field-input-field-placeholder"
         />
     );
 }

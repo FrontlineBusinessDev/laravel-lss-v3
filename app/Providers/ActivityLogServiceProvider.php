@@ -8,7 +8,7 @@ use App\Models\AcademicLevel;
 use App\Models\AcademicProgram;
 use App\Models\Batches;
 use App\Models\PartnerSchools;
-use App\Models\Trainee;
+use App\Models\Trainees;
 use App\Models\TraineeDocument;
 use App\Models\User;
 use App\Observers\AppLoggerObserver;
@@ -27,7 +27,7 @@ class ActivityLogServiceProvider extends ServiceProvider
     private array $auditedModels = [
         Batches::class,
         User::class,
-        Trainee::class,
+        Trainees::class,
         TraineeDocument::class,
         AcademicIndustry::class,
         AcademicLevel::class,

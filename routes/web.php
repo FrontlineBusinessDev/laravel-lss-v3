@@ -1,35 +1,57 @@
 <?php
 
-use App\Http\Controllers\Auth\AccountSetupController;
-use App\Http\Controllers\Batches\BatchesController;
-use App\Http\Controllers\Batches\BatchTraineesController;
-use App\Http\Controllers\Batches\BatchViewController;
-use App\Http\Controllers\Developer\SystemLogController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Lss\AnnouncementController;
-use App\Http\Controllers\Lss\BiometricsController;
-use App\Http\Controllers\Lss\CertificateController;
-use App\Http\Controllers\Lss\DashboardController;
-use App\Http\Controllers\Lss\EvaluationController;
-use App\Http\Controllers\Lss\LeaveController;
-use App\Http\Controllers\Lss\PaymentController;
-use App\Http\Controllers\Lss\RatingController;
-use App\Http\Controllers\Lss\ReportController;
-use App\Http\Controllers\Lss\ScheduleController;
-use App\Http\Controllers\Lss\SeminarController;
-// use App\Http\Controllers\Lss\BatchController;
-use App\Http\Controllers\Lss\TaskController;
-use App\Http\Controllers\Lss\TraineeController;
-use App\Http\Controllers\PublicRegistrationController;
-use App\Http\Controllers\Settings\AcademicController;
-use App\Http\Controllers\Settings\AcademicIndustryController;
-use App\Http\Controllers\Settings\AcademicLearningOutcomesController;
-use App\Http\Controllers\Settings\AcademicLevelController;
-use App\Http\Controllers\Settings\AcademicProgramController;
-use App\Http\Controllers\Settings\PartnerSchoolsController;
-use App\Http\Controllers\Settings\RoleController;
-use App\Http\Controllers\Settings\SettingController;
-use App\Http\Controllers\Settings\UserController;
+use App\Http\Controllers\v1\Developer\HomeController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicIndustryController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicLearningOutcomesController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicLevelController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicProgramController;
+use App\Http\Controllers\v1\Developer\Settings\GroupDiscountController;
+use App\Http\Controllers\v1\Developer\Settings\HoursDiscountController;
+use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
+use App\Http\Controllers\v1\Developer\Settings\RatesController;
+use App\Http\Controllers\v1\Developer\Settings\RoleController;
+use App\Http\Controllers\v1\Developer\Settings\SettingController;
+use App\Http\Controllers\v1\Developer\Settings\UserController;
+use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
+use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
+use App\Http\Controllers\v1\Developer\Batches\BatchesController;
+use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
+use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
+use App\Http\Controllers\v1\Developer\Developer\SystemLogController;
+use App\Http\Controllers\v1\Developer\Biometrics\BiometricsController;
+use App\Http\Controllers\v1\Developer\Certificate\CertificateController;
+use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
+use App\Http\Controllers\v1\Developer\Leave\LeaveController;
+use App\Http\Controllers\v1\Developer\Payment\PaymentController;
+use App\Http\Controllers\v1\Developer\Report\ReportController;
+use App\Http\Controllers\v1\Developer\Schedule\ScheduleController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarController;
+use App\Http\Controllers\v1\Developer\Tasks\DailyTaskController;
+use App\Http\Controllers\v1\Developer\Tasks\TasksController;
+use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
+use App\Http\Controllers\v1\Developer\Ratings\RatingController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
+use App\Http\Controllers\v1\Trainer\Announcements\AnnouncementsController as TrainerAnnouncementsController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchesController as TrainerBatchesController;
+use App\Http\Controllers\v1\Trainer\Dashboard\DashboardController as TrainerDashboardController;
+use App\Http\Controllers\v1\Trainer\Ratings\RatingsController as TrainerRatingsController;
+use App\Http\Controllers\v1\Trainer\Schedule\ScheduleController as TrainerScheduleController;
+use App\Http\Controllers\v1\Trainer\Tasks\TasksController as TrainerTasksController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineesController as TrainerTraineesController;
+use App\Http\Controllers\v1\Trainee\Announcements\AnnouncementsController as TraineeAnnouncementsController;
+use App\Http\Controllers\v1\Trainee\Biometrics\BiometricsController as TraineeBiometricsController;
+use App\Http\Controllers\v1\Trainee\Dashboard\DashboardController as TraineeDashboardController;
+use App\Http\Controllers\v1\Trainee\Evaluations\EvaluationsController as TraineeEvaluationsController;
+use App\Http\Controllers\v1\Trainee\Leave\LeaveController as TraineeLeaveController;
+use App\Http\Controllers\v1\Trainee\MyInfo\MyInfoController as TraineeMyInfoController;
+use App\Http\Controllers\v1\Trainee\Tasks\TasksController as TraineeTasksController;
+use App\Http\Controllers\v1\Developer\PublicRegistrationController;
+use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 
@@ -86,6 +108,28 @@ Route::prefix('settings')->name('settings.')->group(function () {
         Route::crudModule('/level', AcademicLevelController::class, 'level');
         Route::crudModule('/program', AcademicProgramController::class, 'program');
     });
+    // Rates & discount matrices: its own top-level Settings section (sibling
+    // to Academic/Users/Partner Schools), with a "Default Rates" landing page
+    // plus 2 further sub-pages.
+    Route::prefix('rates')->name('rates.')->group(function () {
+        Route::get('/', [RatesController::class, 'index'])->name('default.index');
+        Route::put('/', [RatesController::class, 'updateRates'])->name('default.update');
+        // No status column on these two tables, so no archive/restore routes.
+        Route::prefix('hours-discounts')->name('hours-discounts.')->group(function () {
+            Route::get('/', [HoursDiscountController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [HoursDiscountController::class, 'paginationSearch'])->name('pagination-search');
+            Route::post('/', [HoursDiscountController::class, 'store'])->name('store');
+            Route::post('/{id}', [HoursDiscountController::class, 'update'])->name('update');
+            Route::delete('/{id}', [HoursDiscountController::class, 'destroy'])->name('destroy');
+        });
+        Route::prefix('group-discounts')->name('group-discounts.')->group(function () {
+            Route::get('/', [GroupDiscountController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [GroupDiscountController::class, 'paginationSearch'])->name('pagination-search');
+            Route::post('/', [GroupDiscountController::class, 'store'])->name('store');
+            Route::post('/{id}', [GroupDiscountController::class, 'update'])->name('update');
+            Route::delete('/{id}', [GroupDiscountController::class, 'destroy'])->name('destroy');
+        });
+    });
 });
 
 /**
@@ -112,13 +156,67 @@ Route::middleware('auth')->group(function () {
     Route::get('/batches/{id}', [BatchViewController::class, 'trainees'])->name('batches.show');
     Route::get('/batches/{id}/activity-log', [BatchViewController::class, 'activityLog'])->name('batches.activity-log');
     Route::get('/batches/{id}/financial', [BatchViewController::class, 'financial'])->name('batches.financial');
-    Route::get('/trainees', [TraineeController::class, 'index'])->name('trainees.index');
-    Route::get('/trainees/{id}', [TraineeController::class, 'show'])->name('trainees.show');
+    // Registered before the show/tab routes below so crudModule's static
+    // segments (pagination-search, search-active, lookup) win the route
+    // match against the `{id}` wildcard used by the tab views.
+    Route::crudModule('/trainees', TraineesController::class, 'trainees');
+    Route::get('/trainees/{id}', [TraineesViewController::class, 'personalInformationTab'])->name('trainees.personalInformationTab');
+    Route::get('/trainees/{id}/academic-information', [TraineesViewController::class, 'academicInfoTab'])->name('trainees.academicInfoTab');
+    Route::get('/trainees/{id}/documents', [TraineesViewController::class, 'documents'])->name('trainees.documents');
+    Route::post('/trainees/{id}/documents', [TraineeDocumentsController::class, 'uploadDocument'])->name('trainees.documents.store');
+    Route::delete('/trainees/{id}/documents/{documentId}', [TraineeDocumentsController::class, 'deleteDocument'])->name('trainees.documents.destroy');
+    Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'learningOutcomes'])->name('trainees.learningOutcomes');
+    Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TraineesController::class, 'updateLearningOutcomeStatus'])->name('trainees.learningOutcomes.updateStatus');
+    Route::post('/trainees/{id}/avatar', [TraineesController::class, 'updateAvatar'])->name('trainees.updateAvatar');
+    Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
+    Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
+    Route::post('/trainees/{id}/payments', [TraineePaymentsController::class, 'storePayment'])->name('trainees.payments.store');
+    Route::delete('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'deletePayment'])->name('trainees.payments.destroy');
+    Route::patch('/trainees/{id}/billing-overrides', [TraineesController::class, 'updateBillingOverrides'])->name('trainees.updateBillingOverrides');
+    Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
+    Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
+    Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');
     Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
-    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-    Route::get('/ratings', [RatingController::class, 'index'])->name('ratings.index');
+
+    // Tasks module — Task Management (default) + Daily Task Sheet, real DB-backed.
+    Route::middleware('permission:' . Permissions::MANAGE_TASKS)->group(function () {
+        Route::prefix('tasks')->name('tasks.')->group(function () {
+            Route::get('/', [TasksController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [TasksController::class, 'paginationSearch'])->name('pagination-search');
+            Route::get('/trainers', [TasksController::class, 'trainers'])->name('trainers');
+            Route::post('/', [TasksController::class, 'store'])->name('store');
+            Route::post('/{id}', [TasksController::class, 'update'])->name('update');
+            Route::patch('/{id}/complete', [TasksController::class, 'completeAction'])->name('complete');
+            Route::patch('/{id}/lock', [TasksController::class, 'lockAction'])->name('lock');
+            Route::patch('/{id}/remarks', [TasksController::class, 'updateRemarks'])->name('remarks');
+            Route::patch('/{id}/time-spent', [TasksController::class, 'updateTimeSpent'])->name('time-spent');
+            Route::delete('/{id}', [TasksController::class, 'destroy'])->name('destroy');
+            Route::prefix('daily-task')->name('daily-task.')->group(function () {
+                Route::get('/', [DailyTaskController::class, 'index'])->name('index');
+                Route::get('/list', [DailyTaskController::class, 'list'])->name('list');
+            });
+        });
+    });
+
+    // Ratings module — Task Rating (default, real DB-backed) + Behavioral Rating
+    // (still mock/CSR-only, route added only so it's reachable from the sub-nav tab).
+    Route::middleware('permission:' . Permissions::MANAGE_RATINGS)->group(function () {
+        Route::prefix('ratings')->name('ratings.')->group(function () {
+            Route::get('/', [TaskRatingController::class, 'index'])->name('index');
+            Route::get('/behavioral-rating', [RatingController::class, 'index'])->name('behavioral-rating.index');
+        });
+        Route::prefix('ratings/task-rating')->name('ratings.task-rating.')->group(function () {
+            Route::get('/task-options', [TaskRatingController::class, 'taskOptions'])->name('task-options');
+            Route::get('/trainees', [TaskRatingController::class, 'trainees'])->name('trainees');
+            Route::get('/', [TaskRatingController::class, 'forTask'])->name('index');
+            Route::post('/', [TaskRatingController::class, 'store'])->name('store');
+            Route::get('/{id}/history', [TaskRatingController::class, 'history'])->name('history');
+        });
+    });
+
     Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
@@ -127,6 +225,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
+    Route::crudModule('/announcements', AnnoucementController::class, 'announcements');
     // Users & Roles admin JSON API consumed by the settings DataTableField.
     // Coarse access is gated by the Spatie permission; UserController layers on
     // the creator-scoped role matrix, and RolesController is developer-only.
@@ -146,5 +245,31 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:developer')->group(function () {
         Route::get('/system-log', [SystemLogController::class, 'index'])->name('system-log.index');
         Route::get('/system-log/pagination-search', [SystemLogController::class, 'paginationSearch'])->name('system-log.pagination-search');
+    });
+
+    // Trainer-only placeholder module — role-gated, deliberately NOT reusing
+    // the shared /tasks, /batches, /trainees, /schedule, /ratings,
+    // /announcements routes above (trainer already holds those `manage *`
+    // permissions via RoleSeeder, so route-level role gating keeps this
+    // surface separate while the real trainer experience is built out).
+    Route::middleware('role:trainer')->prefix('trainer')->name('trainer.')->group(function () {
+        Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/batches', [TrainerBatchesController::class, 'index'])->name('batches');
+        Route::get('/trainees', [TrainerTraineesController::class, 'index'])->name('trainees');
+        Route::get('/tasks', [TrainerTasksController::class, 'index'])->name('tasks');
+        Route::get('/schedule', [TrainerScheduleController::class, 'index'])->name('schedule');
+        Route::get('/announcements', [TrainerAnnouncementsController::class, 'index'])->name('announcements');
+        Route::get('/ratings', [TrainerRatingsController::class, 'index'])->name('ratings');
+    });
+
+    // Trainee-only placeholder module — same rationale as above.
+    Route::middleware('role:trainee')->prefix('trainee')->name('trainee.')->group(function () {
+        Route::get('/dashboard', [TraineeDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/tasks', [TraineeTasksController::class, 'index'])->name('tasks');
+        Route::get('/announcements', [TraineeAnnouncementsController::class, 'index'])->name('announcements');
+        Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
+        Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
+        Route::get('/evaluations', [TraineeEvaluationsController::class, 'index'])->name('evaluations');
+        Route::get('/my-info', [TraineeMyInfoController::class, 'index'])->name('my-info');
     });
 });

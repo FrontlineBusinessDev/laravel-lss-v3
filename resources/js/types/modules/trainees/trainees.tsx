@@ -1,13 +1,16 @@
 import { ColumnDef } from '@/types/reusable/data-table';
-import { FieldDef } from '@/types/reusable/fields';
-
+import { FieldDef, loadLookupOptions } from '@/types/reusable/fields';
 export interface AppTrainees extends Record<string, unknown> {
     id: number;
+    status: string;
     batch_id: number;
     school_id: number;
     public_url_id: string;
     first_name: string;
     last_name: string;
+    full_name?: string;
+    initials?: string;
+    avatar_url?: string | null;
     email: string;
     birthday: string;
     birth_place: string;
@@ -18,11 +21,72 @@ export interface AppTrainees extends Record<string, unknown> {
     required_hours: number;
     date_completed: string | null;
     address: string;
+    batchNo?: string;
+    school?: string;
     created_at: string;
     updated_at: string;
 }
+export const studentsStatus = ['active', 'inactive', 'ongoing', 'completed'];
 
 export const columns: ColumnDef<AppTrainees>[] = [
+    {
+        key: 'status',
+        label: 'status',
+        searchable: true,
+        filterable: true,
+        type: 'select',
+        typeData: studentsStatus,
+    },
+    {
+        key: 'school_id',
+        label: 'School Name',
+        searchable: true,
+        filterable: true,
+        type: 'async-select',
+        loadOptions: (q) =>
+            loadLookupOptions('/settings/partner-schools', q, 'school_name'),
+        // Changing the industry filter resets the dependent program filter.
+        // filterResets: ['school_id'],
+    },
+    {
+        key: 'academic_industry_id',
+        label: 'Industry',
+        searchable: true,
+        filterable: true,
+        type: 'async-select',
+        loadOptions: (q) =>
+            loadLookupOptions('/settings/academic/industry', q, 'name'),
+        // Changing the industry filter resets the dependent program filter.
+        // filterResets: ['school_id'],
+    },
+    {
+        key: 'academic_level_id',
+        label: 'Level',
+        searchable: true,
+        filterable: true,
+        type: 'async-select',
+        loadOptions: (q) =>
+            loadLookupOptions('/settings/academic/level', q, 'name'),
+        // Changing the industry filter resets the dependent program filter.
+        // filterResets: ['school_id'],
+    },
+    {
+        key: 'academic_program_id',
+        label: 'Program',
+        searchable: true,
+        filterable: true,
+        type: 'async-select',
+        loadOptions: (q) =>
+            loadLookupOptions('/settings/academic/program', q, 'name'),
+        // Changing the industry filter resets the dependent program filter.
+        // filterResets: ['school_id'],
+    },
+    {
+        key: 'first_name',
+        label: 'First Name',
+        searchable: true,
+        filterable: true,
+    },
     {
         key: 'last_name',
         label: 'Last Name',
@@ -30,33 +94,38 @@ export const columns: ColumnDef<AppTrainees>[] = [
         filterable: true,
     },
     {
-        key: 'first_name',
-        label: 'First Name',
-        searchable: true,
-    },
-    {
         key: 'email',
-        label: 'Email Profile',
+        label: 'Email',
         searchable: true,
+        filterable: true,
     },
-    {
-        key: 'required_hours',
-        label: 'Required Hours',
-    },
+    // {
+    //     key: 'required_hours',
+    //     label: 'Required Hours',
+    //     searchable: true,
+    //     filterable: true,
+    // },
     {
         key: 'date_completed',
         label: 'Status',
         render: (value) =>
             value ? (
-                <span className="font-medium text-green-600">
+                <span
+                    className="font-medium text-green-600"
+                    data-cy="trainees-span-completed"
+                >
                     Completed ({value as string})
                 </span>
             ) : (
-                <span className="font-medium text-amber-500">On-going</span>
+                <span
+                    className="font-medium text-amber-500"
+                    data-cy="trainees-span-on-going"
+                >
+                    On-going
+                </span>
             ),
     },
 ];
-
 export const fields: FieldDef<AppTrainees>[] = [
     {
         key: 'batch_id',
@@ -112,8 +181,14 @@ export const fields: FieldDef<AppTrainees>[] = [
         type: 'select',
         required: true,
         options: [
-            { label: 'Male', value: 'male' },
-            { label: 'Female', value: 'female' },
+            {
+                label: 'Male',
+                value: 'male',
+            },
+            {
+                label: 'Female',
+                value: 'female',
+            },
         ],
     },
     {
@@ -137,7 +212,8 @@ export const fields: FieldDef<AppTrainees>[] = [
     {
         key: 'required_hours',
         label: 'Total Hours Demanded',
-        type: 'text', // Handles decimal conversions cleanly visually
+        type: 'text',
+        // Handles decimal conversions cleanly visually
         required: true,
     },
     {

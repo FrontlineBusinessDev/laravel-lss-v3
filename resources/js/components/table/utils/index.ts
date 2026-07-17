@@ -146,3 +146,29 @@ export function getCsrfToken(): string {
             ?.content ?? ''
     );
 }
+
+// ─── Query keys ───────────────────────────────────────────────────────────────
+
+/**
+ * Normalizes an `apiQueryKey` (string or string[]) into a stable string array.
+ * A bare string is wrapped (`['x']`), never spread (`[...'x']`) which would
+ * explode into characters and break cache matching. Mirrors the logic in
+ * DataTableField and use-card-table-controller so all three agree.
+ */
+export function normalizeQueryKey(apiQueryKey: string | string[]): string[] {
+    return Array.isArray(apiQueryKey)
+        ? apiQueryKey.map(String)
+        : [String(apiQueryKey)];
+}
+
+/**
+ * The invalidation key(s) that match a table's `useCrud` list query. `useCrud`
+ * keys its list as `[normalizeQueryKey(apiQueryKey), queryParams]`, so the
+ * partial-match prefix is `[normalizeQueryKey(apiQueryKey)]`. Wrap in an array
+ * for <FormModal>'s `invalidateKeys` prop, which invalidates each entry.
+ */
+export function tableListInvalidateKeys(
+    apiQueryKey: string | string[],
+): unknown[][] {
+    return [[normalizeQueryKey(apiQueryKey)]];
+}
