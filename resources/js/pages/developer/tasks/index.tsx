@@ -324,24 +324,28 @@ export default function TasksPage() {
     };
 
     return (
-        <TasksPrimaryLayout data-cy="index-tasks-primary-layout-1">
+        <TasksPrimaryLayout
+            data-cy="index-tasks-primary-layout-1"
+            actionNode={
+                <Button
+                    variant="primary"
+                    icon={Plus}
+                    onClick={() => {
+                        setEditingTask(null);
+                        setAddModalOpen(true);
+                    }}
+                    data-cy="index-button-set-add-modal-open"
+                >
+                    Add task
+                </Button>
+            }
+        >
             <div data-cy="index-div-1">
                 <div
                     className="mb-4 flex items-center justify-between"
                     data-cy="index-div-2"
                 >
                     <div data-cy="index-div-heading"></div>
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() => {
-                            setEditingTask(null);
-                            setAddModalOpen(true);
-                        }}
-                        data-cy="index-button-set-add-modal-open"
-                    >
-                        Add task
-                    </Button>
                 </div>
 
                 <DataTableCardField<ApiTask>
