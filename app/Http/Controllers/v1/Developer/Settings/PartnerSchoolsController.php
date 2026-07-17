@@ -25,6 +25,9 @@ class PartnerSchoolsController extends BaseController
     // Transforms the stored path into a temporary (presigned) URL on list responses.
     protected array $fileFields = ['image'];
     protected array $activeColumns = ['id', 'school_name'];
+    // BaseController's default sortBy ('name') doesn't exist on this table —
+    // lookup()/searchActive() would 500 on orderBy('name') without this override.
+    protected string $sortBy = 'school_name';
 
     protected function storeRules(?Model $record = null): array
     {

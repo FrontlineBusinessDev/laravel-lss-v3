@@ -171,12 +171,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
     Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
     Route::post('/trainees/{id}/payments', [TraineePaymentsController::class, 'storePayment'])->name('trainees.payments.store');
+    Route::patch('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'updatePayment'])->name('trainees.payments.update');
     Route::delete('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'deletePayment'])->name('trainees.payments.destroy');
     Route::patch('/trainees/{id}/billing-overrides', [TraineesController::class, 'updateBillingOverrides'])->name('trainees.updateBillingOverrides');
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');
-    Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements.index');
     // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
@@ -215,10 +216,15 @@ Route::middleware('auth')->group(function () {
             Route::post('/', [TaskRatingController::class, 'store'])->name('store');
             Route::get('/{id}/history', [TaskRatingController::class, 'history'])->name('history');
         });
+        Route::prefix('ratings/behavioral-rating')->name('ratings.behavioral-rating.')->group(function () {
+            Route::get('/trainees', [RatingController::class, 'trainees'])->name('trainees');
+        });
     });
 
     Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/pagination-search', [PaymentController::class, 'paginationSearch'])->name('payments.pagination-search');
+    Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/seminars', [SeminarController::class, 'index'])->name('seminars.index');
     Route::get('/certificates', [CertificateController::class, 'index'])->name('certificates.index');

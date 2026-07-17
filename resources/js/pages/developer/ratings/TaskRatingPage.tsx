@@ -1,13 +1,14 @@
 import { Button } from '@/components/Button';
-import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
 import { RatingInput } from '@/components/RatingInput';
 import { StatCard } from '@/components/StatCard';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { TaskRating, TaskRatingHistoryEntry } from '@/types';
+import type { FieldOption } from '@/types/reusable/fields';
 import { ClipboardList, History, Printer } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RatingSheetPrint } from './RatingSheetPrint';
 
 interface BatchOption {
@@ -64,11 +65,11 @@ function toHistoryEntry(h: ApiHistoryEntry): TaskRatingHistoryEntry {
 
 export default function TaskRatingPage() {
     const { toast } = useToast();
-    const [batches, setBatches] = useState<BatchOption[]>([]);
+    const [batchesCache, setBatchesCache] = useState<BatchOption[]>([]);
     const [batchTrainees, setBatchTrainees] = useState<PersonRef[]>([]);
     const [taskOptions, setTaskOptions] = useState<string[]>([]);
     const [ratings, setRatings] = useState<ApiTaskRating[]>([]);
-    const [batchNo, setBatchNo] = useState('');
+    const [batchId, setBatchId] = useState('');
     const [taskName, setTaskName] = useState('');
     const [draftByTrainee, setDraftByTrainee] = useState<
         Record<
@@ -82,15 +83,38 @@ export default function TaskRatingPage() {
     const [historyFor, setHistoryFor] = useState<ApiTaskRating | null>(null);
     const [history, setHistory] = useState<TaskRatingHistoryEntry[]>([]);
 
-    useEffect(() => {
-        apiFetchJson<BatchOption[]>('/batches/lookup?status=active&per_page=50').then((res) =>
-            setBatches(res.data ?? []),
-        );
-    }, []);
+    const loadBatchOptions = useCallback(
+        async (q: string): Promise<FieldOption[]> => {
+            const res = await apiFetchJson<BatchOption[]>(
+                `/batches/lookup?status=active&q=${encodeURIComponent(q)}&per_page=50`,
+            );
+            const data = res.data ?? [];
+            setBatchesCache((prev) => {
+                const merged = [...prev];
+                data.forEach((b) => {
+                    if (!merged.some((m) => m.id === b.id)) merged.push(b);
+                });
+                return merged;
+            });
+            return data.map((b) => ({ value: String(b.id), label: b.batch_code }));
+        },
+        [],
+    );
+    const getBatchLabel = useCallback(
+        (v: unknown) =>
+            batchesCache.find((b) => String(b.id) === String(v))?.batch_code ?? '',
+        [batchesCache],
+    );
+    const batchLabel = getBatchLabel(batchId);
 
-    const batchId = useMemo(
-        () => batches.find((b) => b.batch_code === batchNo)?.id,
-        [batches, batchNo],
+    const loadTaskOptions = useCallback(
+        async (q: string): Promise<FieldOption[]> => {
+            const filtered = q
+                ? taskOptions.filter((t) => t.toLowerCase().includes(q.toLowerCase()))
+                : taskOptions;
+            return filtered.map((t) => ({ value: t, label: t }));
+        },
+        [taskOptions],
     );
 
     useEffect(() => {
@@ -223,19 +247,16 @@ export default function TaskRatingPage() {
                     >
                         1. Batch
                     </label>
-                    <Dropdown
-                        options={[
-                            'Select batch',
-                            ...batches.map((b) => b.batch_code),
-                        ]}
-                        value={batchNo}
+                    <AsyncSelectField
+                        value={batchId}
                         placeholder="Select batch"
+                        loadOptions={loadBatchOptions}
+                        getOptionLabel={getBatchLabel}
                         onChange={(v) => {
-                            setBatchNo(v === 'Select batch' ? '' : v);
+                            setBatchId((v as string) ?? '');
                             setTaskName('');
                             setDraftByTrainee({});
                         }}
-                        data-cy="task-rating-page-dropdown-select-batch"
                     />
                 </div>
                 <div className="w-64" data-cy="task-rating-page-div-9">
@@ -245,24 +266,15 @@ export default function TaskRatingPage() {
                     >
                         2. Task / project
                     </label>
-                    <Dropdown
-                        options={
-                            taskOptions.length
-                                ? ['Select task', ...taskOptions]
-                                : ['No tasks for this batch']
-                        }
+                    <AsyncSelectField
                         value={taskName}
                         placeholder="Select task"
+                        disabled={!batchId}
+                        loadOptions={loadTaskOptions}
                         onChange={(v) => {
-                            setTaskName(
-                                v === 'Select task' ||
-                                    v === 'No tasks for this batch'
-                                    ? ''
-                                    : v,
-                            );
+                            setTaskName((v as string) ?? '');
                             setDraftByTrainee({});
                         }}
-                        data-cy="task-rating-page-dropdown-select-task"
                     />
                 </div>
                 {taskName && (
@@ -276,7 +288,7 @@ export default function TaskRatingPage() {
                 )}
             </div>
 
-            {!batchNo && (
+            {!batchId && (
                 <div
                     className="no-print rounded-lg border border-dashed border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500"
                     data-cy="task-rating-page-div-select-a-batch-then-a-task"
@@ -291,7 +303,7 @@ export default function TaskRatingPage() {
                 </div>
             )}
 
-            {batchNo && !taskName && (
+            {batchId && !taskName && (
                 <div
                     className="no-print rounded-lg border border-dashed border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500"
                     data-cy="task-rating-page-div-15"
@@ -303,7 +315,7 @@ export default function TaskRatingPage() {
             )}
 
             {/* Step 3 + 4 — Trainees → Ratings */}
-            {batchNo && taskName && (
+            {batchId && taskName && (
                 <>
                     <div
                         className="no-print mb-3 rounded-lg border border-neutral-200 bg-brand-50 px-4 py-3"
@@ -641,7 +653,7 @@ export default function TaskRatingPage() {
                             className="mb-1 text-xs text-neutral-500"
                             data-cy="task-rating-page-p-59"
                         >
-                            {historyFor.task_name} · {batchNo}
+                            {historyFor.task_name} · {batchLabel}
                         </p>
                         {history.map((h, i) => (
                             <div
@@ -687,7 +699,7 @@ export default function TaskRatingPage() {
             {/* Print layout */}
             {taskName && (
                 <RatingSheetPrint
-                    batchNo={batchNo}
+                    batchNo={batchLabel}
                     taskName={taskName}
                     ratings={ratingsForTask}
                     average={average}

@@ -12,16 +12,15 @@
  *   - card view : all table chrome/headers hidden, only children render
  */
 
-import React from 'react';
 import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
 import type { CardActions } from '@/types/reusable/card';
 import type { DataTableProps } from '@/types/reusable/data-table';
+import React from 'react';
 import { ConfirmDeleteModal } from '../modal/ConfirmDeleteModal';
 import FetchingSpinner from '../spinners/FetchingSpinner';
 import { CardFilterPanel } from './components/CardFilterPanel';
 import { DefaultRecordCard } from './components/DefaultRecordCard';
 import { PaginationBar } from './components/Pagination';
-import { StatusFilter } from './components/StatusFilter';
 import { Toolbar } from './components/Toolbar';
 import { ViewToggle } from './components/ViewToggle';
 import { useCardTableController } from './hooks/use-card-table-controller';

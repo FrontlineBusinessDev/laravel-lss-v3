@@ -1,18 +1,33 @@
 import { Button } from '@/components/Button';
-import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
 import { RatingStars } from '@/components/RatingStars';
 import { StatCard } from '@/components/StatCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useToast } from '@/components/Toast';
-import { useBatches } from '@/context/BatchesContext';
 import { behavioralQuestions, currentUser, behavioralRatingRecords as initialRatings, TODAY } from '@/data/mockData';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
+import { apiFetchJson } from '@/lib/apiFetch';
 import { toDateInputValue } from '@/lib/utils';
 import type { BehavioralAnswer, BehavioralQuestion, BehavioralRating } from '@/types';
+import type { FieldOption } from '@/types/reusable/fields';
 import { ClipboardCheck, ClipboardList, History, Printer } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BehavioralSheetPrint } from './BehavrialSheetPrint';
 
+interface BatchOption {
+  id: number;
+  batch_code: string;
+}
+interface ApiTrainee {
+  id: number;
+  first_name: string;
+  last_name: string;
+  school: { id: number; school_name: string } | null;
+}
+
+function traineeName(tr: ApiTrainee) {
+  return `${tr.first_name} ${tr.last_name}`.trim();
+}
 /** Overall average considers only the rated (1–5) statements, not written-response items. */
 function averageOf(answers: BehavioralAnswer[]) {
   const scores = answers.filter(a => a.score != null).map(a => a.score as number);
@@ -29,17 +44,37 @@ function groupBySection(questions: BehavioralQuestion[]) {
 }
 export function BehavioralAssessmentForm() {
   const {
-    batches,
-    trainees
-  } = useBatches();
-  const {
     showToast
   } = useToast();
   const [ratings, setRatings] = useState<BehavioralRating[]>(initialRatings);
   const activeQuestions = useMemo(() => behavioralQuestions.filter(q => q.status === 'active').sort((a, b) => a.order - b.order), []);
   const sections = useMemo(() => groupBySection(activeQuestions), [activeQuestions]);
-  const [batchNo, setBatchNo] = useState('');
-  const batchTrainees = useMemo(() => trainees.filter(t => t.batchNo === batchNo && !t.archived), [batchNo]);
+  const [batchId, setBatchId] = useState('');
+  const [batchesCache, setBatchesCache] = useState<BatchOption[]>([]);
+  const [batchTrainees, setBatchTrainees] = useState<ApiTrainee[]>([]);
+
+  const loadBatchOptions = useCallback(async (q: string): Promise<FieldOption[]> => {
+    const res = await apiFetchJson<BatchOption[]>(`/batches/lookup?status=active&q=${encodeURIComponent(q)}&per_page=50`);
+    const data = res.data ?? [];
+    setBatchesCache(prev => {
+      const merged = [...prev];
+      data.forEach(b => {
+        if (!merged.some(m => m.id === b.id)) merged.push(b);
+      });
+      return merged;
+    });
+    return data.map(b => ({ value: String(b.id), label: b.batch_code }));
+  }, []);
+  const getBatchLabel = useCallback((v: unknown) => batchesCache.find(b => String(b.id) === String(v))?.batch_code ?? '', [batchesCache]);
+  const batchNo = getBatchLabel(batchId);
+
+  useEffect(() => {
+    if (!batchId) {
+      setBatchTrainees([]);
+      return;
+    }
+    apiFetchJson<ApiTrainee[]>(`/ratings/behavioral-rating/trainees?batch_id=${batchId}`).then(res => setBatchTrainees(res.data ?? []));
+  }, [batchId]);
   const [formFor, setFormFor] = useState<{
     traineeId: string;
     traineeName: string;
@@ -142,9 +177,9 @@ export function BehavioralAssessmentForm() {
       <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-neutral-200 bg-white p-3.5 no-print" data-cy="behavioral-assessment-form-div-4">
         <div className="w-56" data-cy="behavioral-assessment-form-div-5">
           <label className="mb-1 block text-[11px] font-medium text-neutral-500" data-cy="behavioral-assessment-form-label-1-batch">1. Batch</label>
-          <Dropdown options={['Select batch', ...batches.map(b => b.batchNo)]} value={batchNo} placeholder="Select batch" onChange={v => setBatchNo(v === 'Select batch' ? '' : v)} data-cy="behavioral-assessment-form-dropdown-select-batch" />
+          <AsyncSelectField value={batchId} placeholder="Select batch" loadOptions={loadBatchOptions} getOptionLabel={getBatchLabel} onChange={v => setBatchId(v as string ?? '')} />
         </div>
-        {batchNo && <StatCard label="Evaluated" value={`${batchTrainees.filter(t => ratingFor(t.id)).length} / ${batchTrainees.length}`} tone="accent" className="w-40" data-cy="behavioral-assessment-form-stat-card-evaluated" />}
+        {batchNo && <StatCard label="Evaluated" value={`${batchTrainees.filter(t => ratingFor(String(t.id))).length} / ${batchTrainees.length}`} tone="accent" className="w-40" data-cy="behavioral-assessment-form-stat-card-evaluated" />}
       </div>
 
       {!batchNo && <div className="rounded-lg border border-dashed border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500 no-print" data-cy="behavioral-assessment-form-div-select-a-batch-to-view-its">
@@ -167,12 +202,14 @@ export function BehavioralAssessmentForm() {
               </thead>
               <tbody data-cy="behavioral-assessment-form-tbody-20">
                 {batchTrainees.map(tr => {
-                const existing = ratingFor(tr.id);
+                const traineeId = String(tr.id);
+                const name = traineeName(tr);
+                const existing = ratingFor(traineeId);
                 const avg = existing ? averageOf(existing.answers) : 0;
-                return <tr key={tr.id} className="border-t border-neutral-100 align-top" data-cy="behavioral-assessment-form-tr-21">
+                return <tr key={traineeId} className="border-t border-neutral-100 align-top" data-cy="behavioral-assessment-form-tr-21">
                       <td className="px-4 py-3" data-cy="behavioral-assessment-form-td-22">
-                        <div className="font-medium text-ink" data-cy="behavioral-assessment-form-div-23">{tr.name}</div>
-                        <div className="text-xs text-neutral-400" data-cy="behavioral-assessment-form-div-24">{tr.school}</div>
+                        <div className="font-medium text-ink" data-cy="behavioral-assessment-form-div-23">{name}</div>
+                        <div className="text-xs text-neutral-400" data-cy="behavioral-assessment-form-div-24">{tr.school?.school_name ?? '—'}</div>
                       </td>
                       <td className="px-4 py-3" data-cy="behavioral-assessment-form-td-25">
                         {existing ? <StatusBadge status="completed" data-cy="behavioral-assessment-form-status-badge-26" /> : <span className="inline-flex items-center rounded-pill bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500" data-cy="behavioral-assessment-form-span-not-evaluated">
@@ -183,7 +220,7 @@ export function BehavioralAssessmentForm() {
                       <td className="px-4 py-3" data-cy="behavioral-assessment-form-td-29">{existing ? <RatingStars value={avg} data-cy="behavioral-assessment-form-rating-stars-30" /> : <span className="text-xs text-neutral-400" data-cy="behavioral-assessment-form-span-31">—</span>}</td>
                       <td className="px-4 py-3" data-cy="behavioral-assessment-form-td-32">
                         <div className="flex flex-wrap items-center justify-end gap-1.5" data-cy="behavioral-assessment-form-div-33">
-                          <Button size="sm" variant="primary" icon={ClipboardCheck} onClick={() => openForm(tr.id, tr.name)} data-cy="behavioral-assessment-form-button-open-form">
+                          <Button size="sm" variant="primary" icon={ClipboardCheck} onClick={() => openForm(traineeId, name)} data-cy="behavioral-assessment-form-button-open-form">
                             {existing ? 'Edit form' : 'Evaluate'}
                           </Button>
                           {existing && <>
@@ -211,13 +248,15 @@ export function BehavioralAssessmentForm() {
         {/* Mobile cards */}
         <div className="flex flex-col gap-2 no-print sm:hidden" data-cy="behavioral-assessment-form-div-39">
           {batchTrainees.map(tr => {
-          const existing = ratingFor(tr.id);
+          const traineeId = String(tr.id);
+          const name = traineeName(tr);
+          const existing = ratingFor(traineeId);
           const avg = existing ? averageOf(existing.answers) : 0;
-          return <div key={tr.id} className="rounded-lg border border-neutral-200 bg-white p-3.5" data-cy="behavioral-assessment-form-div-40">
+          return <div key={traineeId} className="rounded-lg border border-neutral-200 bg-white p-3.5" data-cy="behavioral-assessment-form-div-40">
                 <div className="mb-2 flex items-start justify-between gap-2" data-cy="behavioral-assessment-form-div-41">
                   <div data-cy="behavioral-assessment-form-div-42">
-                    <div className="font-medium text-ink" data-cy="behavioral-assessment-form-div-43">{tr.name}</div>
-                    <div className="text-xs text-neutral-400" data-cy="behavioral-assessment-form-div-44">{tr.school}</div>
+                    <div className="font-medium text-ink" data-cy="behavioral-assessment-form-div-43">{name}</div>
+                    <div className="text-xs text-neutral-400" data-cy="behavioral-assessment-form-div-44">{tr.school?.school_name ?? '—'}</div>
                   </div>
                   {existing ? <StatusBadge status="completed" data-cy="behavioral-assessment-form-status-badge-45" /> : <span className="inline-flex items-center rounded-pill bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500" data-cy="behavioral-assessment-form-span-not-evaluated-2">
                       Not evaluated
@@ -225,7 +264,7 @@ export function BehavioralAssessmentForm() {
                 </div>
                 {existing && <RatingStars value={avg} data-cy="behavioral-assessment-form-rating-stars-47" />}
                 <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-neutral-100 pt-2.5" data-cy="behavioral-assessment-form-div-48">
-                  <Button size="sm" variant="primary" icon={ClipboardCheck} onClick={() => openForm(tr.id, tr.name)} data-cy="behavioral-assessment-form-button-open-form-2">
+                  <Button size="sm" variant="primary" icon={ClipboardCheck} onClick={() => openForm(traineeId, name)} data-cy="behavioral-assessment-form-button-open-form-2">
                     {existing ? 'Edit form' : 'Evaluate'}
                   </Button>
                   {existing && <>

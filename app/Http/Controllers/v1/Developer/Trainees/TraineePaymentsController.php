@@ -33,6 +33,25 @@ class TraineePaymentsController extends BaseController
         return $this->sendResponse($payment, 'Payment recorded successfully.', 201);
     }
 
+    public function updatePayment(Request $request, int|string $traineeId, int|string $paymentId): JsonResponse
+    {
+        $trainee = Trainees::findOrFail($traineeId);
+        $this->authorize('update', $trainee);
+
+        $payment = TraineesPayments::where('trainee_id', $trainee->id)->findOrFail($paymentId);
+
+        $validated = $request->validate([
+            'amount_paid' => ['required', 'numeric', 'min:0.01'],
+            'payment_date' => ['required', 'date'],
+            'reference_no' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $payment->update($validated);
+
+        return $this->sendResponse($payment, 'Payment updated successfully.');
+    }
+
     public function deletePayment(int|string $traineeId, int|string $paymentId): JsonResponse
     {
         $trainee = Trainees::findOrFail($traineeId);

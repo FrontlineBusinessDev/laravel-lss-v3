@@ -65,13 +65,18 @@ const columns: ColumnDef<ApiTask>[] = [
 export default function TraineeTasksPage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'tasks' | 'daily-sheet'>('tasks');
+    const [activeTab, setActiveTab] = useState<'tasks' | 'daily-sheet'>(
+        'tasks',
+    );
     const [viewTask, setViewTask] = useState<ApiTask | null>(null);
 
     const invalidateOpenTasks = () =>
         queryClient.invalidateQueries({ queryKey: [['trainee-tasks-open']] });
 
-    async function runTaskAction(task: ApiTask, action: 'run' | 'stop' | 'complete') {
+    async function runTaskAction(
+        task: ApiTask,
+        action: 'run' | 'stop' | 'complete',
+    ) {
         try {
             await apiFetchJson(`/trainee/tasks/${task.id}/${action}`, {
                 method: 'PATCH',
@@ -87,7 +92,11 @@ export default function TraineeTasksPage() {
 
     const renderRow = (row: ApiTask, _actions: CardActions) => {
         const menu: RowMenuAction[] = [
-            { label: 'Open', icon: FolderOpen, onClick: () => setViewTask(row) },
+            {
+                label: 'Open',
+                icon: FolderOpen,
+                onClick: () => setViewTask(row),
+            },
             {
                 label: 'Run',
                 icon: Play,
@@ -117,7 +126,10 @@ export default function TraineeTasksPage() {
                 )}
                 data-cy="trainee-tasks-div-row"
             >
-                <div className="flex items-center gap-1.5" data-cy="trainee-tasks-div-status">
+                <div
+                    className="flex items-center gap-1.5"
+                    data-cy="trainee-tasks-div-status"
+                >
                     <span
                         className={cn(
                             'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
@@ -128,7 +140,10 @@ export default function TraineeTasksPage() {
                         {row.is_running ? 'Running' : 'Open'}
                     </span>
                 </div>
-                <TaskPriorityBadge priority={row.priority} data-cy="trainee-tasks-badge-priority" />
+                <TaskPriorityBadge
+                    priority={row.priority}
+                    data-cy="trainee-tasks-badge-priority"
+                />
                 <TextCell muted data-cy="trainee-tasks-text-cell-task">
                     {row.task}
                 </TextCell>
@@ -161,7 +176,7 @@ export default function TraineeTasksPage() {
                         'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                         activeTab === 'tasks'
                             ? 'bg-brand-500 text-white'
-                            : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50',
+                            : 'border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
                     )}
                     data-cy="trainee-tasks-button-tab-tasks"
                 >
@@ -174,7 +189,7 @@ export default function TraineeTasksPage() {
                         'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
                         activeTab === 'daily-sheet'
                             ? 'bg-brand-500 text-white'
-                            : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50',
+                            : 'border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50',
                     )}
                     data-cy="trainee-tasks-button-tab-daily-sheet"
                 >
@@ -203,8 +218,14 @@ export default function TraineeTasksPage() {
                 data-cy="trainee-tasks-modal-view-task"
             >
                 {viewTask && (
-                    <div className="flex flex-col gap-3 text-sm" data-cy="trainee-tasks-div-view">
-                        <div className="flex items-center gap-2" data-cy="trainee-tasks-div-view-badges">
+                    <div
+                        className="flex flex-col gap-3 text-sm"
+                        data-cy="trainee-tasks-div-view"
+                    >
+                        <div
+                            className="flex items-center gap-2"
+                            data-cy="trainee-tasks-div-view-badges"
+                        >
                             <span
                                 className={cn(
                                     'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
@@ -216,7 +237,10 @@ export default function TraineeTasksPage() {
                             </span>
                             <TaskPriorityBadge priority={viewTask.priority} />
                         </div>
-                        <p className="text-neutral-600" data-cy="trainee-tasks-p-description">
+                        <p
+                            className="text-neutral-600"
+                            data-cy="trainee-tasks-p-description"
+                        >
                             {viewTask.description ?? 'No description.'}
                         </p>
                         <div
@@ -224,7 +248,9 @@ export default function TraineeTasksPage() {
                             data-cy="trainee-tasks-div-details"
                         >
                             <div>
-                                <span className="text-neutral-500">Category/Project</span>
+                                <span className="text-neutral-500">
+                                    Category/Project
+                                </span>
                                 <div className="font-medium text-ink">
                                     {viewTask.batch?.batch_code ?? '—'}
                                 </div>
@@ -236,13 +262,17 @@ export default function TraineeTasksPage() {
                                 </div>
                             </div>
                             <div>
-                                <span className="text-neutral-500">Time goal</span>
+                                <span className="text-neutral-500">
+                                    Time goal
+                                </span>
                                 <div className="font-mono font-medium text-ink">
                                     {Number(viewTask.time_goal)}h
                                 </div>
                             </div>
                             <div>
-                                <span className="text-neutral-500">Time spent</span>
+                                <span className="text-neutral-500">
+                                    Time spent
+                                </span>
                                 <div className="font-mono font-medium text-ink">
                                     {Number(viewTask.time_spent)}h
                                 </div>
