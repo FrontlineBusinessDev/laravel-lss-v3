@@ -3,11 +3,13 @@ import { Avatar } from '@/components/Avatar';
 import { AvatarCropModal } from '@/components/AvatarCropModal';
 import { Button } from '@/components/Button';
 import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
+import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Link, router, usePage } from '@inertiajs/react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     Archive,
     ArchiveRestore,
@@ -28,8 +30,14 @@ export default function TraineesDetailLayout({
 }) {
     const { toast } = useToast();
     const { url } = usePage();
+    const queryClient = useQueryClient();
     const path = url.split('?')[0];
     const displayStatus = trainee.status;
+
+    const invalidateTraineesList = () =>
+        tableListInvalidateKeys('trainees').forEach((queryKey) =>
+            queryClient.invalidateQueries({ queryKey }),
+        );
 
     const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
     const [avatarProgress, setAvatarProgress] = useState<number | null>(null);
@@ -47,6 +55,7 @@ export default function TraineesDetailLayout({
                 `/trainees/${trainee.id}/${isActive ? 'archive' : 'restore'}`,
                 { method: 'PATCH' },
             );
+            invalidateTraineesList();
             toast({
                 title: isActive ? 'Trainee archived' : 'Trainee restored',
                 variant: 'info',
@@ -70,6 +79,7 @@ export default function TraineesDetailLayout({
             await apiFetchJson(`/trainees/${trainee.id}`, {
                 method: 'DELETE',
             });
+            invalidateTraineesList();
             toast({ title: 'Trainee deleted', variant: 'info' });
             router.visit('/trainees');
         } catch (error) {

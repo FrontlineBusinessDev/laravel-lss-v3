@@ -8,7 +8,6 @@ import type {
   LearningOutcome,
   AppUser,
   LeaveRecord,
-  AppNotification,
   TaskItem,
   Announcement,
   CalendarEvent,
@@ -361,33 +360,6 @@ export function getLeaveDayCount(record: LeaveRecord): number {
   const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
   return Math.max(1, days)
 }
-
-export const notifications: AppNotification[] = [
-  {
-    id: 'nt1', audience: 'admin',
-    title: 'New leave request \u2013 Sofia Mendoza',
-    body: 'Sofia Mendoza (B-2026-039) requested Sick Leave from Jun 28 to Jul 3, 2026.',
-    createdAt: '2026-06-27', read: false, link: '/leave?highlight=lv1', relatedLeaveId: 'lv1',
-  },
-  {
-    id: 'nt2', audience: 'admin',
-    title: 'New leave request \u2013 Ryan Aquino',
-    body: 'Ryan Aquino (B-2026-047) requested Bereavement Leave from Jun 30 to Jul 2, 2026.',
-    createdAt: '2026-06-29', read: false, link: '/leave?highlight=lv2', relatedLeaveId: 'lv2',
-  },
-  {
-    id: 'nt3', audience: 'admin',
-    title: 'New leave request \u2013 Jared Cruz',
-    body: 'Jared Cruz (B-2026-042) requested School-Related Leave from Jul 1 to Jul 1, 2026.',
-    createdAt: '2026-06-30', read: false, link: '/leave?highlight=lv3', relatedLeaveId: 'lv3',
-  },
-  {
-    id: 'nt4', audience: 'admin',
-    title: 'New leave request \u2013 Paolo Diaz',
-    body: 'Paolo Diaz (B-2026-028) requested Sick Leave from Jul 4 to Jul 6, 2026.',
-    createdAt: '2026-07-03', read: false, link: '/leave?highlight=lv6', relatedLeaveId: 'lv6',
-  },
-]
 
 export const tasks: TaskItem[] = [
   { id: 'tk1', title: 'Review endorsement letters for Batch B-2026-046', dueDate: '2026-07-02', assignee: 'Miguel Torres', status: 'in_progress' },

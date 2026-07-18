@@ -28,7 +28,7 @@ const STATUS_STYLE: Record<string, string> = {
     locked: 'bg-neutral-100 text-neutral-600',
 };
 
-const GRID = 'sm:grid-cols-[0.6fr_0.6fr_1.2fr_0.6fr_0.9fr_0.7fr_2.5rem]!';
+const GRID = 'sm:grid-cols-[0.6fr_0.6fr_1.2fr_0.6fr_0.6fr_0.9fr_0.7fr_2.5rem]!';
 
 const columns: ColumnDef<ApiTask>[] = [
     { key: 'task', label: 'Task', searchable: true },
@@ -146,6 +146,9 @@ export default function TraineeTasksPage() {
                 </TextCell>
                 <TextCell muted data-cy="trainee-tasks-text-cell-time-goal">
                     {Number(row.time_goal)}h
+                </TextCell>
+                <TextCell muted data-cy="trainee-tasks-text-cell-time-spent">
+                    {Number(row.time_spent ?? 0)}h
                 </TextCell>
                 <TextCell muted data-cy="trainee-tasks-text-cell-batch">
                     {row.batch?.batch_code ?? '—'}

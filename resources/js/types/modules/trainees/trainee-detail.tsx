@@ -80,6 +80,30 @@ export interface AppTraineeUser {
     status: string;
 }
 
+export interface AppTraineeCertificate {
+    id: number;
+    certificate_no: string;
+    issued_at: string | null;
+    citation: { id: number; name: string } | null;
+}
+
+export interface AppTraineeTaskRatingEvaluator {
+    id: number;
+    first_name: string;
+    last_name: string;
+}
+
+export interface AppTraineeTaskRating {
+    id: number;
+    batch_id: number;
+    task_name: string | null;
+    rating: number | null;
+    comments: string | null;
+    rated_at: string | null;
+    batch: { id: number; batch_code: string } | null;
+    evaluator: AppTraineeTaskRatingEvaluator | null;
+}
+
 export interface TraineeDetail {
     id: number;
     status: string;
@@ -127,6 +151,8 @@ export interface TraineeDetail {
     total_paid: string;
     outstanding_balance: string;
     payments: AppTraineePayment[];
+    certificate: AppTraineeCertificate | null;
+    task_ratings: AppTraineeTaskRating[];
     created_at: string;
     updated_at: string;
 }

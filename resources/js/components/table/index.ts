@@ -1,16 +1,12 @@
 /**
  * @file index.ts
- * Public API of the DataTableField module.
+ * Public API of the table module — the shared type contracts consumed by
+ * pages that build their own columns/fields/card renderers.
  *
- * Import everything from this single entry point:
- *
- *   import { DataTableField } from '@/components/data-table';
- *   import type { ColumnDef, FieldDef } from '@/components/data-table';
+ *   import type { CardActions, ColumnDef } from '@/components/table';
+ *   import { DataTableCardField } from '@/components/table/DataTableCardField';
  */
 
-export { DataTableField, default } from './DataTableField';
-
-// Types — re-exported so consumers don't need to know internal paths
 export type {
     CardActions,
     ColumnDef,

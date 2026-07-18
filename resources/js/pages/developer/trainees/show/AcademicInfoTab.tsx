@@ -5,8 +5,10 @@ import { ApiError } from '@/api-service-layer/client';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Button } from '@/components/Button';
 import { TextField, TextAreaField } from '@/components/FormField';
+import { RequiredHoursCompletedPill } from '@/components/RatingsBadges';
 import { useToast } from '@/hooks/use-toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { getHoursProgress } from '@/lib/ratings';
 import { router } from '@inertiajs/react';
 
 function Field({
@@ -103,8 +105,7 @@ export default function AcademicInfoTab({
             setSaving(false);
         }
     };
-    const requiredHours = Number(saved.required_hours) || 0;
-    const completedHours = Number(trainee.completed_hours ?? 0);
+    const hours = getHoursProgress(trainee.completed_hours, saved.required_hours);
     return (
         <>
             <TraineesDetailLayout trainee={trainee}>
@@ -212,7 +213,7 @@ export default function AcademicInfoTab({
                         >
                             <Field
                                 label="Required hours"
-                                value={`${requiredHours} hrs`}
+                                value={`${hours.required} hrs`}
                                 data-cy="academic-info-tab-field-required-hours"
                             />
                             <Field
@@ -304,16 +305,19 @@ export default function AcademicInfoTab({
                             <div
                                 className="h-full rounded-pill bg-brand-500"
                                 style={{
-                                    width: `${requiredHours > 0 ? Math.min(100, Math.round((completedHours / requiredHours) * 100)) : 0}%`,
+                                    width: `${hours.percent}%`,
                                 }}
                                 data-cy="academic-info-tab-div-38"
                             />
                         </div>
                         <div
-                            className="mt-1.5 text-xs text-neutral-500"
+                            className="mt-1.5 flex items-center gap-2 text-xs text-neutral-500"
                             data-cy="academic-info-tab-div-of"
                         >
-                            {completedHours} of {requiredHours} hrs completed
+                            {hours.completed} of {hours.required} hrs completed
+                            {hours.hoursComplete && (
+                                <RequiredHoursCompletedPill />
+                            )}
                         </div>
                     </div>
                 </div>

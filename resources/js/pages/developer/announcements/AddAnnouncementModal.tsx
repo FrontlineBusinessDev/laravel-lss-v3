@@ -6,10 +6,18 @@ import {
     TextField,
 } from '@/components/FormField';
 import { Modal } from '@/components/Modal';
-import type { AnnouncementInput, Announcements } from '@/types/modules/announcements/announcements';
-import { AUDIENCE_OPTIONS } from '@/types/modules/announcements/announcements';
-
-const STATUS_OPTIONS = ['active', 'inactive'];
+import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
+import { apiFetchJson } from '@/lib/apiFetch';
+import type {
+    AnnouncementInput,
+    Announcements,
+} from '@/types/modules/announcements/announcements';
+import {
+    AUDIENCE_ROLE_OPTIONS,
+    AUDIENCE_TYPE_OPTIONS,
+} from '@/types/modules/announcements/announcements';
+import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
 
 interface AddAnnouncementModalProps {
     open: boolean;
@@ -21,11 +29,26 @@ interface AddAnnouncementModalProps {
 
 function emptyValues(): AnnouncementInput {
     return {
-        status: 'active',
         subject: '',
         description: '',
-        audience: AUDIENCE_OPTIONS[0],
+        audience_type: 'all',
+        audience: null,
+        audience_batch_id: null,
+        audience_user_ids: [],
+        scheduled_at: '',
     };
+}
+
+async function loadTraineeOptions(query: string): Promise<FieldOption[]> {
+    const res = await apiFetchJson<{
+        data: { id: number; first_name: string; last_name: string }[];
+    }>(
+        `/trainees/pagination-search?filters[status]=active&per_page=50&search=${encodeURIComponent(query)}`,
+    );
+    return (res.data?.data ?? []).map((p) => ({
+        value: String(p.id),
+        label: `${p.first_name} ${p.last_name}`,
+    }));
 }
 
 export function AddAnnouncementModal({
@@ -46,10 +69,15 @@ export function AddAnnouncementModal({
             setValues(
                 mode === 'edit' && announcement
                     ? {
-                          status: announcement.status,
                           subject: announcement.subject,
                           description: announcement.description ?? '',
+                          audience_type: announcement.audience_type,
                           audience: announcement.audience,
+                          audience_batch_id: announcement.audience_batch_id,
+                          audience_user_ids:
+                              announcement.audience_user_ids ?? [],
+                          scheduled_at:
+                              announcement.scheduled_at?.slice(0, 16) ?? '',
                       }
                     : emptyValues(),
             );
@@ -113,17 +141,96 @@ export function AddAnnouncementModal({
 
             <SelectField
                 label="Audience"
-                options={[...AUDIENCE_OPTIONS]}
-                value={values.audience ?? AUDIENCE_OPTIONS[0]}
-                onChange={(e) => set('audience', e.target.value)}
+                options={AUDIENCE_TYPE_OPTIONS.map((o) => o.label)}
+                value={
+                    AUDIENCE_TYPE_OPTIONS.find(
+                        (o) => o.value === values.audience_type,
+                    )?.label ?? AUDIENCE_TYPE_OPTIONS[0].label
+                }
+                onChange={(e) => {
+                    const match = AUDIENCE_TYPE_OPTIONS.find(
+                        (o) => o.label === e.target.value,
+                    );
+                    set(
+                        'audience_type',
+                        (match?.value ??
+                            'all') as AnnouncementInput['audience_type'],
+                    );
+                }}
             />
 
-            <SelectField
-                label="Status"
-                options={STATUS_OPTIONS}
-                value={values.status ?? 'active'}
-                onChange={(e) => set('status', e.target.value)}
+            {values.audience_type === 'batch' && (
+                <div className="mb-3.5">
+                    <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                        Batch
+                    </label>
+                    <AsyncSelectField
+                        value={
+                            values.audience_batch_id
+                                ? String(values.audience_batch_id)
+                                : ''
+                        }
+                        onChange={(v) =>
+                            set(
+                                'audience_batch_id',
+                                v ? Number(v) : null,
+                            )
+                        }
+                        loadOptions={(q) =>
+                            loadLookupOptions('/batches', q, 'batch_code')
+                        }
+                        placeholder="Select a batch"
+                    />
+                </div>
+            )}
+
+            {values.audience_type === 'role' && (
+                <SelectField
+                    label="Role"
+                    options={AUDIENCE_ROLE_OPTIONS.map((o) => o.label)}
+                    value={
+                        AUDIENCE_ROLE_OPTIONS.find(
+                            (o) => o.value === values.audience,
+                        )?.label ?? AUDIENCE_ROLE_OPTIONS[0].label
+                    }
+                    onChange={(e) => {
+                        const match = AUDIENCE_ROLE_OPTIONS.find(
+                            (o) => o.label === e.target.value,
+                        );
+                        set('audience', match?.value ?? 'trainee');
+                    }}
+                />
+            )}
+
+            {values.audience_type === 'custom' && (
+                <div className="mb-3.5">
+                    <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                        Trainees
+                    </label>
+                    <AsyncMultiSelectField
+                        value={(values.audience_user_ids ?? []).map(String)}
+                        onChange={(v) =>
+                            set(
+                                'audience_user_ids',
+                                v.map((id) => Number(id)),
+                            )
+                        }
+                        loadOptions={loadTraineeOptions}
+                        placeholder="Select trainee(s)"
+                    />
+                </div>
+            )}
+
+            <TextField
+                label="Publish"
+                type="datetime-local"
+                optional
+                value={values.scheduled_at ?? ''}
+                onChange={(e) => set('scheduled_at', e.target.value)}
             />
+            <p className="-mt-2.5 mb-3.5 text-xs text-neutral-400">
+                Leave blank to publish immediately.
+            </p>
 
             <div className="flex gap-2">
                 <Button

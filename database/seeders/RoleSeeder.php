@@ -30,6 +30,7 @@ class RoleSeeder extends Seeder
             Permissions::MANAGE_OWN_TASKS,
             Permissions::MANAGE_OWN_LEAVE,
             Permissions::MANAGE_OWN_EVALUATION,
+            Permissions::MANAGE_OWN_MY_INFO,
         ];
 
         // Every permission referenced below must exist before syncPermissions()

@@ -10,22 +10,40 @@ export interface Announcements extends Record<string, unknown> {
     id: number;
     status: string;
     subject: string;
-    audience: string;
+    audience: string | null;
     description: string | null;
+    scheduled_at: string | null;
+    notified_at: string | null;
+    audience_type: 'all' | 'batch' | 'role' | 'custom';
+    audience_batch_id: number | null;
+    audience_user_ids: number[] | null;
     created_at: string;
     updated_at: string;
 }
 
-/** Matches AnnoucementController::storeRules()'s `audience` Rule::in(). */
-export const AUDIENCE_OPTIONS = [
-    'all trainees',
-    'specific batch',
-    'trainees with documents',
-    'custome group',
+export const AUDIENCE_TYPE_OPTIONS = [
+    { value: 'all', label: 'All trainees' },
+    { value: 'batch', label: 'Specific batch' },
+    { value: 'role', label: 'Specific role' },
+    { value: 'custom', label: 'Custom group' },
+] as const;
+
+export const AUDIENCE_ROLE_OPTIONS = [
+    { value: 'trainee', label: 'Trainees' },
+    { value: 'trainer', label: 'Trainers' },
 ] as const;
 
 export type AnnouncementInput = Partial<
-    Pick<Announcements, 'status' | 'subject' | 'description' | 'audience'>
+    Pick<
+        Announcements,
+        | 'subject'
+        | 'description'
+        | 'audience'
+        | 'scheduled_at'
+        | 'audience_type'
+        | 'audience_batch_id'
+        | 'audience_user_ids'
+    >
 >;
 
 export const columns: ColumnDef<Announcements>[] = [
@@ -46,12 +64,26 @@ export const columns: ColumnDef<Announcements>[] = [
         filterable: true,
     },
     {
-        key: 'audience',
+        key: 'audience_type',
         label: 'Audience',
         sortable: true,
         filterable: true,
         type: 'select',
-        typeData: AUDIENCE_OPTIONS.map((value) => ({ value, label: value })),
+        typeData: AUDIENCE_TYPE_OPTIONS.map((o) => ({ ...o })),
+        render: (value) =>
+            AUDIENCE_TYPE_OPTIONS.find((o) => o.value === value)?.label ??
+            String(value ?? ''),
+    },
+    {
+        key: 'scheduled_at',
+        label: 'Publish',
+        sortable: true,
+        render: (_value, row) =>
+            row.scheduled_at && new Date(row.scheduled_at) > new Date()
+                ? `Scheduled ${row.scheduled_at.slice(0, 10)}`
+                : row.notified_at
+                  ? `Published ${row.notified_at.slice(0, 10)}`
+                  : 'Not yet published',
     },
     {
         key: 'description',
@@ -64,28 +96,9 @@ export const columns: ColumnDef<Announcements>[] = [
 
 export const fields: FieldDef<Announcements>[] = [
     {
-        key: 'status',
-        label: 'Status',
-        type: 'select',
-        options: [
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-        ],
-        required: true,
-        colSpan: 2,
-    },
-    {
         key: 'subject',
         label: 'Subject',
         type: 'text',
-        required: true,
-        colSpan: 2,
-    },
-    {
-        key: 'audience',
-        label: 'Audience',
-        type: 'select',
-        options: AUDIENCE_OPTIONS.map((value) => ({ value, label: value })),
         required: true,
         colSpan: 2,
     },

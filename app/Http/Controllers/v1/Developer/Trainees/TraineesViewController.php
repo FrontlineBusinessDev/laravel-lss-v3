@@ -83,6 +83,9 @@ class TraineesViewController extends BaseController
                 'learningOutcomes:id,learning_outcomes',
                 'payments',
                 'user:id,first_name,last_name,email,status',
+                'taskRatings:id,batch_id,trainee_id,task_name,rating,comments,evaluator_id,rated_at',
+                'taskRatings.batch:id,batch_code',
+                'taskRatings.evaluator:id,first_name,last_name',
             ])
             ->findOrFail($id);
 

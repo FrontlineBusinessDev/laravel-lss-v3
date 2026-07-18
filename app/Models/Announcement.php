@@ -16,5 +16,16 @@ class Announcement extends Model
         'subject',
         'description',
         'audience',
+        'scheduled_at',
+        'notified_at',
+        'audience_type',
+        'audience_batch_id',
+        'audience_user_ids',
+    ];
+
+    protected $casts = [
+        'scheduled_at' => 'datetime',
+        'notified_at' => 'datetime',
+        'audience_user_ids' => 'array',
     ];
 }

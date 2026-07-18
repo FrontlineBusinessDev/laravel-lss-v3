@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@/types/reusable/data-table';
+import { loadLookupOptions } from '@/types/reusable/fields';
 
 /** Disconnected actor snapshot stored on each log row (never an FK). */
 export interface LogActor {
@@ -14,6 +15,11 @@ export interface LogChanges {
   new?: Record<string, unknown>;
   url?: string;
   route?: string | null;
+  // Populated for action === 'error' (see ActivityLogger::logError()).
+  exception?: string;
+  trace?: string;
+  file?: string;
+  line?: number;
 }
 export interface LogRow extends Record<string, unknown> {
   id: number;
@@ -54,11 +60,16 @@ export const ACTION_FILTER_PAIRS = [{
 }, {
   value: 'visit',
   label: 'Visit'
+}, {
+  value: 'error',
+  label: 'Error'
 }];
 export const columns: ColumnDef<LogRow>[] = [{
   key: 'created_at',
   label: 'When',
-  sortable: true
+  sortable: true,
+  type: 'date-range',
+  filterable: true
 }, {
   key: 'action',
   label: 'Action',
@@ -67,6 +78,12 @@ export const columns: ColumnDef<LogRow>[] = [{
   filterable: true,
   typeData: ACTION_FILTER_PAIRS,
   exactFilters: true
+}, {
+  key: 'actor_id',
+  label: 'Actor',
+  type: 'async-select',
+  filterable: true,
+  loadOptions: (q) => loadLookupOptions('/settings/users', q),
 }, {
   key: 'subject_label',
   label: 'Subject',
@@ -88,7 +105,8 @@ const ACTION_STYLES: Record<string, string> = {
   archive: 'bg-warning-50 text-warning-600',
   restore: 'bg-brand-50 text-brand-600',
   delete: 'bg-danger-50 text-danger-600',
-  visit: 'bg-neutral-100 text-neutral-600'
+  visit: 'bg-neutral-100 text-neutral-600',
+  error: 'bg-danger-100 text-danger-700'
 };
 export function ActionBadge({
   action

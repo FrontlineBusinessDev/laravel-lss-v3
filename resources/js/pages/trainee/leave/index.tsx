@@ -1,20 +1,20 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { leaveRequestService } from '@/api-service-layer/leave-request';
 import { Button } from '@/components/Button';
 import { SelectField, TextAreaField, TextField } from '@/components/FormField';
 import { StatusBadge } from '@/components/StatusBadge';
-import { DataTable } from '@/components/table/DataTable';
-import { tableListInvalidateKeys, formatCell } from '@/components/table/utils';
+import DataTableCardField from '@/components/table/DataTableCardField';
+import { formatCell, tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/hooks/use-toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
 import type { StatusKind } from '@/types';
+import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
+import { traineeColumns } from '@/types/modules/leave/leave-requests';
 import type { CardActions } from '@/types/reusable/card';
 import type { FieldOption } from '@/types/reusable/fields';
 import { loadLookupOptions } from '@/types/reusable/fields';
-import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
-import { traineeColumns } from '@/types/modules/leave/leave-requests';
+import { useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const STATUS_BADGE: Record<string, StatusKind> = {
     pending: 'pending',
@@ -91,8 +91,16 @@ export default function TraineeLeavePage() {
     }
 
     async function handleSubmit() {
-        if (!values.leave_category_id || !values.leave_date || !values.return_date || !values.reason.trim()) {
-            toast({ title: 'Fill in all fields before submitting.', variant: 'error' });
+        if (
+            !values.leave_category_id ||
+            !values.leave_date ||
+            !values.return_date ||
+            !values.reason.trim()
+        ) {
+            toast({
+                title: 'Fill in all fields before submitting.',
+                variant: 'error',
+            });
             return;
         }
         setSubmitting(true);
@@ -122,14 +130,23 @@ export default function TraineeLeavePage() {
                 </h2>
                 <SelectField
                     label="Category"
-                    options={['Select a category', ...categories.map((c) => c.label)]}
+                    options={[
+                        'Select a category',
+                        ...categories.map((c) => c.label),
+                    ]}
                     value={
-                        categories.find((c) => String(c.value) === values.leave_category_id)?.label ??
-                        'Select a category'
+                        categories.find(
+                            (c) => String(c.value) === values.leave_category_id,
+                        )?.label ?? 'Select a category'
                     }
                     onChange={(e) => {
-                        const match = categories.find((c) => c.label === e.target.value);
-                        set('leave_category_id', match ? String(match.value) : '');
+                        const match = categories.find(
+                            (c) => c.label === e.target.value,
+                        );
+                        set(
+                            'leave_category_id',
+                            match ? String(match.value) : '',
+                        );
                     }}
                 />
                 <div className="grid grid-cols-2 gap-3">
@@ -164,7 +181,7 @@ export default function TraineeLeavePage() {
             <h2 className="mb-3 text-sm font-semibold text-ink">
                 Your leave history
             </h2>
-            <DataTable<LeaveRequests>
+            <DataTableCardField<LeaveRequests>
                 apiUrl="/leave"
                 apiQueryKey="leave-requests-own"
                 columns={columns}

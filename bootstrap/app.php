@@ -39,6 +39,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+        // Capture real application errors to the System Log (app_loggers) with
+        // actor + stack trace. Skip HTTP-status exceptions (404/429/403/etc.)
+        // and validation failures — those are expected control flow, not bugs,
+        // and would otherwise flood the log with every broken link or bad form.
+        $exceptions->report(function (\Throwable $e) {
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+                || $e instanceof \Illuminate\Validation\ValidationException
+                || $e instanceof \Illuminate\Auth\AuthenticationException
+                || $e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                return;
+            }
+            \App\Support\ActivityLogger::logError($e);
+        });
         // 429 - Too Many Requests
         $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e) {
             /** @disregard P1013 */ // this disregard the error below but it works
@@ -62,4 +75,5 @@ return Application::configure(basePath: dirname(__DIR__))
     })->withSchedule(function () {
         // Call your controller directly every minute (or change to your preferred frequency)
         Schedule::call(new CronController)->everyMinute();
+        Schedule::command('announcements:dispatch-scheduled')->everyMinute();
     })->create();

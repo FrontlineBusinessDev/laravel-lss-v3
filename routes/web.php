@@ -344,6 +344,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
         Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
         Route::get('/evaluations', [TraineeEvaluationsController::class, 'index'])->name('evaluations');
-        Route::get('/my-info', [TraineeMyInfoController::class, 'index'])->name('my-info');
+        Route::middleware('permission:' . Permissions::MANAGE_OWN_MY_INFO)
+            ->prefix('my-info')->name('my-info.')->group(function () {
+                Route::get('/', [TraineeMyInfoController::class, 'index'])->name('index');
+                Route::post('/documents', [TraineeMyInfoController::class, 'uploadDocument'])->name('documents.store');
+                Route::delete('/documents/{document}', [TraineeMyInfoController::class, 'deleteDocument'])->name('documents.destroy');
+            });
     });
 });

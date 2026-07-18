@@ -43,6 +43,7 @@ class Permissions
     const MANAGE_OWN_TASKS = 'manage own tasks';
     const MANAGE_OWN_LEAVE = 'manage own leave';
     const MANAGE_OWN_EVALUATION = 'manage own evaluation';
+    const MANAGE_OWN_MY_INFO = 'manage own my info';
 
     /**
      * Grouped by module — used in seeders, UI permission managers, role builders.
@@ -81,6 +82,7 @@ class Permissions
                 self::MANAGE_OWN_TASKS,
                 self::MANAGE_OWN_LEAVE,
                 self::MANAGE_OWN_EVALUATION,
+                self::MANAGE_OWN_MY_INFO,
             ]
         ];
     }

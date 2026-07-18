@@ -1,4 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     Archive,
     ArchiveRestore,
@@ -25,6 +26,7 @@ import { apiFetchJson } from '@/lib/apiFetch';
 import { copyText } from '@/lib/clipboard';
 import { cn } from '@/lib/utils';
 import { CreateBatchModal } from '@/pages/developer/batches/CreateBatchModal';
+import { tableListInvalidateKeys } from '@/components/table/utils';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
 
@@ -59,6 +61,7 @@ export default function BatchDetailLayout({
 }) {
     const { toast } = useToast();
     const { url } = usePage();
+    const queryClient = useQueryClient();
     const path = url.split('?')[0];
     const [editOpen, setEditOpen] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
@@ -100,6 +103,9 @@ export default function BatchDetailLayout({
             await apiFetchJson(endpoint, {
                 method,
             });
+            tableListInvalidateKeys('batches').forEach((queryKey) =>
+                queryClient.invalidateQueries({ queryKey }),
+            );
             toast({
                 title: okMsg,
                 variant: 'info',

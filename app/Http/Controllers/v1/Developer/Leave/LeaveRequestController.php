@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Developer\Leave;
 
 use App\Http\Controllers\v1\Developer\BaseController;
+use App\Mail\LeaveDecisionMail;
 use App\Mail\LeaveSubmittedMail;
 use App\Models\LeaveCategory;
 use App\Models\LeaveRequest;
@@ -106,6 +107,7 @@ class LeaveRequestController extends BaseController
         $this->authorize('approve', $leaveRequest);
         abort_if($leaveRequest->status !== 'pending', 422, 'Only pending requests can be approved.');
         $leaveRequest->update(['status' => 'approved']);
+        $this->notifyTraineeOfDecision($leaveRequest->fresh(['trainee', 'leaveCategory']));
 
         return $this->sendResponse($leaveRequest, 'Leave request approved.');
     }
@@ -120,6 +122,7 @@ class LeaveRequestController extends BaseController
             'status' => 'declined',
             'decision_remarks' => $validated['decision_remarks'] ?? null,
         ]);
+        $this->notifyTraineeOfDecision($leaveRequest->fresh(['trainee', 'leaveCategory']));
 
         return $this->sendResponse($leaveRequest, 'Leave request declined.');
     }
@@ -186,5 +189,31 @@ class LeaveRequestController extends BaseController
 
             Mail::to($recipient->email)->queue(new LeaveSubmittedMail($leaveRequest));
         }
+    }
+
+    /**
+     * Notifies the submitting trainee of an approve/decline decision — in-app
+     * (if they hold a linked login account) + email (always, since every
+     * trainee has an email on file even without one).
+     */
+    protected function notifyTraineeOfDecision(LeaveRequest $leaveRequest): void
+    {
+        if (! $leaveRequest->trainee) {
+            return;
+        }
+
+        if ($leaveRequest->trainee->user_id) {
+            Notification::create([
+                'user_id' => $leaveRequest->trainee->user_id,
+                'type' => "leave.{$leaveRequest->status}",
+                'title' => $leaveRequest->status === 'approved'
+                    ? 'Leave request approved'
+                    : 'Leave request declined',
+                'body' => "Your {$leaveRequest->leaveCategory->name} request has been {$leaveRequest->status}.",
+                'data' => ['leave_request_id' => $leaveRequest->id],
+            ]);
+        }
+
+        Mail::to($leaveRequest->trainee->email)->queue(new LeaveDecisionMail($leaveRequest));
     }
 }

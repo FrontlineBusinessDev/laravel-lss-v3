@@ -120,7 +120,7 @@ const columns: ColumnDef<ApiTask>[] = [
 ];
 
 const customGRID =
-    'sm:grid-cols-[0.7fr_0.7fr_0.7fr_1fr_1.2fr_0.6fr_0.9fr_0.9fr_0.7fr_2.5rem]!';
+    'sm:grid-cols-[0.7fr_0.7fr_0.7fr_1fr_1.2fr_0.6fr_0.6fr_0.9fr_0.9fr_0.7fr_2.5rem]!';
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
@@ -131,6 +131,7 @@ const listHeader = (
             'Task',
             'Description',
             'Time goal',
+            'Time spent',
             'Trainee',
             'Trainer',
             'Date',
@@ -303,6 +304,12 @@ export default function TasksPage() {
                 </TextCell>
                 <TextCell muted data-cy="index-text-cell-time-goal">
                     {Number(row.time_goal)}h
+                </TextCell>
+                <TextCell muted data-cy="index-text-cell-time-spent">
+                    {Number(row.time_spent ?? 0)}h
+                    {row.is_running && (
+                        <span className="ml-1 text-warning-600">●</span>
+                    )}
                 </TextCell>
                 <TextCell muted data-cy="index-text-cell-trainee">
                     {personName(row.trainee)}
