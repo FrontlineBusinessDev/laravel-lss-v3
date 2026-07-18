@@ -29,6 +29,19 @@ config/infra issues:
    missing, contrary to first appearances from only checking
    `routes/console.php` (the older, pre-11 convention, which this app doesn't
    use for scheduling).
+5. **No queue worker was ever started — the actual root cause of "scheduler
+   runs fine but nothing sends."** `QUEUE_CONNECTION=database`, and every
+   mailable in this app is dispatched via `Mail::to(...)->queue(...)`, never
+   `->send()`. Both `nixpacks.toml` (Octane/FrankenPHP) and
+   `nixpacks-traditional.toml` (Nginx+FPM) only ever started the web server (+
+   SSR in the background) — nothing consumed the `jobs` table, so queued mail
+   piled up silently forever, even though `announcements:dispatch-scheduled`
+   ran successfully every minute (as confirmed by production logs: `Running
+   ['artisan' announcements:dispatch-scheduled] ... DONE`). Fixed by adding a
+   self-restarting `php artisan queue:work --tries=3 --backoff=10
+   --max-time=3600` loop, backgrounded alongside SSR in both `[start]` blocks,
+   logging to `storage/logs/queue.log`. This requires no separate Coolify
+   service — it runs inside the same container as the web process.
 
 If production still doesn't send mail after deploying this fix, one or more
 of the following (genuinely outside this repo's reach) is the cause.
@@ -60,23 +73,26 @@ Pick exactly one of these two mechanisms — don't run both:
 
 ## 2. Is a queue worker actually running?
 
-Every mailable in this app is dispatched via `Mail::to(...)->queue(...)`, not
-`->send()` (`QUEUE_CONNECTION=database` by default). If nothing is draining
-the `jobs` table, queued mail piles up silently — **this is the single most
-likely root cause** given the codebase's mail-dispatch pattern.
+**Fixed in-repo** (see bug #5 above) — both nixpacks configs now background a
+self-restarting `queue:work` loop alongside the web server. After deploying
+this change:
 
-- Confirm a `php artisan queue:work --tries=3` process is running
-  **continuously** — in Coolify this typically means a second, dedicated
-  "service"/process alongside the web container (not something that ends when
-  a deploy's build step finishes). A one-off `queue:work` run during deploy is
-  not enough; it needs to be a supervised, always-on process (or
-  `queue:work --stop-when-empty` re-triggered on its own schedule if a true
-  daemon isn't available on the plan).
+- Confirm the process actually started: check `storage/logs/queue.log`
+  inside the container — it should show `Processing:` / `Processed:` lines as
+  jobs run, starting right after deploy.
 - Run `php artisan queue:failed` — if jobs are accumulating there, the worker
   IS running but mail is failing for a different reason (see §3/§4).
 - Run `php artisan queue:monitor database` or check the `jobs` table row
-  count directly — a growing, never-shrinking count means no worker is
-  consuming it at all.
+  count directly — it should now drain instead of growing forever. Any
+  already-stuck jobs from before this fix will get picked up and processed
+  (or fail into `failed_jobs`, visible via `queue:failed`) as soon as the
+  worker boots.
+- If you'd rather run the worker as a **separate Coolify service** instead of
+  in-process (recommended for production at scale — isolates worker crashes
+  from the web process, and lets you scale/restart it independently), remove
+  the backgrounded loop from `nixpacks.toml`'s `[start].cmd` and instead add a
+  second Coolify application/service pointed at the same repo/image with
+  start command `php artisan queue:work --tries=3 --backoff=10`.
 
 ## 3. Are the mail credentials actually valid for the target host?
 
