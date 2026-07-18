@@ -1,17 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
+import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from '@/lib/router-compat';
 import { router } from '@inertiajs/react';
-import { useAuth } from '@/hooks/use-auth';
-import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
-import { Menu, LogOut, UserCog, KeyRound } from 'lucide-react';
+import { KeyRound, LogOut, Menu } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { LogoMark } from './Logo';
 import { NotificationBell } from './NotificationBell';
+
 export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
     const navigate = useNavigate();
     const { displayName, initials, role } = useAuth();
     const [open, setOpen] = useState(false);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (!open) return;
         const onDown = (e: MouseEvent) => {
@@ -39,10 +41,10 @@ export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
             >
                 <LogoMark size={18} data-cy="top-bar-logo-mark-5" />
                 <span
-                    className="text-[11px] font-bold tracking-wide text-ink"
+                    className="text-[11px] font-bold tracking-wide text-ink uppercase"
                     data-cy="top-bar-span-ls-admin"
                 >
-                    LS ADMIN
+                    LS {role}
                 </span>
             </div>
             <NotificationBell data-cy="top-bar-notification-bell-7" />
@@ -78,21 +80,6 @@ export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
                                 {role}
                             </p>
                         </div>
-                        {/* <button
-                            onClick={() => {
-                                setOpen(false);
-                                navigate('/settings');
-                            }}
-                            className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
-                            data-cy="top-bar-button-set-open-2"
-                        >
-                            <UserCog
-                                size={14}
-                                className="shrink-0"
-                                data-cy="top-bar-user-cog-15"
-                            />
-                            Account settings
-                        </button> */}
                         <button
                             onClick={() => {
                                 setOpen(false);

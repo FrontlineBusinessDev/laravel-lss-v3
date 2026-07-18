@@ -3,10 +3,13 @@ import DataTableCardField from '@/components/table/DataTableCardField';
 import { formatCell } from '@/components/table/utils';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { cn } from '@/lib/utils';
 import type { TraineeRatingMetrics } from '@/types/modules/ratings/trainee-task-rating';
 import type { TraineeTaskRatingRow } from '@/types/modules/ratings/trainee-task-rating';
 import { columns } from '@/types/modules/ratings/trainee-task-rating';
 import { useEffect, useState } from 'react';
+
+const GRID = 'lg:grid grid-cols-[2fr_1fr_1.6fr_1fr_2fr_0.5fr_0.5fr_2fr]';
 
 export default function TraineeRatingsPage() {
     const [metrics, setMetrics] = useState<TraineeRatingMetrics>({
@@ -16,22 +19,25 @@ export default function TraineeRatingsPage() {
 
     useEffect(() => {
         apiFetchJson<TraineeRatingMetrics>('/trainee/ratings/metrics')
-            .then((res) =>
-                res.data && setMetrics(res.data),
-            )
+            .then((res) => res.data && setMetrics(res.data))
             .catch(() => undefined);
     }, []);
 
     const renderRow = (row: TraineeTaskRatingRow) => (
-        <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60">
+        <div
+            className={cn(
+                'border-b border-slate-100 last:border-0 hover:bg-slate-50/60',
+                GRID,
+            )}
+        >
             {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3 text-sm">
+                <div key={col.key} className="px-4 py-2 text-sm lg:py-3">
                     {col.render
                         ? col.render(row[col.key], row)
                         : formatCell(row[col.key])}
-                </td>
+                </div>
             ))}
-        </tr>
+        </div>
     );
 
     return (
@@ -61,9 +67,7 @@ export default function TraineeRatingsPage() {
                 />
             </div>
 
-            <h2 className="mb-3 text-sm font-semibold text-ink">
-                Rated tasks
-            </h2>
+            <h2 className="mb-3 text-sm font-semibold text-ink">Rated tasks</h2>
             <DataTableCardField<TraineeTaskRatingRow>
                 apiUrl="/trainee/ratings"
                 apiQueryKey="trainee-ratings-own"
