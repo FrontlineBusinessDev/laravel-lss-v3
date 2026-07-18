@@ -65,7 +65,16 @@ function toHistoryEntry(h: ApiHistoryEntry): TaskRatingHistoryEntry {
     };
 }
 
-export default function TaskRatingPage() {
+interface TaskRatingPageProps {
+    /** Batch options source for the picker — trainer pages pass their own
+     * scoped `/trainer/batches/lookup` so the dropdown never lists batches
+     * outside what the backend would actually let them rate. */
+    batchLookupUrl?: string;
+}
+
+export default function TaskRatingPage({
+    batchLookupUrl = '/batches/lookup',
+}: TaskRatingPageProps) {
     const { toast } = useToast();
     const [batchesCache, setBatchesCache] = useState<BatchOption[]>([]);
     const [batchTrainees, setBatchTrainees] = useState<PersonRef[]>([]);
@@ -90,7 +99,7 @@ export default function TaskRatingPage() {
     const loadBatchOptions = useCallback(
         async (q: string): Promise<FieldOption[]> => {
             const res = await apiFetchJson<BatchOption[]>(
-                `/batches/lookup?status=active&q=${encodeURIComponent(q)}&per_page=50`,
+                `${batchLookupUrl}?status=active&q=${encodeURIComponent(q)}&per_page=50`,
             );
             const data = res.data ?? [];
             setBatchesCache((prev) => {
@@ -102,7 +111,7 @@ export default function TaskRatingPage() {
             });
             return data.map((b) => ({ value: String(b.id), label: b.batch_code }));
         },
-        [],
+        [batchLookupUrl],
     );
     const getBatchLabel = useCallback(
         (v: unknown) =>

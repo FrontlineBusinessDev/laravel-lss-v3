@@ -7,6 +7,7 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Models\Task;
 use App\Models\TaskRating;
 use App\Models\Trainees;
+use App\Traits\ScopesToAssignedBatches;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +15,15 @@ use Inertia\Response;
 
 /**
  * Task Rating API (prefix /ratings/task-rating). Batch -> task/project name ->
- * trainee -> rating, with an append-only history trail on every save.
+ * trainee -> rating, with an append-only history trail on every save. Shared
+ * by admin/developer (full access) and trainer (assertBatchAccessible()
+ * restricts every batch_id-bearing call to their assigned batches) — one
+ * controller, branching by role, matching how LeaveRequestController does it.
  */
 class TaskRatingController extends Controller
 {
+    use ScopesToAssignedBatches;
+
     public function index(): Response
     {
         return InertiaPageResponse::csr('developer/ratings/index');
@@ -27,6 +33,7 @@ class TaskRatingController extends Controller
     public function taskOptions(Request $request): JsonResponse
     {
         $validated = $request->validate(['batch_id' => ['required', 'integer', 'exists:app_batches,id']]);
+        $this->assertBatchAccessible((int) $validated['batch_id']);
 
         $tasks = Task::where('batch_id', $validated['batch_id'])
             ->distinct()
@@ -40,6 +47,7 @@ class TaskRatingController extends Controller
     public function trainees(Request $request): JsonResponse
     {
         $validated = $request->validate(['batch_id' => ['required', 'integer', 'exists:app_batches,id']]);
+        $this->assertBatchAccessible((int) $validated['batch_id']);
 
         $trainees = Trainees::where('batch_id', $validated['batch_id'])
             ->where('status', 'active')
@@ -56,6 +64,7 @@ class TaskRatingController extends Controller
             'batch_id' => ['required', 'integer', 'exists:app_batches,id'],
             'task_name' => ['required', 'string'],
         ]);
+        $this->assertBatchAccessible((int) $validated['batch_id']);
 
         $ratings = TaskRating::where('batch_id', $validated['batch_id'])
             ->where('task_name', $validated['task_name'])
@@ -77,6 +86,7 @@ class TaskRatingController extends Controller
             'description' => ['nullable', 'string'],
             'hours_spent' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
         ]);
+        $this->assertBatchAccessible((int) $validated['batch_id']);
 
         $rating = DB::transaction(function () use ($validated) {
             $rating = TaskRating::firstOrNew([
@@ -110,8 +120,24 @@ class TaskRatingController extends Controller
     public function history(int|string $id): JsonResponse
     {
         $rating = TaskRating::findOrFail($id);
+        $this->assertBatchAccessible($rating->batch_id);
         $history = $rating->history()->with('evaluator:id,first_name,last_name')->get();
 
         return response()->json(['data' => $history]);
+    }
+
+    /**
+     * No-op for admin/developer (full access, matching every other module's
+     * convention). Trainers are restricted to their assigned batches — 403s
+     * otherwise, closing the cross-batch gap a coarse `manage ratings`
+     * permission check alone would allow (trainer holds it too, RoleSeeder).
+     */
+    private function assertBatchAccessible(int $batchId): void
+    {
+        /** @disregard P1013 */
+        $user = auth()->user();
+        if ($user->hasRole('trainer') && ! $user->hasAnyRole(['admin', 'developer'])) {
+            $this->assertBatchAssigned($batchId);
+        }
     }
 }

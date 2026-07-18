@@ -10,6 +10,7 @@ use App\Models\LeaveRequest;
 use App\Models\Notification;
 use App\Models\Trainees;
 use App\Models\User;
+use App\Traits\ScopesToAssignedBatches;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,8 @@ use Throwable;
  */
 class LeaveRequestController extends BaseController
 {
+    use ScopesToAssignedBatches;
+
     protected string $model = LeaveRequest::class;
     protected string $view = 'developer/leave/index';
     protected array $searchable = ['reason'];
@@ -61,6 +64,14 @@ class LeaveRequestController extends BaseController
             $trainee = Trainees::where('user_id', $user->id)->first();
 
             return $query->where('trainee_id', $trainee ? $trainee->id : 0);
+        }
+
+        // Trainers see requests from their assigned batches only, pending
+        // first then most-recent — the Leave Management module's default view.
+        if ($user->hasRole('trainer') && ! $user->can('manage leave')) {
+            return $query->whereIn('batch_id', $this->assignedBatchIds())
+                ->orderByRaw("status = 'pending' desc")
+                ->orderByDesc('created_at');
         }
 
         return $query;
@@ -205,10 +216,17 @@ class LeaveRequestController extends BaseController
         }
     }
 
-    /** Notifies every admin/developer of a new submission — in-app + email. */
+    /**
+     * Notifies every admin/developer, plus any trainer assigned to the
+     * request's batch, of a new submission — in-app + email.
+     */
     protected function notifyAdminsOfSubmission(LeaveRequest $leaveRequest): void
     {
-        $recipients = User::role(['admin', 'developer'])->get();
+        $assignedTrainers = User::role('trainer')
+            ->whereHas('assignedBatches', fn(Builder $q) => $q->where('app_batches.id', $leaveRequest->batch_id))
+            ->get();
+
+        $recipients = User::role(['admin', 'developer'])->get()->merge($assignedTrainers)->unique('id');
         $traineeName = trim(($leaveRequest->trainee->first_name ?? '') . ' ' . ($leaveRequest->trainee->last_name ?? ''));
         $categoryName = $leaveRequest->leaveCategory->name ?? 'Leave';
 

@@ -18,7 +18,10 @@ use Illuminate\Support\Facades\Storage;
  * the DB level already (cascadeOnDelete FKs), so they're left to Trainees'
  * own delete(). Documents, tasks, leave requests, and task ratings are all
  * restrictOnDelete FKs and must be removed here first, before the trainee row
- * itself, or the DB will reject the delete.
+ * itself, or the DB will reject the delete. The linked User (if any) is
+ * deleted right before the trainee row — Spatie's model_has_roles pivot and
+ * any FK-linked auth tables (password reset tokens, sessions) already
+ * cascade at the DB level off users.id.
  */
 class TraineeCascadeDeleter
 {
@@ -42,6 +45,10 @@ class TraineeCascadeDeleter
         LeaveRequest::where('trainee_id', $trainee->id)->delete();
         // TaskRatingHistory rows cascade at the DB level off app_task_ratings.
         TaskRating::where('trainee_id', $trainee->id)->delete();
+
+        if ($trainee->user_id) {
+            $trainee->user()->delete();
+        }
 
         // payments/certificate/learningOutcomes cascade via DB FKs.
         $trainee->delete();

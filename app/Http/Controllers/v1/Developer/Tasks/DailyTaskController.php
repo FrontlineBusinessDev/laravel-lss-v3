@@ -6,6 +6,7 @@ use App\Http\Controllers\v1\Developer\Controller;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\LeaveRequest;
 use App\Models\Task;
+use App\Traits\ScopesToAssignedBatches;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
@@ -18,6 +19,9 @@ use Inertia\Response;
  */
 class DailyTaskController extends Controller
 {
+    use ScopesToAssignedBatches;
+
+
     public function index(): Response
     {
         return InertiaPageResponse::csr('developer/tasks/daily-task');
@@ -87,6 +91,10 @@ class DailyTaskController extends Controller
      */
     private function filteredQuery(array $filters): \Illuminate\Database\Eloquent\Builder
     {
+        /** @disregard P1013 */
+        $user = auth()->user();
+        $isTrainerOnly = $user->hasRole('trainer') && ! $user->hasAnyRole(['admin', 'developer']);
+
         return Task::query()
             ->where('status', 'completed')
             ->with(['batch:id,batch_code', 'trainee:id,first_name,last_name', 'trainer:id,first_name,last_name'])
@@ -94,7 +102,8 @@ class DailyTaskController extends Controller
             ->when($filters['date_to'] ?? null, fn($q, $date) => $q->whereDate('date', '<=', $date))
             ->when($filters['batch_id'] ?? null, fn($q, $id) => $q->where('batch_id', $id))
             ->when($filters['trainee_ids'] ?? null, fn($q, $ids) => $q->whereIn('trainee_id', $ids))
-            ->when($filters['trainer_ids'] ?? null, fn($q, $ids) => $q->whereIn('trainer_id', $ids));
+            ->when($filters['trainer_ids'] ?? null, fn($q, $ids) => $q->whereIn('trainer_id', $ids))
+            ->when($isTrainerOnly, fn($q) => $q->whereIn('batch_id', $this->assignedBatchIds()));
     }
 
     /**

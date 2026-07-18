@@ -5,7 +5,10 @@ import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { formatCell, tableListInvalidateKeys } from '@/components/table/utils';
-import { FileUploadField, emptyFileFieldValue } from '@/hooks/use-file-upload-field';
+import {
+    FileUploadField,
+    emptyFileFieldValue,
+} from '@/hooks/use-file-upload-field';
 import { useToast } from '@/hooks/use-toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
 import type { StatusKind } from '@/types';
@@ -64,9 +67,8 @@ export default function TraineeLeavePage() {
     const queryClient = useQueryClient();
     const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [values, setValues] = useState<FormValues>(emptyValues);
-    const [document, setDocument] = useState<FileFieldValue>(
-        emptyFileFieldValue,
-    );
+    const [document, setDocument] =
+        useState<FileFieldValue>(emptyFileFieldValue);
     const [submitting, setSubmitting] = useState(false);
     const [formOpen, setFormOpen] = useState(false);
 
@@ -178,17 +180,16 @@ export default function TraineeLeavePage() {
     }
 
     return (
-        <TraineeLayout title="Leave">
-            <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-ink">
-                    Your leave history
-                </h2>
+        <TraineeLayout
+            title="Leave"
+            description="New leave request"
+            actionNode={
                 <Button variant="primary" onClick={() => setFormOpen(true)}>
                     <Plus className="mr-1.5 size-4" />
                     New leave request
                 </Button>
-            </div>
-
+            }
+        >
             <DataTableCardField<LeaveRequests>
                 apiUrl="/leave"
                 apiQueryKey="leave-requests-own"

@@ -8,7 +8,10 @@ import type { AppTraineeLearningOutcome } from '@/types/modules/trainees/trainee
  * mirroring use-batch-link-actions.ts: an instant local override keyed by
  * outcome id, reverted if the PATCH fails.
  */
-export function useTraineeOutcomeToggle(traineeId: number) {
+export function useTraineeOutcomeToggle(
+    traineeId: number,
+    basePath: string = '/trainees',
+) {
     const { toast } = useToast();
     const [override, setOverride] = useState<Record<number, 'active' | 'inactive'>>({});
     const [savingId, setSavingId] = useState<number | null>(null);
@@ -23,7 +26,7 @@ export function useTraineeOutcomeToggle(traineeId: number) {
 
         try {
             await apiFetchJson(
-                `/trainees/${traineeId}/learning-outcomes/${outcome.id}`,
+                `${basePath}/${traineeId}/learning-outcomes/${outcome.id}`,
                 { method: 'PATCH', body: JSON.stringify({ status: next }) },
             );
         } catch (err) {

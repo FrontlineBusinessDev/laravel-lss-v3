@@ -2,16 +2,21 @@
 
 namespace App\Support;
 
+use App\Mail\AnnouncementMail;
 use App\Models\Announcement;
 use App\Models\Notification;
 use App\Models\Trainees;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /**
  * Resolves an announcement's `audience_type` into concrete recipient user
- * ids and creates their in-app Notification rows. Shared by
- * AnnoucementController (dispatch on create) and the
- * announcements:dispatch-scheduled command (dispatch once scheduled_at passes).
+ * ids, creates their in-app Notification rows, and queues an email to each.
+ * Shared by AnnoucementController/Trainer AnnouncementsController (dispatch
+ * on create) and the announcements:dispatch-scheduled command (dispatch once
+ * scheduled_at passes).
  */
 class AnnouncementDispatcher
 {
@@ -28,14 +33,26 @@ class AnnouncementDispatcher
             return;
         }
 
-        foreach (self::resolveAudienceUserIds($announcement) as $userId) {
+        $userIds = self::resolveAudienceUserIds($announcement);
+
+        foreach (User::whereIn('id', $userIds)->get(['id', 'email']) as $recipient) {
             Notification::create([
-                'user_id' => $userId,
+                'user_id' => $recipient->id,
                 'type' => 'announcement.published',
                 'title' => 'New announcement',
                 'body' => $announcement->subject,
                 'data' => ['announcement_id' => $announcement->id],
             ]);
+
+            try {
+                Mail::to($recipient->email)->queue(new AnnouncementMail($announcement));
+            } catch (Throwable $e) {
+                Log::error('announcement mail failed', [
+                    'announcement_id' => $announcement->id,
+                    'user_id' => $recipient->id,
+                    'message' => $e->getMessage(),
+                ]);
+            }
         }
 
         $announcement->update(['notified_at' => now()]);

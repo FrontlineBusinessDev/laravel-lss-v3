@@ -47,11 +47,15 @@ use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
 use App\Http\Controllers\v1\Trainer\Announcements\AnnouncementsController as TrainerAnnouncementsController;
 use App\Http\Controllers\v1\Trainer\Batches\BatchesController as TrainerBatchesController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchTraineesController as TrainerBatchTraineesController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchViewController as TrainerBatchViewController;
 use App\Http\Controllers\v1\Trainer\Dashboard\DashboardController as TrainerDashboardController;
 use App\Http\Controllers\v1\Trainer\Ratings\RatingsController as TrainerRatingsController;
 use App\Http\Controllers\v1\Trainer\Schedule\ScheduleController as TrainerScheduleController;
 use App\Http\Controllers\v1\Trainer\Tasks\TasksController as TrainerTasksController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineeDocumentsController as TrainerTraineeDocumentsController;
 use App\Http\Controllers\v1\Trainer\Trainees\TraineesController as TrainerTraineesController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineesViewController as TrainerTraineesViewController;
 use App\Http\Controllers\v1\Trainee\Announcements\AnnouncementsController as TraineeAnnouncementsController;
 use App\Http\Controllers\v1\Trainee\Biometrics\BiometricsController as TraineeBiometricsController;
 use App\Http\Controllers\v1\Trainee\Dashboard\DashboardController as TraineeDashboardController;
@@ -322,11 +326,38 @@ Route::middleware('auth')->group(function () {
     // surface separate while the real trainer experience is built out).
     Route::middleware('role:trainer')->prefix('trainer')->name('trainer.')->group(function () {
         Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
+        // Read-only, batch-scoped (TrainerBatchesController::newQuery() /
+        // BatchViewController::assertBatchAssigned()) — no store/update/archive/
+        // destroy for this role.
         Route::get('/batches', [TrainerBatchesController::class, 'index'])->name('batches');
+        Route::get('/batches/pagination-search', [TrainerBatchesController::class, 'paginationSearch'])->name('batches.pagination-search');
+        // Inherited from BaseController — status-aware paginated options,
+        // scoped by the same newQuery() override as the list above. Backs
+        // the batch picker on the Task Rating page.
+        Route::get('/batches/lookup', [TrainerBatchesController::class, 'lookup'])->name('batches.lookup');
+        Route::get('/batches/{batch}/trainees/pagination-search', [TrainerBatchTraineesController::class, 'paginationSearch'])->name('batches.trainees.pagination-search');
+        Route::get('/batches/{id}', [TrainerBatchViewController::class, 'trainees'])->name('batches.show');
+        // Read-only trainee list + Personal Info/Academic Info/Documents/
+        // Learning Outcomes tabs, all scoped/guarded by ScopesToAssignedBatches.
+        // No Ratings/Biometrics/Certificate/Payment Details (out of Phase-1 scope).
         Route::get('/trainees', [TrainerTraineesController::class, 'index'])->name('trainees');
+        Route::get('/trainees/pagination-search', [TrainerTraineesController::class, 'paginationSearch'])->name('trainees.pagination-search');
+        // Inherited from BaseController, scoped by the same newQuery() override
+        // — backs the trainee filter dropdown on the Daily Task Sheet.
+        Route::get('/trainees/lookup', [TrainerTraineesController::class, 'lookup'])->name('trainees.lookup');
+        Route::get('/trainees/{id}', [TrainerTraineesViewController::class, 'personalInformationTab'])->name('trainees.show');
+        Route::get('/trainees/{id}/academic-info', [TrainerTraineesViewController::class, 'academicInfoTab'])->name('trainees.academic-info');
+        Route::get('/trainees/{id}/documents', [TrainerTraineesViewController::class, 'documents'])->name('trainees.documents');
+        Route::get('/trainees/{id}/learning-outcomes', [TrainerTraineesViewController::class, 'learningOutcomes'])->name('trainees.learning-outcomes');
+        Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TrainerTraineesViewController::class, 'updateLearningOutcomeStatus'])->name('trainees.learning-outcomes.update');
+        Route::post('/trainees/{traineeId}/documents', [TrainerTraineeDocumentsController::class, 'uploadDocument'])->name('trainees.documents.upload');
+        Route::delete('/trainees/{traineeId}/documents/{documentId}', [TrainerTraineeDocumentsController::class, 'deleteDocument'])->name('trainees.documents.delete');
         Route::get('/tasks', [TrainerTasksController::class, 'index'])->name('tasks');
         Route::get('/schedule', [TrainerScheduleController::class, 'index'])->name('schedule');
-        Route::get('/announcements', [TrainerAnnouncementsController::class, 'index'])->name('announcements');
+        // Full CRUD JSON API (batch-scoped by AnnouncementsController::newQuery()/
+        // storeRules()) — replaces the old index-only placeholder route.
+        Route::crudModule('/announcements', TrainerAnnouncementsController::class, 'announcements');
+        Route::get('/announcements/batch-options', [TrainerAnnouncementsController::class, 'batchOptions'])->name('announcements.batch-options');
         Route::get('/ratings', [TrainerRatingsController::class, 'index'])->name('ratings');
         // Read-only "who's on leave" feed — reuses the shared LeaveRequestController
         // JSON API (LeaveRequestPolicy::viewAny() grants trainers read access);

@@ -73,6 +73,10 @@ interface AddTaskModalProps {
   onSave: (values: TaskSavePayload) => void;
   /** When set, the modal edits this row instead of creating new ones. */
   editingTask?: EditableTaskRow | null;
+  /** Batch picker source — trainer pages pass their own scoped
+   * `/trainer/batches/lookup` so the dropdown never lists a batch the
+   * backend would reject (Rule::in(assignedBatchIds()) on store()/update()). */
+  batchLookupUrl?: string;
 }
 function personLabel(p: PersonOption): string {
   return `${p.first_name} ${p.last_name}`.trim();
@@ -120,7 +124,8 @@ export function AddTaskModal({
   open,
   onClose,
   onSave,
-  editingTask
+  editingTask,
+  batchLookupUrl = '/batches'
 }: AddTaskModalProps) {
   const isEdit = !!editingTask;
   const [values, setValues] = useState<FormValues>(emptyValues);
@@ -191,7 +196,7 @@ export function AddTaskModal({
           value={values.batchId}
           initialLabel={values.batchLabel}
           placeholder="Select batch"
-          loadOptions={(q) => loadLookupOptions('/batches', q, 'batch_code')}
+          loadOptions={(q) => loadLookupOptions(batchLookupUrl, q, 'batch_code')}
           onChange={(v) => {
             set('batchId', (v as string) ?? '');
             set('traineeIds', []);

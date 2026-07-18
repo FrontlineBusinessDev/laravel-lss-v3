@@ -8,6 +8,7 @@ import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
  */
 export interface Announcements extends Record<string, unknown> {
     id: number;
+    created_by_id: number | null;
     status: string;
     subject: string;
     audience: string | null;

@@ -9,8 +9,11 @@ use App\Support\Permissions;
 /**
  * `manage leave` (developer/admin) can view/approve/decline/delete every
  * request. `manage own leave` (trainee) can create and view/delete their own
- * pending requests. Trainers hold neither permission (RoleSeeder) but get
- * read-only visibility into who's on leave via `viewAny`/`view`.
+ * pending requests. Trainers hold neither permission (RoleSeeder), but can
+ * view (`viewAny`/`view`) and approve/decline requests scoped to their own
+ * assigned batches (LeaveRequestController::newQuery() already restricts
+ * their *list* to those batches; approve/decline re-check it directly since
+ * a row could otherwise be reached by guessing an id).
  */
 class LeaveRequestPolicy
 {
@@ -37,12 +40,20 @@ class LeaveRequestPolicy
 
     public function approve(User $user, LeaveRequest $leaveRequest): bool
     {
-        return $user->can(Permissions::MANAGE_LEAVE);
+        if ($user->can(Permissions::MANAGE_LEAVE)) {
+            return true;
+        }
+
+        return $user->hasRole('trainer') && $this->assignedToBatch($user, $leaveRequest);
     }
 
     public function decline(User $user, LeaveRequest $leaveRequest): bool
     {
-        return $user->can(Permissions::MANAGE_LEAVE);
+        if ($user->can(Permissions::MANAGE_LEAVE)) {
+            return true;
+        }
+
+        return $user->hasRole('trainer') && $this->assignedToBatch($user, $leaveRequest);
     }
 
     public function delete(User $user, LeaveRequest $leaveRequest): bool
@@ -61,5 +72,10 @@ class LeaveRequestPolicy
         $leaveRequest->loadMissing('trainee');
 
         return $leaveRequest->trainee?->user_id === $user->id;
+    }
+
+    private function assignedToBatch(User $user, LeaveRequest $leaveRequest): bool
+    {
+        return $user->assignedBatches()->where('app_batches.id', $leaveRequest->batch_id)->exists();
     }
 }

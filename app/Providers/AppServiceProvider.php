@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Batches;
 use App\Models\Trainees;
+use App\Observers\BatchStatusObserver;
 use App\Observers\TraineeObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         /** LISTENT TO PAYMENT */
         Trainees::observe(TraineeObserver::class);
+        Batches::observe(BatchStatusObserver::class);
         /**
          * REUSABLE API
          */
