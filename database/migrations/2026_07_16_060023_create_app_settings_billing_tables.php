@@ -20,7 +20,7 @@ return new class extends Migration
 
         Schema::create('app_settings_hours_discounts', function (Blueprint $table) {
             $table->id();
-            $table->integer('min_hours')->unique(); // e.g., 120, 300, 350
+            $table->decimal('min_hours', 8, 2)->unique(); // e.g., 120, 300, 350
             $table->decimal('discount_percentage', 5, 2); // e.g., 2.00 para sa 2%
             $table->timestamps();
         });
