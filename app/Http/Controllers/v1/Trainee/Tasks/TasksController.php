@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1\Trainee\Tasks;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\Trainees;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,9 @@ class TasksController
         if (! empty($filters['batch_id'])) {
             $query->where('batch_id', $filters['batch_id']);
         }
+        if (! empty($filters['trainer_id'])) {
+            $query->where('trainer_id', $filters['trainer_id']);
+        }
         if (! empty($filters['due_bucket'])) {
             $today = now()->toDateString();
             $weekEnd = now()->addDays(7)->toDateString();
@@ -115,6 +119,39 @@ class TasksController
             'sort_by' => $sortByParam,
             'sort_dir' => $sortDir,
         ]);
+    }
+
+    /** DB-level aggregates for the Daily Task Sheet — completed task count + total hours. */
+    public function aggregates(Request $request): JsonResponse
+    {
+        $trainee = $this->currentTrainee($request);
+
+        $result = Task::query()
+            ->where('trainee_id', $trainee->id)
+            ->where('status', 'completed')
+            ->toBase()
+            ->selectRaw('COUNT(*) as total, SUM(time_spent) as hours')
+            ->first();
+
+        return response()->json([
+            'data' => [
+                'total_tasks' => (int) $result->total,
+                'total_hours' => round((float) ($result->hours ?? 0), 2),
+            ],
+        ]);
+    }
+
+    /** Distinct trainers assigned to this trainee's own tasks — feeds the Trainer filter. */
+    public function trainers(Request $request): JsonResponse
+    {
+        $trainee = $this->currentTrainee($request);
+
+        $trainers = User::query()
+            ->whereIn('id', Task::where('trainee_id', $trainee->id)->whereNotNull('trainer_id')->distinct()->pluck('trainer_id'))
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
+
+        return response()->json(['data' => $trainers]);
     }
 
     /** Start the timer on an open, not-already-running task. */

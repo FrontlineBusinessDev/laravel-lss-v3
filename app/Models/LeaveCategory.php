@@ -14,11 +14,13 @@ class LeaveCategory extends Model
         'name',
         'max_days',
         'max_instances',
+        'requires_document',
     ];
 
     protected $casts = [
         'max_days' => 'integer',
         'max_instances' => 'integer',
+        'requires_document' => 'boolean',
     ];
 
     public function leaveRequests(): HasMany

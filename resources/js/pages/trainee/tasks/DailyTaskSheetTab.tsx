@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FolderOpen } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { TextCell } from '@/components/settings';
+import { StatCard } from '@/components/StatCard';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
+import { apiFetchJson } from '@/lib/apiFetch';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
+import type { FieldOption } from '@/types/reusable/fields';
 import { loadLookupOptions } from '@/types/reusable/fields';
 import type { ApiTask } from '@/types/task';
 import { cn } from '@/lib/utils';
 
-const GRID = 'sm:grid-cols-[0.7fr_1.4fr_0.8fr_0.9fr_0.9fr_2.5rem]!';
+const GRID = 'sm:grid-cols-[0.7fr_1.4fr_0.8fr_0.8fr_0.9fr_0.9fr_2.5rem]!';
+
+interface TrainerOption {
+    id: number;
+    first_name: string;
+    last_name: string;
+}
 
 const columns: ColumnDef<ApiTask>[] = [
     { key: 'task', label: 'Task', searchable: true },
@@ -21,6 +30,30 @@ const columns: ColumnDef<ApiTask>[] = [
         type: 'async-select',
         filterable: true,
         loadOptions: (q) => loadLookupOptions('/batches', q, 'batch_code'),
+    },
+    {
+        key: 'trainer_id',
+        label: 'Trainer',
+        type: 'async-select',
+        filterable: true,
+        loadOptions: async (q: string): Promise<FieldOption[]> => {
+            const res = await apiFetchJson<TrainerOption[]>(
+                '/trainee/tasks/trainers',
+            );
+            const items = res.data ?? [];
+            const filtered = q
+                ? items.filter((t) =>
+                      `${t.first_name} ${t.last_name}`
+                          .toLowerCase()
+                          .includes(q.toLowerCase()),
+                  )
+                : items;
+
+            return filtered.map((t) => ({
+                value: String(t.id),
+                label: `${t.first_name} ${t.last_name}`,
+            }));
+        },
     },
     {
         key: 'completed_at',
@@ -37,6 +70,18 @@ function formatDate(value: string | null): string {
 
 export default function DailyTaskSheetTab() {
     const [viewTask, setViewTask] = useState<ApiTask | null>(null);
+    const [aggregates, setAggregates] = useState({
+        total_tasks: 0,
+        total_hours: 0,
+    });
+
+    useEffect(() => {
+        apiFetchJson<{ total_tasks: number; total_hours: number }>(
+            '/trainee/tasks/aggregates',
+        )
+            .then((res) => res.data && setAggregates(res.data))
+            .catch(() => undefined);
+    }, []);
 
     const renderRow = (row: ApiTask, _actions: CardActions) => {
         const menu: RowMenuAction[] = [
@@ -68,6 +113,11 @@ export default function DailyTaskSheetTab() {
                 <TextCell muted data-cy="daily-task-sheet-text-cell-batch">
                     {row.batch?.batch_code ?? '—'}
                 </TextCell>
+                <TextCell muted data-cy="daily-task-sheet-text-cell-trainer">
+                    {row.trainer
+                        ? `${row.trainer.first_name} ${row.trainer.last_name}`
+                        : '—'}
+                </TextCell>
                 <TextCell muted data-cy="daily-task-sheet-text-cell-time-spent">
                     {Number(row.time_spent)}h
                 </TextCell>
@@ -92,6 +142,17 @@ export default function DailyTaskSheetTab() {
 
     return (
         <>
+            <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-2">
+                <StatCard
+                    label="Total number of tasks"
+                    value={aggregates.total_tasks}
+                />
+                <StatCard
+                    label="Total hours rendered"
+                    value={`${aggregates.total_hours}h`}
+                    tone="success"
+                />
+            </div>
             <DataTableCardField<ApiTask>
                 apiUrl="/trainee/tasks"
                 apiQueryKey="trainee-tasks-completed"

@@ -32,7 +32,7 @@
                   </table>
                 </td>
                 <td style="padding-left:10px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:700; letter-spacing:-.01em; color:#14151a; white-space:nowrap;">Learning Solutions</td>
-                <td align="right" style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#aab0bb;">Support</td>
+                {{-- <td align="right" style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#aab0bb;">Support</td> --}}
               </tr>
             </table>
           </td>

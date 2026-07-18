@@ -74,6 +74,8 @@ class TaskRatingController extends Controller
             'trainee_id' => ['required', 'integer', 'exists:app_trainees,id'],
             'rating' => ['required', 'integer', 'between:1,100'],
             'comments' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'],
+            'hours_spent' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
         ]);
 
         $rating = DB::transaction(function () use ($validated) {
@@ -85,6 +87,8 @@ class TaskRatingController extends Controller
             $rating->fill([
                 'rating' => $validated['rating'],
                 'comments' => $validated['comments'] ?? null,
+                'description' => $validated['description'] ?? null,
+                'hours_spent' => $validated['hours_spent'] ?? null,
                 'evaluator_id' => auth()->id(),
                 'rated_at' => now()->toDateString(),
             ])->save();

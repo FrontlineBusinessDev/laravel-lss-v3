@@ -27,8 +27,8 @@ const TABS = [
     'Academic Info',
     'Documents',
     'Learning Outcomes',
-    'Payment Details',
-    'Ratings',
+    // 'Payment Details',
+    // 'Ratings',
     'Certificate',
     'Biometrics',
 ] as const;
@@ -104,7 +104,10 @@ function PersonalInfoSection({ trainee }: { trainee: TraineeDetail }) {
 }
 
 function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
-    const hours = getHoursProgress(trainee.completed_hours, trainee.required_hours);
+    const hours = getHoursProgress(
+        trainee.completed_hours,
+        trainee.required_hours,
+    );
 
     return (
         <Card>
@@ -144,10 +147,7 @@ function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Field
-                    label="Required hours"
-                    value={`${hours.required} hrs`}
-                />
+                <Field label="Required hours" value={`${hours.required} hrs`} />
                 <Field
                     label="Date completed"
                     value={trainee.date_completed?.slice(0, 10) ?? ''}
@@ -541,7 +541,7 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
                                             >
                                                 <FileText
                                                     size={15}
-                                                    className="shrink-0 text-success-700"
+                                                    className="text-success-700 shrink-0"
                                                 />
                                                 <div className="min-w-0">
                                                     <div className="truncate text-xs font-medium text-ink hover:underline">
@@ -620,8 +620,8 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
                                         </label>
                                     )}
                                     <p className="mt-1.5 text-[11px] text-neutral-400">
-                                        Accepted formats: {ACCEPTED_LABEL} ·
-                                        Max file size: {MAX_FILE_SIZE_MB}MB
+                                        Accepted formats: {ACCEPTED_LABEL} · Max
+                                        file size: {MAX_FILE_SIZE_MB}MB
                                     </p>
                                     {state.error && (
                                         <p className="mt-1 text-[11px] font-medium text-danger-600">
@@ -640,9 +640,7 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
 
 function LearningOutcomesSection({ trainee }: { trainee: TraineeDetail }) {
     const outcomes = trainee.outcomes ?? [];
-    const achievedCount = outcomes.filter(
-        (o) => o.status === 'active',
-    ).length;
+    const achievedCount = outcomes.filter((o) => o.status === 'active').length;
 
     return (
         <Card>
@@ -695,9 +693,7 @@ function LearningOutcomesSection({ trainee }: { trainee: TraineeDetail }) {
                                 <span
                                     className={cn(
                                         'text-sm',
-                                        checked
-                                            ? 'text-brand-800'
-                                            : 'text-ink',
+                                        checked ? 'text-brand-800' : 'text-ink',
                                     )}
                                 >
                                     {o.title}
@@ -741,9 +737,17 @@ function PaymentDetailsSection({ trainee }: { trainee: TraineeDetail }) {
                 />
             </div>
 
-            <h3 className="mb-3 text-sm font-semibold text-ink">
-                Payment history
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-ink">
+                    Payment history
+                </h3>
+                <Link
+                    href="/trainee/payments"
+                    className="text-xs font-medium text-brand-600 hover:underline"
+                >
+                    View full payment history →
+                </Link>
+            </div>
             <div className="overflow-hidden rounded-md border border-neutral-200">
                 <div className="lss-scrollbar overflow-x-auto">
                     <table className="w-full min-w-[480px] border-collapse text-sm">
@@ -805,7 +809,10 @@ function RatingsSection({ trainee }: { trainee: TraineeDetail }) {
     const ratings = trainee.task_ratings ?? [];
     const allTasksCompleted =
         ratings.length > 0 && ratings.every((r) => r.rating != null);
-    const hours = getHoursProgress(trainee.completed_hours, trainee.required_hours);
+    const hours = getHoursProgress(
+        trainee.completed_hours,
+        trainee.required_hours,
+    );
 
     return (
         <Card>
@@ -829,20 +836,18 @@ function CertificateSection({ trainee }: { trainee: TraineeDetail }) {
 
     return (
         <Card>
-            <h3 className="mb-4 text-sm font-semibold text-ink">
-                Certificate
-            </h3>
+            <h3 className="mb-4 text-sm font-semibold text-ink">Certificate</h3>
             {!cert ? (
                 <div className="rounded-md border border-dashed border-neutral-200 p-6 text-center text-sm text-neutral-500">
                     No certificate issued yet.
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Field label="Certificate no." value={cert.certificate_no} />
                     <Field
-                        label="Citation"
-                        value={cert.citation?.name ?? ''}
+                        label="Certificate no."
+                        value={cert.certificate_no}
                     />
+                    <Field label="Citation" value={cert.citation?.name ?? ''} />
                     <Field
                         label="Issued on"
                         value={cert.issued_at?.slice(0, 10) ?? ''}
@@ -878,7 +883,10 @@ function BiometricsSection() {
     );
 }
 
-export default function MyInfoPage({ trainee, uploadableDocumentTypes }: Props) {
+export default function MyInfoPage({
+    trainee,
+    uploadableDocumentTypes,
+}: Props) {
     const [tab, setTab] = useState<Tab>('Personal Info');
 
     return (
@@ -916,10 +924,10 @@ export default function MyInfoPage({ trainee, uploadableDocumentTypes }: Props) 
             {tab === 'Learning Outcomes' && (
                 <LearningOutcomesSection trainee={trainee} />
             )}
-            {tab === 'Payment Details' && (
+            {/* {tab === 'Payment Details' && (
                 <PaymentDetailsSection trainee={trainee} />
             )}
-            {tab === 'Ratings' && <RatingsSection trainee={trainee} />}
+            {tab === 'Ratings' && <RatingsSection trainee={trainee} />} */}
             {tab === 'Certificate' && <CertificateSection trainee={trainee} />}
             {tab === 'Biometrics' && <BiometricsSection />}
         </TraineeLayout>

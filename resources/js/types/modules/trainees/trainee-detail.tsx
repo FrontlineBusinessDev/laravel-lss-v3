@@ -69,6 +69,13 @@ export interface AppTraineePayment {
     payment_date: string;
     reference_no: string | null;
     notes: string | null;
+    official_receipt_number: string | null;
+    receipt_path: string | null;
+    receipt_original_name: string | null;
+    receipt_mime_type: string | null;
+    receipt_size: number | null;
+    receipt_view_url: string | null;
+    receipt_download_url: string | null;
     created_at: string;
 }
 

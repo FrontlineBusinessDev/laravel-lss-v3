@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 /**
  * JSON API for the /leave module (developer/admin full management, trainee
@@ -49,7 +51,8 @@ class LeaveRequestController extends BaseController
         $query = LeaveRequest::query()->with([
             'trainee:id,first_name,last_name,batch_id',
             'batch:id,batch_code',
-            'leaveCategory:id,name',
+            'leaveCategory:id,name,requires_document',
+            'decidedBy:id,first_name,last_name',
         ]);
 
         if ($user->hasRole('trainee') && ! $user->can('manage leave')) {
@@ -75,11 +78,20 @@ class LeaveRequestController extends BaseController
         $user = auth()->user();
         $trainee = Trainees::where('user_id', $user->id)->firstOrFail();
 
+        $category = LeaveCategory::find((int) $request->input('leave_category_id'));
+
         $validated = $request->validate([
             'leave_category_id' => ['required', 'integer', 'exists:app_leave_categories,id'],
             'leave_date' => ['required', 'date'],
             'return_date' => ['required', 'date', 'after_or_equal:leave_date'],
             'reason' => ['required', 'string'],
+            'document' => [
+                Rule::requiredIf($category?->requires_document === true),
+                'nullable',
+                'file',
+                'mimes:pdf,jpg,jpeg,png',
+                'max:10240',
+            ],
         ]);
 
         $this->assertWithinCategoryLimits(
@@ -89,12 +101,26 @@ class LeaveRequestController extends BaseController
             $validated['return_date'],
         );
 
-        $leaveRequest = LeaveRequest::create([
-            ...$validated,
+        $leaveRequest = new LeaveRequest([
+            'leave_category_id' => $validated['leave_category_id'],
+            'leave_date' => $validated['leave_date'],
+            'return_date' => $validated['return_date'],
+            'reason' => $validated['reason'],
             'trainee_id' => $trainee->id,
             'batch_id' => $trainee->batch_id,
             'status' => 'pending',
         ]);
+
+        if ($request->hasFile('document')) {
+            $file = $request->file('document');
+            $folder = env('AWS_S3_STORAGE', 'laravel-ls-system') . '/leave-documents';
+            $leaveRequest->document_path = Storage::disk(config('filesystems.default'))->putFile($folder, $file, 'private');
+            $leaveRequest->document_original_name = $file->getClientOriginalName();
+            $leaveRequest->document_mime_type = $file->getClientMimeType();
+            $leaveRequest->document_size = $file->getSize();
+        }
+
+        $leaveRequest->save();
 
         $this->notifyAdminsOfSubmission($leaveRequest->fresh(['trainee', 'leaveCategory']));
 
@@ -106,7 +132,11 @@ class LeaveRequestController extends BaseController
         $leaveRequest = $this->resolveModel($id);
         $this->authorize('approve', $leaveRequest);
         abort_if($leaveRequest->status !== 'pending', 422, 'Only pending requests can be approved.');
-        $leaveRequest->update(['status' => 'approved']);
+        $leaveRequest->update([
+            'status' => 'approved',
+            'decided_by_id' => auth()->id(),
+            'decided_at' => now(),
+        ]);
         $this->notifyTraineeOfDecision($leaveRequest->fresh(['trainee', 'leaveCategory']));
 
         return $this->sendResponse($leaveRequest, 'Leave request approved.');
@@ -121,6 +151,8 @@ class LeaveRequestController extends BaseController
         $leaveRequest->update([
             'status' => 'declined',
             'decision_remarks' => $validated['decision_remarks'] ?? null,
+            'decided_by_id' => auth()->id(),
+            'decided_at' => now(),
         ]);
         $this->notifyTraineeOfDecision($leaveRequest->fresh(['trainee', 'leaveCategory']));
 

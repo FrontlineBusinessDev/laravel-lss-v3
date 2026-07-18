@@ -31,6 +31,7 @@ import {
 } from '@/data/mockData';
 import { computeTotalEarnings } from '@/pages/developer/reports/reportsUtils';
 import { cn } from '@/lib/utils';
+import { PendingRegistrationsWidget } from './PendingRegistrationsWidget';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 function daysUntil(dateStr: string) {
@@ -98,7 +99,13 @@ function SectionCard({
         </div>
     );
 }
-export default function DashboardPage() {
+interface Props {
+    pendingRegistrationsCount: number;
+}
+
+export default function DashboardPage({
+    pendingRegistrationsCount,
+}: Props) {
     const navigate = useNavigate();
     const { batches, trainees } = useBatches();
     const totalTraineesEnrolled = trainees.length;
@@ -175,6 +182,12 @@ export default function DashboardPage() {
                     tone="warning"
                     hint="Based on partner school & trainee feedback"
                     data-cy="index-stat-card-overall-ls-program-rating"
+                />
+            </div>
+
+            <div className="mb-4">
+                <PendingRegistrationsWidget
+                    pendingCount={pendingRegistrationsCount}
                 />
             </div>
 

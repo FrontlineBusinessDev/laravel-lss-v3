@@ -11,6 +11,16 @@ import { notificationService } from '@/api-service-layer/notification';
 import type { NotificationRow } from '@/api-service-layer/notification';
 import type { AppNotification } from '@/types';
 
+/** Resolves the click-through target by notification type — new types add a case here. */
+function linkFor(row: NotificationRow): string {
+    if (row.type?.startsWith('registration.')) {
+        const traineeId = row.data?.trainee_id;
+        return traineeId ? `/trainees/${traineeId}` : '/trainees';
+    }
+
+    return '/leave';
+}
+
 function toAppNotification(row: NotificationRow): AppNotification {
     return {
         id: String(row.id),
@@ -19,7 +29,9 @@ function toAppNotification(row: NotificationRow): AppNotification {
         body: row.body ?? '',
         createdAt: row.created_at,
         read: row.read_at !== null,
-        link: '/leave',
+        link: linkFor(row),
+        type: row.type,
+        data: row.data,
     };
 }
 

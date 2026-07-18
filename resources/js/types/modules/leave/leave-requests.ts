@@ -16,6 +16,13 @@ export interface LeaveRequestBatch {
 export interface LeaveRequestCategory {
     id: number;
     name: string;
+    requires_document?: boolean;
+}
+
+export interface LeaveRequestDecidedBy {
+    id: number;
+    first_name: string;
+    last_name: string;
 }
 
 /** Row shape returned by `/leave/pagination-search` (LeaveRequestController). */
@@ -28,12 +35,21 @@ export interface LeaveRequests extends Record<string, unknown> {
     leave_date: string;
     return_date: string;
     reason: string;
+    document_path: string | null;
+    document_original_name: string | null;
+    document_mime_type: string | null;
+    document_size: number | null;
+    document_view_url: string | null;
+    document_download_url: string | null;
     decision_remarks: string | null;
+    decided_by_id: number | null;
+    decided_at: string | null;
     created_at: string;
     updated_at: string;
     trainee?: LeaveRequestTrainee;
     batch?: LeaveRequestBatch;
     leave_category?: LeaveRequestCategory;
+    decided_by?: LeaveRequestDecidedBy;
 }
 
 export const LEAVE_STATUS_OPTIONS = [

@@ -14,7 +14,7 @@ class LeaveCategoryController extends BaseController
     protected array $searchable = ['name'];
     protected array $filterable = ['status', 'name'];
     protected array $sortable = ['name', 'max_days', 'max_instances'];
-    protected array $activeColumns = ['id', 'name'];
+    protected array $activeColumns = ['id', 'name', 'requires_document'];
     protected string $sortBy = 'name';
     protected array $inUseRelations = ['leaveRequests'];
 
@@ -25,6 +25,7 @@ class LeaveCategoryController extends BaseController
             'name' => ['required', 'string', 'max:255', 'unique:app_leave_categories,name'],
             'max_days' => ['nullable', 'integer', 'min:0'],
             'max_instances' => ['nullable', 'integer', 'min:0'],
+            'requires_document' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -35,6 +36,7 @@ class LeaveCategoryController extends BaseController
             'name' => ['required', 'string', 'max:255', Rule::unique('app_leave_categories', 'name')->ignore($model->id)],
             'max_days' => ['nullable', 'integer', 'min:0'],
             'max_instances' => ['nullable', 'integer', 'min:0'],
+            'requires_document' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Rules\UniqueEmailAcrossIdentities;
 use App\Mail\UserInviteMail;
 use App\Models\Batches;
+use App\Models\Notification;
 use App\Models\PartnerSchools;
 use App\Models\Trainees;
 use App\Models\User;
@@ -176,8 +177,9 @@ class PublicRegistrationController extends Controller
 
         $validated = $request->validate($this->storeRules());
 
-        $newUser =  null;
-        DB::transaction(function () use ($request, $validated, $batch, &$newUser) {
+        $newUser = null;
+        $trainee = null;
+        DB::transaction(function () use ($request, $validated, $batch, &$newUser, &$trainee) {
             $trainee = Trainees::create([
                 'batch_id' => $batch->id,
                 'school_id' => $validated['school_id'],
@@ -210,6 +212,7 @@ class PublicRegistrationController extends Controller
 
         // Sent after commit: never email an invite for a transaction that could still roll back.
         if ($newUser) $this->sendAccountInvite($newUser);
+        if ($trainee) $this->notifyAdminsOfRegistration($trainee, $batch);
 
         return redirect()
             ->route('public.register', $token)
@@ -285,5 +288,28 @@ class PublicRegistrationController extends Controller
     {
         $resetUrl = PasswordSetupUrl::generate($user);
         Mail::to($user->email)->send(new UserInviteMail($user, $resetUrl));
+    }
+
+    /**
+     * FYI-only in-app notification for every admin/developer, mirroring
+     * LeaveRequestController::notifyAdminsOfSubmission()'s pattern. No
+     * broadcasting — the existing polling NotificationsContext picks this up
+     * on its next cycle. No approval workflow: "pending" is simply an unread
+     * notification of this type.
+     */
+    private function notifyAdminsOfRegistration(Trainees $trainee, Batches $batch): void
+    {
+        $recipients = User::role(['admin', 'developer'])->get();
+        $name = trim("{$trainee->first_name} {$trainee->last_name}");
+
+        foreach ($recipients as $recipient) {
+            Notification::create([
+                'user_id' => $recipient->id,
+                'type' => 'registration.submitted',
+                'title' => 'New trainee registration',
+                'body' => "{$name} registered for batch {$batch->batch_code}.",
+                'data' => ['trainee_id' => $trainee->id],
+            ]);
+        }
     }
 }

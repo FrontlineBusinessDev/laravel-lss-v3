@@ -58,6 +58,8 @@ use App\Http\Controllers\v1\Trainee\Dashboard\DashboardController as TraineeDash
 use App\Http\Controllers\v1\Trainee\Evaluations\EvaluationsController as TraineeEvaluationsController;
 use App\Http\Controllers\v1\Trainee\Leave\LeaveController as TraineeLeaveController;
 use App\Http\Controllers\v1\Trainee\MyInfo\MyInfoController as TraineeMyInfoController;
+use App\Http\Controllers\v1\Trainee\Payments\PaymentsController as TraineeSelfPaymentsController;
+use App\Http\Controllers\v1\Trainee\Ratings\RatingsController as TraineeRatingsController;
 use App\Http\Controllers\v1\Trainee\Tasks\TasksController as TraineeTasksController;
 use App\Http\Controllers\v1\Developer\PublicRegistrationController;
 use App\Support\Permissions;
@@ -335,6 +337,8 @@ Route::middleware('auth')->group(function () {
                 Route::get('/', [TraineeTasksController::class, 'index'])->name('index');
                 Route::get('/daily-task', [TraineeTasksController::class, 'dailyTask'])->name('daily-task');
                 Route::get('/pagination-search', [TraineeTasksController::class, 'paginationSearch'])->name('pagination-search');
+                Route::get('/aggregates', [TraineeTasksController::class, 'aggregates'])->name('aggregates');
+                Route::get('/trainers', [TraineeTasksController::class, 'trainers'])->name('trainers');
                 Route::patch('/{id}/run', [TraineeTasksController::class, 'runAction'])->name('run');
                 Route::patch('/{id}/stop', [TraineeTasksController::class, 'stopAction'])->name('stop');
                 Route::patch('/{id}/complete', [TraineeTasksController::class, 'completeAction'])->name('complete');
@@ -344,6 +348,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
         Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
         Route::get('/evaluations', [TraineeEvaluationsController::class, 'index'])->name('evaluations');
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/', [TraineeSelfPaymentsController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [TraineeSelfPaymentsController::class, 'paginationSearch'])->name('pagination-search');
+        });
+        Route::prefix('ratings')->name('ratings.')->group(function () {
+            Route::get('/', [TraineeRatingsController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [TraineeRatingsController::class, 'paginationSearch'])->name('pagination-search');
+            Route::get('/trainers', [TraineeRatingsController::class, 'trainers'])->name('trainers');
+            Route::get('/metrics', [TraineeRatingsController::class, 'metrics'])->name('metrics');
+        });
         Route::middleware('permission:' . Permissions::MANAGE_OWN_MY_INFO)
             ->prefix('my-info')->name('my-info.')->group(function () {
                 Route::get('/', [TraineeMyInfoController::class, 'index'])->name('index');

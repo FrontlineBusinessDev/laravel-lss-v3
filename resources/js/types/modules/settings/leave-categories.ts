@@ -9,6 +9,7 @@ export interface LeaveCategories extends Record<string, unknown> {
     name: string;
     max_days: number | null;
     max_instances: number | null;
+    requires_document: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -42,6 +43,11 @@ export const columns: ColumnDef<LeaveCategories>[] = [
         sortable: true,
         render: (value) => (value == null ? 'Unlimited' : String(value)),
     },
+    {
+        key: 'requires_document',
+        label: 'Document required',
+        render: (value) => (value ? 'Yes' : 'No'),
+    },
 ];
 
 export const fields: FieldDef<LeaveCategories>[] = [
@@ -74,5 +80,13 @@ export const fields: FieldDef<LeaveCategories>[] = [
         label: 'Max applications per period',
         type: 'number',
         helpText: 'Leave blank for unlimited.',
+    },
+    {
+        key: 'requires_document',
+        label: 'Requires supporting document',
+        type: 'checkbox',
+        helpText:
+            'When enabled, trainees must attach a supporting document to submit this leave type.',
+        colSpan: 2,
     },
 ];

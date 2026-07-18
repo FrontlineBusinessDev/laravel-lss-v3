@@ -8,6 +8,7 @@ import type {
     TraineeDetail,
 } from '@/types/modules/trainees/trainee-detail';
 import { http, unwrap } from '../client';
+import { hasBinaryFiles, buildFormData } from '../form-data';
 import { createCrudResource } from '../http';
 
 export type TraineeInput = Partial<TraineeDetail>;
@@ -16,11 +17,13 @@ export const traineeService = createCrudResource<TraineeDetail, TraineeInput>({
     baseUrl: '/trainees',
 });
 
-export interface TraineePaymentInput {
+export interface TraineePaymentInput extends Record<string, unknown> {
     amount_paid: string | number;
     payment_date: string;
     reference_no?: string | null;
     notes?: string | null;
+    official_receipt_number?: string | null;
+    receipt?: File | null;
 }
 
 /** Trainee-scoped payment log — not a top-level crudModule resource. */
@@ -30,7 +33,10 @@ export const traineePaymentsService = {
         data: TraineePaymentInput,
     ): Promise<AppTraineePayment> =>
         unwrap<AppTraineePayment>(
-            await http.post(`/trainees/${traineeId}/payments`, data),
+            await http.post(
+                `/trainees/${traineeId}/payments`,
+                hasBinaryFiles(data) ? buildFormData(data) : data,
+            ),
         ),
     destroy: async (
         traineeId: string | number,

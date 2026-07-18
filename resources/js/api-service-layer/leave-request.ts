@@ -10,13 +10,14 @@ import type {
 } from '@/types/reusable/pagination';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { http, unwrap } from './client';
-import { buildQueryString } from './form-data';
+import { buildFormData, buildQueryString, hasBinaryFiles } from './form-data';
 
-export interface LeaveRequestInput {
+export interface LeaveRequestInput extends Record<string, unknown> {
     leave_category_id: number | string;
     leave_date: string;
     return_date: string;
     reason: string;
+    document?: File | null;
 }
 
 function query(params?: Record<string, unknown>): string {
@@ -37,7 +38,12 @@ export const leaveRequestService = {
         ),
 
     submit: async (data: LeaveRequestInput): Promise<LeaveRequests> =>
-        unwrap<LeaveRequests>(await http.post('/leave', data)),
+        unwrap<LeaveRequests>(
+            await http.post(
+                '/leave',
+                hasBinaryFiles(data) ? buildFormData(data) : data,
+            ),
+        ),
 
     approve: async (id: number | string): Promise<LeaveRequests> =>
         unwrap<LeaveRequests>(await http.patch(`/leave/${id}/approve`)),

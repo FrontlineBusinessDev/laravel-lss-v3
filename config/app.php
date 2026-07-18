@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | GCash Payment Form URL
+    |--------------------------------------------------------------------------
+    |
+    | External payment gateway form shown on the trainee Payments page's
+    | admin-instructions card. Set via env so it can be changed per
+    | environment without a code deploy.
+    |
+    */
+
+    'gcash_payment_url' => env('GCASH_PAYMENT_URL', 'https://gcash.com'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

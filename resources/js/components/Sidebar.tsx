@@ -135,10 +135,12 @@ const TRAINER_ITEMS: NavigationItem[] = [
 const TRAINEE_ITEMS: NavigationItem[] = [
     { to: '/trainee/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/trainee/tasks', label: 'Tasks', icon: ListChecks },
-    { to: '/trainee/announcements', label: 'Announcements', icon: Megaphone },
+    // { to: '/trainee/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/trainee/leave', label: 'Leave', icon: CalendarOff },
     // { to: '/trainee/biometrics', label: 'Biometrics', icon: Fingerprint },
     { to: '/trainee/evaluations', label: 'Evaluation', icon: ClipboardList },
+    { to: '/trainee/ratings', label: 'Ratings', icon: Star },
+    { to: '/trainee/payments', label: 'Payments', icon: Banknote },
     { to: '/trainee/my-info', label: 'My Info', icon: IdCard },
 ];
 interface SidebarProps {

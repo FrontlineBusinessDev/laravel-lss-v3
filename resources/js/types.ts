@@ -244,6 +244,8 @@ export interface AppNotification {
     read: boolean;
     link?: string;
     relatedLeaveId?: string;
+    type?: string;
+    data?: Record<string, unknown> | null;
 }
 
 export interface TaskItem {

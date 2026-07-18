@@ -6,8 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 import type { StatusKind } from '@/types';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { columns } from '@/types/modules/leave/leave-requests';
-import { CheckCircle2, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Eye, Trash2, XCircle } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { LeaveDetailsModal } from './LeaveDetailsModal';
 
 const PERMISSION = 'manage leave';
 
@@ -25,6 +26,9 @@ export default function LeaveManagementPage() {
     );
     const [decisionRemarks, setDecisionRemarks] = useState('');
     const [busyId, setBusyId] = useState<number | null>(null);
+    const [detailsTarget, setDetailsTarget] = useState<LeaveRequests | null>(
+        null,
+    );
 
     const refresh = () => refreshRef.current?.();
 
@@ -95,6 +99,14 @@ export default function LeaveManagementPage() {
                     </dl>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 pt-0.5">
+                    <button
+                        type="button"
+                        onClick={() => setDetailsTarget(row)}
+                        title="View details"
+                        className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100"
+                    >
+                        <Eye className="size-4" />
+                    </button>
                     {row.status === 'pending' && (
                         <>
                             <button
@@ -201,6 +213,19 @@ export default function LeaveManagementPage() {
                     </button>
                 </div>
             </Modal>
+
+            <LeaveDetailsModal
+                record={detailsTarget}
+                onClose={() => setDetailsTarget(null)}
+                onRequestApprove={(record) => {
+                    setDetailsTarget(null);
+                    void approve(record);
+                }}
+                onRequestDecline={(record) => {
+                    setDetailsTarget(null);
+                    setDeclineTarget(record);
+                }}
+            />
         </div>
     );
 }

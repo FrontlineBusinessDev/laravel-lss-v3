@@ -4,17 +4,23 @@ import { SelectField, TextAreaField, TextField } from '@/components/FormField';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { formatCell, tableListInvalidateKeys } from '@/components/table/utils';
+import { FileUploadField, emptyFileFieldValue } from '@/hooks/use-file-upload-field';
 import { useToast } from '@/hooks/use-toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
+import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { traineeColumns } from '@/types/modules/leave/leave-requests';
 import type { CardActions } from '@/types/reusable/card';
 import type { FieldOption } from '@/types/reusable/fields';
-import { loadLookupOptions } from '@/types/reusable/fields';
+import type { FileFieldValue } from '@/types/reusable/fields';
 import { useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { LeaveDetailsModal } from '@/pages/developer/leave/LeaveDetailsModal';
+
+const REQUIRED_DOCUMENT_HELP_TEXT =
+    'For School-Related Leave, uploading a supporting document is required. The supporting document must be signed or approved by the trainee’s school coordinator or authorized school representative.';
 
 const STATUS_BADGE: Record<string, StatusKind> = {
     pending: 'pending',
@@ -35,6 +41,10 @@ const columns = traineeColumns.map((col) =>
         : col,
 );
 
+interface CategoryOption extends FieldOption {
+    requiresDocument: boolean;
+}
+
 interface FormValues {
     leave_category_id: string;
     leave_date: string;
@@ -52,15 +62,36 @@ const emptyValues: FormValues = {
 export default function TraineeLeavePage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-    const [categories, setCategories] = useState<FieldOption[]>([]);
+    const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [values, setValues] = useState<FormValues>(emptyValues);
+    const [document, setDocument] = useState<FileFieldValue>(
+        emptyFileFieldValue,
+    );
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        loadLookupOptions('/settings/leave-categories', '', 'name')
-            .then(setCategories)
+        apiFetchJson<
+            { id: number; name: string; requires_document: boolean }[]
+        >('/settings/leave-categories/lookup?status=active')
+            .then((res) =>
+                setCategories(
+                    (res.data ?? []).map((c) => ({
+                        value: String(c.id),
+                        label: c.name,
+                        requiresDocument: c.requires_document,
+                    })),
+                ),
+            )
             .catch(() => setCategories([]));
     }, []);
+
+    const selectedCategory = categories.find(
+        (c) => c.value === values.leave_category_id,
+    );
+    const documentRequired = selectedCategory?.requiresDocument ?? false;
+    const [detailsTarget, setDetailsTarget] = useState<LeaveRequests | null>(
+        null,
+    );
 
     const renderRow = (row: LeaveRequests, actions: CardActions) => (
         <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60">
@@ -72,6 +103,14 @@ export default function TraineeLeavePage() {
                 </td>
             ))}
             <td className="px-4 py-3 text-right whitespace-nowrap">
+                <button
+                    type="button"
+                    onClick={() => setDetailsTarget(row)}
+                    title="View details"
+                    className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100"
+                >
+                    <Eye className="size-4" />
+                </button>
                 {row.status === 'pending' && (
                     <button
                         type="button"
@@ -103,11 +142,26 @@ export default function TraineeLeavePage() {
             });
             return;
         }
+        if (documentRequired && document.files.length === 0) {
+            toast({
+                title: 'A supporting document is required for this leave type.',
+                variant: 'error',
+            });
+            return;
+        }
         setSubmitting(true);
         try {
-            await leaveRequestService.submit(values);
-            toast({ title: 'Leave request submitted', variant: 'success' });
+            await leaveRequestService.submit({
+                ...values,
+                document: document.files[0] ?? null,
+            });
+            toast({
+                title: 'Leave request submitted',
+                description: 'Your application is pending admin approval.',
+                variant: 'success',
+            });
             setValues(emptyValues);
+            setDocument(emptyFileFieldValue);
             tableListInvalidateKeys('leave-requests-own').forEach((queryKey) =>
                 queryClient.invalidateQueries({ queryKey }),
             );
@@ -169,6 +223,25 @@ export default function TraineeLeavePage() {
                     value={values.reason}
                     onChange={(e) => set('reason', e.target.value)}
                 />
+                <div className="mb-3.5">
+                    <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                        Supporting document
+                        {documentRequired && (
+                            <span className="text-danger-600"> *</span>
+                        )}
+                    </label>
+                    <FileUploadField
+                        value={document}
+                        onChange={setDocument}
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        maxSizeMB={10}
+                    />
+                    {documentRequired && (
+                        <p className="mt-1.5 text-xs text-neutral-500">
+                            {REQUIRED_DOCUMENT_HELP_TEXT}
+                        </p>
+                    )}
+                </div>
                 <Button
                     variant="primary"
                     onClick={handleSubmit}
@@ -188,6 +261,11 @@ export default function TraineeLeavePage() {
                 defaultSortBy="leave_date"
                 defaultSortDir="desc"
                 renderCard={renderRow}
+            />
+
+            <LeaveDetailsModal
+                record={detailsTarget}
+                onClose={() => setDetailsTarget(null)}
             />
         </TraineeLayout>
     );

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, FolderOpen, Play, Square } from 'lucide-react';
+import { CheckCircle2, FolderOpen } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { TextCell } from '@/components/settings';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
+import { TaskTimer } from '@/components/task/TaskTimer';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
@@ -28,7 +29,8 @@ const STATUS_STYLE: Record<string, string> = {
     locked: 'bg-neutral-100 text-neutral-600',
 };
 
-const GRID = 'sm:grid-cols-[0.6fr_0.6fr_1.2fr_0.6fr_0.6fr_0.9fr_0.7fr_2.5rem]!';
+const GRID =
+    'sm:grid-cols-[0.6fr_0.6fr_1.2fr_0.6fr_0.6fr_0.9fr_0.7fr_6.5rem_2.5rem]!';
 
 const columns: ColumnDef<ApiTask>[] = [
     { key: 'task', label: 'Task', searchable: true },
@@ -95,18 +97,6 @@ export default function TraineeTasksPage() {
                 onClick: () => setViewTask(row),
             },
             {
-                label: 'Run',
-                icon: Play,
-                onClick: () => runTaskAction(row, 'run'),
-                disabled: row.is_running || row.status !== 'open',
-            },
-            {
-                label: 'Stop',
-                icon: Square,
-                onClick: () => runTaskAction(row, 'stop'),
-                disabled: !row.is_running,
-            },
-            {
                 label: 'Complete',
                 icon: CheckCircle2,
                 onClick: () => runTaskAction(row, 'complete'),
@@ -156,6 +146,16 @@ export default function TraineeTasksPage() {
                 <TextCell muted data-cy="trainee-tasks-text-cell-date">
                     {row.date?.slice(0, 10)}
                 </TextCell>
+                <div
+                    className="flex items-center justify-end"
+                    data-cy="trainee-tasks-div-timer"
+                >
+                    <TaskTimer
+                        task={row}
+                        onRun={() => runTaskAction(row, 'run')}
+                        onStop={() => runTaskAction(row, 'stop')}
+                    />
+                </div>
                 <div
                     className="flex items-center justify-end sm:justify-self-end"
                     data-cy="trainee-tasks-div-actions"
