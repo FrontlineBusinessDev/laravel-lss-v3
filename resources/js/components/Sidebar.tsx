@@ -137,7 +137,7 @@ const TRAINEE_ITEMS: NavigationItem[] = [
     { to: '/trainee/tasks', label: 'Tasks', icon: ListChecks },
     { to: '/trainee/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/trainee/leave', label: 'Leave', icon: CalendarOff },
-    { to: '/trainee/biometrics', label: 'Biometrics', icon: Fingerprint },
+    // { to: '/trainee/biometrics', label: 'Biometrics', icon: Fingerprint },
     { to: '/trainee/evaluations', label: 'Evaluation', icon: ClipboardList },
     { to: '/trainee/my-info', label: 'My Info', icon: IdCard },
 ];
@@ -285,7 +285,7 @@ function UserMenu() {
                             {email}
                         </p>
                     </div>
-                    <button
+                    {/* <button
                         onClick={() => {
                             setOpen(false);
                             navigate('/settings');
@@ -299,7 +299,7 @@ function UserMenu() {
                             data-cy="sidebar-user-cog-21"
                         />
                         Account settings
-                    </button>
+                    </button> */}
                     <button
                         onClick={() => {
                             setOpen(false);
