@@ -12,6 +12,8 @@ import { DataTableCardField } from '@/components/table/DataTableCardField';
 import type { HoursDiscount } from '@/types/modules/settings/academic/hours-discount';
 import { columns } from '@/types/modules/settings/academic/hours-discount';
 import HoursDiscountModal from './HoursDiscountModal';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsRatesLayout from '@/layouts/settings/SettingsRatesLayout';
 
 const PERMISSION = 'manage settings rates';
 const customGRID = 'sm:grid-cols-[1.8fr_1.8fr_2.5rem]';
@@ -63,36 +65,41 @@ export default function HoursDiscountsPage() {
 
     return (
         <>
-            <div className="float-right">
-                <AddRecordButton
-                    label="Add Hours Discount"
-                    permission={PERMISSION}
-                    onClick={() => {
-                        modal.setData(null);
-                        modal.setOpen(true);
-                    }}
-                />
-            </div>
-            <DataTableCardField<HoursDiscount>
-                apiUrl="/settings/rates/hours-discounts"
-                apiQueryKey="settings-rates/hours-discounts"
-                columns={columns}
-                defaultSortBy="min_hours"
-                editPermission={PERMISSION}
-                deletePermission={PERMISSION}
-                listHeader={listHeader}
-                renderCard={renderRow}
-                onEditRow={(row) => {
-                    modal.setData(row);
-                    modal.setOpen(true);
-                }}
-                data-cy="hours-discounts-data-table-field-5"
-            />
-            <HoursDiscountModal
-                open={modal.open}
-                onClose={() => modal.setOpen(false)}
-                row={modal.data}
-            />
+            <SettingsPrimaryLayout
+                actionNode={
+                    <AddRecordButton
+                        label="Add Hours Discount"
+                        permission={PERMISSION}
+                        onClick={() => {
+                            modal.setData(null);
+                            modal.setOpen(true);
+                        }}
+                    />
+                }
+            >
+                <SettingsRatesLayout>
+                    <DataTableCardField<HoursDiscount>
+                        apiUrl="/settings/rates/hours-discounts"
+                        apiQueryKey="settings-rates/hours-discounts"
+                        columns={columns}
+                        defaultSortBy="min_hours"
+                        editPermission={PERMISSION}
+                        deletePermission={PERMISSION}
+                        listHeader={listHeader}
+                        renderCard={renderRow}
+                        onEditRow={(row) => {
+                            modal.setData(row);
+                            modal.setOpen(true);
+                        }}
+                        data-cy="hours-discounts-data-table-field-5"
+                    />
+                    <HoursDiscountModal
+                        open={modal.open}
+                        onClose={() => modal.setOpen(false)}
+                        row={modal.data}
+                    />
+                </SettingsRatesLayout>
+            </SettingsPrimaryLayout>
         </>
     );
 }

@@ -7,7 +7,7 @@
 
             <h1 style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:23px; font-weight:800; letter-spacing:-.02em; margin:0 0 14px; line-height:1.25; color:#14151a;">Welcome to Learning Solutions, {{ $user->name }}</h1>
 
-            <p style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14.5px; line-height:1.6; color:#4b5159; margin:0 0 22px;">Your Learning Solutions account has just been created. Set up your password below to access your account and start submitting or tracking support tickets.</p>
+            <p style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14.5px; line-height:1.6; color:#4b5159; margin:0 0 22px;">Your Learning Solutions account has just been created. Set up your password below to access your account and start using the application.</p>
 
             <!-- Info card -->
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #ecedf1; border-radius:12px; margin-bottom:24px;">

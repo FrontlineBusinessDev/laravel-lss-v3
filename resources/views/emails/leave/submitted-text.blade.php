@@ -9,5 +9,5 @@ Reason: {{ $leaveRequest->reason }}
 Review and approve or decline this request from the Leave Management page.
 
 --
-LS Support
-LS Business Solutions Inc. · Baloc Road, Brgy. San Ignacio, San Pablo City, Philippines
+Learning Solutions
+Learning Solutions Business Solutions Inc. · Baloc Road, Brgy. San Ignacio, San Pablo City, Philippines

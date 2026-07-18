@@ -12,6 +12,8 @@ import { DataTableCardField } from '@/components/table/DataTableCardField';
 import type { GroupDiscount } from '@/types/modules/settings/academic/group-discount';
 import { columns } from '@/types/modules/settings/academic/group-discount';
 import GroupDiscountModal from './GroupDiscountModal';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsRatesLayout from '@/layouts/settings/SettingsRatesLayout';
 
 const PERMISSION = 'manage settings rates';
 const customGRID = 'sm:grid-cols-[1.8fr_1.8fr_2.5rem]';
@@ -63,36 +65,41 @@ export default function GroupDiscountsPage() {
 
     return (
         <>
-            <div className="float-right">
-                <AddRecordButton
-                    label="Add Group Discount"
-                    permission={PERMISSION}
-                    onClick={() => {
-                        modal.setData(null);
-                        modal.setOpen(true);
-                    }}
-                />
-            </div>
-            <DataTableCardField<GroupDiscount>
-                apiUrl="/settings/rates/group-discounts"
-                apiQueryKey="settings-rates/group-discounts"
-                columns={columns}
-                defaultSortBy="min_trainees"
-                editPermission={PERMISSION}
-                deletePermission={PERMISSION}
-                listHeader={listHeader}
-                renderCard={renderRow}
-                onEditRow={(row) => {
-                    modal.setData(row);
-                    modal.setOpen(true);
-                }}
-                data-cy="group-discounts-data-table-field-5"
-            />
-            <GroupDiscountModal
-                open={modal.open}
-                onClose={() => modal.setOpen(false)}
-                row={modal.data}
-            />
+            <SettingsPrimaryLayout
+                actionNode={
+                    <AddRecordButton
+                        label="Add Group Discount"
+                        permission={PERMISSION}
+                        onClick={() => {
+                            modal.setData(null);
+                            modal.setOpen(true);
+                        }}
+                    />
+                }
+            >
+                <SettingsRatesLayout>
+                    <DataTableCardField<GroupDiscount>
+                        apiUrl="/settings/rates/group-discounts"
+                        apiQueryKey="settings-rates/group-discounts"
+                        columns={columns}
+                        defaultSortBy="min_trainees"
+                        editPermission={PERMISSION}
+                        deletePermission={PERMISSION}
+                        listHeader={listHeader}
+                        renderCard={renderRow}
+                        onEditRow={(row) => {
+                            modal.setData(row);
+                            modal.setOpen(true);
+                        }}
+                        data-cy="group-discounts-data-table-field-5"
+                    />
+                    <GroupDiscountModal
+                        open={modal.open}
+                        onClose={() => modal.setOpen(false)}
+                        row={modal.data}
+                    />
+                </SettingsRatesLayout>
+            </SettingsPrimaryLayout>
         </>
     );
 }

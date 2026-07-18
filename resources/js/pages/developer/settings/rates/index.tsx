@@ -3,6 +3,8 @@ import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/FormField';
 import { useToast } from '@/hooks/use-toast';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsRatesLayout from '@/layouts/settings/SettingsRatesLayout';
 import type { Rate } from '@/types/modules/settings/academic/rates';
 import { router } from '@inertiajs/react';
 import { Save } from 'lucide-react';
@@ -36,48 +38,57 @@ export default function DefaultRatesPage({ rates }: Props) {
     };
 
     return (
-        <div
-            className="max-w-md rounded-2xl border border-[#ecedf1] bg-white p-5 shadow-sm"
-            data-cy="rates-index-div-form"
-        >
-            <h2 className="mb-1 text-sm font-semibold text-ink">
-                Default hourly rates
-            </h2>
-            <p className="mb-4 text-xs text-neutral-500">
-                Base rate per training hour, inherited by trainees from their
-                batch's setup (Face-to-Face or Online).
-            </p>
-            <TextField
-                label="Face-to-Face rate (per hour)"
-                type="number"
-                min={0}
-                step="0.01"
-                value={draft.f2f}
-                onChange={(e) =>
-                    setDraft((d) => ({ ...d, f2f: e.target.value }))
-                }
-                data-cy="rates-index-text-field-f2f"
-            />
-            <TextField
-                label="Online rate (per hour)"
-                type="number"
-                min={0}
-                step="0.01"
-                value={draft.online}
-                onChange={(e) =>
-                    setDraft((d) => ({ ...d, online: e.target.value }))
-                }
-                data-cy="rates-index-text-field-online"
-            />
-            <Button
-                variant="primary"
-                icon={Save}
-                onClick={save}
-                disabled={saving}
-                data-cy="rates-index-button-save"
-            >
-                {saving ? 'Saving…' : 'Save changes'}
-            </Button>
-        </div>
+        <>
+            <SettingsPrimaryLayout>
+                <SettingsRatesLayout>
+                    <div
+                        className="max-w-md rounded-2xl border border-[#ecedf1] bg-white p-5 shadow-sm"
+                        data-cy="rates-index-div-form"
+                    >
+                        <h2 className="mb-1 text-sm font-semibold text-ink">
+                            Default hourly rates
+                        </h2>
+                        <p className="mb-4 text-xs text-neutral-500">
+                            Base rate per training hour, inherited by trainees
+                            from their batch's setup (Face-to-Face or Online).
+                        </p>
+                        <TextField
+                            label="Face-to-Face rate (per hour)"
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={draft.f2f}
+                            onChange={(e) =>
+                                setDraft((d) => ({ ...d, f2f: e.target.value }))
+                            }
+                            data-cy="rates-index-text-field-f2f"
+                        />
+                        <TextField
+                            label="Online rate (per hour)"
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={draft.online}
+                            onChange={(e) =>
+                                setDraft((d) => ({
+                                    ...d,
+                                    online: e.target.value,
+                                }))
+                            }
+                            data-cy="rates-index-text-field-online"
+                        />
+                        <Button
+                            variant="primary"
+                            icon={Save}
+                            onClick={save}
+                            disabled={saving}
+                            data-cy="rates-index-button-save"
+                        >
+                            {saving ? 'Saving…' : 'Save changes'}
+                        </Button>
+                    </div>
+                </SettingsRatesLayout>
+            </SettingsPrimaryLayout>
+        </>
     );
 }

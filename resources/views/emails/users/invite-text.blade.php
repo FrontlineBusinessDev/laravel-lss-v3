@@ -10,6 +10,6 @@ Set up your password: {{ $resetUrl }}
 This link is valid for a limited time. Didn't expect this email? Just reply and we'll sort it out.
 
 --
-LS Support
-LS Business Solutions Inc. · Baloc Road, Brgy. San Ignacio, San Pablo City, Philippines
+Learning Solutions
+Learning Solutions Business Solutions Inc. · Baloc Road, Brgy. San Ignacio, San Pablo City, Philippines
 You're receiving this because you have a LS account.

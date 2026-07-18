@@ -47,7 +47,7 @@ export function CardFilterPanel<T>({
             {filterCols.length > 0 && (
                 <div
                     // className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4"
-                    className="flex flex-wrap items-center gap-3 [*&>]:w-40"
+                    className="flex flex-wrap items-center gap-3"
                 >
                     {filterCols.map((col, i) => {
                         if (col.type == 'select' && col.typeData) {
