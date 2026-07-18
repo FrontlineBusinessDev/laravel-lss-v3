@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Megaphone } from 'lucide-react';
 import { Modal } from '@/components/Modal';
-import { apiFetchJson } from '@/lib/apiFetch';
+import { traineeAnnouncementsService } from '@/api-service-layer/trainee/announcements';
 import type { DashboardAnnouncement } from '@/types/modules/dashboard/trainee-dashboard';
 
 function formatDate(value: string | null): string {
@@ -29,9 +29,9 @@ export function AnnouncementsCard({
                     a.id === announcement.id ? { ...a, is_read: true } : a,
                 ),
             );
-            void apiFetchJson(`/trainee/announcements/${announcement.id}/read`, {
-                method: 'POST',
-            }).catch(() => {});
+            void traineeAnnouncementsService
+                .markRead(announcement.id)
+                .catch(() => {});
         }
     };
 

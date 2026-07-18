@@ -35,6 +35,12 @@ class BatchViewController extends BaseController
         return $this->renderTab('developer/batches/show/financial', $id);
     }
 
+    /** Trainers tab (GET /batches/{id}/trainers). */
+    public function trainersTab(int|string $id): mixed
+    {
+        return $this->renderTab('developer/batches/show/trainers', $id);
+    }
+
     /**
      * Load the batch with its display relations + trainee count and hand the
      * common props to the requested tab component.
@@ -46,6 +52,7 @@ class BatchViewController extends BaseController
                 'academicIndustry:id,name',
                 'academicLevel:id,name',
                 'academicProgram:id,name',
+                'trainers:id,first_name,last_name,email',
             ])
             ->withCount('trainees')
             ->findOrFail($id);

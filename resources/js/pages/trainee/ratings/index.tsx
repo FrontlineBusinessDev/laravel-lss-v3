@@ -2,7 +2,7 @@ import { StatCard } from '@/components/StatCard';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { formatCell } from '@/components/table/utils';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import { apiFetchJson } from '@/lib/apiFetch';
+import { traineeRatingsService } from '@/api-service-layer/trainee/ratings';
 import { cn } from '@/lib/utils';
 import type { TraineeRatingMetrics } from '@/types/modules/ratings/trainee-task-rating';
 import type { TraineeTaskRatingRow } from '@/types/modules/ratings/trainee-task-rating';
@@ -18,8 +18,9 @@ export default function TraineeRatingsPage() {
     });
 
     useEffect(() => {
-        apiFetchJson<TraineeRatingMetrics>('/trainee/ratings/metrics')
-            .then((res) => res.data && setMetrics(res.data))
+        traineeRatingsService
+            .metrics()
+            .then((metrics) => setMetrics(metrics))
             .catch(() => undefined);
     }, []);
 

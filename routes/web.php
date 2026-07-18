@@ -168,6 +168,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/batches/{id}/terminate', [BatchesController::class, 'terminate'])->name('batches.terminate');
     Route::patch('/batches/{id}/toggle-registration', [BatchesController::class, 'toggleRegistration'])->name('batches.toggle-registration');
     Route::get('/batches/{id}/registration', [BatchesController::class, 'registration'])->name('batches.registration');
+    Route::get('/batches/trainer-options', [BatchesController::class, 'trainerOptions'])->name('batches.trainer-options');
+    Route::patch('/batches/{id}/trainers', [BatchesController::class, 'assignTrainers'])->name('batches.assign-trainers');
     // Batch-scoped trainee listing consumed by the detail page's DataTableField
     // (static `/trainees/pagination-search` segment, so no clash with `{id}`).
     Route::get('/batches/{batch}/trainees/pagination-search', [BatchTraineesController::class, 'paginationSearch'])
@@ -177,6 +179,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/batches/{id}', [BatchViewController::class, 'trainees'])->name('batches.show');
     Route::get('/batches/{id}/activity-log', [BatchViewController::class, 'activityLog'])->name('batches.activity-log');
     Route::get('/batches/{id}/financial', [BatchViewController::class, 'financial'])->name('batches.financial');
+    Route::get('/batches/{id}/trainers', [BatchViewController::class, 'trainersTab'])->name('batches.trainers');
     // Registered before the show/tab routes below so crudModule's static
     // segments (pagination-search, search-active, lookup) win the route
     // match against the `{id}` wildcard used by the tab views.

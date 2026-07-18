@@ -14,9 +14,11 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 /**
  * JSON API for the /leave module (developer/admin full management, trainee
@@ -219,7 +221,15 @@ class LeaveRequestController extends BaseController
                 'data' => ['leave_request_id' => $leaveRequest->id],
             ]);
 
-            Mail::to($recipient->email)->queue(new LeaveSubmittedMail($leaveRequest));
+            try {
+                Mail::to($recipient->email)->queue(new LeaveSubmittedMail($leaveRequest));
+            } catch (Throwable $e) {
+                Log::error('Leave submission mail failed', [
+                    'leave_request_id' => $leaveRequest->id,
+                    'recipient_id' => $recipient->id,
+                    'message' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
@@ -246,6 +256,13 @@ class LeaveRequestController extends BaseController
             ]);
         }
 
-        Mail::to($leaveRequest->trainee->email)->queue(new LeaveDecisionMail($leaveRequest));
+        try {
+            Mail::to($leaveRequest->trainee->email)->queue(new LeaveDecisionMail($leaveRequest));
+        } catch (Throwable $e) {
+            Log::error('Leave decision mail failed', [
+                'leave_request_id' => $leaveRequest->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }

@@ -25,6 +25,7 @@ export interface AppBatches extends Record<string, unknown> {
     academic_industry?: { id: number; name: string } | null;
     academic_level?: { id: number; name: string } | null;
     academic_program?: { id: number; name: string } | null;
+    trainers?: { id: number; first_name: string; last_name: string; email: string }[];
     created_at: string;
     updated_at: string;
 }

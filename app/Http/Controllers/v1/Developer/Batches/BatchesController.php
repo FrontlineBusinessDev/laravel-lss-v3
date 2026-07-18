@@ -7,6 +7,7 @@ use App\Models\Batches;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\TaskRating;
+use App\Models\User;
 use App\Support\QrCode;
 use App\Support\TraineeCascadeDeleter;
 use Illuminate\Database\Eloquent\Builder;
@@ -212,6 +213,46 @@ class BatchesController extends BaseController
     protected function qrSvg(string $text): string
     {
         return QrCode::svg($text);
+    }
+
+    /**
+     * All users holding the `trainer` role, for the batch-assignment picker.
+     */
+    public function trainerOptions(): JsonResponse
+    {
+        $trainers = User::role('trainer')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name'])
+            ->map(fn(User $u) => ['value' => $u->id, 'label' => $u->name]);
+
+        return $this->sendResponse($trainers);
+    }
+
+    /**
+     * Sync the full set of trainers assigned to this batch. Every id must
+     * already hold the `trainer` Spatie role — silently rejecting a stray
+     * non-trainer id here would be confusing, so it's a validation failure.
+     */
+    public function assignTrainers(Request $request, int|string $id): JsonResponse
+    {
+        $batch = $this->resolveModel($id);
+        $this->authorize('update', $batch);
+
+        $validated = $request->validate([
+            'trainer_ids' => ['present', 'array'],
+            'trainer_ids.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $trainerIds = $validated['trainer_ids'];
+        $nonTrainerCount = User::whereIn('id', $trainerIds)->whereDoesntHave('roles', fn($q) => $q->where('name', 'trainer'))->count();
+        abort_if($nonTrainerCount > 0, 422, 'All selected users must hold the trainer role.');
+
+        $batch->trainers()->sync($trainerIds);
+
+        return $this->sendResponse(
+            $batch->fresh()->load('trainers:id,first_name,last_name,email'),
+            'Trainers updated successfully.',
+        );
     }
 
     /**

@@ -8,7 +8,6 @@ import { formatCell, tableListInvalidateKeys } from '@/components/table/utils';
 import { FileUploadField, emptyFileFieldValue } from '@/hooks/use-file-upload-field';
 import { useToast } from '@/hooks/use-toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import { apiFetchJson } from '@/lib/apiFetch';
 import type { StatusKind } from '@/types';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { traineeColumns } from '@/types/modules/leave/leave-requests';
@@ -72,12 +71,11 @@ export default function TraineeLeavePage() {
     const [formOpen, setFormOpen] = useState(false);
 
     useEffect(() => {
-        apiFetchJson<
-            { id: number; name: string; requires_document: boolean }[]
-        >('/settings/leave-categories/lookup?status=active')
-            .then((res) =>
+        leaveRequestService
+            .leaveCategories()
+            .then((rows) =>
                 setCategories(
-                    (res.data ?? []).map((c) => ({
+                    rows.map((c) => ({
                         value: String(c.id),
                         label: c.name,
                         requiresDocument: c.requires_document,

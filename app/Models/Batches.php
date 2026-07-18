@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Batches extends Model
@@ -48,5 +49,10 @@ class Batches extends Model
     public function trainees(): HasMany
     {
         return $this->hasMany(Trainees::class, 'batch_id');
+    }
+
+    public function trainers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'app_batch_trainer', 'batch_id', 'trainer_id');
     }
 }

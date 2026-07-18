@@ -6,7 +6,7 @@ import { RowMenu } from '@/components/RowMenu';
 import { TextCell } from '@/components/settings';
 import { StatCard } from '@/components/StatCard';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { apiFetchJson } from '@/lib/apiFetch';
+import { traineeTasksService } from '@/api-service-layer/trainee/tasks';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import type { FieldOption } from '@/types/reusable/fields';
@@ -15,12 +15,6 @@ import type { ApiTask } from '@/types/task';
 import { cn } from '@/lib/utils';
 
 const GRID = 'sm:grid-cols-[0.7fr_1.4fr_0.8fr_0.8fr_0.9fr_0.9fr_2.5rem]!';
-
-interface TrainerOption {
-    id: number;
-    first_name: string;
-    last_name: string;
-}
 
 const columns: ColumnDef<ApiTask>[] = [
     { key: 'task', label: 'Task', searchable: true },
@@ -37,10 +31,7 @@ const columns: ColumnDef<ApiTask>[] = [
         type: 'async-select',
         filterable: true,
         loadOptions: async (q: string): Promise<FieldOption[]> => {
-            const res = await apiFetchJson<TrainerOption[]>(
-                '/trainee/tasks/trainers',
-            );
-            const items = res.data ?? [];
+            const items = await traineeTasksService.trainers();
             const filtered = q
                 ? items.filter((t) =>
                       `${t.first_name} ${t.last_name}`
@@ -76,10 +67,9 @@ export default function DailyTaskSheetTab() {
     });
 
     useEffect(() => {
-        apiFetchJson<{ total_tasks: number; total_hours: number }>(
-            '/trainee/tasks/aggregates',
-        )
-            .then((res) => res.data && setAggregates(res.data))
+        traineeTasksService
+            .aggregates()
+            .then((data) => setAggregates(data))
             .catch(() => undefined);
     }, []);
 

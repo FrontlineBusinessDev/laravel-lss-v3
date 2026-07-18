@@ -7,7 +7,7 @@ import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import { TaskTimer } from '@/components/task/TaskTimer';
 import { useToast } from '@/hooks/use-toast';
 import TraineeTasksPrimaryLayout from '@/layouts/tasks/TraineeTasksPrimaryLayout';
-import { apiFetchJson } from '@/lib/apiFetch';
+import { traineeTasksService } from '@/api-service-layer/trainee/tasks';
 import { cn } from '@/lib/utils';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
@@ -76,9 +76,7 @@ export default function TraineeTasksPage() {
         action: 'run' | 'stop' | 'complete',
     ) {
         try {
-            await apiFetchJson(`/trainee/tasks/${task.id}/${action}`, {
-                method: 'PATCH',
-            });
+            await traineeTasksService.runAction(task.id, action);
             invalidateOpenTasks();
         } catch {
             toast({

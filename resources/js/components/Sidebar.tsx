@@ -128,6 +128,7 @@ const TRAINER_ITEMS: NavigationItem[] = [
     { to: '/trainer/tasks', label: 'Tasks', icon: ListChecks },
     { to: '/trainer/schedule', label: 'Schedule', icon: CalendarDays },
     { to: '/trainer/announcements', label: 'Announcements', icon: Megaphone },
+    { to: '/trainer/leave', label: 'Leave', icon: CalendarOff },
     { to: '/trainer/ratings', label: 'Ratings', icon: Star },
 ];
 

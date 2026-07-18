@@ -91,6 +91,10 @@ export default function BatchDetailLayout({
             label: 'Financials',
             href: `/batches/${batch.id}/financial`,
         },
+        {
+            label: 'Trainers',
+            href: `/batches/${batch.id}/trainers`,
+        },
     ];
     const mutate = async (
         method: 'PATCH' | 'DELETE',

@@ -5,7 +5,8 @@ import {
 import { StatCard } from '@/components/StatCard';
 import { useToast } from '@/hooks/use-toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import { ApiError, apiFetchJson } from '@/lib/apiFetch';
+import { ApiError } from '@/api-service-layer/client';
+import { myInfoService } from '@/api-service-layer/trainee/my-info';
 import { getHoursProgress } from '@/lib/ratings';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
@@ -281,14 +282,11 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
             [key]: { ...prev[key], uploading: true, error: undefined },
         }));
         try {
-            const res = await apiFetchJson<TraineeDetail['documents'][number]>(
-                '/trainee/my-info/documents',
-                { method: 'POST', body },
-            );
+            const doc = await myInfoService.uploadDocument(body);
             setDocs((prev) => ({
                 ...prev,
                 [key]: {
-                    ...toDocState(res.data),
+                    ...toDocState(doc),
                     mode: prev[key]?.mode ?? 'upload',
                 },
             }));
@@ -340,9 +338,7 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
             return;
         }
         try {
-            await apiFetchJson(`/trainee/my-info/documents/${id}`, {
-                method: 'DELETE',
-            });
+            await myInfoService.deleteDocument(id);
             setDocs((prev) => ({
                 ...prev,
                 [key]: { mode: prev[key]?.mode ?? 'upload' },

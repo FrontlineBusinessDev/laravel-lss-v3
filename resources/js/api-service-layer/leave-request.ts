@@ -29,7 +29,22 @@ function query(params?: Record<string, unknown>): string {
     return qs ? `?${qs}` : '';
 }
 
+export interface LeaveCategoryOption {
+    id: number;
+    name: string;
+    requires_document: boolean;
+}
+
 export const leaveRequestService = {
+    /** GET /settings/leave-categories/lookup — richer than the generic
+     *  {value,label} lookup shape (also carries requires_document), so this
+     *  hits the endpoint directly rather than going through
+     *  leaveCategoryService.lookup(). */
+    leaveCategories: async (): Promise<LeaveCategoryOption[]> =>
+        unwrap<LeaveCategoryOption[]>(
+            await http.get('/settings/leave-categories/lookup?status=active'),
+        ),
+
     getPaginatedFilterSearch: async (
         params?: CrudQueryParams,
     ): Promise<PaginatedResponse<LeaveRequests>> =>
