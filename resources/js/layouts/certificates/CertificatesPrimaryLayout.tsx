@@ -11,20 +11,31 @@ const NAV_LINKS = [
     { id: 'Trainees', label: 'Trainees', href: '/certificates/trainees' },
     { id: 'Seminar', label: 'Seminar', href: '/certificates/seminar' },
     { id: 'Citations', label: 'Citations', href: '/certificates/citations' },
+    { id: 'Templates', label: 'Templates', href: '/certificates/templates' },
 ] as const;
 
-export default function CertificatesPrimaryLayout({ children, actionNode }: LayoutProps) {
+export default function CertificatesPrimaryLayout({
+    children,
+    actionNode,
+}: LayoutProps) {
     const { url } = usePage();
 
     return (
         <div data-cy="certificates-primary-layout-div-1">
             <div className="mb-4 flex items-center justify-between gap-2">
                 <div>
-                    <h1 className="text-xl font-semibold text-ink" data-cy="certificates-primary-layout-h1-certificates">
+                    <h1
+                        className="text-xl font-semibold text-ink"
+                        data-cy="certificates-primary-layout-h1-certificates"
+                    >
                         Certificates
                     </h1>
-                    <p className="text-sm text-neutral-500" data-cy="certificates-primary-layout-p-subtitle">
-                        Issue and manage trainee and seminar certificates, and design reusable citations
+                    <p
+                        className="text-sm text-neutral-500"
+                        data-cy="certificates-primary-layout-p-subtitle"
+                    >
+                        Issue and manage trainee and seminar certificates, and
+                        design reusable citations
                     </p>
                 </div>
                 <div>{actionNode}</div>

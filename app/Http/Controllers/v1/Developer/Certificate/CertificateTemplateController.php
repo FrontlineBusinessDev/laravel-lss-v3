@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 class CertificateTemplateController extends BaseController
 {
     protected string $model = CertificateTemplate::class;
-    protected string $view = 'developer/certificates/citations/index';
+    protected string $view = 'developer/certificates/templates/index';
     protected array $searchable = ['name'];
     protected array $filterable = ['status', 'certificate_type'];
     protected array $exactFilters = ['status', 'certificate_type'];

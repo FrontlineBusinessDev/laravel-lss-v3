@@ -1,4 +1,10 @@
-import { useState } from 'react';
+import { Button } from '@/components/Button';
+import { RowMenu, RowMenuAction } from '@/components/RowMenu';
+import { ColumnDef } from '@/components/table';
+import DataTableCardField from '@/components/table/DataTableCardField';
+import CertificatesPrimaryLayout from '@/layouts/certificates/CertificatesPrimaryLayout';
+import { cn } from '@/lib/utils';
+import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 import {
     Archive,
     ArchiveRestore,
@@ -7,21 +13,19 @@ import {
     Pencil,
     Plus,
     Trash2,
-    X,
 } from 'lucide-react';
-import { Button } from '@/components/Button';
-import { RowMenu, type RowMenuAction } from '@/components/RowMenu';
-import { Modal } from '@/components/Modal';
-import { DataTableCardField } from '@/components/table/DataTableCardField';
-import type { ColumnDef } from '@/types/reusable/data-table';
-import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
-import { cn } from '@/lib/utils';
-import CertificatesPrimaryLayout from '@/layouts/certificates/CertificatesPrimaryLayout';
-import { CertificateSheet } from '../CertificatePrint';
+import { useState } from 'react';
 import { renderCitation } from '../certificateUtils';
-import { AddEditCitationModal } from '../AddEditCitationModal';
-import type { CertificateCitation } from '../types';
-import { CertificateTemplateList } from './CertificateTemplateList';
+import { CertificateTemplateBuilder } from '../citations/CertificateTemplateBuilder';
+import type {
+    CertificateCitation,
+    CertificateTemplate,
+    CertificateType,
+} from '../types';
+
+interface CertificateTemplateListProps {
+    certificateType: CertificateType;
+}
 
 const APPLIES_TO_LABEL: Record<string, string> = {
     trainee: 'Trainee',
@@ -54,16 +58,9 @@ const columns: ColumnDef<CertificateCitation>[] = [
     },
 ];
 
-const listHeader = (
-    <div className="hidden bg-neutral-50 px-4 py-2.5 text-left text-xs font-medium text-neutral-500 sm:grid sm:grid-cols-[2fr_1fr_1fr_2.5rem] sm:items-center sm:gap-3">
-        <span>Title</span>
-        <span>Applies to</span>
-        <span>Status</span>
-        <span className="text-right">Actions</span>
-    </div>
-);
-
-export default function CitationsPage() {
+export default function index({
+    certificateType,
+}: CertificateTemplateListProps) {
     const [editing, setEditing] = useState<CertificateCitation | null | 'new'>(
         null,
     );
@@ -168,87 +165,49 @@ export default function CitationsPage() {
         : '';
 
     return (
-        <CertificatesPrimaryLayout
-            data-cy="citations-index-layout"
-            actionNode={
-                <Button
-                    variant="primary"
-                    size="sm"
-                    icon={Plus}
-                    onClick={() => setEditing('new')}
-                    data-cy="citations-index-button-add"
-                >
-                    Add citation
-                </Button>
-            }
-        >
-            <DataTableCardField<CertificateCitation>
-                apiUrl="/certificates/citations"
-                apiQueryKey="certificates-citations"
-                columns={columns}
-                defaultSortBy="title"
-                enableStatusFilter
-                statusFilterOptions={[
-                    { value: '', label: 'All' },
-                    { value: 'active', label: 'Active' },
-                    { value: 'inactive', label: 'Archived' },
-                ]}
-                archiveUrl={(row) =>
-                    `/certificates/citations/${row.id}/archive`
+        <>
+            <CertificatesPrimaryLayout
+                data-cy="citations-index-layout"
+                actionNode={
+                    <Button
+                        variant="primary"
+                        onClick={() => setEditing('new')}
+                        icon={Plus}
+                        data-cy="citations-index-button-add"
+                    >
+                        New template
+                    </Button>
                 }
-                restoreUrl={(row) =>
-                    `/certificates/citations/${row.id}/restore`
-                }
-                deleteUrl={(row) => `/certificates/citations/${row.id}`}
-                listHeader={listHeader}
-                renderCard={(row, actions) => renderRow(row, actions)}
-                onRefreshRef={(fn) => setRefreshTable(() => fn)}
-            />
-
-            {/* <div className="mt-8" data-cy="citations-index-templates-section">
-                <CertificateTemplateList certificateType="citation" />
-            </div> */}
-
-            <AddEditCitationModal
-                open={!!editing}
-                initial={editing === 'new' ? null : editing}
-                onClose={() => setEditing(null)}
-                onSaved={() => refreshTable()}
-            />
-
-            <Modal
-                open={!!previewing}
-                onClose={() => setPreviewing(null)}
-                title="Citation preview"
-                maxWidth={640}
             >
-                {previewing && (
-                    <div className="flex flex-col gap-4">
-                        <CertificateSheet
-                            doc={{
-                                key: 'preview',
-                                recipientName: 'Juan Dela Cruz',
-                                subtitle:
-                                    previewing.applies_to === 'seminar'
-                                        ? 'Sample Seminar Topic'
-                                        : 'Sample School',
-                                citationText: previewText,
-                                certificateNo: 'PREVIEW-0000',
-                                issuedDate: undefined,
-                            }}
-                        />
-                        <div className="flex justify-end">
-                            <Button
-                                variant="secondary"
-                                icon={X}
-                                onClick={() => setPreviewing(null)}
-                            >
-                                Close preview
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-        </CertificatesPrimaryLayout>
+                <div data-cy="certificate-template-list-div">
+                    <DataTableCardField<CertificateTemplate>
+                        apiUrl="/certificates/templates"
+                        apiQueryKey={[
+                            'certificates-templates',
+                            certificateType,
+                        ]}
+                        columns={columns}
+                        defaultSortBy="name"
+                        extraFilters={{ certificate_type: certificateType }}
+                        archiveUrl={(row) =>
+                            `/certificates/templates/${row.id}/archive`
+                        }
+                        restoreUrl={(row) =>
+                            `/certificates/templates/${row.id}/restore`
+                        }
+                        renderCard={(row, actions) => renderRow(row, actions)}
+                        onRefreshRef={(fn) => setRefreshTable(() => fn)}
+                    />
+
+                    <CertificateTemplateBuilder
+                        open={!!editing}
+                        certificateType={certificateType}
+                        initial={editing === 'new' ? null : editing}
+                        onClose={() => setEditing(null)}
+                        onSaved={() => refreshTable()}
+                    />
+                </div>
+            </CertificatesPrimaryLayout>
+        </>
     );
 }
