@@ -31,7 +31,7 @@ export const columns: ColumnDef<TraineeRow>[] = [
         sortable: true,
         filterable: true,
         type: 'select',
-        loadOptions: staticOptions(STATUS_FILTER_PAIRS),
+        typeData: STATUS_FILTER_PAIRS,
     },
     {
         key: 'first_name',

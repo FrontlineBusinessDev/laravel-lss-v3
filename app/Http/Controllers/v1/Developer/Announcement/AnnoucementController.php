@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 class AnnoucementController extends BaseController
 {
     protected string $model = Announcement::class;
-    protected string $view = 'announcements/index';
+    protected string $view = 'developer/announcements/index';
     protected array $searchable = ['status', 'subject', 'audience'];
     protected array $filterable = ['status', 'subject', 'audience'];
     protected array $sortable = ['status', 'subject', 'audience'];

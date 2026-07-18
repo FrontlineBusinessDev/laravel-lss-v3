@@ -22,7 +22,7 @@ class Permissions
      */
     const MANAGE_BATCHES = 'manage batches';
     const MANAGE_TRAINEES = 'manage trainees';
-    const MANAGE_ANNOUNCEMENTS = 'manage announcement';
+    const MANAGE_ANNOUNCEMENTS = 'manage announcements';
     const MANAGE_LEAVE = 'manage leave';
     const MANAGE_BIOMETRICS = 'manage biometrics';
     const MANAGE_TASKS = 'manage tasks';

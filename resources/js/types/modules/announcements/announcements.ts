@@ -1,28 +1,33 @@
 import type { ColumnDef } from '@/types/reusable/data-table';
-import { FieldDef, staticOptions } from '@/types/reusable/fields';
+import { FieldDef } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 /**
- * Row shape returned by the batch-scoped trainee listing
- * (GET /batches/{batch}/trainees/pagination-search — BatchTraineesController).
- * `school` is the eager-loaded PartnerSchools relation (snake_case column).
+ * Row shape returned by `/announcements` (AnnoucementController extends
+ * BaseController — table `app_announcement`).
  */
 export interface Announcements extends Record<string, unknown> {
     id: number;
     status: string;
     subject: string;
     audience: string;
-    description: string;
+    description: string | null;
     created_at: string;
     updated_at: string;
-    postedBy: string;
 }
 
-/**
- * Columns for the trainee DataTableField. Only backend-sortable keys are marked
- * sortable (see BatchTraineesController::$sortable); `school` is a relation, so
- * it is display-only.
- */
+/** Matches AnnoucementController::storeRules()'s `audience` Rule::in(). */
+export const AUDIENCE_OPTIONS = [
+    'all trainees',
+    'specific batch',
+    'trainees with documents',
+    'custome group',
+] as const;
+
+export type AnnouncementInput = Partial<
+    Pick<Announcements, 'status' | 'subject' | 'description' | 'audience'>
+>;
+
 export const columns: ColumnDef<Announcements>[] = [
     {
         key: 'status',
@@ -41,6 +46,14 @@ export const columns: ColumnDef<Announcements>[] = [
         filterable: true,
     },
     {
+        key: 'audience',
+        label: 'Audience',
+        sortable: true,
+        filterable: true,
+        type: 'select',
+        typeData: AUDIENCE_OPTIONS.map((value) => ({ value, label: value })),
+    },
+    {
         key: 'description',
         label: 'Description',
         searchable: true,
@@ -49,8 +62,6 @@ export const columns: ColumnDef<Announcements>[] = [
     },
 ];
 
-// Create/edit modal fields. batch_code and public_registration_url_id are
-// intentionally absent — both are system-generated and protected from input.
 export const fields: FieldDef<Announcements>[] = [
     {
         key: 'status',
@@ -58,7 +69,7 @@ export const fields: FieldDef<Announcements>[] = [
         type: 'select',
         options: [
             { value: 'active', label: 'Active' },
-            { value: 'archived', label: 'Archived' },
+            { value: 'inactive', label: 'Inactive' },
         ],
         required: true,
         colSpan: 2,
@@ -71,10 +82,17 @@ export const fields: FieldDef<Announcements>[] = [
         colSpan: 2,
     },
     {
+        key: 'audience',
+        label: 'Audience',
+        type: 'select',
+        options: AUDIENCE_OPTIONS.map((value) => ({ value, label: value })),
+        required: true,
+        colSpan: 2,
+    },
+    {
         key: 'description',
         label: 'Description',
         type: 'textarea',
-        required: true,
         colSpan: 2,
     },
 ];

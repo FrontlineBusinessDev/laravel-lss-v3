@@ -1,825 +1,229 @@
-import { Button } from '@/components/Button';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { Dropdown } from '@/components/Dropdown';
-import { TextAreaField } from '@/components/FormField';
-import { useToast } from '@/components/Toast';
-import { TooltipIconButton } from '@/components/TooltipIconButton';
-import { useBatches } from '@/context/BatchesContext';
-import { useNotifications } from '@/context/NotificationsContext';
-import {
-    currentUser,
-    leaveRecords as initialLeaveRecords,
-    TODAY,
-} from '@/data/mockData';
-import { useSearchParams } from '@/lib/router-compat';
-import { cn, toDateInputValue } from '@/lib/utils';
-import {
-    LEAVE_STATUS_LABEL,
-    LEAVE_STATUS_STYLE,
-    LeaveDetailsModal,
-} from '@/pages/developer/leave/LeaveDetailsModal';
-import type { LeaveRecord, LeaveType } from '@/types';
-import {
-    CalendarOff,
-    CheckCircle2,
-    Eye,
-    Paperclip,
-    Search,
-    X,
-    XCircle,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { leaveRequestService } from '@/api-service-layer/leave-request';
+import { Modal } from '@/components/Modal';
+import { StatusBadge } from '@/components/StatusBadge';
+import DataTableCardField from '@/components/table/DataTableCardField';
+import { useToast } from '@/hooks/use-toast';
+import type { StatusKind } from '@/types';
+import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
+import { columns } from '@/types/modules/leave/leave-requests';
+import { CheckCircle2, Trash2, XCircle } from 'lucide-react';
+import { useRef, useState } from 'react';
 
-const STATUS_OPTIONS = ['All statuses', 'Pending', 'Approved', 'Declined'];
-const LEAVE_TYPE_OPTIONS: (LeaveType | 'All types')[] = [
-    'All types',
-    'Sick Leave',
-    'Vacation Leave',
-    'School-Related Leave',
-    'Bereavement Leave',
-];
-interface Filters {
-    batch: string;
-    status: string;
-    leaveType: string;
-    onDate: string; // "on leave on this date" filter
-    rangeFrom: string;
-    rangeTo: string;
-}
-const EMPTY_FILTERS: Filters = {
-    batch: 'All batches',
-    status: 'All statuses',
-    leaveType: 'All types',
-    onDate: '',
-    rangeFrom: '',
-    rangeTo: '',
+const PERMISSION = 'manage leave';
+
+const STATUS_BADGE: Record<string, StatusKind> = {
+    pending: 'pending',
+    approved: 'active',
+    declined: 'declined',
 };
-type PendingDecision = {
-    kind: 'approve' | 'decline';
-    record: LeaveRecord;
-} | null;
-export default function LeavePage() {
-    const { showToast } = useToast();
-    const { notify, resolveForLeave } = useNotifications();
-    const { batches } = useBatches();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const batchOptions = useMemo(
-        () => ['All batches', ...batches.map((b) => b.batchNo)],
-        [batches],
+
+export default function LeaveManagementPage() {
+    const { toast } = useToast();
+    const refreshRef = useRef<(() => void) | null>(null);
+    const [declineTarget, setDeclineTarget] = useState<LeaveRequests | null>(
+        null,
     );
-    const [records, setRecords] = useState<LeaveRecord[]>(initialLeaveRecords);
-    const [query, setQuery] = useState('');
-    const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-    const [viewRecord, setViewRecord] = useState<LeaveRecord | null>(null);
-    const [pendingDecision, setPendingDecision] =
-        useState<PendingDecision>(null);
     const [decisionRemarks, setDecisionRemarks] = useState('');
+    const [busyId, setBusyId] = useState<number | null>(null);
 
-    // Deep link from the notification bell: /leave?highlight=<id> opens that request's details.
-    useEffect(() => {
-        const highlightId = searchParams.get('highlight');
-        if (!highlightId) return;
-        const record = records.find((r) => r.id === highlightId);
-        if (record) setViewRecord(record);
-        const next = new URLSearchParams(searchParams);
-        next.delete('highlight');
-        // setSearchParams(next, {
-        //     replace: true,
-        // });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]);
-    const filteredSorted = useMemo(() => {
-        const q = query.trim().toLowerCase();
-        const filtered = records.filter((r) => {
-            if (q && !r.traineeName.toLowerCase().includes(q)) return false;
-            if (filters.batch !== 'All batches' && r.batchNo !== filters.batch)
-                return false;
-            if (
-                filters.status !== 'All statuses' &&
-                r.status !== filters.status.toLowerCase()
-            )
-                return false;
-            if (
-                filters.leaveType !== 'All types' &&
-                r.leaveType !== filters.leaveType
-            )
-                return false;
-            if (
-                filters.onDate &&
-                !(
-                    r.leaveDate <= filters.onDate &&
-                    filters.onDate <= r.returnDate
-                )
-            )
-                return false;
-            if (filters.rangeFrom && r.leaveDate < filters.rangeFrom)
-                return false;
-            if (filters.rangeTo && r.leaveDate > filters.rangeTo) return false;
-            return true;
-        });
+    const refresh = () => refreshRef.current?.();
 
-        // Pending always on top; within each group, most recently submitted first.
-        const byDateSubmittedDesc = (a: LeaveRecord, b: LeaveRecord) =>
-            a.dateSubmitted < b.dateSubmitted ? 1 : -1;
-        const pending = filtered
-            .filter((r) => r.status === 'pending')
-            .sort(byDateSubmittedDesc);
-        const rest = filtered
-            .filter((r) => r.status !== 'pending')
-            .sort(byDateSubmittedDesc);
-        return [...pending, ...rest];
-    }, [records, query, filters]);
-    const hasActiveFilters =
-        query !== '' ||
-        Object.entries(filters).some(
-            ([k, v]) => v !== EMPTY_FILTERS[k as keyof Filters],
-        );
-    const clearFilters = () => {
-        setQuery('');
-        setFilters(EMPTY_FILTERS);
-    };
-    function requestDecision(kind: 'approve' | 'decline', record: LeaveRecord) {
-        setViewRecord(null);
-        setDecisionRemarks('');
-        setPendingDecision({
-            kind,
-            record,
-        });
+    async function approve(row: LeaveRequests) {
+        setBusyId(row.id);
+        try {
+            await leaveRequestService.approve(row.id);
+            toast({ title: 'Leave request approved', variant: 'success' });
+            refresh();
+        } catch (err) {
+            toast({
+                title: 'Approve failed',
+                description: err instanceof Error ? err.message : undefined,
+                variant: 'error',
+            });
+        } finally {
+            setBusyId(null);
+        }
     }
-    function confirmDecision() {
-        if (!pendingDecision) return;
-        const { kind, record } = pendingDecision;
-        const status: LeaveRecord['status'] =
-            kind === 'approve' ? 'approved' : 'declined';
-        const remarks = decisionRemarks.trim();
-        const decisionDate = toDateInputValue(TODAY);
-        setRecords((prev) =>
-            prev.map((r) =>
-                r.id === record.id
-                    ? {
-                          ...r,
-                          status,
-                          decisionRemarks: remarks || undefined,
-                          decidedBy: currentUser.name,
-                          decisionDate,
-                      }
-                    : r,
-            ),
-        );
 
-        // Clears the pending admin notification for this request, and records the
-        // outcome as a trainee-facing notification (no trainee UI exists to render
-        // it in yet, but the data flow is real and inspectable).
-        resolveForLeave(record.id);
-        notify({
-            audience: 'trainee',
-            title:
-                kind === 'approve'
-                    ? 'Leave request approved'
-                    : 'Leave request declined',
-            body:
-                kind === 'approve'
-                    ? `Your ${record.leaveType} request (${record.leaveDate} to ${record.returnDate}) was approved.`
-                    : `Your ${record.leaveType} request was declined. Reason: ${remarks || 'No reason provided.'}`,
-            createdAt: decisionDate,
-            relatedLeaveId: record.id,
-        });
-        showToast(
-            `${record.traineeName}\u2019s leave request was ${status}. Trainee notified.`,
-            kind === 'approve' ? 'success' : 'error',
-        );
-        setPendingDecision(null);
-        setDecisionRemarks('');
+    async function confirmDecline() {
+        if (!declineTarget) return;
+        setBusyId(declineTarget.id);
+        try {
+            await leaveRequestService.decline(
+                declineTarget.id,
+                decisionRemarks,
+            );
+            toast({ title: 'Leave request declined', variant: 'info' });
+            setDeclineTarget(null);
+            setDecisionRemarks('');
+            refresh();
+        } catch (err) {
+            toast({
+                title: 'Decline failed',
+                description: err instanceof Error ? err.message : undefined,
+                variant: 'error',
+            });
+        } finally {
+            setBusyId(null);
+        }
     }
-    const pendingCount = records.filter((r) => r.status === 'pending').length;
-    return (
-        <div data-cy="index-div-1">
-            <div
-                className="mb-4 flex items-center justify-between"
-                data-cy="index-div-2"
-            >
-                <div data-cy="index-div-3">
-                    <h1
-                        className="text-xl font-semibold text-ink"
-                        data-cy="index-h1-leave-management"
-                    >
-                        Leave management
-                    </h1>
-                    <p
-                        className="text-sm text-neutral-500"
-                        data-cy="index-p-pending-of"
-                    >
-                        {pendingCount} pending of {records.length} leave
-                        requests
-                    </p>
-                </div>
-            </div>
 
-            <div
-                className="mb-3 flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-3"
-                data-cy="index-div-6"
-            >
-                <div
-                    className="flex flex-wrap items-end gap-2"
-                    data-cy="index-div-7"
-                >
-                    <div
-                        className="relative min-w-[200px] flex-1"
-                        data-cy="index-div-8"
-                    >
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-search-trainee"
-                        >
-                            Search trainee
-                        </label>
-                        <Search
-                            size={14}
-                            className="pointer-events-none absolute top-[34px] left-2.5 text-neutral-400"
-                            data-cy="index-search-10"
-                        />
-                        <input
-                            type="text"
-                            placeholder="Search by trainee name..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            className="h-9 w-full rounded-md border border-neutral-200 pr-2.5 pl-8 text-sm transition-colors hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                            data-cy="index-input-search-by-trainee-name"
-                        />
+    const renderRow = (row: LeaveRequests) => {
+        const badge: StatusKind = STATUS_BADGE[row.status] ?? 'pending';
+        const busy = busyId === row.id;
+
+        return (
+            <div className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <h3 className="truncate text-base font-semibold">
+                            {row.trainee
+                                ? `${row.trainee.first_name} ${row.trainee.last_name}`
+                                : '—'}
+                        </h3>
+                        <StatusBadge status={badge} />
                     </div>
-                    <div className="w-full sm:w-40" data-cy="index-div-12">
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-batch"
-                        >
-                            Batch
-                        </label>
-                        <Dropdown
-                            options={batchOptions}
-                            value={filters.batch}
-                            onChange={(v) =>
-                                setFilters((f) => ({
-                                    ...f,
-                                    batch: v,
-                                }))
-                            }
-                            data-cy="index-dropdown-set-filters"
-                        />
-                    </div>
-                    <div className="w-full sm:w-36" data-cy="index-div-15">
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-status"
-                        >
-                            Status
-                        </label>
-                        <Dropdown
-                            options={STATUS_OPTIONS}
-                            value={filters.status}
-                            onChange={(v) =>
-                                setFilters((f) => ({
-                                    ...f,
-                                    status: v,
-                                }))
-                            }
-                            data-cy="index-dropdown-set-filters-2"
-                        />
-                    </div>
-                    <div className="w-full sm:w-48" data-cy="index-div-18">
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-leave-type"
-                        >
-                            Leave type
-                        </label>
-                        <Dropdown
-                            options={LEAVE_TYPE_OPTIONS}
-                            value={filters.leaveType}
-                            onChange={(v) =>
-                                setFilters((f) => ({
-                                    ...f,
-                                    leaveType: v,
-                                }))
-                            }
-                            data-cy="index-dropdown-set-filters-3"
-                        />
-                    </div>
+                    <dl className="mt-1 space-y-0.5">
+                        <dd className="truncate text-sm">
+                            {row.leave_category?.name ?? '—'}
+                        </dd>
+                        <dd className="truncate text-sm">
+                            {row.leave_date.slice(0, 10)} –{' '}
+                            {row.return_date.slice(0, 10)}
+                        </dd>
+                        <dd className="truncate text-sm">{row.reason}</dd>
+                    </dl>
                 </div>
-                <div
-                    className="flex flex-wrap items-end gap-2"
-                    data-cy="index-div-21"
-                >
-                    <div data-cy="index-div-22">
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-on-leave-on"
+                <div className="flex shrink-0 items-center gap-2 pt-0.5">
+                    {row.status === 'pending' && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => void approve(row)}
+                                disabled={busy}
+                                title="Approve"
+                                className="rounded-md p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50"
+                            >
+                                <CheckCircle2 className="size-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setDeclineTarget(row)}
+                                disabled={busy}
+                                title="Decline"
+                                className="rounded-md p-1.5 text-rose-600 transition-colors hover:bg-rose-50"
+                            >
+                                <XCircle className="size-4" />
+                            </button>
+                        </>
+                    )}
+                    {row.status !== 'approved' && (
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                setBusyId(row.id);
+                                try {
+                                    await leaveRequestService.delete(row.id);
+                                    toast({
+                                        title: 'Leave request deleted',
+                                        variant: 'success',
+                                    });
+                                    refresh();
+                                } finally {
+                                    setBusyId(null);
+                                }
+                            }}
+                            disabled={busy}
+                            title="Delete"
+                            className="rounded-md p-1.5 text-rose-600 transition-colors hover:bg-rose-50"
                         >
-                            On leave on
-                        </label>
-                        <input
-                            type="date"
-                            value={filters.onDate}
-                            onChange={(e) =>
-                                setFilters((f) => ({
-                                    ...f,
-                                    onDate: e.target.value,
-                                }))
-                            }
-                            className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                            data-cy="index-input-date"
-                        />
-                    </div>
-                    <div data-cy="index-div-25">
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-leave-date-from"
-                        >
-                            Leave date from
-                        </label>
-                        <input
-                            type="date"
-                            value={filters.rangeFrom}
-                            onChange={(e) =>
-                                setFilters((f) => ({
-                                    ...f,
-                                    rangeFrom: e.target.value,
-                                }))
-                            }
-                            className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                            data-cy="index-input-date-2"
-                        />
-                    </div>
-                    <div data-cy="index-div-28">
-                        <label
-                            className="mb-1 block text-[11px] font-medium text-neutral-500"
-                            data-cy="index-label-leave-date-to"
-                        >
-                            Leave date to
-                        </label>
-                        <input
-                            type="date"
-                            value={filters.rangeTo}
-                            onChange={(e) =>
-                                setFilters((f) => ({
-                                    ...f,
-                                    rangeTo: e.target.value,
-                                }))
-                            }
-                            className="h-9 rounded-md border border-neutral-200 px-2.5 text-xs text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                            data-cy="index-input-date-3"
-                        />
-                    </div>
-                    {hasActiveFilters && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={X}
-                            onClick={clearFilters}
-                            className="ml-auto"
-                            data-cy="index-button-clear-filters"
-                        >
-                            Clear filters
-                        </Button>
+                            <Trash2 className="size-4" />
+                        </button>
                     )}
                 </div>
             </div>
+        );
+    };
 
-            <div
-                className="mb-2 flex items-center justify-between"
-                data-cy="index-div-32"
-            >
-                <span
-                    className="text-xs text-neutral-400"
-                    data-cy="index-span-of"
-                >
-                    {filteredSorted.length} of {records.length} requests
-                </span>
+    return (
+        <div>
+            <div className="mb-4">
+                <h1 className="text-xl font-semibold text-ink">
+                    Leave Management
+                </h1>
+                <p className="text-sm text-neutral-500">
+                    Review, approve, or decline trainee leave applications.
+                </p>
             </div>
 
-            <div
-                className="hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
-                data-cy="index-div-34"
-            >
-                <div
-                    className="lss-scrollbar overflow-x-auto"
-                    data-cy="index-div-35"
-                >
-                    <table
-                        className="w-full min-w-[1080px] border-collapse text-sm"
-                        data-cy="index-table-36"
-                    >
-                        <thead data-cy="index-thead-37">
-                            <tr
-                                className="bg-neutral-50 text-left text-xs font-medium text-neutral-500"
-                                data-cy="index-tr-38"
-                            >
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-trainee"
-                                >
-                                    Trainee
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-batch"
-                                >
-                                    Batch
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-leave-date"
-                                >
-                                    Leave date
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-return-date"
-                                >
-                                    Return date
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-leave-type"
-                                >
-                                    Leave type
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-remarks"
-                                >
-                                    Remarks
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-status"
-                                >
-                                    Status
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 font-medium"
-                                    data-cy="index-th-date-submitted"
-                                >
-                                    Date submitted
-                                </th>
-                                <th
-                                    className="px-4 py-2.5 text-right font-medium"
-                                    data-cy="index-th-actions"
-                                >
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody data-cy="index-tbody-48">
-                            {filteredSorted.map((r) => (
-                                <tr
-                                    key={r.id}
-                                    className="border-t border-neutral-100 transition-colors hover:bg-neutral-50"
-                                    data-cy="index-tr-49"
-                                >
-                                    <td
-                                        className="px-4 py-2.5"
-                                        data-cy="index-td-50"
-                                    >
-                                        <div
-                                            className="flex items-center gap-2"
-                                            data-cy="index-div-51"
-                                        >
-                                            <span
-                                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600"
-                                                data-cy="index-span-52"
-                                            >
-                                                {r.initials}
-                                            </span>
-                                            <span
-                                                className="font-medium text-ink"
-                                                data-cy="index-span-53"
-                                            >
-                                                {r.traineeName}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                        data-cy="index-td-54"
-                                    >
-                                        {r.batchNo}
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                        data-cy="index-td-55"
-                                    >
-                                        {r.leaveDate}
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                        data-cy="index-td-56"
-                                    >
-                                        {r.returnDate}
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5 text-neutral-600"
-                                        data-cy="index-td-57"
-                                    >
-                                        {r.leaveType}
-                                    </td>
-                                    <td
-                                        className="max-w-[200px] truncate px-4 py-2.5 text-xs text-neutral-500"
-                                        title={r.remarks}
-                                        data-cy="index-td-r-remarks"
-                                    >
-                                        <span
-                                            className="inline-flex items-center gap-1"
-                                            data-cy="index-span-59"
-                                        >
-                                            {r.supportingDocuments &&
-                                                r.supportingDocuments.length >
-                                                    0 && (
-                                                    <Paperclip
-                                                        size={11}
-                                                        className="shrink-0 text-neutral-400"
-                                                        data-cy="index-paperclip-60"
-                                                    />
-                                                )}
-                                            {r.remarks}
-                                        </span>
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5"
-                                        data-cy="index-td-61"
-                                    >
-                                        <span
-                                            className={cn(
-                                                'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
-                                                LEAVE_STATUS_STYLE[r.status],
-                                            )}
-                                            data-cy="index-span-62"
-                                        >
-                                            {LEAVE_STATUS_LABEL[r.status]}
-                                        </span>
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                        data-cy="index-td-63"
-                                    >
-                                        {r.dateSubmitted}
-                                    </td>
-                                    <td
-                                        className="px-4 py-2.5"
-                                        data-cy="index-td-64"
-                                    >
-                                        <div
-                                            className="flex justify-end gap-0.5"
-                                            data-cy="index-div-65"
-                                        >
-                                            <TooltipIconButton
-                                                icon={Eye}
-                                                label="View details"
-                                                onClick={() => setViewRecord(r)}
-                                                data-cy="index-tooltip-icon-button-view-details"
-                                            />
-                                            <TooltipIconButton
-                                                icon={CheckCircle2}
-                                                label="Approve"
-                                                disabled={
-                                                    r.status !== 'pending'
-                                                }
-                                                onClick={() =>
-                                                    requestDecision(
-                                                        'approve',
-                                                        r,
-                                                    )
-                                                }
-                                                data-cy="index-tooltip-icon-button-approve"
-                                            />
-                                            <TooltipIconButton
-                                                icon={XCircle}
-                                                label="Decline"
-                                                disabled={
-                                                    r.status !== 'pending'
-                                                }
-                                                onClick={() =>
-                                                    requestDecision(
-                                                        'decline',
-                                                        r,
-                                                    )
-                                                }
-                                                data-cy="index-tooltip-icon-button-decline"
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredSorted.length === 0 && (
-                                <tr data-cy="index-tr-69">
-                                    <td
-                                        colSpan={9}
-                                        className="px-4 py-10 text-center text-xs text-neutral-400"
-                                        data-cy="index-td-no-leave-requests-match-your-search"
-                                    >
-                                        <CalendarOff
-                                            size={20}
-                                            className="mx-auto mb-2 text-neutral-300"
-                                            data-cy="index-calendar-off-71"
-                                        />
-                                        No leave requests match your search or
-                                        filters.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Mobile cards */}
-            <div
-                className="flex flex-col gap-2 sm:hidden"
-                data-cy="index-div-72"
-            >
-                {filteredSorted.map((r) => (
-                    <div
-                        key={r.id}
-                        className="rounded-lg border border-neutral-200 bg-white p-3.5"
-                        data-cy="index-div-73"
-                    >
-                        <button
-                            onClick={() => setViewRecord(r)}
-                            className="flex w-full items-start justify-between gap-2 text-left"
-                            data-cy="index-button-set-view-record"
-                        >
-                            <div
-                                className="flex min-w-0 items-center gap-2"
-                                data-cy="index-div-75"
-                            >
-                                <span
-                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600"
-                                    data-cy="index-span-76"
-                                >
-                                    {r.initials}
-                                </span>
-                                <div className="min-w-0" data-cy="index-div-77">
-                                    <p
-                                        className="truncate text-sm font-semibold text-ink"
-                                        data-cy="index-p-78"
-                                    >
-                                        {r.traineeName}
-                                    </p>
-                                    <p
-                                        className="truncate text-xs text-neutral-500"
-                                        data-cy="index-p-79"
-                                    >
-                                        {r.batchNo} · {r.leaveType}
-                                    </p>
-                                </div>
-                            </div>
-                            <span
-                                className={cn(
-                                    'shrink-0 rounded-pill px-2 py-0.5 text-[11px] font-medium',
-                                    LEAVE_STATUS_STYLE[r.status],
-                                )}
-                                data-cy="index-span-80"
-                            >
-                                {LEAVE_STATUS_LABEL[r.status]}
-                            </span>
-                        </button>
-                        <p
-                            className="mt-2 text-xs text-neutral-500"
-                            data-cy="index-p-81"
-                        >
-                            {r.leaveDate} – {r.returnDate}
-                        </p>
-                        {r.remarks && (
-                            <p
-                                className="mt-1 flex items-center gap-1 truncate text-xs text-neutral-400"
-                                data-cy="index-p-82"
-                            >
-                                {r.supportingDocuments &&
-                                    r.supportingDocuments.length > 0 && (
-                                        <Paperclip
-                                            size={11}
-                                            className="shrink-0"
-                                            data-cy="index-paperclip-83"
-                                        />
-                                    )}
-                                {r.remarks}
-                            </p>
-                        )}
-                        {r.status === 'pending' && (
-                            <div
-                                className="mt-2.5 flex gap-2 border-t border-neutral-100 pt-2.5"
-                                data-cy="index-div-84"
-                            >
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    icon={CheckCircle2}
-                                    className="flex-1"
-                                    onClick={() =>
-                                        requestDecision('approve', r)
-                                    }
-                                    data-cy="index-button-request-decision"
-                                >
-                                    Approve
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    icon={XCircle}
-                                    className="flex-1"
-                                    onClick={() =>
-                                        requestDecision('decline', r)
-                                    }
-                                    data-cy="index-button-request-decision-2"
-                                >
-                                    Decline
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                ))}
-                {filteredSorted.length === 0 && (
-                    <div
-                        className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-xs text-neutral-400"
-                        data-cy="index-div-no-leave-requests-match-your-search"
-                    >
-                        <CalendarOff
-                            size={20}
-                            className="mx-auto mb-2 text-neutral-300"
-                            data-cy="index-calendar-off-88"
-                        />
-                        No leave requests match your search or filters.
-                    </div>
-                )}
-            </div>
-
-            <LeaveDetailsModal
-                record={viewRecord}
-                onClose={() => setViewRecord(null)}
-                onRequestApprove={(r) => requestDecision('approve', r)}
-                onRequestDecline={(r) => requestDecision('decline', r)}
-                data-cy="index-leave-details-modal-set-view-record"
+            <DataTableCardField<LeaveRequests>
+                apiUrl="/leave"
+                apiQueryKey="leave-requests"
+                columns={columns}
+                defaultSortBy="leave_date"
+                defaultSortDir="desc"
+                archivePermission={PERMISSION}
+                deletePermission={PERMISSION}
+                renderCard={renderRow}
+                onRefreshRef={(fn) => (refreshRef.current = fn)}
             />
 
-            <ConfirmDialog
-                open={!!pendingDecision}
-                onClose={() => setPendingDecision(null)}
-                onConfirm={confirmDecision}
-                title={
-                    pendingDecision?.kind === 'approve'
-                        ? 'Approve leave request'
-                        : 'Decline leave request'
-                }
-                tone={
-                    pendingDecision?.kind === 'decline' ? 'danger' : 'default'
-                }
-                confirmLabel={
-                    pendingDecision?.kind === 'approve' ? 'Approve' : 'Decline'
-                }
-                confirmDisabled={
-                    pendingDecision?.kind === 'decline' &&
-                    !decisionRemarks.trim()
-                }
+            <Modal
+                open={declineTarget !== null}
+                onClose={() => !busyId && setDeclineTarget(null)}
+                title="Decline leave request"
                 description={
-                    pendingDecision ? (
-                        <>
-                            {pendingDecision.kind === 'approve'
-                                ? 'Approve'
-                                : 'Decline'}{' '}
-                            the {pendingDecision.record.leaveType.toLowerCase()}{' '}
-                            request from{' '}
-                            <span
-                                className="font-medium text-ink"
-                                data-cy="index-span-91"
-                            >
-                                {pendingDecision.record.traineeName}
-                            </span>{' '}
-                            ({pendingDecision.record.leaveDate} to{' '}
-                            {pendingDecision.record.returnDate})? The trainee
-                            will be notified
-                            {pendingDecision.kind === 'decline'
-                                ? ' with your remarks below'
-                                : ''}
-                            .
-                        </>
-                    ) : (
-                        ''
-                    )
+                    declineTarget
+                        ? `Decline ${declineTarget.trainee?.first_name ?? ''} ${declineTarget.trainee?.last_name ?? ''}'s leave request?`
+                        : undefined
                 }
-                data-cy="index-confirm-dialog-set-pending-decision"
             >
-                <TextAreaField
-                    label="Remarks"
-                    optional={pendingDecision?.kind === 'approve'}
-                    placeholder={
-                        pendingDecision?.kind === 'approve'
-                            ? 'Optional note for this approval...'
-                            : 'Reason for declining this request...'
-                    }
+                <TextAreaRemarks
                     value={decisionRemarks}
-                    onChange={(e) => setDecisionRemarks(e.target.value)}
-                    data-cy="index-text-area-field-remarks"
+                    onChange={setDecisionRemarks}
                 />
-            </ConfirmDialog>
+                <div className="mt-2 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setDeclineTarget(null)}
+                        disabled={busyId !== null}
+                        className="rounded-md border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => void confirmDecline()}
+                        disabled={busyId !== null}
+                        className="rounded-md bg-danger-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-600/90 disabled:opacity-60"
+                    >
+                        {busyId !== null ? 'Declining…' : 'Decline'}
+                    </button>
+                </div>
+            </Modal>
+        </div>
+    );
+}
+
+function TextAreaRemarks({
+    value,
+    onChange,
+}: {
+    value: string;
+    onChange: (v: string) => void;
+}) {
+    return (
+        <div className="mb-3.5">
+            <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                Remarks (optional)
+            </label>
+            <textarea
+                className="w-full rounded-md border border-neutral-200 bg-white px-2.5 py-2 text-sm text-ink placeholder:text-neutral-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                rows={3}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="Reason for declining…"
+            />
         </div>
     );
 }

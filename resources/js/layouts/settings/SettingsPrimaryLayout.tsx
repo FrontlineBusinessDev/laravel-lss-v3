@@ -33,6 +33,12 @@ const NAV_LINKS = [
         href: '/settings/rates',
         permission: 'manage settings rates',
     },
+    {
+        id: 'Leave categories',
+        label: 'Leave Categories',
+        href: '/settings/leave-categories',
+        permission: 'manage leave',
+    },
 ] as const;
 
 export default function SettingsPrimaryLayout({

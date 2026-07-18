@@ -34,6 +34,11 @@ class LeaveRequest extends Model
         return $this->belongsTo(Batches::class, 'batch_id');
     }
 
+    public function leaveCategory(): BelongsTo
+    {
+        return $this->belongsTo(LeaveCategory::class, 'leave_category_id');
+    }
+
     /** Approved leaves whose range covers the given date. */
     public function scopeApprovedCovering(Builder $query, string $date): Builder
     {

@@ -68,13 +68,28 @@ class TraineesController extends BaseController
      */
     protected function newQuery(): Builder
     {
-        return parent::newQuery()->with([
+        $query = parent::newQuery()->with([
             'school:id,school_name',
             'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
             'batch.academicProgram:id,name,course_name',
             'batch.academicLevel:id,name,name',
         ]);
+
+        // Opt-in exclusion for the task-assignment trainee picker: pass
+        // ?exclude_on_leave_date=YYYY-MM-DD to drop trainees with an approved
+        // leave covering that date. Not a `filterable` column, so it's read
+        // directly off the request rather than the generic filters[] loop.
+        $excludeOnLeaveDate = request()->string('exclude_on_leave_date')->toString();
+        if ($excludeOnLeaveDate !== '') {
+            $query->whereDoesntHave('leaveRequests', function (Builder $leaveQuery) use ($excludeOnLeaveDate) {
+                $leaveQuery->where('status', 'approved')
+                    ->whereDate('leave_date', '<=', $excludeOnLeaveDate)
+                    ->whereDate('return_date', '>=', $excludeOnLeaveDate);
+            });
+        }
+
+        return $query;
     }
 
     protected function storeRules(): array

@@ -37,3 +37,7 @@ export * from './admin/batch';
 export * from './admin/batch-trainee';
 export * from './admin/batch-view';
 export * from './admin/trainee';
+export * from './admin/announcement';
+export * from './admin/leave-category';
+export * from './notification';
+export * from './leave-request';

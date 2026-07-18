@@ -1,0 +1,190 @@
+<?php
+
+namespace App\Http\Controllers\v1\Developer\Leave;
+
+use App\Http\Controllers\v1\Developer\BaseController;
+use App\Mail\LeaveSubmittedMail;
+use App\Models\LeaveCategory;
+use App\Models\LeaveRequest;
+use App\Models\Notification;
+use App\Models\Trainees;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+
+/**
+ * JSON API for the /leave module (developer/admin full management, trainee
+ * self-submission). The three role-specific `Leave\LeaveController`s
+ * (developer/trainer/trainee) only render the CSR page shell; every list/
+ * mutation call below is the single source of truth all three consume.
+ *
+ * Doesn't use BaseController's default store/archive/restore/destroy: those
+ * assume the active/inactive Statuses domain, but a leave request's status is
+ * pending/approved/declined — a different lifecycle entirely.
+ */
+class LeaveRequestController extends BaseController
+{
+    protected string $model = LeaveRequest::class;
+    protected string $view = 'developer/leave/index';
+    protected array $searchable = ['reason'];
+    protected array $filterable = ['status', 'leave_category_id', 'trainee_id', 'batch_id'];
+    protected array $sortable = ['leave_date', 'return_date', 'status', 'created_at'];
+    protected string $sortBy = 'leave_date';
+
+    public function paginationSearch(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', LeaveRequest::class);
+
+        return parent::paginationSearch($request);
+    }
+
+    protected function newQuery(): Builder
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $query = LeaveRequest::query()->with([
+            'trainee:id,first_name,last_name,batch_id',
+            'batch:id,batch_code',
+            'leaveCategory:id,name',
+        ]);
+
+        if ($user->hasRole('trainee') && ! $user->can('manage leave')) {
+            $trainee = Trainees::where('user_id', $user->id)->first();
+
+            return $query->where('trainee_id', $trainee ? $trainee->id : 0);
+        }
+
+        return $query;
+    }
+
+    /** Narrows resolveModel()'s generic Model return to LeaveRequest for status/decision_remarks access below. */
+    protected function resolveModel(int|string $id): LeaveRequest
+    {
+        return LeaveRequest::query()->findOrFail($id);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $this->authorize('create', LeaveRequest::class);
+
+        /** @var User $user */
+        $user = auth()->user();
+        $trainee = Trainees::where('user_id', $user->id)->firstOrFail();
+
+        $validated = $request->validate([
+            'leave_category_id' => ['required', 'integer', 'exists:app_leave_categories,id'],
+            'leave_date' => ['required', 'date'],
+            'return_date' => ['required', 'date', 'after_or_equal:leave_date'],
+            'reason' => ['required', 'string'],
+        ]);
+
+        $this->assertWithinCategoryLimits(
+            $trainee->id,
+            (int) $validated['leave_category_id'],
+            $validated['leave_date'],
+            $validated['return_date'],
+        );
+
+        $leaveRequest = LeaveRequest::create([
+            ...$validated,
+            'trainee_id' => $trainee->id,
+            'batch_id' => $trainee->batch_id,
+            'status' => 'pending',
+        ]);
+
+        $this->notifyAdminsOfSubmission($leaveRequest->fresh(['trainee', 'leaveCategory']));
+
+        return $this->sendResponse($leaveRequest, 'Leave request submitted.', 201);
+    }
+
+    public function approve(int|string $id): JsonResponse
+    {
+        $leaveRequest = $this->resolveModel($id);
+        $this->authorize('approve', $leaveRequest);
+        abort_if($leaveRequest->status !== 'pending', 422, 'Only pending requests can be approved.');
+        $leaveRequest->update(['status' => 'approved']);
+
+        return $this->sendResponse($leaveRequest, 'Leave request approved.');
+    }
+
+    public function decline(Request $request, int|string $id): JsonResponse
+    {
+        $leaveRequest = $this->resolveModel($id);
+        $this->authorize('decline', $leaveRequest);
+        abort_if($leaveRequest->status !== 'pending', 422, 'Only pending requests can be declined.');
+        $validated = $request->validate(['decision_remarks' => ['nullable', 'string']]);
+        $leaveRequest->update([
+            'status' => 'declined',
+            'decision_remarks' => $validated['decision_remarks'] ?? null,
+        ]);
+
+        return $this->sendResponse($leaveRequest, 'Leave request declined.');
+    }
+
+    public function destroy(int|string $id): JsonResponse
+    {
+        $leaveRequest = $this->resolveModel($id);
+        $this->authorize('delete', $leaveRequest);
+        abort_if($leaveRequest->status === 'approved', 422, 'Approved leave cannot be deleted.');
+        $leaveRequest->delete();
+
+        return response()->json(null, 204);
+    }
+
+    /**
+     * Cumulative, all-time limit check (the category table has no notion of
+     * a reset period) against the trainee's pending + approved requests in
+     * the same category — declined requests don't count against the limit.
+     */
+    protected function assertWithinCategoryLimits(int $traineeId, int $categoryId, string $leaveDate, string $returnDate): void
+    {
+        $category = LeaveCategory::find($categoryId);
+        if (! $category) {
+            return;
+        }
+
+        $requestedDays = Carbon::parse($leaveDate)->diffInDays(Carbon::parse($returnDate)) + 1;
+
+        $existing = LeaveRequest::where('trainee_id', $traineeId)
+            ->where('leave_category_id', $categoryId)
+            ->whereIn('status', ['pending', 'approved'])
+            ->get(['leave_date', 'return_date']);
+
+        if ($category->max_instances !== null && $existing->count() + 1 > $category->max_instances) {
+            abort(422, "This exceeds the maximum of {$category->max_instances} {$category->name} application(s) allowed.");
+        }
+
+        if ($category->max_days !== null) {
+            $usedDays = $existing->sum(
+                fn($r) => Carbon::parse($r->leave_date)->diffInDays(Carbon::parse($r->return_date)) + 1,
+            );
+
+            if ($usedDays + $requestedDays > $category->max_days) {
+                abort(422, "This exceeds the maximum of {$category->max_days} {$category->name} day(s) allowed.");
+            }
+        }
+    }
+
+    /** Notifies every admin/developer of a new submission — in-app + email. */
+    protected function notifyAdminsOfSubmission(LeaveRequest $leaveRequest): void
+    {
+        $recipients = User::role(['admin', 'developer'])->get();
+        $traineeName = trim(($leaveRequest->trainee->first_name ?? '') . ' ' . ($leaveRequest->trainee->last_name ?? ''));
+        $categoryName = $leaveRequest->leaveCategory->name ?? 'Leave';
+
+        foreach ($recipients as $recipient) {
+            Notification::create([
+                'user_id' => $recipient->id,
+                'type' => 'leave.submitted',
+                'title' => 'New leave request',
+                'body' => "{$traineeName} submitted a {$categoryName} request.",
+                'data' => ['leave_request_id' => $leaveRequest->id],
+            ]);
+
+            Mail::to($recipient->email)->queue(new LeaveSubmittedMail($leaveRequest));
+        }
+    }
+}

@@ -135,12 +135,17 @@ export function AddTaskModal({
   const loadTraineeOptions = useMemo(() => {
     return async (query: string): Promise<FieldOption[]> => {
       if (!values.batchId) return [];
+      // Excludes trainees with an approved leave covering the task's date,
+      // so they can't be assigned a task while on leave.
+      const excludeParam = values.date
+        ? `&exclude_on_leave_date=${encodeURIComponent(values.date)}`
+        : '';
       const res = await apiFetchJson<{ data: PersonOption[] }>(
-        `/trainees/pagination-search?filters[batch_id]=${values.batchId}&filters[status]=active&per_page=50&search=${encodeURIComponent(query)}`
+        `/trainees/pagination-search?filters[batch_id]=${values.batchId}&filters[status]=active&per_page=50&search=${encodeURIComponent(query)}${excludeParam}`
       );
       return (res.data?.data ?? []).map(p => ({ value: String(p.id), label: personLabel(p) }));
     };
-  }, [values.batchId]);
+  }, [values.batchId, values.date]);
 
   function set<K extends keyof FormValues>(key: K, val: FormValues[K]) {
     setValues(v => ({ ...v, [key]: val }));

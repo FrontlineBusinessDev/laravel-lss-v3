@@ -8,6 +8,7 @@ use App\Http\Controllers\v1\Developer\Settings\AcademicLevelController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicProgramController;
 use App\Http\Controllers\v1\Developer\Settings\GroupDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\HoursDiscountController;
+use App\Http\Controllers\v1\Developer\Settings\LeaveCategoryController;
 use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
 use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
@@ -29,6 +30,9 @@ use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
 use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveController;
+use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
+use App\Http\Controllers\v1\NotificationController;
+use App\Http\Controllers\v1\Trainer\Leave\LeaveController as TrainerLeaveController;
 use App\Http\Controllers\v1\Developer\Payment\PaymentController;
 use App\Http\Controllers\v1\Developer\Report\ReportController;
 use App\Http\Controllers\v1\Developer\Schedule\ScheduleController;
@@ -107,6 +111,9 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::crudModule('/roles', RoleController::class, 'roles');
     // Partner School Management
     Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
+    // Leave category limits (max days / instances per category), enforced by
+    // LeaveRequestController on submission.
+    Route::crudModule('/leave-categories', LeaveCategoryController::class, 'leave-categories');
     Route::prefix('academic')->name('academic.')->group(function () {
         Route::get('/', [AcademicController::class, 'index'])->name('index');
         Route::crudModule('/industry', AcademicIndustryController::class, 'industry');
@@ -149,6 +156,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Self-service change password (avatar menu, any authenticated user).
     Route::put('/user/password', [ChangePasswordController::class, 'update'])->name('user.password.update');
+    // Polled in-app notification feed (TopBar/NotificationBell) — own rows only.
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     // Batches CRUD (index/pagination-search/lookup/store/update/archive/restore/destroy)
     // plus the Terminate transition and the QR/registration-link endpoint.
     Route::crudModule('/batches', BatchesController::class, 'batches');
@@ -187,9 +198,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');
-    Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements.index');
-    // Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    // Announcements CSR shell + JSON API both come from AnnoucementController
+    // via the crudModule() registration further down (keeps a single source
+    // of truth for the route name `announcements.index`).
+
+    // Developer/admin leave management page shell. The JSON API underneath
+    // (LeaveRequestController) is shared with the trainer/trainee pages —
+    // access to *rows* is enforced by LeaveRequestPolicy + newQuery() role
+    // scoping, not by gating this route (matches every other module here).
     Route::get('/leave', [LeaveController::class, 'index'])->name('leave.index');
+    Route::prefix('leave')->name('leave.')->group(function () {
+        Route::get('/pagination-search', [LeaveRequestController::class, 'paginationSearch'])->name('pagination-search');
+        Route::post('/', [LeaveRequestController::class, 'store'])->name('store');
+        Route::patch('/{id}/approve', [LeaveRequestController::class, 'approve'])->name('approve');
+        Route::patch('/{id}/decline', [LeaveRequestController::class, 'decline'])->name('decline');
+        Route::delete('/{id}', [LeaveRequestController::class, 'destroy'])->name('destroy');
+    });
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
 
     // Tasks module — Task Management (default) + Daily Task Sheet, real DB-backed.
@@ -297,6 +321,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/schedule', [TrainerScheduleController::class, 'index'])->name('schedule');
         Route::get('/announcements', [TrainerAnnouncementsController::class, 'index'])->name('announcements');
         Route::get('/ratings', [TrainerRatingsController::class, 'index'])->name('ratings');
+        // Read-only "who's on leave" feed — reuses the shared LeaveRequestController
+        // JSON API (LeaveRequestPolicy::viewAny() grants trainers read access);
+        // no submit/approve UI, no email per the trainer-visibility requirement.
+        Route::get('/leave', [TrainerLeaveController::class, 'index'])->name('leave');
     });
 
     // Trainee-only placeholder module — same rationale as above.
