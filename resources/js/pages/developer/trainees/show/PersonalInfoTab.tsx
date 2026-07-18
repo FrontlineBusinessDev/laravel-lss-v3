@@ -64,9 +64,7 @@ function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
                                         : 'text-neutral-500'
                                 }
                             >
-                                {canLogin
-                                    ? 'Can log in'
-                                    : 'Login disabled'}
+                                {canLogin ? 'Can log in' : 'Login disabled'}
                             </span>
                         </>
                     ) : (
@@ -193,7 +191,7 @@ export default function PersonalInfoTab({ trainee }: Props) {
                 className="rounded-lg border border-neutral-200 bg-white p-5"
                 data-cy="personal-info-tab-div-4"
             >
-                <div className="grid grid-cols-[1fr_70px] gap-2">
+                <div className="grid grid-cols-[1fr_120px] gap-5">
                     {!editing ? (
                         <div
                             className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
@@ -379,7 +377,7 @@ export default function PersonalInfoTab({ trainee }: Props) {
                         </Button>
                     ) : (
                         <div
-                            className="flex gap-2"
+                            className="flex flex-col gap-2"
                             data-cy="personal-info-tab-div-12"
                         >
                             <Button
