@@ -14,7 +14,7 @@ class TraineePaymentsController extends BaseController
     protected string $model = TraineesPayments::class;
     protected string $view = 'developer/trainees/show/PaymentDetailsTab';
 
-    private const RECEIPT_RULES = ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'];
+    private const RECEIPT_RULES = ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'];
 
     public function storePayment(Request $request, int|string $traineeId): JsonResponse
     {

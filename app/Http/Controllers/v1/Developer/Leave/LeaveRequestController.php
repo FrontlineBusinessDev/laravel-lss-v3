@@ -90,7 +90,7 @@ class LeaveRequestController extends BaseController
                 'nullable',
                 'file',
                 'mimes:pdf,jpg,jpeg,png',
-                'max:10240',
+                'max:5120',
             ],
         ]);
 

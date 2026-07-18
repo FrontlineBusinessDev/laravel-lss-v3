@@ -1,6 +1,7 @@
 import { leaveRequestService } from '@/api-service-layer/leave-request';
 import { Button } from '@/components/Button';
 import { SelectField, TextAreaField, TextField } from '@/components/FormField';
+import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { formatCell, tableListInvalidateKeys } from '@/components/table/utils';
@@ -15,7 +16,7 @@ import type { CardActions } from '@/types/reusable/card';
 import type { FieldOption } from '@/types/reusable/fields';
 import type { FileFieldValue } from '@/types/reusable/fields';
 import { useQueryClient } from '@tanstack/react-query';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { LeaveDetailsModal } from '@/pages/developer/leave/LeaveDetailsModal';
 
@@ -68,6 +69,7 @@ export default function TraineeLeavePage() {
         emptyFileFieldValue,
     );
     const [submitting, setSubmitting] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
 
     useEffect(() => {
         apiFetchJson<
@@ -162,6 +164,7 @@ export default function TraineeLeavePage() {
             });
             setValues(emptyValues);
             setDocument(emptyFileFieldValue);
+            setFormOpen(false);
             tableListInvalidateKeys('leave-requests-own').forEach((queryKey) =>
                 queryClient.invalidateQueries({ queryKey }),
             );
@@ -178,10 +181,36 @@ export default function TraineeLeavePage() {
 
     return (
         <TraineeLayout title="Leave">
-            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="mb-3 text-sm font-semibold text-ink">
-                    Submit a leave application
+            <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-ink">
+                    Your leave history
                 </h2>
+                <Button variant="primary" onClick={() => setFormOpen(true)}>
+                    <Plus className="mr-1.5 size-4" />
+                    New leave request
+                </Button>
+            </div>
+
+            <DataTableCardField<LeaveRequests>
+                apiUrl="/leave"
+                apiQueryKey="leave-requests-own"
+                columns={columns}
+                defaultSortBy="leave_date"
+                defaultSortDir="desc"
+                renderCard={renderRow}
+            />
+
+            <LeaveDetailsModal
+                record={detailsTarget}
+                onClose={() => setDetailsTarget(null)}
+            />
+
+            <Modal
+                open={formOpen}
+                onClose={() => setFormOpen(false)}
+                title="Submit a leave application"
+                maxWidth={560}
+            >
                 <SelectField
                     label="Category"
                     options={[
@@ -234,7 +263,7 @@ export default function TraineeLeavePage() {
                         value={document}
                         onChange={setDocument}
                         accept=".pdf,.jpg,.jpeg,.png"
-                        maxSizeMB={10}
+                        maxSizeMB={5}
                     />
                     {documentRequired && (
                         <p className="mt-1.5 text-xs text-neutral-500">
@@ -249,24 +278,7 @@ export default function TraineeLeavePage() {
                 >
                     {submitting ? 'Submitting…' : 'Submit application'}
                 </Button>
-            </div>
-
-            <h2 className="mb-3 text-sm font-semibold text-ink">
-                Your leave history
-            </h2>
-            <DataTableCardField<LeaveRequests>
-                apiUrl="/leave"
-                apiQueryKey="leave-requests-own"
-                columns={columns}
-                defaultSortBy="leave_date"
-                defaultSortDir="desc"
-                renderCard={renderRow}
-            />
-
-            <LeaveDetailsModal
-                record={detailsTarget}
-                onClose={() => setDetailsTarget(null)}
-            />
+            </Modal>
         </TraineeLayout>
     );
 }

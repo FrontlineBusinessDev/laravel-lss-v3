@@ -7,6 +7,7 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\TraineeDocument;
 use App\Models\Trainees;
+use App\Support\RequiredDocumentTypes;
 use App\Support\Statuses;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,7 @@ class MyInfoController
 {
     use AuthorizesRequests;
 
-    private const UPLOADABLE_DOCUMENT_TYPES = ['endorsement-letter', 'moa', 'liability-waiver'];
+    private const UPLOADABLE_DOCUMENT_TYPES = RequiredDocumentTypes::TYPES;
 
     public function index(): mixed
     {
@@ -79,7 +80,7 @@ class MyInfoController
 
         $validated = $request->validate([
             'document_type' => ['required', 'string', Rule::in(self::UPLOADABLE_DOCUMENT_TYPES)],
-            'file' => ['required_without:url_link', 'nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
+            'file' => ['required_without:url_link', 'nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'],
             'url_link' => ['required_without:file', 'nullable', 'url', 'max:2048'],
         ]);
 

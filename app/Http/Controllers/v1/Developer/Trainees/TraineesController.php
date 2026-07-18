@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
 use App\Http\Controllers\v1\Developer\BaseController;
+use App\Mail\TraineeActivatedMail;
 use App\Mail\UserInviteMail;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
 use App\Support\PasswordSetupUrl;
+use App\Support\Statuses;
 use App\Support\TraineeAccountLinker;
 use App\Support\TraineeCascadeDeleter;
 use Illuminate\Database\Eloquent\Builder;
@@ -190,6 +192,62 @@ class TraineesController extends BaseController
         TraineeAccountLinker::unlink($trainee);
 
         return $this->sendResponse($trainee->fresh('user'), 'Account unlinked successfully.');
+    }
+
+    /**
+     * Admit a PENDING trainee to a batch, activate the record, provision
+     * their login account, and email them a password-setup link. The batch
+     * chosen at registration is the frontend's default but can be reassigned
+     * here before confirming.
+     */
+    public function approve(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('approve', $trainee);
+
+        abort_if($trainee->status !== Statuses::PENDING, 422, 'Trainee is not pending approval.');
+
+        $validated = $request->validate([
+            'batch_id' => ['required', 'exists:app_batches,id'],
+        ]);
+
+        $newUser = null;
+        DB::transaction(function () use ($trainee, $validated, &$newUser) {
+            $trainee->update([
+                'batch_id' => $validated['batch_id'],
+                'status' => Statuses::ACTIVE,
+                'approved_by_id' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+            $newUser = TraineeAccountLinker::createAndLink($trainee);
+        });
+
+        if ($newUser) {
+            $resetUrl = PasswordSetupUrl::generate($newUser);
+            Mail::to($newUser->email)->queue(new TraineeActivatedMail($newUser, $resetUrl));
+        }
+
+        return $this->sendResponse($trainee->fresh(['user', 'batch']), 'Trainee approved successfully.');
+    }
+
+    /** Decline a PENDING trainee's application. No account is created. */
+    public function decline(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('decline', $trainee);
+
+        abort_if($trainee->status !== Statuses::PENDING, 422, 'Trainee is not pending approval.');
+
+        $validated = $request->validate([
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $trainee->update([
+            'status' => Statuses::INACTIVE,
+            'decline_remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        return $this->sendResponse($trainee->fresh(), 'Trainee application declined.');
     }
 
     /**

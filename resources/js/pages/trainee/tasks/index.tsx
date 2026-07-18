@@ -1,22 +1,21 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, FolderOpen } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { TextCell } from '@/components/settings';
+import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import { TaskTimer } from '@/components/task/TaskTimer';
-import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/hooks/use-toast';
+import TraineeTasksPrimaryLayout from '@/layouts/tasks/TraineeTasksPrimaryLayout';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { loadLookupOptions } from '@/types/reusable/fields';
 import { TASK_PRIORITY_OPTIONS, type ApiTask } from '@/types/task';
-import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import TraineeTasksPrimaryLayout from '@/layouts/tasks/TraineeTasksPrimaryLayout';
+import { useQueryClient } from '@tanstack/react-query';
+import { CheckCircle2, FolderOpen } from 'lucide-react';
+import { useState } from 'react';
 
 const DUE_BUCKET_OPTIONS = [
     { label: 'Overdue', value: 'overdue' },
@@ -30,7 +29,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const GRID =
-    'sm:grid-cols-[0.6fr_0.6fr_1.2fr_0.6fr_0.6fr_0.9fr_0.7fr_6.5rem_2.5rem]!';
+    'sm:grid-cols-[0.6fr_0.6fr_1.2fr_0.6fr_0.6fr_0.9fr_0.7fr_8rem_1.5rem]!';
 
 const columns: ColumnDef<ApiTask>[] = [
     { key: 'task', label: 'Task', searchable: true },
@@ -92,7 +91,7 @@ export default function TraineeTasksPage() {
     const renderRow = (row: ApiTask, _actions: CardActions) => {
         const menu: RowMenuAction[] = [
             {
-                label: 'Open',
+                label: 'View',
                 icon: FolderOpen,
                 onClick: () => setViewTask(row),
             },
@@ -147,7 +146,7 @@ export default function TraineeTasksPage() {
                     {row.date?.slice(0, 10)}
                 </TextCell>
                 <div
-                    className="flex items-center justify-end"
+                    className="ml-4 flex items-center justify-end bg-white pl-4"
                     data-cy="trainee-tasks-div-timer"
                 >
                     <TaskTimer

@@ -23,6 +23,7 @@ const listHeader = (
 );
 
 const STATUS_BADGE: Record<string, StatusKind> = {
+    pending: 'pending',
     active: 'active',
     inactive: 'archived',
     completed: 'completed',

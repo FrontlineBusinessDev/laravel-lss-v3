@@ -4,17 +4,16 @@ namespace App\Http\Controllers\v1\Developer;
 
 use App\Http\Responses\InertiaPageResponse;
 use App\Rules\UniqueEmailAcrossIdentities;
-use App\Mail\UserInviteMail;
+use App\Mail\ApplicationSubmittedMail;
+use App\Mail\NewApplicationAdminMail;
 use App\Models\Batches;
 use App\Models\Notification;
 use App\Models\PartnerSchools;
 use App\Models\Trainees;
 use App\Models\User;
 use App\Support\OgImage;
-use App\Support\PasswordSetupUrl;
 use App\Support\QrCode;
 use App\Support\Statuses;
-use App\Support\TraineeAccountLinker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -177,14 +176,18 @@ class PublicRegistrationController extends Controller
 
         $validated = $request->validate($this->storeRules());
 
-        $newUser = null;
         $trainee = null;
-        DB::transaction(function () use ($request, $validated, $batch, &$newUser, &$trainee) {
+        DB::transaction(function () use ($request, $validated, $batch, &$trainee) {
             $trainee = Trainees::create([
                 'batch_id' => $batch->id,
                 'school_id' => $validated['school_id'],
                 'public_url_id' => (string) Str::ulid(),
-                'status' => Statuses::ACTIVE,
+                // No User account is created at this stage — a trainee stays
+                // PENDING (no login access) until an admin approves the
+                // application, at which point TraineeApprovalController
+                // provisions the account. See that controller for the
+                // status=>active transition.
+                'status' => Statuses::PENDING,
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => $validated['email'],
@@ -205,14 +208,18 @@ class PublicRegistrationController extends Controller
                     $this->storeDocument($request->file($field), $trainee, $type);
                 }
             }
-            // CREATE TRAINEE ACCOUNT AND LINKED IT
-            $newUser = TraineeAccountLinker::createAndLink($trainee);
+
             return $trainee;
         });
 
-        // Sent after commit: never email an invite for a transaction that could still roll back.
-        if ($newUser) $this->sendAccountInvite($newUser);
-        if ($trainee) $this->notifyAdminsOfRegistration($trainee, $batch);
+        // Sent after commit: never email for a transaction that could still roll back.
+        if ($trainee) {
+            $this->notifyAdminsOfRegistration($trainee, $batch);
+            Mail::to($trainee->email)->queue(new ApplicationSubmittedMail($trainee));
+            foreach (User::role(['admin', 'developer'])->get() as $recipient) {
+                Mail::to($recipient->email)->queue(new NewApplicationAdminMail($trainee, $batch));
+            }
+        }
 
         return redirect()
             ->route('public.register', $token)
@@ -279,15 +286,6 @@ class PublicRegistrationController extends Controller
             'mime_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
         ]);
-    }
-
-    /**
-     * Email the client a link to set their account password.
-     */
-    private function sendAccountInvite(User $user): void
-    {
-        $resetUrl = PasswordSetupUrl::generate($user);
-        Mail::to($user->email)->send(new UserInviteMail($user, $resetUrl));
     }
 
     /**

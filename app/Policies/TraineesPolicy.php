@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Trainees;
 use App\Models\User;
 use App\Support\Permissions;
+use App\Support\RequiredDocumentTypes;
 
 /**
  * Auto-discovered policy for App\Models\Batch. Coarse module access is gated by
@@ -13,7 +14,7 @@ use App\Support\Permissions;
 class TraineesPolicy
 {
     /** Document types a trainee may upload/remove for their own record via /my-info. */
-    private const OWN_UPLOADABLE_DOCUMENT_TYPES = ['endorsement-letter', 'moa', 'liability-waiver'];
+    private const OWN_UPLOADABLE_DOCUMENT_TYPES = RequiredDocumentTypes::TYPES;
 
     /** Self-service: a trainee viewing their own /my-info record. */
     public function viewOwn(User $user, Trainees $trainee): bool
@@ -76,6 +77,16 @@ class TraineesPolicy
     }
 
     public function unlinkAccount(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_TRAINEES);
+    }
+
+    public function approve(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_TRAINEES);
+    }
+
+    public function decline(User $user): bool
     {
         return $user->can(Permissions::MANAGE_TRAINEES);
     }

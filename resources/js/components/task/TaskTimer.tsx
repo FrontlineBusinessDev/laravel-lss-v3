@@ -66,7 +66,7 @@ export function TaskTimer({ task, onRun, onStop, disabled }: Props) {
                     onClick={onRun}
                     disabled={disabled}
                     title="Play"
-                    className="rounded-md p-1.5 text-brand-600 transition-colors hover:bg-brand-50 disabled:opacity-50"
+                    className="rounded-md p-1 text-brand-600 transition-colors hover:bg-brand-50 disabled:opacity-50"
                 >
                     <Play className="size-4" />
                 </button>
@@ -79,7 +79,7 @@ export function TaskTimer({ task, onRun, onStop, disabled }: Props) {
                     onClick={onStop}
                     disabled={disabled}
                     title="Pause"
-                    className="rounded-md p-1.5 text-warning-700 transition-colors hover:bg-warning-50 disabled:opacity-50"
+                    className="text-warning-700 rounded-md p-1 transition-colors hover:bg-warning-50 disabled:opacity-50"
                 >
                     <Pause className="size-4" />
                 </button>
@@ -92,7 +92,7 @@ export function TaskTimer({ task, onRun, onStop, disabled }: Props) {
                     onClick={onRun}
                     disabled={disabled}
                     title="Resume"
-                    className="rounded-md p-1.5 text-brand-600 transition-colors hover:bg-brand-50 disabled:opacity-50"
+                    className="rounded-md p-1 text-brand-600 transition-colors hover:bg-brand-50 disabled:opacity-50"
                 >
                     <Play className="size-4" />
                 </button>
@@ -102,7 +102,7 @@ export function TaskTimer({ task, onRun, onStop, disabled }: Props) {
                     type="button"
                     disabled
                     title="Saved"
-                    className="rounded-md p-1.5 text-success-700 opacity-50"
+                    className="text-success-700 rounded-md p-1 opacity-50"
                 >
                     <Save className="size-4" />
                 </button>

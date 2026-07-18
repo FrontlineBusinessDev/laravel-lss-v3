@@ -9,6 +9,7 @@ import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { router } from '@inertiajs/react';
 import { Check, KeyRound, Pencil, Unlink, X } from 'lucide-react';
 import { useState } from 'react';
+import { ApprovalSection } from './ApprovalSection';
 
 function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
     const { toast } = useToast();
@@ -405,7 +406,11 @@ export default function PersonalInfoTab({ trainee }: Props) {
                     )}
                 </div>
             </div>
-            <AccountLinkSection trainee={trainee} />
+            {trainee.status === 'pending' ? (
+                <ApprovalSection trainee={trainee} />
+            ) : (
+                <AccountLinkSection trainee={trainee} />
+            )}
         </TraineesDetailLayout>
     );
 }

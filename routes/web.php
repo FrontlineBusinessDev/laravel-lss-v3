@@ -197,6 +197,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/trainees/{id}/billing-overrides', [TraineesController::class, 'updateBillingOverrides'])->name('trainees.updateBillingOverrides');
     Route::patch('/trainees/{id}/link-account', [TraineesController::class, 'linkAccount'])->name('trainees.linkAccount');
     Route::patch('/trainees/{id}/unlink-account', [TraineesController::class, 'unlinkAccount'])->name('trainees.unlinkAccount');
+    Route::post('/trainees/{id}/approve', [TraineesController::class, 'approve'])->name('trainees.approve');
+    Route::post('/trainees/{id}/decline', [TraineesController::class, 'decline'])->name('trainees.decline');
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');
@@ -332,6 +334,7 @@ Route::middleware('auth')->group(function () {
     // Trainee-only placeholder module — same rationale as above.
     Route::middleware('role:trainee')->prefix('trainee')->name('trainee.')->group(function () {
         Route::get('/dashboard', [TraineeDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/announcements/{id}/read', [TraineeDashboardController::class, 'markAnnouncementRead'])->name('announcements.read');
         Route::middleware('permission:' . Permissions::MANAGE_OWN_TASKS)
             ->prefix('tasks')->name('tasks.')->group(function () {
                 Route::get('/', [TraineeTasksController::class, 'index'])->name('index');

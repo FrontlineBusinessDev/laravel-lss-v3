@@ -103,9 +103,7 @@ interface Props {
     pendingRegistrationsCount: number;
 }
 
-export default function DashboardPage({
-    pendingRegistrationsCount,
-}: Props) {
+export default function DashboardPage({ pendingRegistrationsCount }: Props) {
     const navigate = useNavigate();
     const { batches, trainees } = useBatches();
     const totalTraineesEnrolled = trainees.length;
@@ -196,10 +194,61 @@ export default function DashboardPage({
                 className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3"
                 data-cy="index-div-15"
             >
-                <EarningsCard
-                    amount={totalEarnings}
-                    data-cy="index-earnings-card-16"
-                />
+                <SectionCard
+                    title="Trainees on leave"
+                    icon={CalendarOff}
+                    count={onLeaveNow.length}
+                    data-cy="index-section-card-trainees-on-leave"
+                >
+                    {onLeaveNow.length === 0 ? (
+                        <p
+                            className="px-4 py-5 text-center text-xs text-neutral-400"
+                            data-cy="index-p-no-trainees-currently-on-leave"
+                        >
+                            No trainees currently on leave.
+                        </p>
+                    ) : (
+                        <div
+                            className="divide-y divide-neutral-100"
+                            data-cy="index-div-56"
+                        >
+                            {onLeaveNow.map((lv) => (
+                                <div
+                                    key={lv.id}
+                                    className="flex items-center gap-2.5 px-4 py-3"
+                                    data-cy="index-div-57"
+                                >
+                                    <span
+                                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600"
+                                        data-cy="index-span-58"
+                                    >
+                                        {lv.initials}
+                                    </span>
+                                    <div
+                                        className="min-w-0"
+                                        data-cy="index-div-59"
+                                    >
+                                        <div
+                                            className="truncate text-sm font-medium text-ink"
+                                            data-cy="index-div-60"
+                                        >
+                                            {lv.traineeName}
+                                        </div>
+                                        <div
+                                            className="truncate text-xs text-neutral-500"
+                                            data-cy="index-div-61"
+                                        >
+                                            {lv.leaveType} ·{' '}
+                                            {formatDate(lv.leaveDate)}–
+                                            {formatDate(lv.returnDate)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </SectionCard>
+
                 <div
                     className="rounded-lg border border-neutral-200 bg-white p-3.5 transition-colors hover:border-neutral-300"
                     data-cy="index-div-17"
@@ -465,61 +514,10 @@ export default function DashboardPage({
 
                 {/* Right / side column */}
                 <div className="flex flex-col gap-4" data-cy="index-div-53">
-                    <SectionCard
-                        title="Trainees on leave"
-                        icon={CalendarOff}
-                        count={onLeaveNow.length}
-                        data-cy="index-section-card-trainees-on-leave"
-                    >
-                        {onLeaveNow.length === 0 ? (
-                            <p
-                                className="px-4 py-5 text-center text-xs text-neutral-400"
-                                data-cy="index-p-no-trainees-currently-on-leave"
-                            >
-                                No trainees currently on leave.
-                            </p>
-                        ) : (
-                            <div
-                                className="divide-y divide-neutral-100"
-                                data-cy="index-div-56"
-                            >
-                                {onLeaveNow.map((lv) => (
-                                    <div
-                                        key={lv.id}
-                                        className="flex items-center gap-2.5 px-4 py-3"
-                                        data-cy="index-div-57"
-                                    >
-                                        <span
-                                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-[10px] font-semibold text-neutral-600"
-                                            data-cy="index-span-58"
-                                        >
-                                            {lv.initials}
-                                        </span>
-                                        <div
-                                            className="min-w-0"
-                                            data-cy="index-div-59"
-                                        >
-                                            <div
-                                                className="truncate text-sm font-medium text-ink"
-                                                data-cy="index-div-60"
-                                            >
-                                                {lv.traineeName}
-                                            </div>
-                                            <div
-                                                className="truncate text-xs text-neutral-500"
-                                                data-cy="index-div-61"
-                                            >
-                                                {lv.leaveType} ·{' '}
-                                                {formatDate(lv.leaveDate)}–
-                                                {formatDate(lv.returnDate)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </SectionCard>
-
+                    <EarningsCard
+                        amount={totalEarnings}
+                        data-cy="index-earnings-card-16"
+                    />
                     <SectionCard
                         title="Ongoing tasks"
                         icon={ListChecks}

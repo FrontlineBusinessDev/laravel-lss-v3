@@ -371,7 +371,7 @@ export default function PaymentDetailsTab({
                             value={receipt}
                             onChange={setReceipt}
                             accept=".pdf,.jpg,.jpeg,.png"
-                            maxSizeMB={10}
+                            maxSizeMB={5}
                         />
                     </div>
                     <div
