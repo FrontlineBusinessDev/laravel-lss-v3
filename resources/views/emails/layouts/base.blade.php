@@ -1,3 +1,8 @@
+@php
+    $initials = collect(explode(' ', config('app.name')))
+        ->map(fn($word) => strtoupper(substr($word, 0, 1)))
+        ->join('');
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
-<title>Learning Solutions · @yield('title')</title>
+<title>{{ config('app.name') }} · @yield('title')</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f4f5f7;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f5f7;">
@@ -27,11 +32,11 @@
                 <td width="30" style="width:30px;">
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td width="30" height="30" align="center" valign="middle" style="width:30px; height:30px; border-radius:8px; background-color:#378add; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:800; color:#ffffff;">F</td>
+                      <td width="30" height="30" align="center" valign="middle" style="width:30px; height:30px; border-radius:8px; background-color:#378add; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:800; color:#ffffff;">{{ $initials }}</td>
                     </tr>
                   </table>
                 </td>
-                <td style="padding-left:10px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:700; letter-spacing:-.01em; color:#14151a; white-space:nowrap;">Learning Solutions</td>
+                <td style="padding-left:10px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:14px; font-weight:700; letter-spacing:-.01em; color:#14151a; white-space:nowrap;">{{ config('app.name') }}</td>
                 {{-- <td align="right" style="font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:#aab0bb;">Support</td> --}}
               </tr>
             </table>
@@ -50,8 +55,8 @@
           <td style="padding:24px 36px; background-color:#fafafb; border-top:1px solid #f0f1f4; border-radius:0 0 16px 16px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">
               <tr>
-                <td width="22" height="22" align="center" valign="middle" style="width:22px; height:22px; border-radius:6px; background-color:#378add; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:800; color:#ffffff;">F</td>
-                <td style="padding-left:8px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:12.5px; font-weight:700; color:#14151a;">Learning Solutions</td>
+                <td width="22" height="22" align="center" valign="middle" style="width:22px; height:22px; border-radius:6px; background-color:#378add; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:11px; font-weight:800; color:#ffffff;">{{ $initials }}</td>
+                <td style="padding-left:8px; font-family:'Plus Jakarta Sans',Arial,sans-serif; font-size:12.5px; font-weight:700; color:#14151a;">{{ config('app.name') }}</td>
               </tr>
             </table>
 
