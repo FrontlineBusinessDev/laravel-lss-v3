@@ -5,7 +5,7 @@ import { AddRecordButton } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import type { Announcements } from '@/types/modules/announcements/announcements';
 import { columns as baseColumns } from '@/types/modules/announcements/announcements';
@@ -36,7 +36,7 @@ const columns = baseColumns
  * broadcasts reaching this trainer's batches show up read-only in the list.
  */
 export default function TrainerAnnouncementsPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Announcements | undefined>(
@@ -97,16 +97,10 @@ export default function TrainerAnnouncementsPage() {
                             editing.id,
                             values,
                         );
-                        toast({
-                            title: 'Announcement updated',
-                            variant: 'success',
-                        });
+                        showToast('Announcement updated', 'success');
                     } else {
                         await trainerAnnouncementService.create(values);
-                        toast({
-                            title: 'Announcement posted',
-                            variant: 'success',
-                        });
+                        showToast('Announcement posted', 'success');
                     }
                     invalidate();
                     closeModal();

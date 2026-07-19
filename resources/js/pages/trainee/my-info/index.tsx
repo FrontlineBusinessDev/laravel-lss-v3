@@ -3,7 +3,7 @@ import {
     TaskCompletedPill,
 } from '@/components/RatingsBadges';
 import { StatCard } from '@/components/StatCard';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
 import { ApiError } from '@/api-service-layer/client';
 import { myInfoService } from '@/api-service-layer/trainee/my-info';
@@ -246,7 +246,7 @@ function formatSize(bytes: number) {
 }
 
 function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [docs, setDocs] = useState<Record<string, DocState>>(() =>
         Object.fromEntries(
             EXPECTED_DOCUMENTS.map(({ type }) => {
@@ -290,7 +290,7 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
                     mode: prev[key]?.mode ?? 'upload',
                 },
             }));
-            toast({ title: 'Document saved', variant: 'success' });
+            showToast('Document saved', 'success');
         } catch (err) {
             setDocs((prev) => ({
                 ...prev,
@@ -343,13 +343,12 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
                 ...prev,
                 [key]: { mode: prev[key]?.mode ?? 'upload' },
             }));
-            toast({ title: 'Document removed', variant: 'success' });
+            showToast('Document removed', 'success');
         } catch (err) {
-            toast({
-                title: 'Failed to remove document',
-                description: err instanceof ApiError ? err.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                err instanceof ApiError ? err.message : 'Failed to remove document',
+                'error',
+            );
         }
     };
 

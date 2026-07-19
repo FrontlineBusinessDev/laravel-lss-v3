@@ -3,7 +3,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +19,7 @@ interface ChangePasswordModalProps {
 }
 
 export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [currentPassword, setCurrentPassword] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -58,7 +58,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
                     password_confirmation: passwordConfirmation,
                 }),
             });
-            toast({ title: 'Password changed', variant: 'success' });
+            showToast('Password changed', 'success');
             handleClose();
         } catch (error) {
             if (error instanceof ApiError && error.errors) {
@@ -71,11 +71,10 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
                     ),
                 );
             }
-            toast({
-                title: 'Failed to change password',
-                description: error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to change password',
+                'error',
+            );
         } finally {
             setSubmitting(false);
         }

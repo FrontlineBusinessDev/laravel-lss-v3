@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Ratings;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\Task;
 use App\Models\TaskRating;
@@ -26,7 +26,7 @@ class TaskRatingController extends Controller
 
     public function index(): Response
     {
-        return InertiaPageResponse::csr('developer/ratings/index');
+        return InertiaPageResponse::csr('developer/ratings/task-rating/index');
     }
 
     /** Distinct task/project names that exist for a batch, across all task statuses. */

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Report;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 

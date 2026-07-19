@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Batches;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\Batches;
 use App\Models\LeaveRequest;
 use App\Models\Task;

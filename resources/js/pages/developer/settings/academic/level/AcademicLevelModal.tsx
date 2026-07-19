@@ -1,7 +1,7 @@
 import { academicLevelService } from '@/api-service-layer/admin/academic';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { AcademicLevel } from '@/types/modules/settings/academic/level';
 import { fields } from '@/types/modules/settings/academic/level';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function AcademicLevelModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -37,10 +37,7 @@ export default function AcademicLevelModal({ open, onClose, row }: Props) {
             }
             invalidateKeys={tableListInvalidateKeys('settings-academic/level')}
             onSuccess={() =>
-                toast({
-                    title: isEdit ? 'Level updated' : 'Level created',
-                    variant: 'success',
-                })
+                showToast(isEdit ? 'Level updated' : 'Level created', 'success')
             }
         />
     );

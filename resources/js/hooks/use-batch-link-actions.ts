@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { copyText } from '@/lib/clipboard';
 import type { AppBatches } from '@/types/modules/batches/batches';
@@ -11,7 +11,7 @@ import type { AppBatches } from '@/types/modules/batches/batches';
  * the override reverts if the request fails.
  */
 export function useBatchLinkActions() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [override, setOverride] = useState<Record<number, boolean>>({});
 
     const isEnabled = (row: AppBatches) =>
@@ -25,32 +25,25 @@ export function useBatchLinkActions() {
             await apiFetchJson(`/batches/${row.id}/toggle-registration`, {
                 method: 'PATCH',
             });
-            toast({
-                title: next ? 'Public link enabled' : 'Public link disabled',
-                variant: 'success',
-            });
+            showToast(
+                next ? 'Public link enabled' : 'Public link disabled',
+                'success',
+            );
         } catch (err) {
             setOverride((m) => ({ ...m, [row.id]: !next }));
-            toast({
-                title: 'Update failed',
-                description:
-                    err instanceof Error ? err.message : 'Please try again.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Please try again.',
+                'error',
+            );
         }
     };
 
     const copy = async (row: AppBatches) => {
         const url = `${window.location.origin}/register/${row.public_registration_url_id}`;
         const ok = await copyText(url);
-        toast(
-            ok
-                ? { title: 'Registration link copied', variant: 'success' }
-                : {
-                      title: 'Could not copy',
-                      description: 'Please copy the link manually.',
-                      variant: 'error',
-                  },
+        showToast(
+            ok ? 'Registration link copied' : 'Please copy the link manually.',
+            ok ? 'success' : 'error',
         );
     };
 

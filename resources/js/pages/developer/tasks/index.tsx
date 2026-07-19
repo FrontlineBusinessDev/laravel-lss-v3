@@ -17,7 +17,7 @@ import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
 import { cn } from '@/lib/utils';
@@ -141,7 +141,7 @@ const listHeader = (
 );
 
 export default function TasksPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<ApiTask | null>(null);
@@ -159,26 +159,20 @@ export default function TasksPage() {
                     method: 'POST',
                     body: JSON.stringify(body),
                 });
-                toast({
-                    description: `"${payload.task}" updated.`,
-                    variant: 'success',
-                });
+                showToast(`"${payload.task}" updated.`, 'success');
             } else {
                 const { mode: _mode, ...body } = payload;
                 await apiFetchJson('/tasks', {
                     method: 'POST',
                     body: JSON.stringify(body),
                 });
-                toast({
-                    description: `Task "${payload.task}" assigned.`,
-                    variant: 'success',
-                });
+                showToast(`Task "${payload.task}" assigned.`, 'success');
             }
             setAddModalOpen(false);
             setEditingTask(null);
             invalidateTasks();
         } catch {
-            toast({ description: 'Failed to save task.', variant: 'error' });
+            showToast('Failed to save task.', 'error');
         }
     }
     async function runComplete(task: ApiTask) {
@@ -186,28 +180,19 @@ export default function TasksPage() {
             await apiFetchJson(`/tasks/${task.id}/complete`, {
                 method: 'PATCH',
             });
-            toast({
-                description: `"${task.task}" marked as complete.`,
-                variant: 'success',
-            });
+            showToast(`"${task.task}" marked as complete.`, 'success');
             invalidateTasks();
         } catch {
-            toast({
-                description: 'Failed to complete task.',
-                variant: 'error',
-            });
+            showToast('Failed to complete task.', 'error');
         }
     }
     async function runLock(task: ApiTask) {
         try {
             await apiFetchJson(`/tasks/${task.id}/lock`, { method: 'PATCH' });
-            toast({
-                description: `"${task.task}" locked.`,
-                variant: 'success',
-            });
+            showToast(`"${task.task}" locked.`, 'success');
             invalidateTasks();
         } catch {
-            toast({ description: 'Failed to lock task.', variant: 'error' });
+            showToast('Failed to lock task.', 'error');
         }
     }
     async function saveRemarks() {
@@ -217,18 +202,17 @@ export default function TasksPage() {
                 method: 'PATCH',
                 body: JSON.stringify({ remarks: viewRemarks }),
             });
-            toast({
-                description: `Remarks saved for ${personName(viewTask.trainee)}'s "${viewTask.task}".`,
-                variant: 'success',
-            });
+            showToast(
+                `Remarks saved for ${personName(viewTask.trainee)}'s "${viewTask.task}".`,
+                'success',
+            );
             setViewTask(null);
             invalidateTasks();
         } catch {
-            toast({
-                description:
-                    'This task is locked and remarks can no longer be edited.',
-                variant: 'error',
-            });
+            showToast(
+                'This task is locked and remarks can no longer be edited.',
+                'error',
+            );
         }
     }
 

@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\v1\Developer\Ratings;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
+use App\Http\Responses\InertiaPageResponse;
 use App\Models\BehavioralEvaluation;
 use App\Models\BehavioralQuestion;
 use App\Models\Trainees;
@@ -10,6 +11,7 @@ use App\Traits\ScopesToAssignedBatches;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Response;
 
 /**
  * Behavioral Assessment Form API (prefix /ratings/behavioral-rating).
@@ -22,6 +24,11 @@ use Illuminate\Support\Facades\DB;
 class BehavioralEvaluationController extends Controller
 {
     use ScopesToAssignedBatches;
+
+    public function index(): Response
+    {
+        return InertiaPageResponse::csr('developer/ratings/behavioral-form/index');
+    }
 
     /** Active trainees in a batch, for the trainee-selection step. */
     public function trainees(Request $request): JsonResponse

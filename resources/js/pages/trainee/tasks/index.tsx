@@ -5,7 +5,7 @@ import { TextCell } from '@/components/settings';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import { TaskTimer } from '@/components/task/TaskTimer';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import TraineeTasksPrimaryLayout from '@/layouts/tasks/TraineeTasksPrimaryLayout';
 import { traineeTasksService } from '@/api-service-layer/trainee/tasks';
 import { cn } from '@/lib/utils';
@@ -64,7 +64,7 @@ const columns: ColumnDef<ApiTask>[] = [
 ];
 
 export default function TraineeTasksPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [viewTask, setViewTask] = useState<ApiTask | null>(null);
 
@@ -79,10 +79,7 @@ export default function TraineeTasksPage() {
             await traineeTasksService.runAction(task.id, action);
             invalidateOpenTasks();
         } catch {
-            toast({
-                description: `Failed to ${action} "${task.task}".`,
-                variant: 'error',
-            });
+            showToast(`Failed to ${action} "${task.task}".`, 'error');
         }
     }
 

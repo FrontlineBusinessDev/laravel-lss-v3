@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Certificate;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\CertificateTemplate;
 use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Builder;

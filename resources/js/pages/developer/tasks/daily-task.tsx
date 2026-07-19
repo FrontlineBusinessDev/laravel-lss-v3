@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Printer, Info } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
@@ -133,7 +133,7 @@ const listHeader = (
 );
 
 export default function DailyTaskSheetPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [reportRows, setReportRows] = useState<TaskRecord[]>([]);
     const [refreshTable, setRefreshTable] = useState<() => void>(() => () => {});
     const [activeFilters, setActiveFilters] = useState<{
@@ -163,10 +163,7 @@ export default function DailyTaskSheetPage() {
                 );
                 setReportRows((res.data ?? []).map(toRecord));
             } catch {
-                toast({
-                    description: 'Failed to load the daily task sheet.',
-                    variant: 'error',
-                });
+                showToast('Failed to load the daily task sheet.', 'error');
             }
             // eslint-disable-next-line react-hooks/exhaustive-deps
         },
@@ -186,10 +183,7 @@ export default function DailyTaskSheetPage() {
             refreshTable();
             loadReport(activeFilters.filters);
         } catch {
-            toast({
-                description: 'Failed to update time spent.',
-                variant: 'error',
-            });
+            showToast('Failed to update time spent.', 'error');
         }
     }
     async function updateRemarks(id: number, value: string) {
@@ -198,11 +192,11 @@ export default function DailyTaskSheetPage() {
                 method: 'PATCH',
                 body: JSON.stringify({ remarks: value }),
             });
-            toast({ description: 'Remarks saved.', variant: 'success' });
+            showToast('Remarks saved.', 'success');
             refreshTable();
             loadReport(activeFilters.filters);
         } catch {
-            toast({ description: 'Failed to save remarks.', variant: 'error' });
+            showToast('Failed to save remarks.', 'error');
         }
     }
 

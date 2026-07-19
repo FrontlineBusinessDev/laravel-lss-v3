@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\v1\Developer\HomeController;
+use App\Http\Controllers\v1\HomeController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicIndustryController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicLearningOutcomesController;
@@ -67,7 +67,7 @@ use App\Http\Controllers\v1\Trainee\MyInfo\MyInfoController as TraineeMyInfoCont
 use App\Http\Controllers\v1\Trainee\Payments\PaymentsController as TraineeSelfPaymentsController;
 use App\Http\Controllers\v1\Trainee\Ratings\RatingsController as TraineeRatingsController;
 use App\Http\Controllers\v1\Trainee\Tasks\TasksController as TraineeTasksController;
-use App\Http\Controllers\v1\Developer\PublicRegistrationController;
+use App\Http\Controllers\v1\PublicRegistrationController;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -269,22 +269,26 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    // Ratings module — single unified CSR shell hosting Setup/Behavioral
-    // Form/Task Rating as controller-driven local-state tabs (no separate
-    // Inertia routes per tab — see resources/js/pages/developer/ratings/
-    // RatingsWorkspace.tsx). Task Rating is real DB-backed; Behavioral
-    // Rating is now real DB-backed too (app_behavioral_evaluations).
+    // Ratings module — RatingsPrimaryLayout with one Inertia page route per tab.
     Route::middleware('permission:' . Permissions::MANAGE_RATINGS)->group(function () {
-        Route::prefix('ratings')->name('ratings.')->group(function () {
-            Route::get('/', [TaskRatingController::class, 'index'])->name('index');
-        });
+        Route::redirect('/ratings', '/ratings/task-rating')->name('ratings.index');
         // Old bookmarked/typed URL for the pre-tab-refactor behavioral page.
-        Route::redirect('/ratings/behavioral-rating', '/ratings');
+        Route::redirect('/ratings/behavioral-rating', '/ratings/behavioral-form');
+
+        Route::get('/ratings/task-rating', [TaskRatingController::class, 'index'])->name('ratings.task-rating.page');
+        Route::get('/ratings/behavioral-form', [BehavioralEvaluationController::class, 'index'])->name('ratings.behavioral-form.page');
+        // Behavioral Assessment Setup — Admin only. Nested permission means a
+        // trainer (who holds MANAGE_RATINGS but not this) 403s here while
+        // still reaching the Form/Task Rating routes above.
+        Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
+            ->get('/ratings/behavioral-setup', [BehavioralQuestionController::class, 'index'])
+            ->name('ratings.behavioral-setup.page');
+
         Route::prefix('ratings/task-rating')->name('ratings.task-rating.')->group(function () {
             Route::get('/task-options', [TaskRatingController::class, 'taskOptions'])->name('task-options');
             Route::get('/trainees', [TaskRatingController::class, 'trainees'])->name('trainees');
-            Route::get('/', [TaskRatingController::class, 'forTask'])->name('index');
-            Route::post('/', [TaskRatingController::class, 'store'])->name('store');
+            Route::get('/entries', [TaskRatingController::class, 'forTask'])->name('index');
+            Route::post('/entries', [TaskRatingController::class, 'store'])->name('store');
             Route::get('/{id}/history', [TaskRatingController::class, 'history'])->name('history');
         });
         Route::prefix('ratings/behavioral-rating')->name('ratings.behavioral-rating.')->group(function () {
@@ -293,9 +297,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/evaluation', [BehavioralEvaluationController::class, 'forTrainee'])->name('evaluation');
             Route::post('/evaluation', [BehavioralEvaluationController::class, 'store'])->name('evaluation.store');
         });
-        // Behavioral Assessment Setup — Admin only. Nested permission means a
-        // trainer (who holds MANAGE_RATINGS but not this) 403s here while
-        // still reaching the Form/Task Rating routes above.
         Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
             ->prefix('ratings/behavioral-questions')->name('ratings.behavioral-questions.')->group(function () {
                 Route::get('/lookup', [BehavioralQuestionController::class, 'lookup'])->name('lookup');

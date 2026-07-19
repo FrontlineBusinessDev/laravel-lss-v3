@@ -21,7 +21,7 @@ import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
 import { StatusBadge } from '@/components/StatusBadge';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { copyText } from '@/lib/clipboard';
 import { cn } from '@/lib/utils';
@@ -59,7 +59,7 @@ export default function BatchDetailLayout({
     registrationUrl: string;
     children: ReactNode;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const { url } = usePage();
     const queryClient = useQueryClient();
     const path = url.split('?')[0];
@@ -110,18 +110,13 @@ export default function BatchDetailLayout({
             tableListInvalidateKeys('batches').forEach((queryKey) =>
                 queryClient.invalidateQueries({ queryKey }),
             );
-            toast({
-                title: okMsg,
-                variant: 'info',
-            });
+            showToast(okMsg, 'info');
             onDone();
         } catch (err) {
-            toast({
-                title: 'Action failed',
-                description:
-                    err instanceof Error ? err.message : 'Please try again.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Action failed',
+                'error',
+            );
         } finally {
             setBusy(false);
             setConfirm(null);
@@ -130,18 +125,11 @@ export default function BatchDetailLayout({
     const handleCopy = async () => {
         const ok = await copyText(registrationUrl);
         if (!ok) {
-            toast({
-                title: 'Could not copy',
-                description: 'Please copy the link manually.',
-                variant: 'error',
-            });
+            showToast('Please copy the link manually.', 'error');
             return;
         }
         setLinkCopied(true);
-        toast({
-            title: 'Registration link copied',
-            variant: 'success',
-        });
+        showToast('Registration link copied', 'success');
         setTimeout(() => setLinkCopied(false), 1800);
     };
     return (

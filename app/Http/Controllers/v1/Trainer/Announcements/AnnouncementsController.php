@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Trainer\Announcements;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\Announcement;
 use App\Models\Batches;
 use App\Support\AnnouncementDispatcher;

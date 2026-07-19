@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Tasks;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\LeaveRequest;
 use App\Models\Task;

@@ -2,8 +2,8 @@ import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { RatingInput } from '@/components/RatingInput';
 import { StatCard } from '@/components/StatCard';
+import { useToast } from '@/components/Toast';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { TaskRating, TaskRatingHistoryEntry } from '@/types';
 import type { FieldOption } from '@/types/reusable/fields';
@@ -75,7 +75,7 @@ interface TaskRatingPageProps {
 export default function TaskRatingPage({
     batchLookupUrl = '/batches/lookup',
 }: TaskRatingPageProps) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [batchesCache, setBatchesCache] = useState<BatchOption[]>([]);
     const [batchTrainees, setBatchTrainees] = useState<PersonRef[]>([]);
     const [taskOptions, setTaskOptions] = useState<string[]>([]);
@@ -150,7 +150,7 @@ export default function TaskRatingPage({
             return;
         }
         apiFetchJson<ApiTaskRating[]>(
-            `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
+            `/ratings/task-rating/entries?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
         ).then((res) => setRatings(res.data ?? []));
     }, [batchId, taskName]);
 
@@ -191,11 +191,11 @@ export default function TaskRatingPage({
         const existing = ratings.find((r) => r.trainee_id === Number(traineeId));
         const draft = draftFor(traineeId, existing);
         if (!draft.rating) {
-            toast({ description: 'Enter a rating between 1 and 100 before saving.', variant: 'error' });
+            showToast('Enter a rating between 1 and 100 before saving.', 'error');
             return;
         }
         try {
-            await apiFetchJson('/ratings/task-rating', {
+            await apiFetchJson('/ratings/task-rating/entries', {
                 method: 'POST',
                 body: JSON.stringify({
                     batch_id: batchId,
@@ -208,15 +208,15 @@ export default function TaskRatingPage({
                 }),
             });
             const res = await apiFetchJson<ApiTaskRating[]>(
-                `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
+                `/ratings/task-rating/entries?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
             );
             setRatings(res.data ?? []);
-            toast({
-                description: existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
-                variant: 'success',
-            });
+            showToast(
+                existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
+                'success',
+            );
         } catch {
-            toast({ description: 'Failed to save rating.', variant: 'error' });
+            showToast('Failed to save rating.', 'error');
         }
     }
     async function openHistory(rating: ApiTaskRating) {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Tasks;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\User;

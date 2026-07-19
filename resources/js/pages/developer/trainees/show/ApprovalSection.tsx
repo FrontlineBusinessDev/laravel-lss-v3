@@ -1,8 +1,8 @@
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { TextAreaField } from '@/components/FormField';
+import { useToast } from '@/components/Toast';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { loadLookupOptions } from '@/types/reusable/fields';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
@@ -11,7 +11,7 @@ import { ShieldCheck, ShieldX } from 'lucide-react';
 import { useState } from 'react';
 
 export function ApprovalSection({ trainee }: { trainee: TraineeDetail }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [busy, setBusy] = useState(false);
     const [batchId, setBatchId] = useState(String(trainee.batch_id));
     const [batchLabel, setBatchLabel] = useState(
@@ -27,19 +27,16 @@ export function ApprovalSection({ trainee }: { trainee: TraineeDetail }) {
                 method: 'POST',
                 body: JSON.stringify({ batch_id: Number(batchId) }),
             });
-            toast({
-                title: 'Trainee approved',
-                description: 'Their account was created and an activation email was sent.',
-                variant: 'success',
-            });
+            showToast(
+                'Their account was created and an activation email was sent.',
+                'success',
+            );
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Approval failed',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Approval failed',
+                'error',
+            );
         } finally {
             setBusy(false);
         }
@@ -52,19 +49,14 @@ export function ApprovalSection({ trainee }: { trainee: TraineeDetail }) {
                 method: 'POST',
                 body: JSON.stringify({ remarks: remarks || null }),
             });
-            toast({
-                title: 'Application declined',
-                variant: 'success',
-            });
+            showToast('Application declined', 'success');
             setDeclineOpen(false);
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Decline failed',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Decline failed',
+                'error',
+            );
         } finally {
             setBusy(false);
         }

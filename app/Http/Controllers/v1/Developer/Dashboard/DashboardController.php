@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Dashboard;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Models\Announcement;
 use App\Models\Batches;
 use App\Models\LeaveRequest;

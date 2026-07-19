@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Certificate;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Models\SeminarCertificate;
 use App\Models\SeminarParticipant;
 use Illuminate\Database\Eloquent\Builder;

@@ -2,7 +2,7 @@ import { leaveRequestService } from '@/api-service-layer/leave-request';
 import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { StatusKind } from '@/types';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { columns } from '@/types/modules/leave/leave-requests';
@@ -19,7 +19,7 @@ const STATUS_BADGE: Record<string, StatusKind> = {
 };
 
 export default function LeaveManagementPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const refreshRef = useRef<(() => void) | null>(null);
     const [declineTarget, setDeclineTarget] = useState<LeaveRequests | null>(
         null,
@@ -36,14 +36,13 @@ export default function LeaveManagementPage() {
         setBusyId(row.id);
         try {
             await leaveRequestService.approve(row.id);
-            toast({ title: 'Leave request approved', variant: 'success' });
+            showToast('Leave request approved', 'success');
             refresh();
         } catch (err) {
-            toast({
-                title: 'Approve failed',
-                description: err instanceof Error ? err.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Approve failed',
+                'error',
+            );
         } finally {
             setBusyId(null);
         }
@@ -57,16 +56,15 @@ export default function LeaveManagementPage() {
                 declineTarget.id,
                 decisionRemarks,
             );
-            toast({ title: 'Leave request declined', variant: 'info' });
+            showToast('Leave request declined', 'info');
             setDeclineTarget(null);
             setDecisionRemarks('');
             refresh();
         } catch (err) {
-            toast({
-                title: 'Decline failed',
-                description: err instanceof Error ? err.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Decline failed',
+                'error',
+            );
         } finally {
             setBusyId(null);
         }
@@ -136,10 +134,10 @@ export default function LeaveManagementPage() {
                                 setBusyId(row.id);
                                 try {
                                     await leaveRequestService.delete(row.id);
-                                    toast({
-                                        title: 'Leave request deleted',
-                                        variant: 'success',
-                                    });
+                                    showToast(
+                                        'Leave request deleted',
+                                        'success',
+                                    );
                                     refresh();
                                 } finally {
                                     setBusyId(null);

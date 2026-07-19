@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Seminar;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Models\Seminar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

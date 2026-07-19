@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Settings;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Http\Resources\UserResource;
 use App\Mail\UserInviteMail;
 use App\Models\User;

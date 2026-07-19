@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Trainer\Batches;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\Batches;
 use App\Traits\ScopesToAssignedBatches;
 use Illuminate\Database\Eloquent\Builder;

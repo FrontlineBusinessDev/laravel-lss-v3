@@ -1,8 +1,8 @@
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Modal } from '@/components/Modal';
+import { useToast } from '@/components/Toast';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { loadLookupOptions } from '@/types/reusable/fields';
@@ -82,7 +82,7 @@ export function CreateBatchModal({
     onSubmit?: (values: Record<string, unknown>) => Promise<void>;
     onSaved?: (saved: AppBatches) => void;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = (modeProp ?? (batch ? 'edit' : 'create')) === 'edit';
     const [values, setValues] = useState<Values>(() => ({
         setup: batch?.setup ?? 'f2f',
@@ -143,10 +143,7 @@ export function CreateBatchModal({
             method: batch ? 'PUT' : 'POST',
             body: JSON.stringify(values),
         });
-        toast({
-            title: batch ? 'Batch updated' : 'Batch created',
-            variant: 'success',
-        });
+        showToast(batch ? 'Batch updated' : 'Batch created', 'success');
         onSaved?.(response.data);
         onClose();
     };

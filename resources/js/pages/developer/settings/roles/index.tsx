@@ -14,7 +14,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions, ColumnDef } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
 import type { StatusKind } from '@/types';
@@ -98,7 +98,7 @@ export default function index({
 }: {
     permissionModules: PermissionModules;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const modal = useGlobalModal<RoleRow | null>('settingsRole', null);
     const [error, setError] = useState<string | null>(null);
@@ -126,10 +126,7 @@ export default function index({
             tableListInvalidateKeys('settings-roles').forEach((queryKey) =>
                 queryClient.invalidateQueries({ queryKey }),
             );
-            toast({
-                title: isEdit ? 'Role updated' : 'Role created',
-                variant: 'success',
-            });
+            showToast(isEdit ? 'Role updated' : 'Role created', 'success');
             closeModal();
         },
     });

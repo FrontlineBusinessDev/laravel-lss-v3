@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Save } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import BatchDetailLayout from '@/layouts/batches/BatchDetailLayout';
 import { batchViewService } from '@/api-service-layer/admin/batch-view';
 import { ApiError } from '@/api-service-layer/client';
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function BatchTrainersPage({ record, registrationUrl }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [options, setOptions] = useState<LookupOption[]>([]);
     const [selected, setSelected] = useState<number[]>(
         (record.trainers ?? []).map((t) => t.id),
@@ -35,14 +35,13 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
         setSaving(true);
         try {
             await batchViewService.assignTrainers(record.id, selected);
-            toast({ title: 'Trainers updated', variant: 'success' });
+            showToast('Trainers updated', 'success');
             router.reload();
         } catch (err) {
-            toast({
-                title: 'Failed to update trainers',
-                description: err instanceof ApiError ? err.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                err instanceof ApiError ? err.message : 'Failed to update trainers',
+                'error',
+            );
         } finally {
             setSaving(false);
         }

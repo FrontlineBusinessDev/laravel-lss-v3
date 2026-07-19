@@ -1,7 +1,7 @@
 import { leaveCategoryService } from '@/api-service-layer/admin/leave-category';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { LeaveCategories } from '@/types/modules/settings/leave-categories';
 import { fields } from '@/types/modules/settings/leave-categories';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function LeaveCategoryModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -37,12 +37,10 @@ export default function LeaveCategoryModal({ open, onClose, row }: Props) {
             }
             invalidateKeys={tableListInvalidateKeys('settings-leave-categories')}
             onSuccess={() =>
-                toast({
-                    title: isEdit
-                        ? 'Leave category updated'
-                        : 'Leave category created',
-                    variant: 'success',
-                })
+                showToast(
+                    isEdit ? 'Leave category updated' : 'Leave category created',
+                    'success',
+                )
             }
         />
     );

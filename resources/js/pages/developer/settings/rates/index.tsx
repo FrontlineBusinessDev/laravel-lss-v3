@@ -2,7 +2,7 @@ import { ratesService } from '@/api-service-layer/admin/rates';
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/FormField';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsRatesLayout from '@/layouts/settings/SettingsRatesLayout';
 import type { Rate } from '@/types/modules/settings/academic/rates';
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function DefaultRatesPage({ rates }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [draft, setDraft] = useState<Rate>(rates);
     const [saving, setSaving] = useState(false);
 
@@ -23,15 +23,13 @@ export default function DefaultRatesPage({ rates }: Props) {
         setSaving(true);
         try {
             await ratesService.update(draft);
-            toast({ title: 'Default rates updated', variant: 'success' });
+            showToast('Default rates updated', 'success');
             router.reload({ only: ['rates'] });
         } catch (error) {
-            toast({
-                title: 'Failed to update rates',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to update rates',
+                'error',
+            );
         } finally {
             setSaving(false);
         }

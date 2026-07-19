@@ -1,5 +1,5 @@
 import { AttachmentViewerModal, type ViewableAttachment } from '@/components/modal/AttachmentViewerModal';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import { apiFetchJson, ApiError } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
@@ -76,7 +76,7 @@ function toDocState(doc: TraineeDetail['documents'][number]): DocState {
 }
 
 export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [docs, setDocs] = useState<Record<string, DocState>>(() =>
         Object.fromEntries(
             EXPECTED_DOCUMENTS.map(({ type }) => {
@@ -127,7 +127,7 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                     mode: prev[key]?.mode ?? 'upload',
                 },
             }));
-            toast({ title: 'Document saved', variant: 'success' });
+            showToast('Document saved', 'success');
         } catch (err) {
             setDocs((prev) => ({
                 ...prev,
@@ -179,13 +179,12 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                 ...prev,
                 [key]: { mode: prev[key]?.mode ?? 'upload' },
             }));
-            toast({ title: 'Document removed', variant: 'success' });
+            showToast('Document removed', 'success');
         } catch (err) {
-            toast({
-                title: 'Failed to remove document',
-                description: err instanceof ApiError ? err.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                err instanceof ApiError ? err.message : 'Failed to remove document',
+                'error',
+            );
         }
     };
     const openPreview = (key: string) => {

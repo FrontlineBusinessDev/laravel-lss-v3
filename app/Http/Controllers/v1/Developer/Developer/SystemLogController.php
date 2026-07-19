@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Developer;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\AppLogger;
 use Illuminate\Database\Eloquent\Builder;
 

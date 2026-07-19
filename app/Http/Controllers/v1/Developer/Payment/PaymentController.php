@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Payment;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Models\Trainees;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;

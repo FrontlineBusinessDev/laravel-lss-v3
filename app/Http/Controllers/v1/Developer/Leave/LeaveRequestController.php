@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Leave;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Mail\LeaveDecisionMail;
 use App\Mail\LeaveSubmittedMail;
 use App\Models\LeaveCategory;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Ratings;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\BehavioralQuestion;
 use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +18,8 @@ use Illuminate\Validation\Rule;
 class BehavioralQuestionController extends BaseController
 {
     protected string $model = BehavioralQuestion::class;
+
+    protected string $view = 'developer/ratings/behavioral-setup/index';
 
     protected array $searchable = ['question'];
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Announcement;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\Announcement;
 use App\Support\AnnouncementDispatcher;
 use Illuminate\Database\Eloquent\Model;

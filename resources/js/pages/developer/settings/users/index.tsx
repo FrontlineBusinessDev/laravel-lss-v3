@@ -19,8 +19,8 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions, ColumnDef } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
+import { useToast } from '@/components/Toast';
 import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
 import type { StatusKind } from '@/types';
@@ -64,7 +64,7 @@ const listHeader = (
 
 export default function index() {
     const { role } = useAuth();
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const currentUserId = usePage().props.auth?.user?.id;
     const modal = useGlobalModal<UserRow | null>('settingsUser', null);
 
@@ -73,18 +73,12 @@ export default function index() {
     const sendPasswordReset = async (row: UserRow) => {
         try {
             await userService.sendPasswordReset(row.id);
-            toast({
-                title: 'Password reset email sent',
-                description: `A reset link was sent to ${row.email}.`,
-                variant: 'success',
-            });
+            showToast(`A reset link was sent to ${row.email}.`, 'success');
         } catch (err) {
-            toast({
-                title: 'Could not send reset email',
-                description:
-                    err instanceof Error ? err.message : 'Please try again.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Could not send reset email',
+                'error',
+            );
         }
     };
 

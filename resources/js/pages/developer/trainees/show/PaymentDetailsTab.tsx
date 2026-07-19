@@ -6,8 +6,8 @@ import { Modal } from '@/components/Modal';
 import { AttachmentViewerModal } from '@/components/modal/AttachmentViewerModal';
 import { StatCard } from '@/components/StatCard';
 import { BillingOverridePanel } from '@/components/trainees/BillingOverridePanel';
+import { useToast } from '@/components/Toast';
 import { FileUploadField, emptyFileFieldValue } from '@/hooks/use-file-upload-field';
-import { useToast } from '@/hooks/use-toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import type { AppTraineePayment, TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import type { FileFieldValue } from '@/types/reusable/fields';
@@ -23,7 +23,7 @@ export default function PaymentDetailsTab({
 }: {
     trainee: TraineeDetail;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [viewingReceipt, setViewingReceipt] =
@@ -49,7 +49,7 @@ export default function PaymentDetailsTab({
                 amount_paid: amount,
                 receipt: receipt.files[0] ?? null,
             });
-            toast({ title: 'Payment recorded', variant: 'success' });
+            showToast('Payment recorded', 'success');
             setForm({
                 amount_paid: '',
                 payment_date: new Date().toISOString().slice(0, 10),
@@ -61,12 +61,10 @@ export default function PaymentDetailsTab({
             setModalOpen(false);
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to record payment',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to record payment',
+                'error',
+            );
         } finally {
             setSaving(false);
         }
@@ -75,15 +73,13 @@ export default function PaymentDetailsTab({
     const deletePayment = async (paymentId: number) => {
         try {
             await traineePaymentsService.destroy(trainee.id, paymentId);
-            toast({ title: 'Payment removed', variant: 'success' });
+            showToast('Payment removed', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to remove payment',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to remove payment',
+                'error',
+            );
         }
     };
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\TraineeDocument;
 use App\Models\Trainees;
 use Illuminate\Http\JsonResponse;

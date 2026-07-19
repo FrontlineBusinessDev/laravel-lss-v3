@@ -1,7 +1,7 @@
 import { academicIndustryService } from '@/api-service-layer/admin/academic';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { AcademicIndustry } from '@/types/modules/settings/academic/industry';
 import { fields } from '@/types/modules/settings/academic/industry';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function AcademicIndustryModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -39,10 +39,7 @@ export default function AcademicIndustryModal({ open, onClose, row }: Props) {
                 'settings-academic/industry',
             )}
             onSuccess={() =>
-                toast({
-                    title: isEdit ? 'Industry updated' : 'Industry created',
-                    variant: 'success',
-                })
+                showToast(isEdit ? 'Industry updated' : 'Industry created', 'success')
             }
         />
     );

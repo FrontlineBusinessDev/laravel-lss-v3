@@ -2,7 +2,7 @@ import { traineeService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { SelectField, TextField } from '@/components/FormField';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { ApprovalSection } from './ApprovalSection';
 
 function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [busy, setBusy] = useState(false);
     const isLinked = trainee.user !== null;
     const canLogin = trainee.user?.status === 'active';
@@ -24,23 +24,20 @@ function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
                 `/trainees/${trainee.id}/${canLogin ? 'unlink-account' : 'link-account'}`,
                 { method: 'PATCH' },
             );
-            toast({
-                title: canLogin ? 'Account unlinked' : 'Account linked',
-                description: canLogin
+            showToast(
+                canLogin
                     ? 'This trainee can no longer log in.'
                     : isLinked
                       ? 'This trainee can log in again.'
                       : 'An invite email was sent to set up their password.',
-                variant: 'success',
-            });
+                'success',
+            );
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Action failed',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Action failed',
+                'error',
+            );
         } finally {
             setBusy(false);
         }
@@ -129,7 +126,7 @@ interface Props {
 }
 
 export default function PersonalInfoTab({ trainee }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState<FormState>({
@@ -168,18 +165,13 @@ export default function PersonalInfoTab({ trainee }: Props) {
             });
             setSaved(draft);
             setEditing(false);
-            toast({
-                title: 'Personal information updated',
-                variant: 'success',
-            });
+            showToast('Personal information updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to save changes',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to save changes',
+                'error',
+            );
         } finally {
             setSaving(false);
         }

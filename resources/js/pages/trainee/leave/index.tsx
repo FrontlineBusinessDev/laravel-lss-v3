@@ -9,7 +9,7 @@ import {
     FileUploadField,
     emptyFileFieldValue,
 } from '@/hooks/use-file-upload-field';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
 import type { StatusKind } from '@/types';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
@@ -63,7 +63,7 @@ const emptyValues: FormValues = {
 };
 
 export default function TraineeLeavePage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [categories, setCategories] = useState<CategoryOption[]>([]);
     const [values, setValues] = useState<FormValues>(emptyValues);
@@ -138,17 +138,14 @@ export default function TraineeLeavePage() {
             !values.return_date ||
             !values.reason.trim()
         ) {
-            toast({
-                title: 'Fill in all fields before submitting.',
-                variant: 'error',
-            });
+            showToast('Fill in all fields before submitting.', 'error');
             return;
         }
         if (documentRequired && document.files.length === 0) {
-            toast({
-                title: 'A supporting document is required for this leave type.',
-                variant: 'error',
-            });
+            showToast(
+                'A supporting document is required for this leave type.',
+                'error',
+            );
             return;
         }
         setSubmitting(true);
@@ -157,11 +154,10 @@ export default function TraineeLeavePage() {
                 ...values,
                 document: document.files[0] ?? null,
             });
-            toast({
-                title: 'Leave request submitted',
-                description: 'Your application is pending admin approval.',
-                variant: 'success',
-            });
+            showToast(
+                'Your application is pending admin approval.',
+                'success',
+            );
             setValues(emptyValues);
             setDocument(emptyFileFieldValue);
             setFormOpen(false);
@@ -169,11 +165,10 @@ export default function TraineeLeavePage() {
                 queryClient.invalidateQueries({ queryKey }),
             );
         } catch (err) {
-            toast({
-                title: 'Submission failed',
-                description: err instanceof Error ? err.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Submission failed',
+                'error',
+            );
         } finally {
             setSubmitting(false);
         }

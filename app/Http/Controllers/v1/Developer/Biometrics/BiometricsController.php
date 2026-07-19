@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Biometrics;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Models\BiometricImport;
 use App\Models\BiometricRecord;
 use App\Support\BiometricHours;

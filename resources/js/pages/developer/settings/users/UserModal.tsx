@@ -3,7 +3,7 @@ import type { UserInput } from '@/api-service-layer/admin/user';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import type { FieldDef } from '@/components/table';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 
 /** Row shape returned by UserResource. Index signature satisfies DataTableField. */
 export interface UserRow extends Record<string, unknown> {
@@ -36,7 +36,7 @@ interface Props {
 }
 
 export default function UserModal({ open, onClose, row, actorRole }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     const fields: FieldDef<UserRow>[] = [
@@ -95,10 +95,7 @@ export default function UserModal({ open, onClose, row, actorRole }: Props) {
             }
             invalidateKeys={tableListInvalidateKeys('settings-users')}
             onSuccess={() =>
-                toast({
-                    title: isEdit ? 'User updated' : 'User created',
-                    variant: 'success',
-                })
+                showToast(isEdit ? 'User updated' : 'User created', 'success')
             }
         />
     );

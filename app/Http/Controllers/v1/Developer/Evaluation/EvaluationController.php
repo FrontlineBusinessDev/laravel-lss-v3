@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Evaluation;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 

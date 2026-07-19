@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\v1\Developer;
+namespace App\Http\Controllers\v1;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;

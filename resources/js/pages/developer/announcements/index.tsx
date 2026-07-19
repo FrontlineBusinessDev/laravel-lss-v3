@@ -3,7 +3,7 @@ import { AddRecordButton } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { Announcements } from '@/types/modules/announcements/announcements';
 import { columns as baseColumns } from '@/types/modules/announcements/announcements';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,7 +26,7 @@ const columns = baseColumns.map((col) =>
 );
 
 export default function AnnouncementsPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<Announcements | undefined>(
@@ -87,16 +87,10 @@ export default function AnnouncementsPage() {
                 onSubmit={async (values) => {
                     if (editing) {
                         await announcementService.update(editing.id, values);
-                        toast({
-                            title: 'Announcement updated',
-                            variant: 'success',
-                        });
+                        showToast('Announcement updated', 'success');
                     } else {
                         await announcementService.create(values);
-                        toast({
-                            title: 'Announcement posted',
-                            variant: 'success',
-                        });
+                        showToast('Announcement posted', 'success');
                     }
                     invalidate();
                     closeModal();

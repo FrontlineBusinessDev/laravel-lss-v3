@@ -4,7 +4,7 @@ import { AvatarCropModal } from '@/components/AvatarCropModal';
 import { Button } from '@/components/Button';
 import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
@@ -28,7 +28,7 @@ export default function TraineesDetailLayout({
     trainee: TraineeDetail;
     children: ReactNode;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const { url } = usePage();
     const queryClient = useQueryClient();
     const path = url.split('?')[0];
@@ -56,18 +56,16 @@ export default function TraineesDetailLayout({
                 { method: 'PATCH' },
             );
             invalidateTraineesList();
-            toast({
-                title: isActive ? 'Trainee archived' : 'Trainee restored',
-                variant: 'info',
-            });
+            showToast(
+                isActive ? 'Trainee archived' : 'Trainee restored',
+                'info',
+            );
             router.reload();
         } catch (error) {
-            toast({
-                title: 'Action failed',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Action failed',
+                'error',
+            );
         } finally {
             setArchiving(false);
         }
@@ -80,15 +78,13 @@ export default function TraineesDetailLayout({
                 method: 'DELETE',
             });
             invalidateTraineesList();
-            toast({ title: 'Trainee deleted', variant: 'info' });
+            showToast('Trainee deleted', 'info');
             router.visit('/trainees');
         } catch (error) {
-            toast({
-                title: 'Delete failed',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Delete failed',
+                'error',
+            );
         } finally {
             setDeleting(false);
             setDeleteOpen(false);
@@ -100,11 +96,7 @@ export default function TraineesDetailLayout({
         e.target.value = '';
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
-            toast({
-                title: 'Image too large',
-                description: 'Please choose an image under 5MB.',
-                variant: 'error',
-            });
+            showToast('Please choose an image under 5MB.', 'error');
             return;
         }
         setAvatarSrc(URL.createObjectURL(file));
@@ -126,16 +118,16 @@ export default function TraineesDetailLayout({
                 body: form,
                 onUploadProgress: setAvatarProgress,
             });
-            toast({ title: 'Profile picture updated', variant: 'success' });
+            showToast('Profile picture updated', 'success');
             closeAvatarModal();
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to upload profile picture',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to upload profile picture',
+                'error',
+            );
             setAvatarProgress(null);
         }
     };
@@ -146,15 +138,15 @@ export default function TraineesDetailLayout({
             await apiFetchJson(`/trainees/${trainee.id}/avatar`, {
                 method: 'DELETE',
             });
-            toast({ title: 'Profile picture removed', variant: 'success' });
+            showToast('Profile picture removed', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to remove profile picture',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to remove profile picture',
+                'error',
+            );
         } finally {
             setDeletingAvatar(false);
         }

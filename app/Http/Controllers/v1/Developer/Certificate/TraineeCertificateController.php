@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Certificate;
 
-use App\Http\Controllers\v1\Developer\Controller;
+use App\Http\Controllers\v1\Controller;
 use App\Models\CertificateCitation;
 use App\Models\CertificateTemplate;
 use App\Models\TraineeCertificate;

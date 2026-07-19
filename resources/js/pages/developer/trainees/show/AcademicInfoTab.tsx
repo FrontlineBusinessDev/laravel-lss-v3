@@ -6,7 +6,7 @@ import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Button } from '@/components/Button';
 import { TextField, TextAreaField } from '@/components/FormField';
 import { RequiredHoursCompletedPill } from '@/components/RatingsBadges';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import { getHoursProgress } from '@/lib/ratings';
 import { router } from '@inertiajs/react';
@@ -56,7 +56,7 @@ export default function AcademicInfoTab({
 }: {
     trainee: TraineeDetail;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState<FormState>({
@@ -89,18 +89,13 @@ export default function AcademicInfoTab({
             });
             setSaved(draft);
             setEditing(false);
-            toast({
-                title: 'Academic information updated',
-                variant: 'success',
-            });
+            showToast('Academic information updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to save changes',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to save changes',
+                'error',
+            );
         } finally {
             setSaving(false);
         }

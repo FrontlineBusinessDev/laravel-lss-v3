@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Trainer\Trainees;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController as AdminTraineeDocumentsController;
 use App\Models\TraineeDocument;
 use App\Models\Trainees;

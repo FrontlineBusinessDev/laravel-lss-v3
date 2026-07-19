@@ -1,7 +1,7 @@
 import { partnerSchoolService } from '@/api-service-layer/admin/partner-school';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { PartnerSchools } from '@/types/modules/settings/partner-schools';
 import { fields } from '@/types/modules/settings/partner-schools';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function PartnerSchoolModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -39,12 +39,10 @@ export default function PartnerSchoolModal({ open, onClose, row }: Props) {
                 'settings-partner-schools',
             )}
             onSuccess={() =>
-                toast({
-                    title: isEdit
-                        ? 'Partner school updated'
-                        : 'Partner school created',
-                    variant: 'success',
-                })
+                showToast(
+                    isEdit ? 'Partner school updated' : 'Partner school created',
+                    'success',
+                )
             }
         />
     );

@@ -13,25 +13,19 @@ const NAV_LINKS = [
         id: 'task rating',
         label: 'task rating',
         href: '/ratings/task-rating',
-        permission: 'manage ratings',
+        permissions: ['manage ratings'],
     },
     {
         id: 'Behavioral form',
         label: 'Behavioral form',
         href: '/ratings/behavioral-form',
-        permission: 'manage ratings',
+        permissions: ['manage ratings'],
     },
     {
         id: 'Behavioral setup',
         label: 'Behavioral setup',
         href: '/ratings/behavioral-setup',
-        permission: 'manage ratings',
-    },
-    {
-        id: 'Rates',
-        label: 'Rates',
-        href: '/ratings/rates',
-        permission: 'manage ratings',
+        permissions: ['manage ratings', 'manage behavioral questions'],
     },
 ] as const;
 
@@ -50,7 +44,7 @@ export default function RatingsPrimaryLayout({
                             className="text-xl font-semibold text-ink"
                             data-cy="settings-primary-layout-h1-settings"
                         >
-                            Settings
+                            Ratings
                         </h1>
                         <p
                             className="text-sm text-neutral-500"
@@ -68,7 +62,8 @@ export default function RatingsPrimaryLayout({
                 >
                     {NAV_LINKS.map((link) => {
                         // 2. Filter tabs out dynamically based on user permissions
-                        if (!can(link.permission)) return null;
+                        if (!link.permissions.every((p) => can(p))) return null;
+
                         // 3. Determine if the link is currently active
                         const isActive = url.startsWith(link.href);
                         return (
