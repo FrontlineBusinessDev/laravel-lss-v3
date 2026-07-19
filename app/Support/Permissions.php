@@ -22,11 +22,12 @@ class Permissions
      */
     const MANAGE_BATCHES = 'manage batches';
     const MANAGE_TRAINEES = 'manage trainees';
-    const MANAGE_ANNOUNCEMENTS = 'manage announcement';
+    const MANAGE_ANNOUNCEMENTS = 'manage announcements';
     const MANAGE_LEAVE = 'manage leave';
     const MANAGE_BIOMETRICS = 'manage biometrics';
     const MANAGE_TASKS = 'manage tasks';
     const MANAGE_RATINGS = 'manage ratings';
+    const MANAGE_BEHAVIORAL_QUESTIONS = 'manage behavioral questions';
     const MANAGE_EVALUATION = 'manage evaluation';
     const MANAGE_PAYMENTS = 'manage payments';
     const MANAGE_SCHEDULE = 'manage schedule';
@@ -43,6 +44,7 @@ class Permissions
     const MANAGE_OWN_TASKS = 'manage own tasks';
     const MANAGE_OWN_LEAVE = 'manage own leave';
     const MANAGE_OWN_EVALUATION = 'manage own evaluation';
+    const MANAGE_OWN_MY_INFO = 'manage own my info';
 
     /**
      * Grouped by module — used in seeders, UI permission managers, role builders.
@@ -69,6 +71,7 @@ class Permissions
                 self::MANAGE_BIOMETRICS,
                 self::MANAGE_TASKS,
                 self::MANAGE_RATINGS,
+                self::MANAGE_BEHAVIORAL_QUESTIONS,
                 self::MANAGE_EVALUATION,
                 self::MANAGE_PAYMENTS,
                 self::MANAGE_SCHEDULE,
@@ -81,6 +84,7 @@ class Permissions
                 self::MANAGE_OWN_TASKS,
                 self::MANAGE_OWN_LEAVE,
                 self::MANAGE_OWN_EVALUATION,
+                self::MANAGE_OWN_MY_INFO,
             ]
         ];
     }

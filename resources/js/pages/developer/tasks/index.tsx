@@ -13,14 +13,20 @@ import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { SettingsListHeader, TextCell } from '@/components/settings';
+import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
 import { cn } from '@/lib/utils';
 import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
+import {
+    type ApiTask,
+    TASK_PRIORITY_OPTIONS,
+    TASK_STATUS_FILTER_OPTIONS,
+} from '@/types/task';
 import {
     AddTaskModal,
     type TaskSavePayload,
@@ -28,30 +34,6 @@ import {
 
 const PERMISSION = 'manage tasks';
 
-interface ApiTask extends Record<string, unknown> {
-    id: number;
-    status: 'open' | 'completed' | 'locked';
-    task: string;
-    description: string | null;
-    time_goal: string | number;
-    time_spent: string | number;
-    date: string;
-    remarks: string | null;
-    batch: {
-        id: number;
-        batch_code: string;
-    } | null;
-    trainee: {
-        id: number;
-        first_name: string;
-        last_name: string;
-    } | null;
-    trainer: {
-        id: number;
-        first_name: string;
-        last_name: string;
-    } | null;
-}
 const STATUS_STYLE: Record<string, string> = {
     open: 'bg-warning-50 text-warning-800',
     completed: 'bg-success-50 text-success-800',
@@ -62,12 +44,6 @@ const STATUS_LABEL: Record<string, string> = {
     completed: 'Completed',
     locked: 'Locked',
 };
-const STATUS_TABS = [
-    { value: 'all', label: 'All' },
-    { value: 'open', label: 'Open' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'locked', label: 'Locked' },
-];
 function personName(
     p: {
         first_name: string;
@@ -106,6 +82,13 @@ async function loadTraineeFilterOptions(query: string): Promise<FieldOption[]> {
 const columns: ColumnDef<ApiTask>[] = [
     { key: 'task', label: 'Task', searchable: true },
     {
+        key: 'priority',
+        label: 'Priority',
+        type: 'select',
+        filterable: true,
+        typeData: TASK_PRIORITY_OPTIONS,
+    },
+    {
         key: 'batch_id',
         label: 'Batch',
         type: 'async-multi-select',
@@ -137,16 +120,18 @@ const columns: ColumnDef<ApiTask>[] = [
 ];
 
 const customGRID =
-    'sm:grid-cols-[0.7fr_0.7fr_1fr_1.2fr_0.6fr_0.9fr_0.9fr_0.7fr_2.5rem]!';
+    'sm:grid-cols-[0.7fr_0.7fr_0.7fr_1fr_1.2fr_0.6fr_0.6fr_0.9fr_0.9fr_0.7fr_2.5rem]!';
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
         labels={[
             'Status',
+            'Priority',
             'Batch',
             'Task',
             'Description',
             'Time goal',
+            'Time spent',
             'Trainee',
             'Trainer',
             'Date',
@@ -156,7 +141,7 @@ const listHeader = (
 );
 
 export default function TasksPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<ApiTask | null>(null);
@@ -174,26 +159,20 @@ export default function TasksPage() {
                     method: 'POST',
                     body: JSON.stringify(body),
                 });
-                toast({
-                    description: `"${payload.task}" updated.`,
-                    variant: 'success',
-                });
+                showToast(`"${payload.task}" updated.`, 'success');
             } else {
                 const { mode: _mode, ...body } = payload;
                 await apiFetchJson('/tasks', {
                     method: 'POST',
                     body: JSON.stringify(body),
                 });
-                toast({
-                    description: `Task "${payload.task}" assigned.`,
-                    variant: 'success',
-                });
+                showToast(`Task "${payload.task}" assigned.`, 'success');
             }
             setAddModalOpen(false);
             setEditingTask(null);
             invalidateTasks();
         } catch {
-            toast({ description: 'Failed to save task.', variant: 'error' });
+            showToast('Failed to save task.', 'error');
         }
     }
     async function runComplete(task: ApiTask) {
@@ -201,28 +180,19 @@ export default function TasksPage() {
             await apiFetchJson(`/tasks/${task.id}/complete`, {
                 method: 'PATCH',
             });
-            toast({
-                description: `"${task.task}" marked as complete.`,
-                variant: 'success',
-            });
+            showToast(`"${task.task}" marked as complete.`, 'success');
             invalidateTasks();
         } catch {
-            toast({
-                description: 'Failed to complete task.',
-                variant: 'error',
-            });
+            showToast('Failed to complete task.', 'error');
         }
     }
     async function runLock(task: ApiTask) {
         try {
             await apiFetchJson(`/tasks/${task.id}/lock`, { method: 'PATCH' });
-            toast({
-                description: `"${task.task}" locked.`,
-                variant: 'success',
-            });
+            showToast(`"${task.task}" locked.`, 'success');
             invalidateTasks();
         } catch {
-            toast({ description: 'Failed to lock task.', variant: 'error' });
+            showToast('Failed to lock task.', 'error');
         }
     }
     async function saveRemarks() {
@@ -232,18 +202,17 @@ export default function TasksPage() {
                 method: 'PATCH',
                 body: JSON.stringify({ remarks: viewRemarks }),
             });
-            toast({
-                description: `Remarks saved for ${personName(viewTask.trainee)}'s "${viewTask.task}".`,
-                variant: 'success',
-            });
+            showToast(
+                `Remarks saved for ${personName(viewTask.trainee)}'s "${viewTask.task}".`,
+                'success',
+            );
             setViewTask(null);
             invalidateTasks();
         } catch {
-            toast({
-                description:
-                    'This task is locked and remarks can no longer be edited.',
-                variant: 'error',
-            });
+            showToast(
+                'This task is locked and remarks can no longer be edited.',
+                'error',
+            );
         }
     }
 
@@ -302,6 +271,12 @@ export default function TasksPage() {
                         {STATUS_LABEL[row.status]}
                     </span>
                 </div>
+                <div data-cy="index-div-priority">
+                    <TaskPriorityBadge
+                        priority={row.priority}
+                        data-cy="index-badge-priority"
+                    />
+                </div>
                 <TextCell muted data-cy="index-text-cell-batch">
                     {row.batch?.batch_code ?? '—'}
                 </TextCell>
@@ -313,6 +288,12 @@ export default function TasksPage() {
                 </TextCell>
                 <TextCell muted data-cy="index-text-cell-time-goal">
                     {Number(row.time_goal)}h
+                </TextCell>
+                <TextCell muted data-cy="index-text-cell-time-spent">
+                    {Number(row.time_spent ?? 0)}h
+                    {row.is_running && (
+                        <span className="ml-1 text-warning-600">●</span>
+                    )}
                 </TextCell>
                 <TextCell muted data-cy="index-text-cell-trainee">
                     {personName(row.trainee)}
@@ -334,38 +315,28 @@ export default function TasksPage() {
     };
 
     return (
-        <TasksPrimaryLayout data-cy="index-tasks-primary-layout-1">
+        <TasksPrimaryLayout
+            data-cy="index-tasks-primary-layout-1"
+            actionNode={
+                <Button
+                    variant="primary"
+                    icon={Plus}
+                    onClick={() => {
+                        setEditingTask(null);
+                        setAddModalOpen(true);
+                    }}
+                    data-cy="index-button-set-add-modal-open"
+                >
+                    Add task
+                </Button>
+            }
+        >
             <div data-cy="index-div-1">
                 <div
                     className="mb-4 flex items-center justify-between"
                     data-cy="index-div-2"
                 >
-                    <div data-cy="index-div-heading">
-                        {/* <h2
-                            className="text-sm font-semibold text-ink"
-                            data-cy="index-h2-task-management"
-                        >
-                            Task management
-                        </h2>
-                        <p
-                            className="text-xs text-neutral-500"
-                            data-cy="index-p-editable-any-status"
-                        >
-                            Tasks can be edited at any time, regardless of
-                            status.
-                        </p> */}
-                    </div>
-                    <Button
-                        variant="primary"
-                        icon={Plus}
-                        onClick={() => {
-                            setEditingTask(null);
-                            setAddModalOpen(true);
-                        }}
-                        data-cy="index-button-set-add-modal-open"
-                    >
-                        Add task
-                    </Button>
+                    <div data-cy="index-div-heading"></div>
                 </div>
 
                 <DataTableCardField<ApiTask>
@@ -375,7 +346,7 @@ export default function TasksPage() {
                     listHeader={listHeader}
                     renderCard={renderRow}
                     enableStatusFilter
-                    statusFilterOptions={STATUS_TABS}
+                    statusFilterOptions={TASK_STATUS_FILTER_OPTIONS}
                     editPermission={PERMISSION}
                     deletePermission={PERMISSION}
                     onEditRow={(row) => {
@@ -396,6 +367,7 @@ export default function TasksPage() {
                                   task: editingTask.task,
                                   description: editingTask.description,
                                   time_goal: editingTask.time_goal,
+                                  priority: editingTask.priority,
                                   batch: editingTask.batch,
                                   trainee: editingTask.trainee,
                                   trainer: editingTask.trainer,

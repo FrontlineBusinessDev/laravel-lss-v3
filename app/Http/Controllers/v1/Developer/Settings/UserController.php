@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Settings;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Http\Resources\UserResource;
 use App\Mail\UserInviteMail;
 use App\Models\User;
@@ -78,7 +78,8 @@ class UserController extends BaseController
     protected function updateRules(Model $model): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'email',
@@ -127,9 +128,19 @@ class UserController extends BaseController
         return $validated;
     }
 
+    /**
+     * New accounts get an unusable random password (see beforeSave()), so an
+     * invite email with a password-setup link is queued automatically here —
+     * no manual "Send password reset" follow-up click is required.
+     */
     protected function afterCreate(Model $model): void
     {
         $this->syncPendingRole($model);
+
+        if ($model instanceof User) {
+            $resetUrl = PasswordSetupUrl::generate($model);
+            Mail::to($model->email)->queue(new UserInviteMail($model, $resetUrl));
+        }
     }
 
     protected function afterUpdate(Model $model): void

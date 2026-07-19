@@ -1,7 +1,7 @@
 import { Eye } from 'lucide-react';
 import { useState } from 'react';
 import { SettingsListHeader, SettingsRow, TextCell } from '@/components/settings';
-import DataTableField from '@/components/table';
+import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { ActionBadge, actorName, columns, formatWhen, subjectType, type LogRow } from '@/types/modules/developer/system-log';
 import { LogDetailModal } from './LogDetailModal';
 
@@ -30,7 +30,7 @@ export default function index() {
             <TextCell muted data-cy="index-text-cell-6">{actorName(row.actor)}</TextCell>
         </SettingsRow>;
   return <>
-            <DataTableField<LogRow> apiUrl="/system-log" apiQueryKey="developer-system-log" columns={columns} enableCreate={false} enableEdit={false} defaultSortBy="created_at" defaultSortDir="desc" listHeader={listHeader} renderCard={renderRow} data-cy="index-data-table-field-7" />
+            <DataTableCardField<LogRow> apiUrl="/system-log" apiQueryKey="developer-system-log" columns={columns} enableCreate={false} enableEdit={false} defaultSortBy="created_at" defaultSortDir="desc" listHeader={listHeader} renderCard={renderRow} data-cy="index-data-table-field-7" />
             {selected && <LogDetailModal log={selected} onClose={() => setSelected(null)} data-cy="index-log-detail-modal-set-selected" />}
         </>;
 }

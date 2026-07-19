@@ -25,6 +25,6 @@ export function EarningsCard({
       <div className="mt-1.5 text-2xl font-semibold text-ink" data-cy="earnings-card-div-8">
         {visible ? formatPHP(amount) : '••••••••'}
       </div>
-      <div className="mt-1 text-xs text-neutral-500" data-cy="earnings-card-div-trainee-payments-seminar-registration-fees">Trainee payments + seminar registration fees, year to date</div>
+      <div className="mt-1 text-xs text-neutral-500" data-cy="earnings-card-div-trainee-payments-seminar-registration-fees">Trainee payments, year to date</div>
     </div>;
 }

@@ -8,17 +8,22 @@ const TYPE_DOT: Record<CalendarEvent['type'], string> = {
   batch: 'bg-brand-500',
   evaluation: 'bg-warning-400',
   meeting: 'bg-success-400',
-  holiday: 'bg-danger-400'
+  holiday: 'bg-danger-400',
+  leave: 'bg-orange-400',
+  task: 'bg-violet-400'
 };
 function toKey(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 export function MiniCalendar({
   events,
-  initialDate
+  initialDate,
+  onMonthChange
 }: {
   events: CalendarEvent[];
   initialDate: Date;
+  /** Fired after the user navigates to a different month, so callers can refetch that month's events. */
+  onMonthChange?: (year: number, month: number) => void;
 }) {
   const [cursor, setCursor] = useState(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
   const [selectedKey, setSelectedKey] = useState<string | null>(toKey(initialDate.getFullYear(), initialDate.getMonth(), initialDate.getDate()));
@@ -50,10 +55,18 @@ export function MiniCalendar({
           {MONTH_NAMES[month]} {year}
         </h2>
         <div className="flex gap-1" data-cy="mini-calendar-div-5">
-          <button onClick={() => setCursor(new Date(year, month - 1, 1))} aria-label="Previous month" className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600" data-cy="mini-calendar-button-previous-month">
+          <button onClick={() => {
+          const next = new Date(year, month - 1, 1);
+          setCursor(next);
+          onMonthChange?.(next.getFullYear(), next.getMonth());
+        }} aria-label="Previous month" className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600" data-cy="mini-calendar-button-previous-month">
             <ChevronLeft size={13} data-cy="mini-calendar-chevron-left-7" />
           </button>
-          <button onClick={() => setCursor(new Date(year, month + 1, 1))} aria-label="Next month" className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600" data-cy="mini-calendar-button-next-month">
+          <button onClick={() => {
+          const next = new Date(year, month + 1, 1);
+          setCursor(next);
+          onMonthChange?.(next.getFullYear(), next.getMonth());
+        }} aria-label="Next month" className="flex h-6 w-6 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600" data-cy="mini-calendar-button-next-month">
             <ChevronRight size={13} data-cy="mini-calendar-chevron-right-9" />
           </button>
         </div>

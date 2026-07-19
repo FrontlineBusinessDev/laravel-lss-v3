@@ -1,7 +1,7 @@
 import { academicLearningOutcomesService } from '@/api-service-layer/admin/academic';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { AcademicLearningOutcomes } from '@/types/modules/settings/academic/learning-outcomes';
 import { fields } from '@/types/modules/settings/academic/learning-outcomes';
 
@@ -16,7 +16,7 @@ export default function AcademicLearningOutcomesModal({
     onClose,
     row,
 }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -43,12 +43,10 @@ export default function AcademicLearningOutcomesModal({
                 'settings-academic/learning-outcomes',
             )}
             onSuccess={() =>
-                toast({
-                    title: isEdit
-                        ? 'Learning outcome updated'
-                        : 'Learning outcome created',
-                    variant: 'success',
-                })
+                showToast(
+                    isEdit ? 'Learning outcome updated' : 'Learning outcome created',
+                    'success',
+                )
             }
         />
     );

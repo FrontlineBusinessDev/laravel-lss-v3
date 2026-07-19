@@ -1,7 +1,7 @@
 import { Check, Copy, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Modal } from '@/components/Modal';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { copyText } from '@/lib/clipboard';
 interface RegistrationData {
@@ -25,7 +25,7 @@ export function BatchRegistrationModal({
   onClose: () => void;
 }) {
   const {
-    toast
+    showToast
   } = useToast();
   const [data, setData] = useState<RegistrationData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,18 +51,11 @@ export function BatchRegistrationModal({
     }
     const ok = await copyText(data.url);
     if (!ok) {
-      toast({
-        title: 'Could not copy',
-        description: 'Please copy the link manually.',
-        variant: 'error'
-      });
+      showToast('Please copy the link manually.', 'error');
       return;
     }
     setCopied(true);
-    toast({
-      title: 'Registration link copied',
-      variant: 'success'
-    });
+    showToast('Registration link copied', 'success');
     setTimeout(() => setCopied(false), 1500);
   };
   return <Modal open={batchId != null} onClose={onClose} title="Registration link" description={batchCode ? `Public sign-up link & QR for ${batchCode}.` : 'Public sign-up link & QR code.'} data-cy="batch-registration-modal-modal-registration-link">

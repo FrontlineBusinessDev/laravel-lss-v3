@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CronController;
+use App\Http\Controllers\v1\CronController;
 use Illuminate\Support\Facades\Route;
 
 // Registered in bootstrap/app.php OUTSIDE the `web` group — no session, CSRF or

@@ -25,11 +25,15 @@ class RoleSeeder extends Seeder
             Permissions::MANAGE_TASKS,
             Permissions::MANAGE_OWN_SCHEDULE,
             Permissions::MANAGE_RATINGS,
+            // Row-scoped to their own authored announcements at the
+            // AnnouncementPolicy/AnnouncementsController level, not full access.
+            Permissions::MANAGE_ANNOUNCEMENTS,
         ];
         $traineePermissions = [
             Permissions::MANAGE_OWN_TASKS,
             Permissions::MANAGE_OWN_LEAVE,
             Permissions::MANAGE_OWN_EVALUATION,
+            Permissions::MANAGE_OWN_MY_INFO,
         ];
 
         // Every permission referenced below must exist before syncPermissions()

@@ -1,60 +1,90 @@
-import { Link, usePage } from '@inertiajs/react';
-import { ReactNode } from 'react';
+import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
+import { Link, usePage } from '@inertiajs/react';
+import React, { ReactNode } from 'react';
 
 interface LayoutProps {
     children: ReactNode;
+    actionNode?: ReactNode;
 }
 
 const NAV_LINKS = [
-    { id: 'Task Rating', label: 'Task Rating', href: '/ratings' },
-    { id: 'Behavioral Rating', label: 'Behavioral Rating', href: '/ratings/behavioral-rating' },
+    {
+        id: 'task rating',
+        label: 'task rating',
+        href: '/ratings/task-rating',
+        permissions: ['manage ratings'],
+    },
+    {
+        id: 'Behavioral form',
+        label: 'Behavioral form',
+        href: '/ratings/behavioral-form',
+        permissions: ['manage ratings'],
+    },
+    {
+        id: 'Behavioral setup',
+        label: 'Behavioral setup',
+        href: '/ratings/behavioral-setup',
+        permissions: ['manage ratings', 'manage behavioral questions'],
+    },
 ] as const;
 
-export default function RatingsPrimaryLayout({ children }: LayoutProps) {
+export default function RatingsPrimaryLayout({
+    children,
+    actionNode,
+}: LayoutProps) {
+    const { can } = usePermission(); // Used to permission
     const { url } = usePage(); // Used to automatically highlight the active tab
-
     return (
-        <div data-cy="ratings-primary-layout-div-1">
-            <h1
-                className="text-xl font-semibold text-ink"
-                data-cy="ratings-primary-layout-h1-ratings"
-            >
-                Ratings
-            </h1>
-            <p
-                className="mb-4 text-sm text-neutral-500"
-                data-cy="ratings-primary-layout-p-evaluate-trainees-on-tasks-and-behavior"
-            >
-                Evaluate trainees on completed tasks and overall behavior
-            </p>
-            <div
-                className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
-                data-cy="ratings-primary-layout-div-4"
-            >
-                {NAV_LINKS.map((link) => {
-                    const isActive =
-                        link.href === '/ratings'
-                            ? url === '/ratings'
-                            : url.startsWith(link.href);
-                    return (
-                        <Link
-                            key={link.id}
-                            href={link.href}
-                            className={cn(
-                                'pb-2.5 text-sm font-medium whitespace-nowrap transition-colors',
-                                isActive
-                                    ? 'border-b-2 border-brand-500 font-semibold text-ink'
-                                    : 'text-neutral-500 hover:text-neutral-700',
-                            )}
-                            data-cy="ratings-primary-layout-link-link-href"
+        <>
+            <div data-cy="settings-primary-layout-div-1">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                    <div>
+                        <h1
+                            className="text-xl font-semibold text-ink"
+                            data-cy="settings-primary-layout-h1-settings"
                         >
-                            {link.label}
-                        </Link>
-                    );
-                })}
+                            Ratings
+                        </h1>
+                        <p
+                            className="text-sm text-neutral-500"
+                            data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"
+                        >
+                            Evaluate trainees on completed tasks and overall
+                            behavior
+                        </p>
+                    </div>
+                    <div>{actionNode}</div>
+                </div>
+                <div
+                    className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
+                    data-cy="settings-primary-layout-div-4"
+                >
+                    {NAV_LINKS.map((link) => {
+                        // 2. Filter tabs out dynamically based on user permissions
+                        if (!link.permissions.every((p) => can(p))) return null;
+
+                        // 3. Determine if the link is currently active
+                        const isActive = url.startsWith(link.href);
+                        return (
+                            <Link
+                                key={link.id}
+                                href={link.href}
+                                className={cn(
+                                    'pb-2.5 text-sm font-medium whitespace-nowrap transition-colors',
+                                    isActive
+                                        ? 'border-b-2 border-brand-500 font-semibold text-ink'
+                                        : 'text-neutral-500 hover:text-neutral-700',
+                                )}
+                                data-cy="settings-primary-layout-link-link-href"
+                            >
+                                {link.label}
+                            </Link>
+                        );
+                    })}
+                </div>
+                {children}
             </div>
-            {children}
-        </div>
+        </>
     );
 }

@@ -1,6 +1,6 @@
 import { traineeBillingOverrideService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -40,7 +40,7 @@ const OVERRIDE_FIELDS: { key: OverrideKey; label: string; suffix: string }[] = [
  * ahead of the column actually being persisted as non-null.
  */
 export function BillingOverridePanel({ trainee }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [saving, setSaving] = useState<OverrideKey | null>(null);
     const [enabled, setEnabled] = useState<Record<OverrideKey, boolean>>({
         override_rate_per_hour: trainee.override_rate_per_hour !== null,
@@ -84,15 +84,15 @@ export function BillingOverridePanel({ trainee }: Props) {
             await traineeBillingOverrideService.update(trainee.id, {
                 [key]: value,
             });
-            toast({ title: 'Billing override updated', variant: 'success' });
+            showToast('Billing override updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to update override',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to update override',
+                'error',
+            );
         } finally {
             setSaving(null);
         }

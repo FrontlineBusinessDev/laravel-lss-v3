@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\TraineeDocument;
 use App\Models\Trainees;
 use Illuminate\Http\JsonResponse;
@@ -33,7 +33,7 @@ class TraineeDocumentsController extends BaseController
 
         $validated = $request->validate([
             'document_type' => ['required', 'string', Rule::in(self::DOCUMENT_TYPES)],
-            'file' => ['required_without:url_link', 'nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
+            'file' => ['required_without:url_link', 'nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:5120'],
             'url_link' => ['required_without:file', 'nullable', 'url', 'max:2048'],
         ]);
 

@@ -8,9 +8,9 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useToast } from '@/components/Toast';
 import { useCrud } from '@/hooks/use-crud';
 import { usePermission } from '@/hooks/use-permissions';
-import { useToast } from '@/hooks/use-toast';
 import type {
     DataTableProps,
     PaginationMeta,
@@ -82,10 +82,11 @@ export function useCardTableController<T extends Record<string, unknown>>(
         viewType = 'table',
         paginationMode = 'server',
         onEditRow,
+        onFiltersChange,
     } = props;
 
     const { can } = usePermission();
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const clientMode = paginationMode === 'client';
 
@@ -126,6 +127,11 @@ export function useCardTableController<T extends Record<string, unknown>>(
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setPage(1);
     }, [debouncedSearch, debouncedFilters, extraFiltersKey, perPage]);
+
+    useEffect(() => {
+        onFiltersChange?.(debouncedFilters, debouncedSearch);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedFilters, debouncedSearch]);
 
     // ── Data fetching ─────────────────────────────────────────────────────────
     const crud = useCrud<T>({
@@ -217,7 +223,7 @@ export function useCardTableController<T extends Record<string, unknown>>(
             archive: (id) => crud.archive.mutateAsync(id),
         },
         invalidateTable,
-        toast,
+        showToast,
     });
 
     return {

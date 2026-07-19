@@ -14,9 +14,12 @@ cmds = [
 
 # PRODUCTION BUILD
 # 1. Fire up the SSR engine in the background
-# 2. Execute the exact start entrypoint script Nixpacks builds natively for Nginx + PHP-FPM
+# 2. Start a self-restarting queue worker in the background (QUEUE_CONNECTION=database
+#    means queued mail/jobs otherwise pile up in the `jobs` table with nothing to
+#    process them — this container has no separate worker service)
+# 3. Execute the exact start entrypoint script Nixpacks builds natively for Nginx + PHP-FPM
 [start]
-cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & /nixpacks/entrypoint.sh"
+cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) & /nixpacks/entrypoint.sh"
 
 
 # cmd = "php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 & .nixpacks/variables.sh && nginx -g 'daemon off;'"

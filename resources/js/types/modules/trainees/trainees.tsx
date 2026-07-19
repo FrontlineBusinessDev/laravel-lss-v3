@@ -26,7 +26,7 @@ export interface AppTrainees extends Record<string, unknown> {
     created_at: string;
     updated_at: string;
 }
-export const studentsStatus = ['active', 'inactive', 'ongoing', 'completed'];
+export const studentsStatus = ['pending', 'active', 'inactive', 'ongoing', 'completed'];
 
 export const columns: ColumnDef<AppTrainees>[] = [
     {

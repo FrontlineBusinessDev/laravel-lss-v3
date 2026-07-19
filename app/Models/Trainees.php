@@ -16,10 +16,11 @@ class Trainees extends Model
     protected $guarded = [];
     protected $table = 'app_trainees';
 
-    protected $appends = ['avatar_url', 'initials', 'total_paid', 'outstanding_balance'];
+    protected $appends = ['avatar_url', 'initials', 'total_paid', 'outstanding_balance', 'payment_status'];
 
     protected $fillable = [
         'status',
+        'user_id',
         'batch_id',
         'school_id',
         'avatar_path',
@@ -70,6 +71,11 @@ class Trainees extends Model
     {
         return $this->belongsTo(Batches::class, 'batch_id');
     }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
     public function payments()
     {
         return $this->hasMany(TraineesPayments::class, 'trainee_id');
@@ -85,6 +91,11 @@ class Trainees extends Model
         return $this->hasMany(TraineeDocument::class, 'trainee_id');
     }
 
+    public function certificate()
+    {
+        return $this->hasOne(TraineeCertificate::class, 'trainee_id');
+    }
+
     public function learningOutcomes(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -96,6 +107,21 @@ class Trainees extends Model
             ->withPivot('status')
             ->using(TraineeLearningOutcome::class)
             ->withTimestamps();
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'trainee_id');
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'trainee_id');
+    }
+
+    public function taskRatings(): HasMany
+    {
+        return $this->hasMany(TaskRating::class, 'trainee_id');
     }
     /** Presigned (or public) URL for the stored avatar, null when none is set. */
     protected function avatarUrl(): Attribute
@@ -129,5 +155,26 @@ class Trainees extends Model
     public function getOutstandingBalanceAttribute()
     {
         return max(0, $this->net_amount_required - $this->total_paid);
+    }
+    /**
+     * unpaid | partially_paid | fully_paid | overpaid, derived from total_paid
+     * vs net_amount_required. Compared in integer cents to avoid float
+     * equality pitfalls on the "fully paid" boundary.
+     */
+    public function getPaymentStatusAttribute(): string
+    {
+        $paidCents = (int) round(((float) $this->total_paid) * 100);
+        $dueCents = (int) round(((float) $this->net_amount_required) * 100);
+
+        if ($paidCents <= 0) {
+            return 'unpaid';
+        }
+        if ($paidCents < $dueCents) {
+            return 'partially_paid';
+        }
+        if ($paidCents === $dueCents) {
+            return 'fully_paid';
+        }
+        return 'overpaid';
     }
 }

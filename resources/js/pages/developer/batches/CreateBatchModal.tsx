@@ -1,8 +1,8 @@
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Modal } from '@/components/Modal';
+import { useToast } from '@/components/Toast';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { useToast } from '@/hooks/use-toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { loadLookupOptions } from '@/types/reusable/fields';
@@ -30,6 +30,7 @@ type Values = {
     academic_industry_id: string | number;
     academic_level_id: string | number;
     date_started: string;
+    projected_end_date: string;
     is_public_url_enable: boolean;
 };
 
@@ -81,7 +82,7 @@ export function CreateBatchModal({
     onSubmit?: (values: Record<string, unknown>) => Promise<void>;
     onSaved?: (saved: AppBatches) => void;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = (modeProp ?? (batch ? 'edit' : 'create')) === 'edit';
     const [values, setValues] = useState<Values>(() => ({
         setup: batch?.setup ?? 'f2f',
@@ -90,6 +91,9 @@ export function CreateBatchModal({
         academic_level_id: batch?.academic_level_id ?? '',
         date_started: batch?.date_started
             ? String(batch.date_started).slice(0, 10)
+            : '',
+        projected_end_date: batch?.projected_end_date
+            ? String(batch.projected_end_date).slice(0, 10)
             : '',
         is_public_url_enable: batch?.is_public_url_enable ?? false,
     }));
@@ -139,10 +143,7 @@ export function CreateBatchModal({
             method: batch ? 'PUT' : 'POST',
             body: JSON.stringify(values),
         });
-        toast({
-            title: batch ? 'Batch updated' : 'Batch created',
-            variant: 'success',
-        });
+        showToast(batch ? 'Batch updated' : 'Batch created', 'success');
         onSaved?.(response.data);
         onClose();
     };
@@ -258,6 +259,22 @@ export function CreateBatchModal({
                         onChange={(e) => set('date_started', e.target.value)}
                         className={inputCls}
                         data-cy="create-batch-modal-input-date"
+                    />
+                </Field>
+
+                <Field
+                    label="Projected end date"
+                    error={errors.projected_end_date}
+                    data-cy="create-batch-modal-field-projected-end-date"
+                >
+                    <input
+                        type="date"
+                        value={values.projected_end_date}
+                        onChange={(e) =>
+                            set('projected_end_date', e.target.value)
+                        }
+                        className={inputCls}
+                        data-cy="create-batch-modal-input-projected-end-date"
                     />
                 </Field>
 

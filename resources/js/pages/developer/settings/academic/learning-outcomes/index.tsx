@@ -13,6 +13,8 @@ import type { StatusKind } from '@/types';
 import type { AcademicLearningOutcomes } from '@/types/modules/settings/academic/learning-outcomes';
 import { columns } from '@/types/modules/settings/academic/learning-outcomes';
 import AcademicLearningOutcomesModal from './AcademicLearningOutcomesModal';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsAcademicLayout from '@/layouts/settings/SettingsAcademicLayout';
 
 const PERMISSION = 'manage settings academic';
 const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
@@ -59,37 +61,42 @@ export default function Index() {
 
     return (
         <>
-            <div className="float-right">
-                <AddRecordButton
-                    label="Add Learning Outcomes"
-                    permission={PERMISSION}
-                    onClick={() => {
-                        modal.setData(null);
-                        modal.setOpen(true);
-                    }}
-                />
-            </div>
-            <DataTableCardField<AcademicLearningOutcomes>
-                apiUrl="/settings/academic/learning-outcomes"
-                apiQueryKey="settings-academic/learning-outcomes"
-                columns={columns}
-                defaultSortBy="first_name"
-                editPermission={PERMISSION}
-                archivePermission={PERMISSION}
-                deletePermission={PERMISSION}
-                listHeader={listHeader}
-                renderCard={renderRow}
-                onEditRow={(row) => {
-                    modal.setData(row);
-                    modal.setOpen(true);
-                }}
-                data-cy="index-data-table-field-7"
-            />
-            <AcademicLearningOutcomesModal
-                open={modal.open}
-                onClose={() => modal.setOpen(false)}
-                row={modal.data}
-            />
+            <SettingsPrimaryLayout
+                actionNode={
+                    <AddRecordButton
+                        label="Add Learning Outcomes"
+                        permission={PERMISSION}
+                        onClick={() => {
+                            modal.setData(null);
+                            modal.setOpen(true);
+                        }}
+                    />
+                }
+            >
+                <SettingsAcademicLayout>
+                    <DataTableCardField<AcademicLearningOutcomes>
+                        apiUrl="/settings/academic/learning-outcomes"
+                        apiQueryKey="settings-academic/learning-outcomes"
+                        columns={columns}
+                        defaultSortBy="first_name"
+                        editPermission={PERMISSION}
+                        archivePermission={PERMISSION}
+                        deletePermission={PERMISSION}
+                        listHeader={listHeader}
+                        renderCard={renderRow}
+                        onEditRow={(row) => {
+                            modal.setData(row);
+                            modal.setOpen(true);
+                        }}
+                        data-cy="index-data-table-field-7"
+                    />
+                    <AcademicLearningOutcomesModal
+                        open={modal.open}
+                        onClose={() => modal.setOpen(false)}
+                        row={modal.data}
+                    />
+                </SettingsAcademicLayout>
+            </SettingsPrimaryLayout>
         </>
     );
 }

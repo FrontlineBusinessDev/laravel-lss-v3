@@ -4,30 +4,43 @@ import { cn } from '@/lib/utils';
 
 interface LayoutProps {
     children: ReactNode;
+    actionNode?: ReactNode;
 }
 
 const NAV_LINKS = [
     { id: 'Task Management', label: 'Task Management', href: '/tasks' },
-    { id: 'Daily Task Sheet', label: 'Daily Task Sheet', href: '/tasks/daily-task' },
+    {
+        id: 'Daily Task Sheet',
+        label: 'Daily Task Sheet',
+        href: '/tasks/daily-task',
+    },
 ] as const;
 
-export default function TasksPrimaryLayout({ children }: LayoutProps) {
+export default function TasksPrimaryLayout({
+    children,
+    actionNode,
+}: LayoutProps) {
     const { url } = usePage(); // Used to automatically highlight the active tab
 
     return (
         <div data-cy="tasks-primary-layout-div-1">
-            <h1
-                className="text-xl font-semibold text-ink"
-                data-cy="tasks-primary-layout-h1-tasks"
-            >
-                Tasks
-            </h1>
-            <p
-                className="mb-4 text-sm text-neutral-500"
-                data-cy="tasks-primary-layout-p-daily-trainee-task-assignment-and-reporting"
-            >
-                Daily trainee task assignment and reporting
-            </p>
+            <div className="flex items-center justify-between gap-2">
+                <div>
+                    <h1
+                        className="text-xl font-semibold text-ink"
+                        data-cy="tasks-primary-layout-h1-tasks"
+                    >
+                        Tasks
+                    </h1>
+                    <p
+                        className="mb-4 text-sm text-neutral-500"
+                        data-cy="tasks-primary-layout-p-daily-trainee-task-assignment-and-reporting"
+                    >
+                        Daily trainee task assignment and reporting
+                    </p>
+                </div>
+                <div>{actionNode}</div>
+            </div>
             <div
                 className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
                 data-cy="tasks-primary-layout-div-4"

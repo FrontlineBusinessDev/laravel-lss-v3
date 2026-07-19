@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Request;
 class ActivityLogger
 {
     /** @var list<string> */
-    public const ACTIONS = ['create', 'update', 'delete', 'archive', 'restore', 'visit'];
+    public const ACTIONS = ['create', 'update', 'delete', 'archive', 'restore', 'visit', 'error'];
 
     /**
      * @param  array<string, mixed>  $changes
@@ -57,6 +57,17 @@ class ActivityLogger
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /** Captures an uncaught exception as an 'error' row, with actor + stack trace. */
+    public static function logError(\Throwable $e): void
+    {
+        self::log('error', null, [
+            'exception' => $e::class,
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], $e->getMessage());
     }
 
     /**

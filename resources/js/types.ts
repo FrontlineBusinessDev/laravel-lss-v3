@@ -244,6 +244,8 @@ export interface AppNotification {
     read: boolean;
     link?: string;
     relatedLeaveId?: string;
+    type?: string;
+    data?: Record<string, unknown> | null;
 }
 
 export interface TaskItem {
@@ -279,7 +281,7 @@ export interface CalendarEvent {
     id: string;
     date: string; // YYYY-MM-DD
     title: string;
-    type: 'batch' | 'evaluation' | 'holiday' | 'meeting';
+    type: 'batch' | 'evaluation' | 'holiday' | 'meeting' | 'leave' | 'task';
 }
 
 export interface PartnerSchool {
@@ -323,31 +325,6 @@ export interface LearningOutcome {
     outcome: string;
     industry: string;
     status: 'active' | 'archived';
-}
-
-export interface BiometricRecord {
-    id: string;
-    traineeId: string;
-    date: string; // YYYY-MM-DD
-    timeIn?: string;
-    timeOut?: string;
-    onLeave: boolean;
-    remarks?: string;
-    importId?: string; // which import batch produced this row, if any
-}
-
-export type ImportStatus = 'success' | 'partial' | 'failed';
-
-/** A single CSV import event, kept for the audit/history log. */
-export interface BiometricImportBatch {
-    id: string;
-    fileName: string;
-    importedBy: string;
-    importedAt: string; // ISO date
-    totalRows: number;
-    successCount: number;
-    errorCount: number;
-    status: ImportStatus;
 }
 
 export interface TaskRecord {

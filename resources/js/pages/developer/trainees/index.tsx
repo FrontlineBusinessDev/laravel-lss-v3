@@ -1,12 +1,16 @@
 import { router } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
+import { Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
-import { SettingsListHeader, TextCell } from '@/components/settings';
+import type { RowMenuAction } from '@/components/RowMenu';
+import { SettingsListHeader, SettingsRow, TextCell } from '@/components/settings';
+import { StatusBadge } from '@/components/StatusBadge';
+import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { cn } from '@/lib/utils';
+import type { StatusKind } from '@/types';
 import type { AppTrainees } from '@/types/modules/trainees/trainees';
 import { columns } from '@/types/modules/trainees/trainees';
-import { GRID } from '@/types/reusable/data-table';
+
+const PERMISSION = 'manage trainees';
 
 const TRAINEE_GRID = 'sm:grid-cols-[1.8fr_2fr_1fr_1.2fr_2.5rem]!';
 
@@ -18,70 +22,94 @@ const listHeader = (
     />
 );
 
-const renderRow = (row: AppTrainees) => {
-    const name = `${row.first_name} ${row.last_name}`.trim();
-    const completed = Boolean(row.date_completed);
-
-    return (
-        // Clicking the row opens the trainee detail page, matching the previous
-        // list behaviour. Rendered as a link so keyboard users can drill in too.
-        <div
-            role="link"
-            tabIndex={0}
-            onClick={() => router.visit(`/trainees/${row.id}`)}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                    router.visit(`/trainees/${row.id}`);
-                }
-            }}
-            className={cn(
-                'flex cursor-pointer flex-col gap-1 px-4 py-3 transition-colors hover:bg-neutral-50/70',
-                GRID,
-                TRAINEE_GRID,
-            )}
-            data-cy="index-div-row"
-        >
-            <div
-                className="flex items-center gap-2.5 font-medium text-ink"
-                data-cy="index-div-name"
-            >
-                <Avatar
-                    src={row.avatar_url}
-                    name={name}
-                    initials={row.initials}
-                    size="sm"
-                    data-cy="index-avatar"
-                />
-                <span className="truncate" data-cy="index-span-name">
-                    {name}
-                </span>
-            </div>
-            <TextCell muted data-cy="index-text-cell-email">
-                {row.email}
-            </TextCell>
-            <TextCell muted data-cy="index-text-cell-hrs">
-                {row.required_hours ?? '—'} hrs
-            </TextCell>
-            <span
-                className={
-                    completed
-                        ? 'inline-flex w-fit items-center rounded-pill bg-success-50 px-2.5 py-0.5 text-xs leading-5 font-medium text-success-800'
-                        : 'inline-flex w-fit items-center rounded-pill bg-amber-50 px-2.5 py-0.5 text-xs leading-5 font-medium text-amber-700'
-                }
-                data-cy="index-status-badge"
-            >
-                {completed ? 'Completed' : 'On-going'}
-            </span>
-            <ChevronRight
-                size={15}
-                className="ml-auto text-neutral-400"
-                data-cy="index-row-chevron"
-            />
-        </div>
-    );
+const STATUS_BADGE: Record<string, StatusKind> = {
+    pending: 'pending',
+    active: 'active',
+    inactive: 'archived',
+    completed: 'completed',
+    terminated: 'terminated',
 };
 
 export default function TraineesListPage() {
+    const renderRow = (row: AppTrainees, actions: CardActions) => {
+        const name = `${row.first_name} ${row.last_name}`.trim();
+        const completed = Boolean(row.date_completed);
+        const nonActive = row.status !== 'active';
+        const badge = STATUS_BADGE[row.status] ?? 'active';
+
+        const menu: RowMenuAction[] = [
+            nonActive
+                ? {
+                      label: 'Restore',
+                      icon: ArchiveRestore,
+                      onClick: actions.onRestore,
+                  }
+                : {
+                      label: 'Archive',
+                      icon: Archive,
+                      onClick: actions.onArchive,
+                      disabled: !actions.canArchive,
+                  },
+            {
+                label: 'Delete',
+                icon: Trash2,
+                danger: true,
+                onClick: () => void actions.onDelete(),
+                disabled: !actions.canDelete || !nonActive,
+            },
+        ];
+
+        return (
+            <div
+                role="link"
+                tabIndex={0}
+                onClick={() => router.visit(`/trainees/${row.id}`)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        router.visit(`/trainees/${row.id}`);
+                    }
+                }}
+                className="cursor-pointer transition-colors hover:bg-neutral-50/70"
+                data-cy="index-div-row"
+            >
+                <SettingsRow
+                    grid={TRAINEE_GRID}
+                    isArchived={nonActive}
+                    badge={
+                        <StatusBadge
+                            status={completed ? 'completed' : badge}
+                            data-cy="index-status-badge"
+                        />
+                    }
+                    menu={menu}
+                    data-cy="index-settings-row-1"
+                >
+                    <div
+                        className="flex items-center gap-2.5 font-medium text-ink"
+                        data-cy="index-div-name"
+                    >
+                        <Avatar
+                            src={row.avatar_url}
+                            name={name}
+                            initials={row.initials}
+                            size="sm"
+                            data-cy="index-avatar"
+                        />
+                        <span className="truncate" data-cy="index-span-name">
+                            {name}
+                        </span>
+                    </div>
+                    <TextCell muted data-cy="index-text-cell-email">
+                        {row.email}
+                    </TextCell>
+                    <TextCell muted data-cy="index-text-cell-hrs">
+                        {row.required_hours ?? '—'} hrs
+                    </TextCell>
+                </SettingsRow>
+            </div>
+        );
+    };
+
     return (
         <>
             <h1
@@ -101,6 +129,11 @@ export default function TraineesListPage() {
                 apiQueryKey="trainees"
                 columns={columns}
                 defaultSortBy="last_name"
+                archivePermission={PERMISSION}
+                deletePermission={PERMISSION}
+                deleteConfirmText={(row) =>
+                    `${row.first_name} ${row.last_name}`.trim()
+                }
                 listHeader={listHeader}
                 renderCard={renderRow}
                 data-cy="index-data-table-field-1"

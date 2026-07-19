@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\v1\Developer\Tasks;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\User;
+use App\Traits\ScopesToAssignedBatches;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * Tasks CRUD API (prefix /tasks). Task's lifecycle (open -> completed -> locked)
@@ -19,22 +21,42 @@ use Illuminate\Support\Facades\DB;
  */
 class TasksController extends BaseController
 {
+    use ScopesToAssignedBatches;
+
     protected string $model = Task::class;
     protected string $view = 'developer/tasks/index';
     protected array $searchable = ['task'];
-    protected array $filterable = ['status', 'batch_id', 'trainee_id', 'trainer_id', 'date_from', 'date_to'];
-    protected array $exactFilters = ['status', 'batch_id', 'trainee_id', 'trainer_id'];
+    protected array $filterable = ['status', 'priority', 'batch_id', 'trainee_id', 'trainer_id', 'date_from', 'date_to'];
+    protected array $exactFilters = ['status', 'priority', 'batch_id', 'trainee_id', 'trainer_id'];
     protected array $sortable = ['date', 'status', 'created_at'];
     protected string $sortBy = 'date';
     protected array $activeColumns = ['id', 'task'];
 
     protected function newQuery(): Builder
     {
-        return parent::newQuery()->with([
+        $query = parent::newQuery()->with([
             'batch:id,batch_code',
             'trainee:id,first_name,last_name',
             'trainer:id,first_name,last_name',
         ]);
+
+        return $this->scopeTrainerBatches($query, 'batch_id');
+    }
+
+    /**
+     * Trainer holds `manage tasks` (RoleSeeder) same as admin/developer, but
+     * must only ever see/mutate tasks in their own assigned batches. No-op
+     * for admin/developer.
+     */
+    protected function scopeTrainerBatches(Builder $query, string $batchColumn): Builder
+    {
+        /** @disregard P1013 */
+        $user = auth()->user();
+        if ($user->hasRole('trainer') && ! $user->hasAnyRole(['admin', 'developer'])) {
+            return $query->whereIn($batchColumn, $this->assignedBatchIds());
+        }
+
+        return $query;
     }
 
     /**
@@ -60,6 +82,7 @@ class TasksController extends BaseController
                 'trainee:id,first_name,last_name',
                 'trainer:id,first_name,last_name',
             ]);
+        $query = $this->scopeTrainerBatches($query, 'app_tasks.batch_id');
 
         if ($search !== '') {
             $query->where('app_tasks.task', 'like', "%{$search}%");
@@ -70,7 +93,7 @@ class TasksController extends BaseController
             $query->where('app_tasks.status', $status);
         }
 
-        foreach (['batch_id', 'trainee_id', 'trainer_id'] as $col) {
+        foreach (['priority', 'batch_id', 'trainee_id', 'trainer_id'] as $col) {
             $value = $filters[$col] ?? null;
             if ($value === null || $value === '') {
                 continue;
@@ -134,29 +157,55 @@ class TasksController extends BaseController
     /** Create accepts trainee_ids (plural) — one Task row is fanned out per selected trainee. */
     protected function storeRules(): array
     {
+        /** @disregard P1013 */
+        $user = auth()->user();
+        $isTrainerOnly = $user->hasRole('trainer') && ! $user->hasAnyRole(['admin', 'developer']);
+
         return [
             'date' => ['required', 'date'],
-            'batch_id' => ['required', 'exists:app_batches,id'],
+            'batch_id' => [
+                'required',
+                'exists:app_batches,id',
+                ...($isTrainerOnly ? [Rule::in($this->assignedBatchIds())] : []),
+            ],
             'trainee_ids' => ['required', 'array', 'min:1'],
-            'trainee_ids.*' => ['integer', 'exists:app_trainees,id'],
+            'trainee_ids.*' => [
+                'integer',
+                Rule::exists('app_trainees', 'id')->where(fn($q) => $q->where('batch_id', request()->input('batch_id'))),
+            ],
+            // trainer_id is still validated here so admin's payload shape stays
+            // unchanged; store() below forces it to auth()->id() for trainers.
             'trainer_id' => ['required', 'exists:users,id'],
             'task' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'time_goal' => ['required', 'numeric', 'min:0.5'],
+            'priority' => ['nullable', 'in:high,medium,low'],
         ];
     }
 
     /** Edit always operates on a single already-created row — trainee_id (singular), any status. */
     protected function updateRules(Model $model): array
     {
+        /** @disregard P1013 */
+        $user = auth()->user();
+        $isTrainerOnly = $user->hasRole('trainer') && ! $user->hasAnyRole(['admin', 'developer']);
+
         return [
             'date' => ['required', 'date'],
-            'batch_id' => ['required', 'exists:app_batches,id'],
-            'trainee_id' => ['required', 'exists:app_trainees,id'],
+            'batch_id' => [
+                'required',
+                'exists:app_batches,id',
+                ...($isTrainerOnly ? [Rule::in($this->assignedBatchIds())] : []),
+            ],
+            'trainee_id' => [
+                'required',
+                Rule::exists('app_trainees', 'id')->where(fn($q) => $q->where('batch_id', request()->input('batch_id'))),
+            ],
             'trainer_id' => ['required', 'exists:users,id'],
             'task' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'time_goal' => ['required', 'numeric', 'min:0.5'],
+            'priority' => ['nullable', 'in:high,medium,low'],
         ];
     }
 
@@ -171,6 +220,12 @@ class TasksController extends BaseController
         $this->authorize('create', $this->model);
         $validated = $request->validate($this->storeRules(), $this->validationMessages());
 
+        /** @disregard P1013 */
+        $user = auth()->user();
+        if ($user->hasRole('trainer') && ! $user->hasAnyRole(['admin', 'developer'])) {
+            $validated['trainer_id'] = $user->id;
+        }
+
         $ids = DB::transaction(function () use ($validated) {
             return collect($validated['trainee_ids'])->map(function ($traineeId) use ($validated) {
                 return Task::create([
@@ -181,6 +236,7 @@ class TasksController extends BaseController
                     'task' => $validated['task'],
                     'description' => $validated['description'] ?? null,
                     'time_goal' => $validated['time_goal'],
+                    'priority' => $validated['priority'] ?? null,
                     'status' => 'open',
                     'time_spent' => 0,
                 ])->id;

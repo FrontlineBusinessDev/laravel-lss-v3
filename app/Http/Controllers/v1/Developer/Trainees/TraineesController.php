@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
+use App\Mail\TraineeActivatedMail;
+use App\Mail\UserInviteMail;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
+use App\Support\PasswordSetupUrl;
+use App\Support\Statuses;
+use App\Support\TraineeAccountLinker;
+use App\Support\TraineeCascadeDeleter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -48,8 +56,10 @@ class TraineesController extends BaseController
     ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
-    // Guards deletion if the trainee has uploaded files/documents attached
-    protected array $inUseRelations = ['documents'];
+    // Informational only: surfaced by inUse() so the frontend can warn before
+    // the type-to-confirm delete modal, since destroy() below cascades rather
+    // than hard-blocking on these relations.
+    protected array $inUseRelations = ['documents', 'tasks', 'leaveRequests', 'taskRatings'];
 
     /**
      * Eager-load the industry/program relations so the list serializes their
@@ -60,13 +70,28 @@ class TraineesController extends BaseController
      */
     protected function newQuery(): Builder
     {
-        return parent::newQuery()->with([
+        $query = parent::newQuery()->with([
             'school:id,school_name',
             'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
             'batch.academicProgram:id,name,course_name',
             'batch.academicLevel:id,name,name',
         ]);
+
+        // Opt-in exclusion for the task-assignment trainee picker: pass
+        // ?exclude_on_leave_date=YYYY-MM-DD to drop trainees with an approved
+        // leave covering that date. Not a `filterable` column, so it's read
+        // directly off the request rather than the generic filters[] loop.
+        $excludeOnLeaveDate = request()->string('exclude_on_leave_date')->toString();
+        if ($excludeOnLeaveDate !== '') {
+            $query->whereDoesntHave('leaveRequests', function (Builder $leaveQuery) use ($excludeOnLeaveDate) {
+                $leaveQuery->where('status', 'approved')
+                    ->whereDate('leave_date', '<=', $excludeOnLeaveDate)
+                    ->whereDate('return_date', '>=', $excludeOnLeaveDate);
+            });
+        }
+
+        return $query;
     }
 
     protected function storeRules(): array
@@ -115,6 +140,114 @@ class TraineesController extends BaseController
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
         ];
+    }
+
+    /**
+     * Cascading hard-delete: documents/tasks/leave-requests/ratings are all
+     * restrictOnDelete FKs, so the DB would reject deleting a trainee that
+     * still has any of them. Per product decision this is destructive by
+     * design — TraineeCascadeDeleter removes everything under the trainee
+     * (payments/certificate/learning-outcomes cascade via DB FKs already).
+     */
+    public function destroy(int|string $id): JsonResponse
+    {
+        return DB::transaction(function () use ($id) {
+            $trainee = $this->newQuery()->lockForUpdate()->findOrFail($id);
+            $this->authorize('delete', $trainee);
+
+            abort_if($trainee->status === self::STATUS_ACTIVE, 422, 'Set to inactive before deleting.');
+
+            TraineeCascadeDeleter::delete($trainee);
+
+            return response()->json(null, 204);
+        });
+    }
+
+    /**
+     * Enable login for the trainee: creates a User account the first time
+     * (mirrors self-registration) and emails an invite, or simply reactivates
+     * a previously unlinked account on subsequent calls.
+     */
+    public function linkAccount(int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('linkAccount', $trainee);
+
+        [$user, $isNewAccount] = TraineeAccountLinker::link($trainee);
+
+        if ($isNewAccount) {
+            $resetUrl = PasswordSetupUrl::generate($user);
+            Mail::to($user->email)->queue(new UserInviteMail($user, $resetUrl));
+        }
+
+        return $this->sendResponse($trainee->fresh('user'), 'Account linked successfully.');
+    }
+
+    /** Disable login for the trainee without severing the account link. */
+    public function unlinkAccount(int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('unlinkAccount', $trainee);
+
+        TraineeAccountLinker::unlink($trainee);
+
+        return $this->sendResponse($trainee->fresh('user'), 'Account unlinked successfully.');
+    }
+
+    /**
+     * Admit a PENDING trainee to a batch, activate the record, provision
+     * their login account, and email them a password-setup link. The batch
+     * chosen at registration is the frontend's default but can be reassigned
+     * here before confirming.
+     */
+    public function approve(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('approve', $trainee);
+
+        abort_if($trainee->status !== Statuses::PENDING, 422, 'Trainee is not pending approval.');
+
+        $validated = $request->validate([
+            'batch_id' => ['required', 'exists:app_batches,id'],
+        ]);
+
+        $newUser = null;
+        DB::transaction(function () use ($trainee, $validated, &$newUser) {
+            $trainee->update([
+                'batch_id' => $validated['batch_id'],
+                'status' => Statuses::ACTIVE,
+                'approved_by_id' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+            $newUser = TraineeAccountLinker::createAndLink($trainee);
+        });
+
+        if ($newUser) {
+            $resetUrl = PasswordSetupUrl::generate($newUser);
+            Mail::to($newUser->email)->queue(new TraineeActivatedMail($newUser, $resetUrl));
+        }
+
+        return $this->sendResponse($trainee->fresh(['user', 'batch']), 'Trainee approved successfully.');
+    }
+
+    /** Decline a PENDING trainee's application. No account is created. */
+    public function decline(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('decline', $trainee);
+
+        abort_if($trainee->status !== Statuses::PENDING, 422, 'Trainee is not pending approval.');
+
+        $validated = $request->validate([
+            'remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $trainee->update([
+            'status' => Statuses::INACTIVE,
+            'decline_remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        return $this->sendResponse($trainee->fresh(), 'Trainee application declined.');
     }
 
     /**

@@ -26,8 +26,8 @@ import { Switch } from '@/components/Switch';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { tableListInvalidateKeys } from '@/components/table/utils';
+import { useToast } from '@/components/Toast';
 import { useBatchLinkActions } from '@/hooks/use-batch-link-actions';
-import { useToast } from '@/hooks/use-toast';
 import type { StatusKind } from '@/types';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns } from '@/types/modules/batches/batches';
@@ -55,7 +55,7 @@ const STATUS_BADGE: Record<string, StatusKind> = {
     terminated: 'terminated',
 };
 export default function BatchesListPage() {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const queryClient = useQueryClient();
     const modal = useGlobalModal<AppBatches | null>('batch', null);
     const isEdit = modal.data !== null;
@@ -88,10 +88,7 @@ export default function BatchesListPage() {
             tableListInvalidateKeys('batches').forEach((queryKey) =>
                 queryClient.invalidateQueries({ queryKey }),
             );
-            toast({
-                title: isEdit ? 'Batch updated' : 'Batch created',
-                variant: 'success',
-            });
+            showToast(isEdit ? 'Batch updated' : 'Batch created', 'success');
             closeModal();
         },
     });
@@ -105,21 +102,14 @@ export default function BatchesListPage() {
 
         try {
             await batchService.terminate(terminateTarget.id);
-            toast({
-                title: 'Batch terminated',
-                variant: 'info',
-            });
+            showToast('Batch terminated', 'info');
             refreshRef.current?.();
             setTerminateTarget(null);
         } catch (err) {
-            toast({
-                title: 'Terminate failed',
-                description:
-                    err instanceof Error
-                        ? err.message
-                        : 'Failed to terminate batch.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Failed to terminate batch.',
+                'error',
+            );
         } finally {
             setTerminating(false);
         }
@@ -282,6 +272,7 @@ export default function BatchesListPage() {
                 editPermission={PERMISSION}
                 archivePermission={PERMISSION}
                 deletePermission={PERMISSION}
+                deleteConfirmText={(row) => row.batch_code}
                 listHeader={listHeader}
                 renderCard={renderRow}
                 onRefreshRef={(fn) => (refreshRef.current = fn)}

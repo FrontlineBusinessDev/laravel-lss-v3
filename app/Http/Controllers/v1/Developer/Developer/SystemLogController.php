@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\v1\Developer\Developer;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\AppLogger;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Read-only developer view over the audit trail. Reuses BaseController's
@@ -20,13 +21,36 @@ class SystemLogController extends BaseController
 
     protected array $searchable = ['action', 'subject_label', 'description', 'url'];
 
-    protected array $filterable = ['action', 'loggable_type'];
+    protected array $filterable = ['action', 'loggable_type', 'actor_id'];
 
-    // Both filters are exact — an "action=create" filter must not also match
-    // any longer value, and loggable_type is a class string.
-    protected array $exactFilters = ['action', 'loggable_type'];
+    // All exact — an "action=create" filter must not also match any longer
+    // value, loggable_type is a class string, and actor_id is a foreign key.
+    protected array $exactFilters = ['action', 'loggable_type', 'actor_id'];
 
     protected array $sortable = ['id', 'action', 'created_at'];
 
     protected string $sortBy = 'created_at';
+
+    /**
+     * `created_at` is a range filter (created_at_from / created_at_to), which
+     * BaseController::paginationSearch()'s generic filters[] loop doesn't
+     * support — it only does exact/LIKE on a single value per column.
+     */
+    protected function newQuery(): Builder
+    {
+        $query = parent::newQuery();
+
+        $filters = (array) request()->input('filters', []);
+        $from = $filters['created_at_from'] ?? null;
+        $to = $filters['created_at_to'] ?? null;
+
+        if (! empty($from)) {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if (! empty($to)) {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
+        return $query;
+    }
 }

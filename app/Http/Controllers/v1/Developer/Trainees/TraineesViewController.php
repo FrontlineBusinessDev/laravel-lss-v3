@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Trainees;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
@@ -82,6 +82,10 @@ class TraineesViewController extends BaseController
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
                 'learningOutcomes:id,learning_outcomes',
                 'payments',
+                'user:id,first_name,last_name,email,status',
+                'taskRatings:id,batch_id,trainee_id,task_name,rating,comments,evaluator_id,rated_at',
+                'taskRatings.batch:id,batch_code',
+                'taskRatings.evaluator:id,first_name,last_name',
             ])
             ->findOrFail($id);
 

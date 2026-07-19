@@ -13,6 +13,8 @@ import type { StatusKind } from '@/types';
 import type { AcademicIndustry } from '@/types/modules/settings/academic/industry';
 import { columns } from '@/types/modules/settings/academic/industry';
 import AcademicIndustryModal from './AcademicIndustryModal';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
+import SettingsAcademicLayout from '@/layouts/settings/SettingsAcademicLayout';
 
 const PERMISSION = 'manage settings academic';
 const customGRID = 'sm:grid-cols-[1.6fr_2.2fr_1fr_2.5rem]';
@@ -52,37 +54,42 @@ export default function index() {
 
     return (
         <>
-            <div className="float-right">
-                <AddRecordButton
-                    label="Add Industry"
-                    permission={PERMISSION}
-                    onClick={() => {
-                        modal.setData(null);
-                        modal.setOpen(true);
-                    }}
-                />
-            </div>
-            <DataTableCardField<AcademicIndustry>
-                apiUrl="/settings/academic/industry"
-                apiQueryKey="settings-academic/industry"
-                columns={columns}
-                defaultSortBy="first_name"
-                editPermission={PERMISSION}
-                archivePermission={PERMISSION}
-                deletePermission={PERMISSION}
-                listHeader={listHeader}
-                renderCard={renderRow}
-                onEditRow={(row) => {
-                    modal.setData(row);
-                    modal.setOpen(true);
-                }}
-                data-cy="index-data-table-field-6"
-            />
-            <AcademicIndustryModal
-                open={modal.open}
-                onClose={() => modal.setOpen(false)}
-                row={modal.data}
-            />
+            <SettingsPrimaryLayout
+                actionNode={
+                    <AddRecordButton
+                        label="Add Industry"
+                        permission={PERMISSION}
+                        onClick={() => {
+                            modal.setData(null);
+                            modal.setOpen(true);
+                        }}
+                    />
+                }
+            >
+                <SettingsAcademicLayout>
+                    <DataTableCardField<AcademicIndustry>
+                        apiUrl="/settings/academic/industry"
+                        apiQueryKey="settings-academic/industry"
+                        columns={columns}
+                        defaultSortBy="first_name"
+                        editPermission={PERMISSION}
+                        archivePermission={PERMISSION}
+                        deletePermission={PERMISSION}
+                        listHeader={listHeader}
+                        renderCard={renderRow}
+                        onEditRow={(row) => {
+                            modal.setData(row);
+                            modal.setOpen(true);
+                        }}
+                        data-cy="index-data-table-field-6"
+                    />
+                    <AcademicIndustryModal
+                        open={modal.open}
+                        onClose={() => modal.setOpen(false)}
+                        row={modal.data}
+                    />
+                </SettingsAcademicLayout>
+            </SettingsPrimaryLayout>
         </>
     );
 }

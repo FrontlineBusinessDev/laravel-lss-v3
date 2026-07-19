@@ -69,12 +69,53 @@ export interface AppTraineePayment {
     payment_date: string;
     reference_no: string | null;
     notes: string | null;
+    official_receipt_number: string | null;
+    receipt_path: string | null;
+    receipt_original_name: string | null;
+    receipt_mime_type: string | null;
+    receipt_size: number | null;
+    receipt_view_url: string | null;
+    receipt_download_url: string | null;
     created_at: string;
+}
+
+export interface AppTraineeUser {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    status: string;
+}
+
+export interface AppTraineeCertificate {
+    id: number;
+    certificate_no: string;
+    issued_at: string | null;
+    citation: { id: number; name: string } | null;
+}
+
+export interface AppTraineeTaskRatingEvaluator {
+    id: number;
+    first_name: string;
+    last_name: string;
+}
+
+export interface AppTraineeTaskRating {
+    id: number;
+    batch_id: number;
+    task_name: string | null;
+    rating: number | null;
+    comments: string | null;
+    rated_at: string | null;
+    batch: { id: number; batch_code: string } | null;
+    evaluator: AppTraineeTaskRatingEvaluator | null;
 }
 
 export interface TraineeDetail {
     id: number;
     status: string;
+    user_id: number | null;
+    user: AppTraineeUser | null;
     batch_id: number;
     school_id: number;
     avatar_path: string | null;
@@ -117,6 +158,8 @@ export interface TraineeDetail {
     total_paid: string;
     outstanding_balance: string;
     payments: AppTraineePayment[];
+    certificate: AppTraineeCertificate | null;
+    task_ratings: AppTraineeTaskRating[];
     created_at: string;
     updated_at: string;
 }

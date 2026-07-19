@@ -43,7 +43,15 @@ export function LogDetailModal({
 
                 {log.action === 'visit' ? <p className="rounded-md bg-neutral-50 px-3 py-2 text-xs text-neutral-500" data-cy="log-detail-modal-p-page-visit">
                         Page visit — {changes.route ?? 'unnamed route'}
-                    </p> : keys.length > 0 ? <DiffTable keys={keys} before={before} after={after} data-cy="log-detail-modal-diff-table-14" /> : <p className="text-xs text-neutral-500" data-cy="log-detail-modal-p-no-field-changes-recorded">
+                    </p> : log.action === 'error' ? <div className="space-y-2" data-cy="log-detail-modal-div-error">
+                        {changes.exception && <Meta label="Exception" data-cy="log-detail-modal-meta-exception">
+                                {changes.exception}
+                                {changes.file ? ` @ ${changes.file}:${changes.line ?? '?'}` : ''}
+                            </Meta>}
+                        {changes.trace && <pre className="max-h-64 overflow-auto rounded-md bg-neutral-900 px-3 py-2 text-[11px] leading-relaxed whitespace-pre-wrap text-neutral-100" data-cy="log-detail-modal-pre-trace">
+                                {changes.trace}
+                            </pre>}
+                    </div> : keys.length > 0 ? <DiffTable keys={keys} before={before} after={after} data-cy="log-detail-modal-diff-table-14" /> : <p className="text-xs text-neutral-500" data-cy="log-detail-modal-p-no-field-changes-recorded">
                         No field changes recorded.
                     </p>}
 

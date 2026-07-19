@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { AppTraineeLearningOutcome } from '@/types/modules/trainees/trainee-detail';
 
@@ -8,8 +8,11 @@ import type { AppTraineeLearningOutcome } from '@/types/modules/trainees/trainee
  * mirroring use-batch-link-actions.ts: an instant local override keyed by
  * outcome id, reverted if the PATCH fails.
  */
-export function useTraineeOutcomeToggle(traineeId: number) {
-    const { toast } = useToast();
+export function useTraineeOutcomeToggle(
+    traineeId: number,
+    basePath: string = '/trainees',
+) {
+    const { showToast } = useToast();
     const [override, setOverride] = useState<Record<number, 'active' | 'inactive'>>({});
     const [savingId, setSavingId] = useState<number | null>(null);
 
@@ -23,7 +26,7 @@ export function useTraineeOutcomeToggle(traineeId: number) {
 
         try {
             await apiFetchJson(
-                `/trainees/${traineeId}/learning-outcomes/${outcome.id}`,
+                `${basePath}/${traineeId}/learning-outcomes/${outcome.id}`,
                 { method: 'PATCH', body: JSON.stringify({ status: next }) },
             );
         } catch (err) {
@@ -31,12 +34,10 @@ export function useTraineeOutcomeToggle(traineeId: number) {
                 ...m,
                 [outcome.id]: next === 'active' ? 'inactive' : 'active',
             }));
-            toast({
-                title: 'Update failed',
-                description:
-                    err instanceof Error ? err.message : 'Please try again.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Please try again.',
+                'error',
+            );
         } finally {
             setSavingId(null);
         }

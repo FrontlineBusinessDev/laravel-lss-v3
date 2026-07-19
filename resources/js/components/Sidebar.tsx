@@ -1,3 +1,4 @@
+import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
 import { useAuth } from '@/hooks/use-auth';
 import { usePermission } from '@/hooks/use-permissions';
 import { NavLink, useNavigate } from '@/lib/router-compat';
@@ -15,6 +16,7 @@ import {
     Fingerprint,
     GraduationCap,
     IdCard,
+    KeyRound,
     LayoutDashboard,
     ListChecks,
     LogOut,
@@ -126,6 +128,7 @@ const TRAINER_ITEMS: NavigationItem[] = [
     { to: '/trainer/tasks', label: 'Tasks', icon: ListChecks },
     { to: '/trainer/schedule', label: 'Schedule', icon: CalendarDays },
     { to: '/trainer/announcements', label: 'Announcements', icon: Megaphone },
+    { to: '/trainer/leave', label: 'Leave', icon: CalendarOff },
     { to: '/trainer/ratings', label: 'Ratings', icon: Star },
 ];
 
@@ -133,10 +136,12 @@ const TRAINER_ITEMS: NavigationItem[] = [
 const TRAINEE_ITEMS: NavigationItem[] = [
     { to: '/trainee/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/trainee/tasks', label: 'Tasks', icon: ListChecks },
-    { to: '/trainee/announcements', label: 'Announcements', icon: Megaphone },
+    // { to: '/trainee/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/trainee/leave', label: 'Leave', icon: CalendarOff },
-    { to: '/trainee/biometrics', label: 'Biometrics', icon: Fingerprint },
+    // { to: '/trainee/biometrics', label: 'Biometrics', icon: Fingerprint },
     { to: '/trainee/evaluations', label: 'Evaluation', icon: ClipboardList },
+    { to: '/trainee/ratings', label: 'Ratings', icon: Star },
+    { to: '/trainee/payments', label: 'Payments', icon: Banknote },
     { to: '/trainee/my-info', label: 'My Info', icon: IdCard },
 ];
 interface SidebarProps {
@@ -144,6 +149,7 @@ interface SidebarProps {
     onCloseMobile: () => void;
 }
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
+    const { role } = useAuth();
     const { hasRole } = usePermission();
     const navItems = hasRole('trainer')
         ? TRAINER_ITEMS
@@ -152,6 +158,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           : hasRole('developer')
             ? [...NAV_ITEMS, ...DEVELOPER_ITEMS]
             : NAV_ITEMS;
+
     return (
         <>
             {mobileOpen && (
@@ -181,10 +188,10 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                     >
                         <LogoMark size={22} data-cy="sidebar-logo-mark-5" />
                         <span
-                            className="text-[11px] font-bold tracking-wide text-ink"
+                            className="text-[11px] font-bold tracking-wide text-ink uppercase"
                             data-cy="sidebar-span-ls-admin"
                         >
-                            LS ADMIN
+                            LS {role}
                         </span>
                     </div>
                     <div
@@ -239,6 +246,7 @@ function UserMenu() {
     const navigate = useNavigate();
     const { displayName, email, initials, role } = useAuth();
     const [open, setOpen] = useState(false);
+    const [changePasswordOpen, setChangePasswordOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (!open) return;
@@ -282,7 +290,7 @@ function UserMenu() {
                             {email}
                         </p>
                     </div>
-                    <button
+                    {/* <button
                         onClick={() => {
                             setOpen(false);
                             navigate('/settings');
@@ -296,6 +304,21 @@ function UserMenu() {
                             data-cy="sidebar-user-cog-21"
                         />
                         Account settings
+                    </button> */}
+                    <button
+                        onClick={() => {
+                            setOpen(false);
+                            setChangePasswordOpen(true);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+                        data-cy="sidebar-button-change-password"
+                    >
+                        <KeyRound
+                            size={14}
+                            className="shrink-0"
+                            data-cy="sidebar-key-round-22"
+                        />
+                        Change password
                     </button>
                     <button
                         onClick={() => {
@@ -350,6 +373,11 @@ function UserMenu() {
                     data-cy="sidebar-chevrons-up-down-29"
                 />
             </button>
+
+            <ChangePasswordModal
+                open={changePasswordOpen}
+                onClose={() => setChangePasswordOpen(false)}
+            />
         </div>
     );
 }

@@ -1,45 +1,30 @@
+import { taskRatingsService } from '@/api-service-layer/admin/task-ratings';
 import { Button } from '@/components/Button';
-import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
 import { RatingInput } from '@/components/RatingInput';
 import { StatCard } from '@/components/StatCard';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { TaskRating, TaskRatingHistoryEntry } from '@/types';
+import type {
+    TaskRatingEntry,
+    TaskRatingHistoryApiEntry,
+    TaskRatingPerson,
+} from '@/types/modules/ratings/task-rating';
+import type { FieldOption } from '@/types/reusable/fields';
 import { ClipboardList, History, Printer } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RatingSheetPrint } from './RatingSheetPrint';
 
 interface BatchOption {
     id: number;
     batch_code: string;
 }
-interface PersonRef {
-    id: number;
-    first_name: string;
-    last_name: string;
-}
-interface ApiTaskRating {
-    id: number;
-    batch_id: number;
-    task_name: string;
-    trainee_id: number;
-    rating: number;
-    comments: string | null;
-    rated_at: string;
-    trainee: PersonRef | null;
-    evaluator: PersonRef | null;
-}
-interface ApiHistoryEntry {
-    rating: number;
-    comments: string | null;
-    rated_at: string;
-    evaluator: PersonRef | null;
-}
-function personName(p: PersonRef | null): string {
+function personName(p: TaskRatingPerson | null): string {
     return p ? `${p.first_name} ${p.last_name}`.trim() : '—';
 }
-function toTaskRating(r: ApiTaskRating): TaskRating {
+function toTaskRating(r: TaskRatingEntry): TaskRating {
     return {
         id: String(r.id),
         batchNo: '',
@@ -53,7 +38,7 @@ function toTaskRating(r: ApiTaskRating): TaskRating {
         history: [],
     };
 }
-function toHistoryEntry(h: ApiHistoryEntry): TaskRatingHistoryEntry {
+function toHistoryEntry(h: TaskRatingHistoryApiEntry): TaskRatingHistoryEntry {
     return {
         rating: h.rating,
         comments: h.comments ?? '',
@@ -62,13 +47,22 @@ function toHistoryEntry(h: ApiHistoryEntry): TaskRatingHistoryEntry {
     };
 }
 
-export default function TaskRatingPage() {
-    const { toast } = useToast();
-    const [batches, setBatches] = useState<BatchOption[]>([]);
-    const [batchTrainees, setBatchTrainees] = useState<PersonRef[]>([]);
+interface TaskRatingPageProps {
+    /** Batch options source for the picker — trainer pages pass their own
+     * scoped `/trainer/batches/lookup` so the dropdown never lists batches
+     * outside what the backend would actually let them rate. */
+    batchLookupUrl?: string;
+}
+
+export default function TaskRatingPage({
+    batchLookupUrl = '/batches/lookup',
+}: TaskRatingPageProps) {
+    const { showToast } = useToast();
+    const [batchesCache, setBatchesCache] = useState<BatchOption[]>([]);
+    const [batchTrainees, setBatchTrainees] = useState<TaskRatingPerson[]>([]);
     const [taskOptions, setTaskOptions] = useState<string[]>([]);
-    const [ratings, setRatings] = useState<ApiTaskRating[]>([]);
-    const [batchNo, setBatchNo] = useState('');
+    const [ratings, setRatings] = useState<TaskRatingEntry[]>([]);
+    const [batchId, setBatchId] = useState('');
     const [taskName, setTaskName] = useState('');
     const [draftByTrainee, setDraftByTrainee] = useState<
         Record<
@@ -76,21 +70,46 @@ export default function TaskRatingPage() {
             {
                 rating: number;
                 comments: string;
+                description: string;
+                hoursSpent: string;
             }
         >
     >({});
-    const [historyFor, setHistoryFor] = useState<ApiTaskRating | null>(null);
+    const [historyFor, setHistoryFor] = useState<TaskRatingEntry | null>(null);
     const [history, setHistory] = useState<TaskRatingHistoryEntry[]>([]);
 
-    useEffect(() => {
-        apiFetchJson<BatchOption[]>('/batches/lookup?status=active&per_page=50').then((res) =>
-            setBatches(res.data ?? []),
-        );
-    }, []);
+    const loadBatchOptions = useCallback(
+        async (q: string): Promise<FieldOption[]> => {
+            const res = await apiFetchJson<BatchOption[]>(
+                `${batchLookupUrl}?status=active&q=${encodeURIComponent(q)}&per_page=50`,
+            );
+            const data = res.data ?? [];
+            setBatchesCache((prev) => {
+                const merged = [...prev];
+                data.forEach((b) => {
+                    if (!merged.some((m) => m.id === b.id)) merged.push(b);
+                });
+                return merged;
+            });
+            return data.map((b) => ({ value: String(b.id), label: b.batch_code }));
+        },
+        [batchLookupUrl],
+    );
+    const getBatchLabel = useCallback(
+        (v: unknown) =>
+            batchesCache.find((b) => String(b.id) === String(v))?.batch_code ?? '',
+        [batchesCache],
+    );
+    const batchLabel = getBatchLabel(batchId);
 
-    const batchId = useMemo(
-        () => batches.find((b) => b.batch_code === batchNo)?.id,
-        [batches, batchNo],
+    const loadTaskOptions = useCallback(
+        async (q: string): Promise<FieldOption[]> => {
+            const filtered = q
+                ? taskOptions.filter((t) => t.toLowerCase().includes(q.toLowerCase()))
+                : taskOptions;
+            return filtered.map((t) => ({ value: t, label: t }));
+        },
+        [taskOptions],
     );
 
     useEffect(() => {
@@ -99,12 +118,8 @@ export default function TaskRatingPage() {
             setBatchTrainees([]);
             return;
         }
-        apiFetchJson<string[]>(`/ratings/task-rating/task-options?batch_id=${batchId}`).then((res) =>
-            setTaskOptions(res.data ?? []),
-        );
-        apiFetchJson<PersonRef[]>(`/ratings/task-rating/trainees?batch_id=${batchId}`).then((res) =>
-            setBatchTrainees(res.data ?? []),
-        );
+        taskRatingsService.taskOptions(batchId).then(setTaskOptions);
+        taskRatingsService.trainees(batchId).then(setBatchTrainees);
     }, [batchId]);
 
     useEffect(() => {
@@ -112,20 +127,20 @@ export default function TaskRatingPage() {
             setRatings([]);
             return;
         }
-        apiFetchJson<ApiTaskRating[]>(
-            `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
-        ).then((res) => setRatings(res.data ?? []));
+        taskRatingsService.entries(batchId, taskName).then(setRatings);
     }, [batchId, taskName]);
 
     const ratingsForTask = useMemo(() => ratings.map(toTaskRating), [ratings]);
     const average = ratingsForTask.length
         ? ratingsForTask.reduce((sum, r) => sum + r.rating, 0) / ratingsForTask.length
         : 0;
-    function draftFor(traineeId: string, existing?: TaskRating) {
+    function draftFor(traineeId: string, existing?: TaskRatingEntry) {
         return (
             draftByTrainee[traineeId] ?? {
                 rating: existing?.rating ?? 0,
                 comments: existing?.comments ?? '',
+                description: existing?.description ?? '',
+                hoursSpent: existing?.hours_spent ?? '',
             }
         );
     }
@@ -134,8 +149,10 @@ export default function TaskRatingPage() {
         patch: Partial<{
             rating: number;
             comments: string;
+            description: string;
+            hoursSpent: string;
         }>,
-        existing?: TaskRating,
+        existing?: TaskRatingEntry,
     ) {
         setDraftByTrainee((prev) => ({
             ...prev,
@@ -147,40 +164,37 @@ export default function TaskRatingPage() {
     }
     async function saveRating(traineeId: string, traineeName: string) {
         if (!batchId) return;
-        const existing = ratingsForTask.find((r) => r.traineeId === traineeId);
+        const existing = ratings.find((r) => r.trainee_id === Number(traineeId));
         const draft = draftFor(traineeId, existing);
         if (!draft.rating) {
-            toast({ description: 'Enter a rating between 1 and 100 before saving.', variant: 'error' });
+            showToast('Enter a rating between 1 and 100 before saving.', 'error');
             return;
         }
         try {
-            await apiFetchJson('/ratings/task-rating', {
-                method: 'POST',
-                body: JSON.stringify({
-                    batch_id: batchId,
-                    task_name: taskName,
-                    trainee_id: Number(traineeId),
-                    rating: draft.rating,
-                    comments: draft.comments,
-                }),
+            await taskRatingsService.submit({
+                batch_id: batchId,
+                task_name: taskName,
+                trainee_id: Number(traineeId),
+                rating: draft.rating,
+                comments: draft.comments,
+                description: draft.description,
+                hours_spent: draft.hoursSpent || null,
             });
-            const res = await apiFetchJson<ApiTaskRating[]>(
-                `/ratings/task-rating?batch_id=${batchId}&task_name=${encodeURIComponent(taskName)}`,
+            const entries = await taskRatingsService.entries(batchId, taskName);
+            setRatings(entries);
+            showToast(
+                existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
+                'success',
             );
-            setRatings(res.data ?? []);
-            toast({
-                description: existing ? `Rating updated for ${traineeName}.` : `Rating saved for ${traineeName}.`,
-                variant: 'success',
-            });
         } catch {
-            toast({ description: 'Failed to save rating.', variant: 'error' });
+            showToast('Failed to save rating.', 'error');
         }
     }
-    async function openHistory(rating: ApiTaskRating) {
+    async function openHistory(rating: TaskRatingEntry) {
         setHistoryFor(rating);
         try {
-            const res = await apiFetchJson<ApiHistoryEntry[]>(`/ratings/task-rating/${rating.id}/history`);
-            setHistory((res.data ?? []).map(toHistoryEntry));
+            const entries = await taskRatingsService.history(rating.id);
+            setHistory(entries.map(toHistoryEntry));
         } catch {
             setHistory([]);
         }
@@ -223,19 +237,16 @@ export default function TaskRatingPage() {
                     >
                         1. Batch
                     </label>
-                    <Dropdown
-                        options={[
-                            'Select batch',
-                            ...batches.map((b) => b.batch_code),
-                        ]}
-                        value={batchNo}
+                    <AsyncSelectField
+                        value={batchId}
                         placeholder="Select batch"
+                        loadOptions={loadBatchOptions}
+                        getOptionLabel={getBatchLabel}
                         onChange={(v) => {
-                            setBatchNo(v === 'Select batch' ? '' : v);
+                            setBatchId((v as string) ?? '');
                             setTaskName('');
                             setDraftByTrainee({});
                         }}
-                        data-cy="task-rating-page-dropdown-select-batch"
                     />
                 </div>
                 <div className="w-64" data-cy="task-rating-page-div-9">
@@ -245,24 +256,15 @@ export default function TaskRatingPage() {
                     >
                         2. Task / project
                     </label>
-                    <Dropdown
-                        options={
-                            taskOptions.length
-                                ? ['Select task', ...taskOptions]
-                                : ['No tasks for this batch']
-                        }
+                    <AsyncSelectField
                         value={taskName}
                         placeholder="Select task"
+                        disabled={!batchId}
+                        loadOptions={loadTaskOptions}
                         onChange={(v) => {
-                            setTaskName(
-                                v === 'Select task' ||
-                                    v === 'No tasks for this batch'
-                                    ? ''
-                                    : v,
-                            );
+                            setTaskName((v as string) ?? '');
                             setDraftByTrainee({});
                         }}
-                        data-cy="task-rating-page-dropdown-select-task"
                     />
                 </div>
                 {taskName && (
@@ -276,7 +278,7 @@ export default function TaskRatingPage() {
                 )}
             </div>
 
-            {!batchNo && (
+            {!batchId && (
                 <div
                     className="no-print rounded-lg border border-dashed border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500"
                     data-cy="task-rating-page-div-select-a-batch-then-a-task"
@@ -291,7 +293,7 @@ export default function TaskRatingPage() {
                 </div>
             )}
 
-            {batchNo && !taskName && (
+            {batchId && !taskName && (
                 <div
                     className="no-print rounded-lg border border-dashed border-neutral-200 bg-white p-10 text-center text-sm text-neutral-500"
                     data-cy="task-rating-page-div-15"
@@ -303,7 +305,7 @@ export default function TaskRatingPage() {
             )}
 
             {/* Step 3 + 4 — Trainees → Ratings */}
-            {batchNo && taskName && (
+            {batchId && taskName && (
                 <>
                     <div
                         className="no-print mb-3 rounded-lg border border-neutral-200 bg-brand-50 px-4 py-3"
@@ -354,6 +356,18 @@ export default function TaskRatingPage() {
                                         </th>
                                         <th
                                             className="px-4 py-2.5 font-medium"
+                                            data-cy="task-rating-page-th-description-optional"
+                                        >
+                                            Description (optional)
+                                        </th>
+                                        <th
+                                            className="px-4 py-2.5 font-medium"
+                                            data-cy="task-rating-page-th-hours-spent"
+                                        >
+                                            Hours spent
+                                        </th>
+                                        <th
+                                            className="px-4 py-2.5 font-medium"
                                             data-cy="task-rating-page-th-comments-optional"
                                         >
                                             Comments (optional)
@@ -375,7 +389,10 @@ export default function TaskRatingPage() {
                                         const existing = existingApi
                                             ? toTaskRating(existingApi)
                                             : undefined;
-                                        const draft = draftFor(traineeId, existing);
+                                        const draft = draftFor(
+                                            traineeId,
+                                            existingApi,
+                                        );
                                         const name = personName(tr);
                                         return (
                                             <tr
@@ -406,7 +423,7 @@ export default function TaskRatingPage() {
                                                                 {
                                                                     rating: v,
                                                                 },
-                                                                existing,
+                                                                existingApi,
                                                             )
                                                         }
                                                         data-cy="task-rating-page-rating-input-set-draft"
@@ -425,6 +442,58 @@ export default function TaskRatingPage() {
                                                 </td>
                                                 <td
                                                     className="px-4 py-3"
+                                                    data-cy="task-rating-page-td-description"
+                                                >
+                                                    <textarea
+                                                        rows={2}
+                                                        value={
+                                                            draft.description
+                                                        }
+                                                        onChange={(e) =>
+                                                            setDraft(
+                                                                traineeId,
+                                                                {
+                                                                    description:
+                                                                        e.target
+                                                                            .value,
+                                                                },
+                                                                existingApi,
+                                                            )
+                                                        }
+                                                        placeholder="What this task involved..."
+                                                        className="w-full min-w-[180px] resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                                        data-cy="task-rating-page-textarea-description"
+                                                    />
+                                                </td>
+                                                <td
+                                                    className="px-4 py-3"
+                                                    data-cy="task-rating-page-td-hours-spent"
+                                                >
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        step={0.5}
+                                                        value={
+                                                            draft.hoursSpent
+                                                        }
+                                                        onChange={(e) =>
+                                                            setDraft(
+                                                                traineeId,
+                                                                {
+                                                                    hoursSpent:
+                                                                        e.target
+                                                                            .value,
+                                                                },
+                                                                existingApi,
+                                                            )
+                                                        }
+                                                        placeholder="0.0"
+                                                        className="w-20 rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                                        data-cy="task-rating-page-input-hours-spent"
+                                                    />
+                                                </td>
+                                                <td
+                                                    className="px-4 py-3"
                                                     data-cy="task-rating-page-td-36"
                                                 >
                                                     <textarea
@@ -438,7 +507,7 @@ export default function TaskRatingPage() {
                                                                         e.target
                                                                             .value,
                                                                 },
-                                                                existing,
+                                                                existingApi,
                                                             )
                                                         }
                                                         placeholder="Feedback for this trainee on this task..."
@@ -518,7 +587,7 @@ export default function TaskRatingPage() {
                             const existing = existingApi
                                 ? toTaskRating(existingApi)
                                 : undefined;
-                            const draft = draftFor(traineeId, existing);
+                            const draft = draftFor(traineeId, existingApi);
                             const name = personName(tr);
                             return (
                                 <div
@@ -549,7 +618,7 @@ export default function TaskRatingPage() {
                                                     {
                                                         rating: v,
                                                     },
-                                                    existing,
+                                                    existingApi,
                                                 )
                                             }
                                             data-cy="task-rating-page-rating-input-set-draft-2"
@@ -566,6 +635,42 @@ export default function TaskRatingPage() {
                                     </div>
                                     <textarea
                                         rows={2}
+                                        value={draft.description}
+                                        onChange={(e) =>
+                                            setDraft(
+                                                traineeId,
+                                                {
+                                                    description:
+                                                        e.target.value,
+                                                },
+                                                existingApi,
+                                            )
+                                        }
+                                        placeholder="What this task involved..."
+                                        className="mb-2.5 w-full resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                        data-cy="task-rating-page-textarea-description-2"
+                                    />
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        step={0.5}
+                                        value={draft.hoursSpent}
+                                        onChange={(e) =>
+                                            setDraft(
+                                                traineeId,
+                                                {
+                                                    hoursSpent:
+                                                        e.target.value,
+                                                },
+                                                existingApi,
+                                            )
+                                        }
+                                        placeholder="Hours spent"
+                                        className="mb-2.5 w-full rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                                        data-cy="task-rating-page-input-hours-spent-2"
+                                    />
+                                    <textarea
+                                        rows={2}
                                         value={draft.comments}
                                         onChange={(e) =>
                                             setDraft(
@@ -573,7 +678,7 @@ export default function TaskRatingPage() {
                                                 {
                                                     comments: e.target.value,
                                                 },
-                                                existing,
+                                                existingApi,
                                             )
                                         }
                                         placeholder="Feedback for this trainee on this task..."
@@ -641,7 +746,7 @@ export default function TaskRatingPage() {
                             className="mb-1 text-xs text-neutral-500"
                             data-cy="task-rating-page-p-59"
                         >
-                            {historyFor.task_name} · {batchNo}
+                            {historyFor.task_name} · {batchLabel}
                         </p>
                         {history.map((h, i) => (
                             <div
@@ -687,7 +792,7 @@ export default function TaskRatingPage() {
             {/* Print layout */}
             {taskName && (
                 <RatingSheetPrint
-                    batchNo={batchNo}
+                    batchNo={batchLabel}
                     taskName={taskName}
                     ratings={ratingsForTask}
                     average={average}

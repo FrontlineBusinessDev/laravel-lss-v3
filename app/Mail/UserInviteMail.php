@@ -23,11 +23,12 @@ class UserInviteMail extends Mailable
         // Plain ->view() (not ->markdown()) — this is a fully custom, pre-styled
         // HTML table layout, not a markdown-component email, so we don't want
         // Laravel's default markdown theme CSS silently inlined on top of it.
-        // View names map to resources/views/users/invite{,-text}.blade.php.
+        // View names map to resources/views/emails/users/invite{,-text}.blade.php,
+        // which extends the shared resources/views/emails/layouts/base.blade.php.
         return $this
             ->subject('Set up your account')
-            ->view('users.invite')
-            ->text('users.invite-text')
+            ->view('emails.users.invite')
+            ->text('emails.users.invite-text')
             ->with([
                 'user' => $this->user,
                 // User has no singular `role` relation — read the Spatie role name.

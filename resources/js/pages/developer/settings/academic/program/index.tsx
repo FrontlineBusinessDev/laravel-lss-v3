@@ -9,6 +9,8 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
+import SettingsAcademicLayout from '@/layouts/settings/SettingsAcademicLayout';
+import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import type { StatusKind } from '@/types';
 import type { AcademicProgram } from '@/types/modules/settings/academic/program';
 import { columns } from '@/types/modules/settings/academic/program';
@@ -55,37 +57,42 @@ export default function index() {
 
     return (
         <>
-            <div className="float-right">
-                <AddRecordButton
-                    label="Add Program"
-                    permission={PERMISSION}
-                    onClick={() => {
-                        modal.setData(null);
-                        modal.setOpen(true);
-                    }}
-                />
-            </div>
-            <DataTableCardField<AcademicProgram>
-                apiUrl="/settings/academic/program"
-                apiQueryKey="settings-academic/program"
-                columns={columns}
-                defaultSortBy="first_name"
-                editPermission={PERMISSION}
-                archivePermission={PERMISSION}
-                deletePermission={PERMISSION}
-                listHeader={listHeader}
-                renderCard={renderRow}
-                onEditRow={(row) => {
-                    modal.setData(row);
-                    modal.setOpen(true);
-                }}
-                data-cy="index-data-table-field-7"
-            />
-            <AcademicProgramModal
-                open={modal.open}
-                onClose={() => modal.setOpen(false)}
-                row={modal.data}
-            />
+            <SettingsPrimaryLayout
+                actionNode={
+                    <AddRecordButton
+                        label="Add Program"
+                        permission={PERMISSION}
+                        onClick={() => {
+                            modal.setData(null);
+                            modal.setOpen(true);
+                        }}
+                    />
+                }
+            >
+                <SettingsAcademicLayout>
+                    <DataTableCardField<AcademicProgram>
+                        apiUrl="/settings/academic/program"
+                        apiQueryKey="settings-academic/program"
+                        columns={columns}
+                        defaultSortBy="first_name"
+                        editPermission={PERMISSION}
+                        archivePermission={PERMISSION}
+                        deletePermission={PERMISSION}
+                        listHeader={listHeader}
+                        renderCard={renderRow}
+                        onEditRow={(row) => {
+                            modal.setData(row);
+                            modal.setOpen(true);
+                        }}
+                        data-cy="index-data-table-field-7"
+                    />
+                    <AcademicProgramModal
+                        open={modal.open}
+                        onClose={() => modal.setOpen(false)}
+                        row={modal.data}
+                    />
+                </SettingsAcademicLayout>
+            </SettingsPrimaryLayout>
         </>
     );
 }

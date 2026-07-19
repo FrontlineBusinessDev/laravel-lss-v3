@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Developer\Settings;
 
-use App\Http\Controllers\v1\Developer\BaseController;
+use App\Http\Controllers\v1\BaseController;
 use App\Http\Resources\RoleResource;
 use App\Http\Responses\InertiaPageResponse;
 use App\Support\Permissions;

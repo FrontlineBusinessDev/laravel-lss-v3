@@ -1,7 +1,7 @@
 import { groupDiscountService } from '@/api-service-layer/admin/rates';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { GroupDiscount } from '@/types/modules/settings/academic/group-discount';
 import { fields } from '@/types/modules/settings/academic/group-discount';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function GroupDiscountModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -39,12 +39,10 @@ export default function GroupDiscountModal({ open, onClose, row }: Props) {
                 'settings-rates/group-discounts',
             )}
             onSuccess={() =>
-                toast({
-                    title: isEdit
-                        ? 'Group discount updated'
-                        : 'Group discount created',
-                    variant: 'success',
-                })
+                showToast(
+                    isEdit ? 'Group discount updated' : 'Group discount created',
+                    'success',
+                )
             }
         />
     );

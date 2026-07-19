@@ -1,7 +1,7 @@
 import { hoursDiscountService } from '@/api-service-layer/admin/rates';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { HoursDiscount } from '@/types/modules/settings/academic/hours-discount';
 import { fields } from '@/types/modules/settings/academic/hours-discount';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function HoursDiscountModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -39,12 +39,10 @@ export default function HoursDiscountModal({ open, onClose, row }: Props) {
                 'settings-rates/hours-discounts',
             )}
             onSuccess={() =>
-                toast({
-                    title: isEdit
-                        ? 'Hours discount updated'
-                        : 'Hours discount created',
-                    variant: 'success',
-                })
+                showToast(
+                    isEdit ? 'Hours discount updated' : 'Hours discount created',
+                    'success',
+                )
             }
         />
     );

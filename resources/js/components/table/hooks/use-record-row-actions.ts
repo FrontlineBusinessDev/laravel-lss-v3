@@ -8,12 +8,12 @@
 import { useState } from 'react';
 import type { InUseEntry } from '@/components/modal/ConfirmInUseModal';
 import { useAsyncAction } from '@/hooks/use-async-action';
-import type { ToastOptions } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/apiFetch';
 import { parseApiError } from '@/lib/parseApiError';
 import { buildArchiveUrl, buildDeleteUrl, buildRestoreUrl, getRowId } from '../utils';
 
-type Toast = (options: ToastOptions) => unknown;
+type ToastVariant = 'success' | 'error' | 'info';
+type ShowToast = (message: string, variant?: ToastVariant) => void;
 
 interface RowActionMutations {
     restore: (id: string) => Promise<unknown>;
@@ -31,7 +31,7 @@ interface RowActionsConfig<T> {
     inUseCheck?: (row: T, action: string) => Promise<InUseEntry[]>;
     mutations: RowActionMutations;
     invalidateTable: () => void;
-    toast: Toast;
+    showToast: ShowToast;
 }
 
 export function useRecordRowActions<T extends Record<string, unknown>>({
@@ -45,7 +45,7 @@ export function useRecordRowActions<T extends Record<string, unknown>>({
     inUseCheck,
     mutations,
     invalidateTable,
-    toast,
+    showToast,
 }: RowActionsConfig<T>) {
     const [inUseTarget, setInUseTarget] = useState<T | null>(null);
     const [inUseEntries, setInUseEntries] = useState<InUseEntry[]>([]);
@@ -61,14 +61,12 @@ await mutations.restore(String(getRowId(row)));
 }
 
             invalidateTable();
-            toast({ title: 'Restored', variant: 'info' });
+            showToast('Restored', 'info');
         } catch (err) {
-            toast({
-                title: 'Restore failed',
-                description:
-                    err instanceof Error ? err.message : 'Failed to restore.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Failed to restore.',
+                'error',
+            );
         }
     };
     const handleArchive = async (row: T) => {
@@ -80,14 +78,12 @@ await mutations.archive(String(getRowId(row)));
 }
 
             invalidateTable();
-            toast({ title: 'Archived', variant: 'info' });
+            showToast('Archived', 'info');
         } catch (err) {
-            toast({
-                title: 'Archive failed',
-                description:
-                    err instanceof Error ? err.message : 'Failed to archive.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Failed to archive.',
+                'error',
+            );
         }
     };
 
@@ -134,11 +130,7 @@ return;
                     return;
                 }
 
-                toast({
-                    title: 'Delete failed',
-                    description: apiError.message,
-                    variant: 'error',
-                });
+                showToast(apiError.message, 'error');
 
                 return;
             }
@@ -148,15 +140,13 @@ return;
                 buildDeleteUrl(deleteTarget, apiUrl, deleteUrl),
             );
             invalidateTable();
-            toast({ title: 'Deleted', variant: 'info' });
+            showToast('Deleted', 'info');
             setDeleteTarget(null);
         } catch (err) {
-            toast({
-                title: 'Delete failed',
-                description:
-                    err instanceof Error ? err.message : 'Failed to delete.',
-                variant: 'error',
-            });
+            showToast(
+                err instanceof Error ? err.message : 'Failed to delete.',
+                'error',
+            );
         } finally {
             setDeleting(false);
         }

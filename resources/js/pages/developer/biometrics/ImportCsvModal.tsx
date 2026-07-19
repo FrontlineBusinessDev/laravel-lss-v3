@@ -1,15 +1,15 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Download, Upload, FileWarning } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { cn } from '@/lib/utils';
-import { useBatches } from '@/context/BatchesContext';
-import { parseCsv, validateCsvRows, CSV_TEMPLATE, type ParsedRow } from '@/pages/developer/biometrics/biometricsUtils';
-import type { BiometricRecord } from '@/types';
+import { traineeService } from '@/api-service-layer/admin/trainee';
+import { parseCsv, validateCsvRows, CSV_TEMPLATE, type ParsedRow, type CsvTrainee } from '@/pages/developer/biometrics/biometricsUtils';
+import type { BiometricLogRow } from '@/types/modules/biometrics/biometrics';
 interface ImportCsvModalProps {
   open: boolean;
   onClose: () => void;
-  existingRecords: BiometricRecord[];
+  existingRecords: BiometricLogRow[];
   onConfirmImport: (fileName: string, validRows: ParsedRow[], totalRows: number, errorRows: number) => void;
 }
 export function ImportCsvModal({
@@ -18,14 +18,24 @@ export function ImportCsvModal({
   existingRecords,
   onConfirmImport
 }: ImportCsvModalProps) {
-  const {
-    trainees
-  } = useBatches();
+  const [trainees, setTrainees] = useState<CsvTrainee[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState<ParsedRow[] | null>(null);
   const [formatError, setFormatError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    traineeService.getPaginatedFilterSearch({ per_page: 1000 }).then((res) => {
+      setTrainees(
+        res.data.map((t) => ({
+          id: t.id,
+          name: `${t.first_name} ${t.last_name}`,
+          batchCode: t.batch?.batch_code ?? '',
+        })),
+      );
+    });
+  }, [open]);
   function reset() {
     setFileName('');
     setRows(null);
@@ -42,7 +52,8 @@ export function ImportCsvModal({
     reader.onload = () => {
       const text = String(reader.result ?? '');
       const parsed = parseCsv(text);
-      const result = validateCsvRows(parsed, trainees, existingRecords);
+      const existing = existingRecords.map((r) => ({ traineeId: r.trainee_id, date: r.date }));
+      const result = validateCsvRows(parsed, trainees, existing);
       if (result.formatError) {
         setFormatError(result.formatError);
         setRows(null);
@@ -85,7 +96,7 @@ export function ImportCsvModal({
       }} onClick={() => fileInputRef.current?.click()} className={cn('flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors', dragOver ? 'border-brand-400 bg-brand-50' : 'border-neutral-200 hover:border-neutral-300')} data-cy="import-csv-modal-div-3">
             <Upload size={22} className="text-neutral-400" data-cy="import-csv-modal-upload-4" />
             <p className="text-sm font-medium text-ink" data-cy="import-csv-modal-p-click-to-browse-or-drag-a">Click to browse or drag a CSV file here</p>
-            <p className="text-xs text-neutral-400" data-cy="import-csv-modal-p-trainee-name-and-date-columns-are">Trainee Name and Date columns are required.</p>
+            <p className="text-xs text-neutral-400" data-cy="import-csv-modal-p-trainee-name-and-date-columns-are">Trainee Name and Date are required, plus the 4 time-checkpoint columns (Morning Time In, Lunch Out, After Lunch Time In, Day Time Out).</p>
             <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={e => {
           const file = e.target.files?.[0];
           if (file) processFile(file);
@@ -134,16 +145,16 @@ export function ImportCsvModal({
                   <th className="px-3 py-2" data-cy="import-csv-modal-th-row">Row</th>
                   <th className="px-3 py-2" data-cy="import-csv-modal-th-trainee">Trainee</th>
                   <th className="px-3 py-2" data-cy="import-csv-modal-th-date">Date</th>
-                  <th className="px-3 py-2" data-cy="import-csv-modal-th-time-in-out">Time in / out</th>
+                  <th className="px-3 py-2" data-cy="import-csv-modal-th-time-in-out">Checkpoints</th>
                   <th className="px-3 py-2" data-cy="import-csv-modal-th-status">Status</th>
                 </tr>
               </thead>
               <tbody data-cy="import-csv-modal-tbody-39">
                 {rows.map(r => <tr key={r.rowNumber} className={cn('border-t border-neutral-100', r.errors.length > 0 && 'bg-danger-50/40')} data-cy="import-csv-modal-tr-40">
                     <td className="px-3 py-2 font-mono text-neutral-500" data-cy="import-csv-modal-td-41">{r.rowNumber}</td>
-                    <td className="px-3 py-2 text-ink" data-cy="import-csv-modal-td-42">{r.traineeName || '\u2014'}</td>
-                    <td className="px-3 py-2 font-mono text-neutral-600" data-cy="import-csv-modal-td-43">{r.date || '\u2014'}</td>
-                    <td className="px-3 py-2 font-mono text-neutral-600" data-cy="import-csv-modal-td-44">{r.timeIn || '\u2014'} / {r.timeOut || '\u2014'}</td>
+                    <td className="px-3 py-2 text-ink" data-cy="import-csv-modal-td-42">{r.traineeName || '—'}</td>
+                    <td className="px-3 py-2 font-mono text-neutral-600" data-cy="import-csv-modal-td-43">{r.date || '—'}</td>
+                    <td className="px-3 py-2 font-mono text-neutral-600" data-cy="import-csv-modal-td-44">{r.onLeave === 'Yes' ? 'On leave' : [r.morningTimeIn, r.lunchTimeOut, r.afternoonTimeIn, r.dayTimeOut].map(v => v || '—').join(' / ')}</td>
                     <td className="px-3 py-2" data-cy="import-csv-modal-td-45">
                       {r.errors.length === 0 ? <span className="inline-flex items-center gap-1 text-success-700" data-cy="import-csv-modal-span-ok"><CheckCircle2 size={12} data-cy="import-csv-modal-check-circle2-47" /> OK</span> : <span className="inline-flex items-start gap-1 text-danger-700" data-cy="import-csv-modal-span-48">
                           <AlertCircle size={12} className="mt-0.5 shrink-0" data-cy="import-csv-modal-alert-circle-49" />

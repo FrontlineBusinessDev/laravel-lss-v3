@@ -1,7 +1,7 @@
 import { academicProgramService } from '@/api-service-layer/admin/academic';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
 import type { AcademicProgram } from '@/types/modules/settings/academic/program';
 import { fields } from '@/types/modules/settings/academic/program';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function AcademicProgramModal({ open, onClose, row }: Props) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const isEdit = row !== null;
 
     return (
@@ -39,10 +39,7 @@ export default function AcademicProgramModal({ open, onClose, row }: Props) {
                 'settings-academic/program',
             )}
             onSuccess={() =>
-                toast({
-                    title: isEdit ? 'Program updated' : 'Program created',
-                    variant: 'success',
-                })
+                showToast(isEdit ? 'Program updated' : 'Program created', 'success')
             }
         />
     );

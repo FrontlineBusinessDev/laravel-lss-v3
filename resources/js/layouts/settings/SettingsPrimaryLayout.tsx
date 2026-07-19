@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 
 interface LayoutProps {
     children: ReactNode;
+    actionNode?: ReactNode;
 }
 
 const NAV_LINKS = [
@@ -32,27 +33,42 @@ const NAV_LINKS = [
         href: '/settings/rates',
         permission: 'manage settings rates',
     },
+    {
+        id: 'Leave categories',
+        label: 'Leave Categories',
+        href: '/settings/leave-categories',
+        permission: 'manage leave',
+    },
 ] as const;
-export default function SettingsPrimaryLayout({ children }: LayoutProps) {
+
+export default function SettingsPrimaryLayout({
+    children,
+    actionNode,
+}: LayoutProps) {
     const { can } = usePermission(); // Used to permission
     const { url } = usePage(); // Used to automatically highlight the active tab
 
     return (
         <>
             <div data-cy="settings-primary-layout-div-1">
-                <h1
-                    className="text-xl font-semibold text-ink"
-                    data-cy="settings-primary-layout-h1-settings"
-                >
-                    Settings
-                </h1>
-                <p
-                    className="mb-4 text-sm text-neutral-500"
-                    data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"
-                >
-                    Manage user accounts, partner schools, and academic
-                    reference data
-                </p>
+                <div className="mb-4 flex items-center justify-between gap-2">
+                    <div>
+                        <h1
+                            className="text-xl font-semibold text-ink"
+                            data-cy="settings-primary-layout-h1-settings"
+                        >
+                            Settings
+                        </h1>
+                        <p
+                            className="text-sm text-neutral-500"
+                            data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"
+                        >
+                            Manage user accounts, partner schools, and academic
+                            reference data
+                        </p>
+                    </div>
+                    <div>{actionNode}</div>
+                </div>
                 <div
                     className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
                     data-cy="settings-primary-layout-div-4"

@@ -1,12 +1,24 @@
 import { ApiError } from '@/api-service-layer/client';
 import { Avatar } from '@/components/Avatar';
 import { AvatarCropModal } from '@/components/AvatarCropModal';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/Button';
+import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
+import { tableListInvalidateKeys } from '@/components/table/utils';
+import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Camera, Mail, Phone, Trash2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+    Archive,
+    ArchiveRestore,
+    ArrowLeft,
+    Camera,
+    Mail,
+    Phone,
+    Trash2,
+} from 'lucide-react';
 import { ReactNode, useRef, useState, type ChangeEvent } from 'react';
 
 export default function TraineesDetailLayout({
@@ -16,26 +28,75 @@ export default function TraineesDetailLayout({
     trainee: TraineeDetail;
     children: ReactNode;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const { url } = usePage();
+    const queryClient = useQueryClient();
     const path = url.split('?')[0];
     const displayStatus = trainee.status;
+
+    const invalidateTraineesList = () =>
+        tableListInvalidateKeys('trainees').forEach((queryKey) =>
+            queryClient.invalidateQueries({ queryKey }),
+        );
 
     const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
     const [avatarProgress, setAvatarProgress] = useState<number | null>(null);
     const [deletingAvatar, setDeletingAvatar] = useState(false);
     const avatarInputRef = useRef<HTMLInputElement>(null);
+    const [archiving, setArchiving] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const isActive = trainee.status === 'active';
+
+    const toggleArchive = async () => {
+        setArchiving(true);
+        try {
+            await apiFetchJson(
+                `/trainees/${trainee.id}/${isActive ? 'archive' : 'restore'}`,
+                { method: 'PATCH' },
+            );
+            invalidateTraineesList();
+            showToast(
+                isActive ? 'Trainee archived' : 'Trainee restored',
+                'info',
+            );
+            router.reload();
+        } catch (error) {
+            showToast(
+                error instanceof ApiError ? error.message : 'Action failed',
+                'error',
+            );
+        } finally {
+            setArchiving(false);
+        }
+    };
+
+    const confirmDeleteTrainee = async () => {
+        setDeleting(true);
+        try {
+            await apiFetchJson(`/trainees/${trainee.id}`, {
+                method: 'DELETE',
+            });
+            invalidateTraineesList();
+            showToast('Trainee deleted', 'info');
+            router.visit('/trainees');
+        } catch (error) {
+            showToast(
+                error instanceof ApiError ? error.message : 'Delete failed',
+                'error',
+            );
+        } finally {
+            setDeleting(false);
+            setDeleteOpen(false);
+        }
+    };
 
     const pickAvatar = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         e.target.value = '';
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
-            toast({
-                title: 'Image too large',
-                description: 'Please choose an image under 5MB.',
-                variant: 'error',
-            });
+            showToast('Please choose an image under 5MB.', 'error');
             return;
         }
         setAvatarSrc(URL.createObjectURL(file));
@@ -57,16 +118,16 @@ export default function TraineesDetailLayout({
                 body: form,
                 onUploadProgress: setAvatarProgress,
             });
-            toast({ title: 'Profile picture updated', variant: 'success' });
+            showToast('Profile picture updated', 'success');
             closeAvatarModal();
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to upload profile picture',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to upload profile picture',
+                'error',
+            );
             setAvatarProgress(null);
         }
     };
@@ -77,15 +138,15 @@ export default function TraineesDetailLayout({
             await apiFetchJson(`/trainees/${trainee.id}/avatar`, {
                 method: 'DELETE',
             });
-            toast({ title: 'Profile picture removed', variant: 'success' });
+            showToast('Profile picture removed', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to remove profile picture',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to remove profile picture',
+                'error',
+            );
         } finally {
             setDeletingAvatar(false);
         }
@@ -236,6 +297,28 @@ export default function TraineesDetailLayout({
                         </p>
                     </div>
                 </div>
+                <div className="flex flex-wrap gap-2" data-cy="detail-div-actions">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={isActive ? Archive : ArchiveRestore}
+                        disabled={archiving}
+                        onClick={() => void toggleArchive()}
+                        data-cy="detail-button-toggle-archive"
+                    >
+                        {isActive ? 'Archive' : 'Restore'}
+                    </Button>
+                    <Button
+                        variant="danger"
+                        size="sm"
+                        icon={Trash2}
+                        disabled={isActive}
+                        onClick={() => setDeleteOpen(true)}
+                        data-cy="detail-button-set-delete-open"
+                    >
+                        Delete
+                    </Button>
+                </div>
             </div>
 
             <div
@@ -269,6 +352,16 @@ export default function TraineesDetailLayout({
                 uploadProgress={avatarProgress}
                 onClose={closeAvatarModal}
                 onSave={saveAvatar}
+            />
+
+            <ConfirmDeleteModal
+                open={deleteOpen}
+                busy={deleting}
+                label={trainee.name}
+                confirmText={trainee.name}
+                onCancel={() => setDeleteOpen(false)}
+                onConfirm={confirmDeleteTrainee}
+                data-cy="detail-confirm-delete-modal"
             />
         </>
     );

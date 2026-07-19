@@ -3,11 +3,14 @@ import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/FormField';
 import { Modal } from '@/components/Modal';
+import { AttachmentViewerModal } from '@/components/modal/AttachmentViewerModal';
 import { StatCard } from '@/components/StatCard';
 import { BillingOverridePanel } from '@/components/trainees/BillingOverridePanel';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/Toast';
+import { FileUploadField, emptyFileFieldValue } from '@/hooks/use-file-upload-field';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
-import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import type { AppTraineePayment, TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import type { FileFieldValue } from '@/types/reusable/fields';
 import { router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -20,15 +23,21 @@ export default function PaymentDetailsTab({
 }: {
     trainee: TraineeDetail;
 }) {
-    const { toast } = useToast();
+    const { showToast } = useToast();
     const [modalOpen, setModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [viewingReceipt, setViewingReceipt] =
+        useState<AppTraineePayment | null>(null);
     const [form, setForm] = useState({
         amount_paid: '',
         payment_date: new Date().toISOString().slice(0, 10),
         reference_no: '',
         notes: '',
+        official_receipt_number: '',
     });
+    const [receipt, setReceipt] = useState<FileFieldValue>(
+        emptyFileFieldValue,
+    );
 
     const handleRecord = async () => {
         const amount = Number(form.amount_paid);
@@ -38,23 +47,24 @@ export default function PaymentDetailsTab({
             await traineePaymentsService.create(trainee.id, {
                 ...form,
                 amount_paid: amount,
+                receipt: receipt.files[0] ?? null,
             });
-            toast({ title: 'Payment recorded', variant: 'success' });
+            showToast('Payment recorded', 'success');
             setForm({
                 amount_paid: '',
                 payment_date: new Date().toISOString().slice(0, 10),
                 reference_no: '',
                 notes: '',
+                official_receipt_number: '',
             });
+            setReceipt(emptyFileFieldValue);
             setModalOpen(false);
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to record payment',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to record payment',
+                'error',
+            );
         } finally {
             setSaving(false);
         }
@@ -63,15 +73,13 @@ export default function PaymentDetailsTab({
     const deletePayment = async (paymentId: number) => {
         try {
             await traineePaymentsService.destroy(trainee.id, paymentId);
-            toast({ title: 'Payment removed', variant: 'success' });
+            showToast('Payment removed', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            toast({
-                title: 'Failed to remove payment',
-                description:
-                    error instanceof ApiError ? error.message : undefined,
-                variant: 'error',
-            });
+            showToast(
+                error instanceof ApiError ? error.message : 'Failed to remove payment',
+                'error',
+            );
         }
     };
 
@@ -184,6 +192,12 @@ export default function PaymentDetailsTab({
                                         </th>
                                         <th
                                             className="px-3.5 py-2.5 font-medium"
+                                            data-cy="payment-details-tab-th-receipt"
+                                        >
+                                            Receipt
+                                        </th>
+                                        <th
+                                            className="px-3.5 py-2.5 font-medium"
                                             data-cy="payment-details-tab-th-actions"
                                         />
                                     </tr>
@@ -220,6 +234,28 @@ export default function PaymentDetailsTab({
                                                 {p.notes ?? '—'}
                                             </td>
                                             <td
+                                                className="px-3.5 py-2.5 text-neutral-600"
+                                                data-cy="payment-details-tab-td-receipt"
+                                            >
+                                                {p.receipt_view_url ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setViewingReceipt(
+                                                                p,
+                                                            )
+                                                        }
+                                                        className="text-xs font-medium text-brand-600 hover:underline"
+                                                        data-cy="payment-details-tab-button-view-receipt"
+                                                    >
+                                                        {p.official_receipt_number ??
+                                                            'View'}
+                                                    </button>
+                                                ) : (
+                                                    '—'
+                                                )}
+                                            </td>
+                                            <td
                                                 className="px-3.5 py-2.5 text-right"
                                                 data-cy="payment-details-tab-td-27"
                                             >
@@ -238,7 +274,7 @@ export default function PaymentDetailsTab({
                                     {trainee.payments.length === 0 && (
                                         <tr data-cy="payment-details-tab-tr-30">
                                             <td
-                                                colSpan={5}
+                                                colSpan={6}
                                                 className="px-3.5 py-8 text-center text-sm text-neutral-500"
                                                 data-cy="payment-details-tab-td-no-payment-transactions-recorded-yet"
                                             >
@@ -310,6 +346,30 @@ export default function PaymentDetailsTab({
                         }
                         data-cy="payment-details-tab-text-field-notes"
                     />
+                    <TextField
+                        label="Official receipt no."
+                        optional
+                        value={form.official_receipt_number}
+                        onChange={(e) =>
+                            setForm((f) => ({
+                                ...f,
+                                official_receipt_number: e.target.value,
+                            }))
+                        }
+                        placeholder="e.g. OR-00123"
+                        data-cy="payment-details-tab-text-field-or-number"
+                    />
+                    <div className="mb-3.5">
+                        <label className="mb-1.5 block text-xs font-medium text-neutral-600">
+                            Official receipt document
+                        </label>
+                        <FileUploadField
+                            value={receipt}
+                            onChange={setReceipt}
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            maxSizeMB={5}
+                        />
+                    </div>
                     <div
                         className="flex justify-end gap-2 pt-1"
                         data-cy="payment-details-tab-div-36"
@@ -332,6 +392,29 @@ export default function PaymentDetailsTab({
                         </Button>
                     </div>
                 </Modal>
+
+                <AttachmentViewerModal
+                    attachment={
+                        viewingReceipt?.receipt_view_url
+                            ? {
+                                  id: viewingReceipt.id,
+                                  original_name:
+                                      viewingReceipt.receipt_original_name ??
+                                      'Receipt',
+                                  mime_type:
+                                      viewingReceipt.receipt_mime_type ??
+                                      'application/octet-stream',
+                                  file_size:
+                                      viewingReceipt.receipt_size ?? 0,
+                                  view_url: viewingReceipt.receipt_view_url,
+                                  download_url:
+                                      viewingReceipt.receipt_download_url ??
+                                      viewingReceipt.receipt_view_url,
+                              }
+                            : null
+                    }
+                    onClose={() => setViewingReceipt(null)}
+                />
             </div>
         </TraineesDetailLayout>
     );

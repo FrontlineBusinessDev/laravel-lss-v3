@@ -9,13 +9,14 @@ import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { Dropdown } from '../../Dropdown';
-import { StatusFilter } from './StatusFilter';
+import { StatusFilter, StatusFilterTab } from './StatusFilter';
 
 interface CardFilterPanelProps<T> {
     filterCols: ColumnDef<T>[];
     enableStatusFilter: boolean;
     statusScope: string;
     columnFilters: Record<string, string | string[]>;
+    statusFilterOptions?: StatusFilterTab[];
     onStatusChange: (scope: string) => void;
     onColumnFilter: (col: string, value: string | string[]) => void;
 }
@@ -27,6 +28,7 @@ export function CardFilterPanel<T>({
     columnFilters,
     onStatusChange,
     onColumnFilter,
+    statusFilterOptions,
 }: CardFilterPanelProps<T>) {
     return (
         <div className="mt-3 space-y-4 rounded-xl border border-slate-200 p-4">
@@ -38,13 +40,14 @@ export function CardFilterPanel<T>({
                     <StatusFilter
                         value={statusScope}
                         onChange={onStatusChange}
+                        tabs={statusFilterOptions}
                     />
                 </div>
             )}
             {filterCols.length > 0 && (
                 <div
                     // className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4"
-                    className="flex flex-wrap items-center gap-3 [*&>]:w-40"
+                    className="flex flex-wrap items-center gap-3"
                 >
                     {filterCols.map((col, i) => {
                         if (col.type == 'select' && col.typeData) {
@@ -165,7 +168,7 @@ export function CardFilterPanel<T>({
                             const asyncValue = columnFilters[col.key];
 
                             return (
-                                <label key={col.key} className="block">
+                                <label key={col.key} className="block min-w-50">
                                     <span className="mb-1 block text-xs font-medium">
                                         {col.label}
                                     </span>

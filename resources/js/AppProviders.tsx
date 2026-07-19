@@ -4,7 +4,6 @@ import { GlobalModalProvider } from './components/global-modal';
 import { SystemToastProvider } from './components/Toast';
 import { BatchesProvider } from './context/BatchesContext';
 import { NotificationsProvider } from './context/NotificationsContext';
-import { ToastProvider } from './hooks/use-toast';
 
 /**
  * Builds a QueryClient with the same options on the server and the client.
@@ -40,15 +39,13 @@ export function AppProviders({
             // data-cy="app-providers-query-client-provider-1"
         >
             <SystemToastProvider data-cy="app-providers-system-toast-provider-2">
-                <ToastProvider data-cy="app-providers-toast-provider-3">
-                    <NotificationsProvider data-cy="app-providers-notifications-provider-4">
-                        <BatchesProvider data-cy="app-providers-batches-provider-5">
-                            <GlobalModalProvider data-cy="app-providers-batches-provider-6">
-                                {children}
-                            </GlobalModalProvider>
-                        </BatchesProvider>
-                    </NotificationsProvider>
-                </ToastProvider>
+                <NotificationsProvider data-cy="app-providers-notifications-provider-4">
+                    <BatchesProvider data-cy="app-providers-batches-provider-5">
+                        <GlobalModalProvider data-cy="app-providers-batches-provider-6">
+                            {children}
+                        </GlobalModalProvider>
+                    </BatchesProvider>
+                </NotificationsProvider>
             </SystemToastProvider>
         </QueryClientProvider>
     );

@@ -12,16 +12,15 @@
  *   - card view : all table chrome/headers hidden, only children render
  */
 
-import React from 'react';
 import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
 import type { CardActions } from '@/types/reusable/card';
 import type { DataTableProps } from '@/types/reusable/data-table';
+import React from 'react';
 import { ConfirmDeleteModal } from '../modal/ConfirmDeleteModal';
 import FetchingSpinner from '../spinners/FetchingSpinner';
 import { CardFilterPanel } from './components/CardFilterPanel';
 import { DefaultRecordCard } from './components/DefaultRecordCard';
 import { PaginationBar } from './components/Pagination';
-import { StatusFilter } from './components/StatusFilter';
 import { Toolbar } from './components/Toolbar';
 import { ViewToggle } from './components/ViewToggle';
 import { useCardTableController } from './hooks/use-card-table-controller';
@@ -38,6 +37,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
         listHeader,
         enableViewToggle = false,
         children,
+        deleteConfirmText,
     } = props;
 
     const c = useCardTableController<T>(props);
@@ -124,7 +124,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
 
     return (
         <div className="2xl:min-w-7x mx-auto mt-2 w-full">
-            {statusFilterOptions && statusFilterOptions.length > 0 && (
+            {/* {statusFilterOptions && statusFilterOptions.length > 0 && (
                 <div className="mb-4">
                     <StatusFilter
                         value={c.customStatusScope}
@@ -132,7 +132,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                         tabs={statusFilterOptions}
                     />
                 </div>
-            )}
+            )} */}
 
             {enableViewToggle && (
                 <div className="mb-3 flex justify-end">
@@ -165,6 +165,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                         columnFilters={c.columnFilters}
                         onStatusChange={c.handleStatusChange}
                         onColumnFilter={c.handleColumnFilter}
+                        statusFilterOptions={statusFilterOptions}
                     />
                 }
             />
@@ -230,6 +231,11 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                 label={
                     c.deleteTarget
                         ? formatCell(c.deleteTarget[columns[0]?.key])
+                        : undefined
+                }
+                confirmText={
+                    c.deleteTarget
+                        ? deleteConfirmText?.(c.deleteTarget)
                         : undefined
                 }
                 onCancel={() => c.setDeleteTarget(null)}

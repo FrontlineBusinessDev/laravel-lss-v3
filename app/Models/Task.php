@@ -20,6 +20,8 @@ class Task extends Model
         'locked_at' => 'datetime',
         'time_goal' => 'decimal:2',
         'time_spent' => 'decimal:2',
+        'is_running' => 'boolean',
+        'started_at' => 'datetime',
     ];
 
     public function batch(): BelongsTo
