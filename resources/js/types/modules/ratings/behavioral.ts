@@ -8,7 +8,7 @@
 export type BehavioralQuestionType = 'rating' | 'text';
 export type BehavioralQuestionStatus = 'active' | 'inactive';
 
-export interface BehavioralQuestion {
+export interface BehavioralQuestion extends Record<string, unknown> {
     id: number;
     section: string;
     question: string;

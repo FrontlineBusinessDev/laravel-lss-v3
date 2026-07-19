@@ -298,13 +298,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/evaluation', [BehavioralEvaluationController::class, 'store'])->name('evaluation.store');
         });
         Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
-            ->prefix('ratings/behavioral-questions')->name('ratings.behavioral-questions.')->group(function () {
-                Route::get('/lookup', [BehavioralQuestionController::class, 'lookup'])->name('lookup');
-                Route::post('/', [BehavioralQuestionController::class, 'store'])->name('store');
-                Route::post('/{id}', [BehavioralQuestionController::class, 'update'])->name('update');
-                Route::patch('/{id}/archive', [BehavioralQuestionController::class, 'archive'])->name('archive');
-                Route::patch('/{id}/restore', [BehavioralQuestionController::class, 'restore'])->name('restore');
-                Route::delete('/{id}', [BehavioralQuestionController::class, 'destroy'])->name('destroy');
+            ->group(function () {
+                Route::crudModule('ratings/behavioral-questions', BehavioralQuestionController::class, 'ratings.behavioral-questions');
             });
     });
 
