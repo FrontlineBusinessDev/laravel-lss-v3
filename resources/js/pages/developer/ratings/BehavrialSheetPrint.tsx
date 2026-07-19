@@ -1,10 +1,14 @@
 import { Star } from 'lucide-react';
 import { LogoMark } from '@/components/Logo';
-import type { BehavioralQuestion, BehavioralRating } from '@/types';
+import type {
+    BehavioralEvaluation,
+    BehavioralQuestion,
+} from '@/types/modules/ratings/behavioral';
 
 interface BehavioralSheetPrintProps {
     batchNo: string;
-    rating: BehavioralRating;
+    traineeName: string;
+    evaluation: BehavioralEvaluation;
     questions: BehavioralQuestion[];
     average: number;
     generatedAt: string;
@@ -38,10 +42,17 @@ function groupBySection(questions: BehavioralQuestion[]) {
     return Array.from(map.entries());
 }
 
+function evaluatorName(evaluation: BehavioralEvaluation): string {
+    return evaluation.evaluator
+        ? `${evaluation.evaluator.first_name} ${evaluation.evaluator.last_name}`.trim()
+        : '—';
+}
+
 /** Print-only Trainer Evaluation Form: one trainee's completed evaluation, grouped by section. */
 export function BehavioralSheetPrint({
     batchNo,
-    rating,
+    traineeName,
+    evaluation,
     questions,
     average,
     generatedAt,
@@ -81,15 +92,15 @@ export function BehavioralSheetPrint({
                 </div>
                 <div>
                     <span className="font-semibold">Trainee:</span>{' '}
-                    {rating.traineeName}
+                    {traineeName}
                 </div>
                 <div>
                     <span className="font-semibold">Evaluator:</span>{' '}
-                    {rating.evaluator}
+                    {evaluatorName(evaluation)}
                 </div>
                 <div>
                     <span className="font-semibold">Date evaluated:</span>{' '}
-                    {rating.ratedAt}
+                    {evaluation.updated_at?.slice(0, 10)}
                 </div>
             </div>
 
@@ -117,8 +128,8 @@ export function BehavioralSheetPrint({
                                 </thead>
                                 <tbody>
                                     {qs.map((q, i) => {
-                                        const answer = rating.answers.find(
-                                            (a) => a.questionId === q.id,
+                                        const answer = evaluation.answers.find(
+                                            (a) => a.question_id === q.id,
                                         );
                                         return (
                                             <tr key={q.id}>
@@ -143,8 +154,8 @@ export function BehavioralSheetPrint({
                         ) : (
                             <div className="flex flex-col gap-2">
                                 {qs.map((q) => {
-                                    const answer = rating.answers.find(
-                                        (a) => a.questionId === q.id,
+                                    const answer = evaluation.answers.find(
+                                        (a) => a.question_id === q.id,
                                     );
                                     return (
                                         <div key={q.id} className="text-[11px]">
@@ -152,7 +163,7 @@ export function BehavioralSheetPrint({
                                                 {q.question}
                                             </div>
                                             <div className="mt-1 min-h-[32px] rounded border border-ink p-2">
-                                                {answer?.text || '\u2014'}
+                                                {answer?.text_answer || '—'}
                                             </div>
                                         </div>
                                     );
@@ -176,6 +187,17 @@ export function BehavioralSheetPrint({
                         </tr>
                     </tbody>
                 </table>
+            )}
+
+            {evaluation.remarks && (
+                <div className="mt-4 text-[11px]">
+                    <div className="mb-1 font-bold">
+                        Evaluator Comments &amp; Recommendations
+                    </div>
+                    <div className="min-h-[40px] rounded border border-ink p-2">
+                        {evaluation.remarks}
+                    </div>
+                </div>
             )}
 
             <div className="mt-14 grid grid-cols-2 gap-10 text-xs">

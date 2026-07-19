@@ -40,7 +40,8 @@ use App\Http\Controllers\v1\Developer\Seminar\SeminarController;
 use App\Http\Controllers\v1\Developer\Tasks\DailyTaskController;
 use App\Http\Controllers\v1\Developer\Tasks\TasksController;
 use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
-use App\Http\Controllers\v1\Developer\Ratings\RatingController;
+use App\Http\Controllers\v1\Developer\Ratings\BehavioralEvaluationController;
+use App\Http\Controllers\v1\Developer\Ratings\BehavioralQuestionController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeBiometricsController as TraineeDetailBiometricsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
@@ -268,13 +269,17 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    // Ratings module — Task Rating (default, real DB-backed) + Behavioral Rating
-    // (still mock/CSR-only, route added only so it's reachable from the sub-nav tab).
+    // Ratings module — single unified CSR shell hosting Setup/Behavioral
+    // Form/Task Rating as controller-driven local-state tabs (no separate
+    // Inertia routes per tab — see resources/js/pages/developer/ratings/
+    // RatingsWorkspace.tsx). Task Rating is real DB-backed; Behavioral
+    // Rating is now real DB-backed too (app_behavioral_evaluations).
     Route::middleware('permission:' . Permissions::MANAGE_RATINGS)->group(function () {
         Route::prefix('ratings')->name('ratings.')->group(function () {
             Route::get('/', [TaskRatingController::class, 'index'])->name('index');
-            Route::get('/behavioral-rating', [RatingController::class, 'index'])->name('behavioral-rating.index');
         });
+        // Old bookmarked/typed URL for the pre-tab-refactor behavioral page.
+        Route::redirect('/ratings/behavioral-rating', '/ratings');
         Route::prefix('ratings/task-rating')->name('ratings.task-rating.')->group(function () {
             Route::get('/task-options', [TaskRatingController::class, 'taskOptions'])->name('task-options');
             Route::get('/trainees', [TaskRatingController::class, 'trainees'])->name('trainees');
@@ -283,8 +288,23 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/history', [TaskRatingController::class, 'history'])->name('history');
         });
         Route::prefix('ratings/behavioral-rating')->name('ratings.behavioral-rating.')->group(function () {
-            Route::get('/trainees', [RatingController::class, 'trainees'])->name('trainees');
+            Route::get('/trainees', [BehavioralEvaluationController::class, 'trainees'])->name('trainees');
+            Route::get('/questions', [BehavioralEvaluationController::class, 'activeQuestions'])->name('questions');
+            Route::get('/evaluation', [BehavioralEvaluationController::class, 'forTrainee'])->name('evaluation');
+            Route::post('/evaluation', [BehavioralEvaluationController::class, 'store'])->name('evaluation.store');
         });
+        // Behavioral Assessment Setup — Admin only. Nested permission means a
+        // trainer (who holds MANAGE_RATINGS but not this) 403s here while
+        // still reaching the Form/Task Rating routes above.
+        Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
+            ->prefix('ratings/behavioral-questions')->name('ratings.behavioral-questions.')->group(function () {
+                Route::get('/lookup', [BehavioralQuestionController::class, 'lookup'])->name('lookup');
+                Route::post('/', [BehavioralQuestionController::class, 'store'])->name('store');
+                Route::post('/{id}', [BehavioralQuestionController::class, 'update'])->name('update');
+                Route::patch('/{id}/archive', [BehavioralQuestionController::class, 'archive'])->name('archive');
+                Route::patch('/{id}/restore', [BehavioralQuestionController::class, 'restore'])->name('restore');
+                Route::delete('/{id}', [BehavioralQuestionController::class, 'destroy'])->name('destroy');
+            });
     });
 
     Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');

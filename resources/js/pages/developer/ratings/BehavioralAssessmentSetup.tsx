@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Plus,
     Search,
@@ -13,16 +13,14 @@ import { Modal } from '@/components/Modal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { TextAreaField, SelectField } from '@/components/FormField';
 import { useToast } from '@/components/Toast';
-import {
-    behavioralQuestions as initialQuestions,
-    behavioralRatingRecords,
-} from '@/data/mockData';
-import type { BehavioralQuestion, BehavioralSection } from '@/types';
+import { ApiError } from '@/api-service-layer/client';
+import { behavioralQuestionsService } from '@/api-service-layer/admin/behavioral-ratings';
+import type { BehavioralQuestion } from '@/types/modules/ratings/behavioral';
 import { cn } from '@/lib/utils';
 
 type Filter = 'active' | 'archived' | 'all';
 
-const SECTIONS: BehavioralSection[] = [
+const SECTIONS = [
     'I. Work Performance & Discipline',
     'II. Learning Ability & Technical Growth',
     'III. Teamwork & Professional Behavior',
@@ -38,19 +36,19 @@ const TYPE_LABEL: Record<BehavioralQuestion['type'], string> = {
 
 export function BehavioralAssessmentSetup() {
     const { showToast } = useToast();
-    const [questions, setQuestions] =
-        useState<BehavioralQuestion[]>(initialQuestions);
+    const [questions, setQuestions] = useState<BehavioralQuestion[]>([]);
+    const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
     const [filter, setFilter] = useState<Filter>('active');
 
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<BehavioralQuestion | null>(null);
     const [draftText, setDraftText] = useState('');
-    const [draftSection, setDraftSection] = useState<BehavioralSection>(
-        SECTIONS[0],
-    );
+    const [draftSection, setDraftSection] = useState(SECTIONS[0]);
     const [draftType, setDraftType] =
         useState<BehavioralQuestion['type']>('rating');
+    const [draftCritical, setDraftCritical] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const [archiveTarget, setArchiveTarget] =
         useState<BehavioralQuestion | null>(null);
@@ -58,22 +56,31 @@ export function BehavioralAssessmentSetup() {
         null,
     );
 
-    /** A question is "in use" once it has been answered in a submitted evaluation — critical records like this stay archive-only. */
-    const questionInUse = useMemo(() => {
-        const used = new Set<string>();
-        behavioralRatingRecords.forEach((r) =>
-            r.answers.forEach((a) => used.add(a.questionId)),
-        );
-        return used;
+    async function loadQuestions() {
+        setLoading(true);
+        try {
+            const data = await behavioralQuestionsService.list();
+            setQuestions(data);
+        } catch {
+            showToast('Failed to load questions.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        loadQuestions();
     }, []);
 
     const filtered = questions
-        .filter((q) => (filter === 'all' ? true : q.status === filter))
+        .filter((q) =>
+            filter === 'all' ? true : q.status === (filter === 'archived' ? 'inactive' : 'active'),
+        )
         .filter((q) => q.question.toLowerCase().includes(query.toLowerCase()))
         .sort((a, b) => a.order - b.order);
 
     const grouped = useMemo(() => {
-        const map = new Map<BehavioralSection, BehavioralQuestion[]>();
+        const map = new Map<string, BehavioralQuestion[]>();
         SECTIONS.forEach((s) => map.set(s, []));
         filtered.forEach((q) => {
             if (!map.has(q.section)) map.set(q.section, []);
@@ -84,7 +91,7 @@ export function BehavioralAssessmentSetup() {
 
     const activeCount = questions.filter((q) => q.status === 'active').length;
     const archivedCount = questions.filter(
-        (q) => q.status === 'archived',
+        (q) => q.status === 'inactive',
     ).length;
 
     function openAdd() {
@@ -92,6 +99,7 @@ export function BehavioralAssessmentSetup() {
         setDraftText('');
         setDraftSection(SECTIONS[0]);
         setDraftType('rating');
+        setDraftCritical(false);
         setFormOpen(true);
     }
 
@@ -100,76 +108,94 @@ export function BehavioralAssessmentSetup() {
         setDraftText(q.question);
         setDraftSection(q.section);
         setDraftType(q.type);
+        setDraftCritical(q.is_critical);
         setFormOpen(true);
     }
 
-    function saveQuestion() {
+    async function saveQuestion() {
         const text = draftText.trim();
         if (!text) {
             showToast('Enter the question text before saving.', 'error');
             return;
         }
-        if (editing) {
-            setQuestions((prev) =>
-                prev.map((q) =>
-                    q.id === editing.id
-                        ? {
-                              ...q,
-                              question: text,
-                              section: draftSection,
-                              type: draftType,
-                          }
-                        : q,
-                ),
-            );
-            showToast('Question updated.', 'success');
-        } else {
-            const nextOrder = questions.length
-                ? Math.max(...questions.map((q) => q.order)) + 1
-                : 1;
-            const created: BehavioralQuestion = {
-                id: `bq-${Date.now()}`,
-                question: text,
-                section: draftSection,
-                type: draftType,
-                order: nextOrder,
-                status: 'active',
-            };
-            setQuestions((prev) => [...prev, created]);
-            showToast('Question added.', 'success');
+        setSaving(true);
+        try {
+            if (editing) {
+                await behavioralQuestionsService.update(editing.id, {
+                    question: text,
+                    section: draftSection,
+                    type: draftType,
+                    is_critical: draftCritical,
+                });
+                showToast('Question updated.', 'success');
+            } else {
+                const nextOrder = questions.length
+                    ? Math.max(...questions.map((q) => q.order)) + 1
+                    : 1;
+                await behavioralQuestionsService.create({
+                    question: text,
+                    section: draftSection,
+                    type: draftType,
+                    order: nextOrder,
+                    is_critical: draftCritical,
+                });
+                showToast('Question added.', 'success');
+            }
+            setFormOpen(false);
+            await loadQuestions();
+        } catch {
+            showToast('Failed to save question.', 'error');
+        } finally {
+            setSaving(false);
         }
-        setFormOpen(false);
     }
 
-    function confirmArchive() {
+    async function confirmArchive() {
         if (!archiveTarget) return;
         const willArchive = archiveTarget.status === 'active';
-        setQuestions((prev) =>
-            prev.map((q) =>
-                q.id === archiveTarget.id
-                    ? { ...q, status: willArchive ? 'archived' : 'active' }
-                    : q,
-            ),
-        );
-        showToast(
-            willArchive ? 'Question archived.' : 'Question restored.',
-            'success',
-        );
-        setArchiveTarget(null);
+        try {
+            if (willArchive) {
+                await behavioralQuestionsService.archive(archiveTarget.id);
+            } else {
+                await behavioralQuestionsService.restore(archiveTarget.id);
+            }
+            showToast(
+                willArchive ? 'Question archived.' : 'Question restored.',
+                'success',
+            );
+            await loadQuestions();
+        } catch {
+            showToast('Failed to update question.', 'error');
+        } finally {
+            setArchiveTarget(null);
+        }
     }
 
-    function restoreDirect(q: BehavioralQuestion) {
-        setQuestions((prev) =>
-            prev.map((x) => (x.id === q.id ? { ...x, status: 'active' } : x)),
-        );
-        showToast('Question restored.', 'success');
+    async function restoreDirect(q: BehavioralQuestion) {
+        try {
+            await behavioralQuestionsService.restore(q.id);
+            showToast('Question restored.', 'success');
+            await loadQuestions();
+        } catch {
+            showToast('Failed to restore question.', 'error');
+        }
     }
 
-    function confirmDelete() {
+    async function confirmDelete() {
         if (!deleteTarget) return;
-        setQuestions((prev) => prev.filter((q) => q.id !== deleteTarget.id));
-        showToast('Question permanently deleted.', 'success');
-        setDeleteTarget(null);
+        try {
+            await behavioralQuestionsService.delete(deleteTarget.id);
+            showToast('Question permanently deleted.', 'success');
+            await loadQuestions();
+        } catch (err) {
+            const message =
+                err instanceof ApiError
+                    ? err.message
+                    : 'Failed to delete question.';
+            showToast(message, 'error');
+        } finally {
+            setDeleteTarget(null);
+        }
     }
 
     return (
@@ -223,19 +249,22 @@ export function BehavioralAssessmentSetup() {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-                {grouped.map(([section, qs]) => (
-                    <div
-                        key={section}
-                        className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
-                    >
-                        <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-2.5 text-xs font-semibold text-neutral-600">
-                            {section}
-                        </div>
-                        <div className="divide-y divide-neutral-100">
-                            {qs.map((q, i) => {
-                                const inUse = questionInUse.has(q.id);
-                                return (
+            {loading ? (
+                <div className="rounded-lg border border-neutral-200 bg-white px-4 py-10 text-center text-xs text-neutral-400">
+                    Loading questions...
+                </div>
+            ) : (
+                <div className="flex flex-col gap-4">
+                    {grouped.map(([section, qs]) => (
+                        <div
+                            key={section}
+                            className="overflow-hidden rounded-lg border border-neutral-200 bg-white"
+                        >
+                            <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-2.5 text-xs font-semibold text-neutral-600">
+                                {section}
+                            </div>
+                            <div className="divide-y divide-neutral-100">
+                                {qs.map((q, i) => (
                                     <div
                                         key={q.id}
                                         className="flex items-center justify-between gap-3 px-4 py-3"
@@ -248,7 +277,7 @@ export function BehavioralAssessmentSetup() {
                                                 <span
                                                     className={cn(
                                                         'text-sm',
-                                                        q.status === 'archived'
+                                                        q.status === 'inactive'
                                                             ? 'text-neutral-400'
                                                             : 'text-ink',
                                                     )}
@@ -265,15 +294,16 @@ export function BehavioralAssessmentSetup() {
                                                 >
                                                     {TYPE_LABEL[q.type]}
                                                 </span>
-                                                {q.status === 'archived' && (
+                                                {q.status === 'inactive' && (
                                                     <span className="ml-2 inline-flex items-center rounded-pill bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-500">
                                                         Archived
                                                     </span>
                                                 )}
-                                                {inUse && (
+                                                {q.is_critical && (
                                                     <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-neutral-400">
-                                                        <Lock size={11} /> Used
-                                                        in submitted evaluations
+                                                        <Lock size={11} />{' '}
+                                                        Critical — cannot be
+                                                        deleted
                                                     </span>
                                                 )}
                                             </div>
@@ -303,19 +333,26 @@ export function BehavioralAssessmentSetup() {
                                                     }
                                                     className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-50"
                                                 >
-                                                    <ArchiveRestore size={13} />{' '}
+                                                    <ArchiveRestore
+                                                        size={13}
+                                                    />{' '}
                                                     Restore
                                                 </button>
                                             )}
                                             <button
                                                 onClick={() =>
-                                                    !inUse && setDeleteTarget(q)
+                                                    q.status === 'inactive' &&
+                                                    setDeleteTarget(q)
                                                 }
-                                                disabled={inUse}
+                                                disabled={
+                                                    q.status !== 'inactive'
+                                                }
                                                 title={
-                                                    inUse
-                                                        ? 'Cannot delete — used in submitted evaluations. Archive instead.'
-                                                        : 'Delete permanently'
+                                                    q.status !== 'inactive'
+                                                        ? 'Archive before deleting.'
+                                                        : q.is_critical
+                                                          ? 'Critical questions cannot be deleted.'
+                                                          : 'Delete permanently'
                                                 }
                                                 className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-danger-600 transition-colors hover:bg-danger-50 disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:bg-transparent"
                                             >
@@ -323,19 +360,19 @@ export function BehavioralAssessmentSetup() {
                                             </button>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
-                {grouped.length === 0 && (
-                    <div className="rounded-lg border border-neutral-200 bg-white px-4 py-10 text-center text-xs text-neutral-400">
-                        {query
-                            ? 'No questions match your search.'
-                            : 'No questions in this view yet.'}
-                    </div>
-                )}
-            </div>
+                    ))}
+                    {grouped.length === 0 && (
+                        <div className="rounded-lg border border-neutral-200 bg-white px-4 py-10 text-center text-xs text-neutral-400">
+                            {query
+                                ? 'No questions match your search.'
+                                : 'No questions in this view yet.'}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Add / edit question */}
             <Modal
@@ -348,9 +385,7 @@ export function BehavioralAssessmentSetup() {
                     label="Section"
                     options={SECTIONS}
                     value={draftSection}
-                    onChange={(e) =>
-                        setDraftSection(e.target.value as BehavioralSection)
-                    }
+                    onChange={(e) => setDraftSection(e.target.value)}
                 />
                 <SelectField
                     label="Response type"
@@ -369,16 +404,21 @@ export function BehavioralAssessmentSetup() {
                     placeholder="e.g. The trainee follows workplace policies, procedures, and instructions."
                     rows={3}
                 />
-                <p className="-mt-2 mb-4 text-xs text-neutral-400">
-                    {draftType === 'rating'
-                        ? "Rated on the standard 1–5 scale during the trainee's evaluation."
-                        : "Collected as a written response during the trainee's evaluation."}
-                </p>
+                <label className="mb-4 flex items-center gap-2 text-sm text-ink">
+                    <input
+                        type="checkbox"
+                        checked={draftCritical}
+                        onChange={(e) => setDraftCritical(e.target.checked)}
+                        className="h-4 w-4 rounded border-neutral-300"
+                    />
+                    Critical question (can never be permanently deleted)
+                </label>
                 <div className="flex gap-2">
                     <Button
                         variant="secondary"
                         className="flex-1"
                         onClick={() => setFormOpen(false)}
+                        disabled={saving}
                     >
                         Cancel
                     </Button>
@@ -386,6 +426,7 @@ export function BehavioralAssessmentSetup() {
                         variant="primary"
                         className="flex-1"
                         onClick={saveQuestion}
+                        disabled={saving}
                     >
                         {editing ? 'Save changes' : 'Add question'}
                     </Button>
@@ -418,7 +459,11 @@ export function BehavioralAssessmentSetup() {
                 onClose={() => setDeleteTarget(null)}
                 onConfirm={confirmDelete}
                 title="Delete question permanently?"
-                description="This cannot be undone. Since this question hasn't been used in any submitted evaluation, it can be safely deleted. If you may need it again, archive it instead."
+                description={
+                    deleteTarget?.is_critical
+                        ? 'This question is marked critical and cannot be permanently deleted. Keep it archived instead.'
+                        : "This cannot be undone. If it's still referenced by a submitted evaluation, deletion will be blocked — archive it instead."
+                }
                 confirmLabel="Delete permanently"
                 tone="danger"
             />

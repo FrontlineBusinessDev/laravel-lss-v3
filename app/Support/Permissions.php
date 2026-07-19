@@ -27,6 +27,7 @@ class Permissions
     const MANAGE_BIOMETRICS = 'manage biometrics';
     const MANAGE_TASKS = 'manage tasks';
     const MANAGE_RATINGS = 'manage ratings';
+    const MANAGE_BEHAVIORAL_QUESTIONS = 'manage behavioral questions';
     const MANAGE_EVALUATION = 'manage evaluation';
     const MANAGE_PAYMENTS = 'manage payments';
     const MANAGE_SCHEDULE = 'manage schedule';
@@ -70,6 +71,7 @@ class Permissions
                 self::MANAGE_BIOMETRICS,
                 self::MANAGE_TASKS,
                 self::MANAGE_RATINGS,
+                self::MANAGE_BEHAVIORAL_QUESTIONS,
                 self::MANAGE_EVALUATION,
                 self::MANAGE_PAYMENTS,
                 self::MANAGE_SCHEDULE,
