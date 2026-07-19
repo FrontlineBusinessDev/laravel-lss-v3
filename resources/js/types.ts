@@ -281,7 +281,7 @@ export interface CalendarEvent {
     id: string;
     date: string; // YYYY-MM-DD
     title: string;
-    type: 'batch' | 'evaluation' | 'holiday' | 'meeting';
+    type: 'batch' | 'evaluation' | 'holiday' | 'meeting' | 'leave' | 'task';
 }
 
 export interface PartnerSchool {

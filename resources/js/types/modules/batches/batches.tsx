@@ -14,6 +14,7 @@ export interface AppBatches extends Record<string, unknown> {
     // app_batches migration column). Never edited from the client.
     public_registration_url_id: string;
     date_started: string;
+    projected_end_date: string | null;
     setup: 'f2f' | 'online';
     academic_industry_id: number;
     academic_level_id: number;
@@ -87,6 +88,7 @@ export const columns: ColumnDef<AppBatches>[] = [
         loadOptions: staticOptions(STATUS_OPTIONS),
     },
     { key: 'date_started', label: 'Date Started' },
+    { key: 'projected_end_date', label: 'Projected End' },
     { key: 'created_at', label: 'Created' },
 ];
 
@@ -142,6 +144,12 @@ export const fields: FieldDef<AppBatches>[] = [
         label: 'Start Date',
         type: 'date',
         required: true,
+        colSpan: 2,
+    },
+    {
+        key: 'projected_end_date',
+        label: 'Projected End Date',
+        type: 'date',
         colSpan: 2,
     },
 ];

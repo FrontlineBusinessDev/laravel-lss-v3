@@ -149,6 +149,7 @@ interface SidebarProps {
     onCloseMobile: () => void;
 }
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
+    const { role } = useAuth();
     const { hasRole } = usePermission();
     const navItems = hasRole('trainer')
         ? TRAINER_ITEMS
@@ -157,6 +158,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           : hasRole('developer')
             ? [...NAV_ITEMS, ...DEVELOPER_ITEMS]
             : NAV_ITEMS;
+
     return (
         <>
             {mobileOpen && (
@@ -186,10 +188,10 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                     >
                         <LogoMark size={22} data-cy="sidebar-logo-mark-5" />
                         <span
-                            className="text-[11px] font-bold tracking-wide text-ink"
+                            className="text-[11px] font-bold tracking-wide text-ink uppercase"
                             data-cy="sidebar-span-ls-admin"
                         >
-                            LS ADMIN
+                            LS {role}
                         </span>
                     </div>
                     <div

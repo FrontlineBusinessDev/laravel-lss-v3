@@ -30,6 +30,7 @@ type Values = {
     academic_industry_id: string | number;
     academic_level_id: string | number;
     date_started: string;
+    projected_end_date: string;
     is_public_url_enable: boolean;
 };
 
@@ -90,6 +91,9 @@ export function CreateBatchModal({
         academic_level_id: batch?.academic_level_id ?? '',
         date_started: batch?.date_started
             ? String(batch.date_started).slice(0, 10)
+            : '',
+        projected_end_date: batch?.projected_end_date
+            ? String(batch.projected_end_date).slice(0, 10)
             : '',
         is_public_url_enable: batch?.is_public_url_enable ?? false,
     }));
@@ -258,6 +262,22 @@ export function CreateBatchModal({
                         onChange={(e) => set('date_started', e.target.value)}
                         className={inputCls}
                         data-cy="create-batch-modal-input-date"
+                    />
+                </Field>
+
+                <Field
+                    label="Projected end date"
+                    error={errors.projected_end_date}
+                    data-cy="create-batch-modal-field-projected-end-date"
+                >
+                    <input
+                        type="date"
+                        value={values.projected_end_date}
+                        onChange={(e) =>
+                            set('projected_end_date', e.target.value)
+                        }
+                        className={inputCls}
+                        data-cy="create-batch-modal-input-projected-end-date"
                     />
                 </Field>
 

@@ -20,6 +20,7 @@ class Batches extends Model
         'public_registration_url_id',
         'is_public_url_enable',
         'date_started',
+        'projected_end_date',
         'setup',
         'academic_industry_id',
         'academic_level_id',
@@ -28,6 +29,7 @@ class Batches extends Model
 
     protected $casts = [
         'date_started' => 'date',
+        'projected_end_date' => 'date',
         'is_public_url_enable' => 'boolean',
     ];
 

@@ -42,19 +42,7 @@ class AnnouncementsController extends BaseController
 
     protected function newQuery(): Builder
     {
-        $batchIds = $this->assignedBatchIds();
-        $userId = auth()->id();
-
-        return parent::newQuery()->where(function (Builder $query) use ($batchIds, $userId) {
-            $query->where('created_by_id', $userId)
-                ->orWhere('audience_type', 'all')
-                ->orWhere(function (Builder $q) use ($batchIds) {
-                    $q->where('audience_type', 'batch')->whereIn('audience_batch_id', $batchIds);
-                })
-                ->orWhere(function (Builder $q) {
-                    $q->where('audience_type', 'role')->where('audience', 'trainer');
-                });
-        });
+        return Announcement::visibleToTrainer(auth()->id(), $this->assignedBatchIds());
     }
 
     protected function storeRules(): array

@@ -326,6 +326,16 @@ Route::middleware('auth')->group(function () {
     // surface separate while the real trainer experience is built out).
     Route::middleware('role:trainer')->prefix('trainer')->name('trainer.')->group(function () {
         Route::get('/dashboard', [TrainerDashboardController::class, 'index'])->name('dashboard');
+        // Dashboard widgets self-fetch client-side (see
+        // resources/js/api-service-layer/trainer/dashboard.ts) rather than
+        // via Inertia props — each endpoint is batch-scoped, JSON-only.
+        Route::get('/dashboard/metrics', [TrainerDashboardController::class, 'metrics'])->name('dashboard.metrics');
+        Route::get('/dashboard/upcoming-ends', [TrainerDashboardController::class, 'upcomingEnds'])->name('dashboard.upcoming-ends');
+        Route::get('/dashboard/calendar-events', [TrainerDashboardController::class, 'calendarEvents'])->name('dashboard.calendar-events');
+        Route::get('/dashboard/on-leave', [TrainerDashboardController::class, 'onLeave'])->name('dashboard.on-leave');
+        Route::get('/dashboard/ongoing-tasks', [TrainerDashboardController::class, 'ongoingTasks'])->name('dashboard.ongoing-tasks');
+        Route::get('/dashboard/announcements', [TrainerDashboardController::class, 'announcements'])->name('dashboard.announcements');
+        Route::get('/dashboard/document-compliance', [TrainerDashboardController::class, 'documentCompliance'])->name('dashboard.document-compliance');
         // Read-only, batch-scoped (TrainerBatchesController::newQuery() /
         // BatchViewController::assertBatchAssigned()) — no store/update/archive/
         // destroy for this role.
