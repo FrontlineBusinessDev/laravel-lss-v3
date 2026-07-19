@@ -5,18 +5,16 @@ import { useNotifications } from '@/context/NotificationsContext';
 /**
  * FYI-only admin widget for new public trainee registrations. "Pending" =
  * unread `registration.submitted` notifications — no separate approval
- * workflow/status on Trainees (see DashboardController::index()). Sourced
- * from the already-polled NotificationsContext, not a second data fetch.
+ * workflow/status on Trainees. Sourced entirely from the already-polled
+ * NotificationsContext, not a second data fetch — no Inertia prop needed.
  */
-export function PendingRegistrationsWidget({
-    pendingCount,
-}: {
-    pendingCount: number;
-}) {
+export function PendingRegistrationsWidget() {
     const { notifications } = useNotifications();
-    const recent = notifications
-        .filter((n) => n.type === 'registration.submitted' && !n.read)
-        .slice(0, 5);
+    const pending = notifications.filter(
+        (n) => n.type === 'registration.submitted' && !n.read,
+    );
+    const pendingCount = pending.length;
+    const recent = pending.slice(0, 5);
 
     return (
         <div className="rounded-lg border border-neutral-200 bg-white p-4">

@@ -161,6 +161,19 @@ Route::prefix('settings')->name('settings.')->group(function () {
  */
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard widgets self-fetch client-side (see
+    // resources/js/api-service-layer/admin/dashboard.ts) rather than via
+    // Inertia props — unscoped versions of the trainer dashboard's endpoints.
+    Route::get('/dashboard/metrics', [DashboardController::class, 'metrics'])->name('dashboard.metrics');
+    Route::get('/dashboard/upcoming-ends', [DashboardController::class, 'upcomingEnds'])->name('dashboard.upcoming-ends');
+    Route::get('/dashboard/calendar-events', [DashboardController::class, 'calendarEvents'])->name('dashboard.calendar-events');
+    Route::get('/dashboard/on-leave', [DashboardController::class, 'onLeave'])->name('dashboard.on-leave');
+    Route::get('/dashboard/ongoing-tasks', [DashboardController::class, 'ongoingTasks'])->name('dashboard.ongoing-tasks');
+    Route::get('/dashboard/announcements', [DashboardController::class, 'announcements'])->name('dashboard.announcements');
+    Route::get('/dashboard/document-compliance', [DashboardController::class, 'documentCompliance'])->name('dashboard.document-compliance');
+    Route::get('/dashboard/trainee-growth', [DashboardController::class, 'traineeGrowth'])->name('dashboard.trainee-growth');
+    Route::get('/dashboard/status-breakdown', [DashboardController::class, 'traineeStatusBreakdown'])->name('dashboard.status-breakdown');
+    Route::get('/dashboard/recent-batches', [DashboardController::class, 'recentBatches'])->name('dashboard.recent-batches');
     // Self-service change password (avatar menu, any authenticated user).
     Route::put('/user/password', [ChangePasswordController::class, 'update'])->name('user.password.update');
     // Polled in-app notification feed (TopBar/NotificationBell) — own rows only.
