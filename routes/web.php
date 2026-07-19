@@ -41,6 +41,7 @@ use App\Http\Controllers\v1\Developer\Tasks\DailyTaskController;
 use App\Http\Controllers\v1\Developer\Tasks\TasksController;
 use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
 use App\Http\Controllers\v1\Developer\Ratings\RatingController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineeBiometricsController as TraineeDetailBiometricsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
@@ -209,6 +210,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');
+    Route::get('/trainees/{id}/biometrics-data', [TraineeDetailBiometricsController::class, 'records'])->name('trainees.biometrics.data');
     // Announcements CSR shell + JSON API both come from AnnoucementController
     // via the crudModule() registration further down (keeps a single source
     // of truth for the route name `announcements.index`).
@@ -226,6 +228,11 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [LeaveRequestController::class, 'destroy'])->name('destroy');
     });
     Route::get('/biometrics', [BiometricsController::class, 'index'])->name('biometrics.index');
+    Route::get('/biometrics/records', [BiometricsController::class, 'records'])->name('biometrics.records');
+    Route::get('/biometrics/imports', [BiometricsController::class, 'imports'])->name('biometrics.imports');
+    Route::post('/biometrics/import', [BiometricsController::class, 'import'])->name('biometrics.import');
+    Route::patch('/biometrics/records/{id}', [BiometricsController::class, 'updateRecord'])->name('biometrics.records.update');
+    Route::delete('/biometrics/records/{id}', [BiometricsController::class, 'deleteRecord'])->name('biometrics.records.destroy');
 
     // Tasks module — Task Management (default) + Daily Task Sheet, real DB-backed.
     Route::middleware('permission:' . Permissions::MANAGE_TASKS)->group(function () {

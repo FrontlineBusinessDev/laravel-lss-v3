@@ -13,8 +13,6 @@ import type {
   CalendarEvent,
   DocumentKey,
   TraineeDocument,
-  BiometricRecord,
-  BiometricImportBatch,
   TaskRecord,
   Seminar,
   SeminarParticipant,
@@ -457,45 +455,6 @@ export const traineesPerYear: { year: string; count: number }[] = [
   { year: '2024', count: 264 },
   { year: '2025', count: 301 },
   { year: '2026', count: 193 },
-]
-
-export const biometricRecords: BiometricRecord[] = [
-  { id: 'bio1', traineeId: 't1', date: '2026-06-29', timeIn: '08:02', timeOut: '17:05', onLeave: false, importId: 'imp1' },
-  { id: 'bio2', traineeId: 't1', date: '2026-06-30', timeIn: '07:58', timeOut: '17:00', onLeave: false, importId: 'imp1' },
-  { id: 'bio3', traineeId: 't1', date: '2026-07-01', timeIn: '08:10', onLeave: false, importId: 'imp2' },
-  { id: 'bio4', traineeId: 't2', date: '2026-06-29', onLeave: true, remarks: 'Sick Leave', importId: 'imp1' },
-  { id: 'bio5', traineeId: 't2', date: '2026-06-30', timeIn: '08:00', timeOut: '17:00', onLeave: false, importId: 'imp1' },
-  { id: 'bio6', traineeId: 't5', date: '2026-06-29', timeIn: '08:15', timeOut: '17:10', onLeave: false, importId: 'imp1' },
-  { id: 'bio7', traineeId: 't5', date: '2026-06-30', timeIn: '08:05', timeOut: '17:00', onLeave: false, importId: 'imp1' },
-  { id: 'bio8', traineeId: 't6', date: '2026-06-29', timeIn: '08:00', timeOut: '16:55', onLeave: false, importId: 'imp1' },
-  { id: 'bio9', traineeId: 't6', date: '2026-06-30', onLeave: false, remarks: 'Missing time out — forgot to log out', importId: 'imp1' },
-  { id: 'bio10', traineeId: 't8', date: '2026-07-01', timeIn: '08:07', timeOut: '17:02', onLeave: false, importId: 'imp2' },
-]
-
-/**
- * Training hours are always derived from the recorded time in/out rather than
- * stored, so an edited punch can never drift out of sync with its total.
- * On-leave days generate no hours per spec, regardless of any stray punches.
- */
-export function computeHoursRendered(record: BiometricRecord): number {
-  if (record.onLeave) return 0
-  if (!record.timeIn || !record.timeOut) return 0
-  const [inH, inM] = record.timeIn.split(':').map(Number)
-  const [outH, outM] = record.timeOut.split(':').map(Number)
-  if ([inH, inM, outH, outM].some((n) => Number.isNaN(n))) return 0
-  const minutes = outH * 60 + outM - (inH * 60 + inM)
-  if (minutes <= 0) return 0
-  return Math.round((minutes / 60) * 100) / 100
-}
-
-/** A record needs review when it isn't an approved leave day but is missing a time in or time out. */
-export function isRecordFlagged(record: BiometricRecord): boolean {
-  return !record.onLeave && (!record.timeIn || !record.timeOut)
-}
-
-export const biometricImports: BiometricImportBatch[] = [
-  { id: 'imp1', fileName: 'biometrics_2026-06-29_to_06-30.csv', importedBy: 'Thea Ramirez', importedAt: '2026-06-30', totalRows: 4, successCount: 4, errorCount: 0, status: 'success' },
-  { id: 'imp2', fileName: 'biometrics_2026-07-01.csv', importedBy: 'Thea Ramirez', importedAt: '2026-07-01', totalRows: 2, successCount: 1, errorCount: 1, status: 'partial' },
 ]
 
 export const taskRecords: TaskRecord[] = [

@@ -327,31 +327,6 @@ export interface LearningOutcome {
     status: 'active' | 'archived';
 }
 
-export interface BiometricRecord {
-    id: string;
-    traineeId: string;
-    date: string; // YYYY-MM-DD
-    timeIn?: string;
-    timeOut?: string;
-    onLeave: boolean;
-    remarks?: string;
-    importId?: string; // which import batch produced this row, if any
-}
-
-export type ImportStatus = 'success' | 'partial' | 'failed';
-
-/** A single CSV import event, kept for the audit/history log. */
-export interface BiometricImportBatch {
-    id: string;
-    fileName: string;
-    importedBy: string;
-    importedAt: string; // ISO date
-    totalRows: number;
-    successCount: number;
-    errorCount: number;
-    status: ImportStatus;
-}
-
 export interface TaskRecord {
     id: string;
     batchNo: string;

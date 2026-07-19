@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Upload,
     Printer,
@@ -16,26 +16,17 @@ import { Modal } from '@/components/Modal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { TooltipIconButton } from '@/components/TooltipIconButton';
 import { useToast } from '@/components/Toast';
-import {
-    biometricRecords as initialRecords,
-    biometricImports as initialImports,
-    trainees,
-    batches,
-    currentUser,
-    computeHoursRendered,
-    isRecordFlagged,
-    TODAY,
-} from '@/data/mockData';
+import { biometricsService } from '@/api-service-layer/admin/biometrics';
+import { batchService } from '@/api-service-layer/admin/batch';
 import type {
-    BiometricRecord,
-    BiometricImportBatch,
-    ImportStatus,
-    Trainee,
-} from '@/types';
-import { cn, toDateInputValue } from '@/lib/utils';
+    BiometricImportSummary,
+    BiometricLogRow,
+} from '@/types/modules/biometrics/biometrics';
+import { cn } from '@/lib/utils';
 import {
     missingPunchLabel,
     summarizeAttendance,
+    toImportRow,
     type ParsedRow,
 } from '@/pages/developer/biometrics/biometricsUtils';
 import { ImportCsvModal } from '@/pages/developer/biometrics/ImportCsvModal';
@@ -46,250 +37,206 @@ import {
 import { BiometricsPrint } from '@/pages/developer/biometrics/BiometricsPrint';
 
 const TABS = ['Daily records', 'Trainee summary'] as const;
-const IMPORT_STATUS_STYLE: Record<ImportStatus, string> = {
+const IMPORT_STATUS_STYLE: Record<string, string> = {
     success: 'bg-success-50 text-success-800',
     partial: 'bg-warning-50 text-warning-800',
     failed: 'bg-danger-50 text-danger-800',
 };
-const IMPORT_STATUS_LABEL: Record<ImportStatus, string> = {
+const IMPORT_STATUS_LABEL: Record<string, string> = {
     success: 'Success',
     partial: 'Partial',
     failed: 'Failed',
 };
-type EditTarget =
-    | (BiometricRecord & {
-          traineeName: string;
-      })
-    | null;
-type DeleteTarget =
-    | (BiometricRecord & {
-          traineeName: string;
-      })
-    | null;
+type PreviewTrainee = { name: string; batchCode: string } | null;
 export default function BiometricsPage() {
     const { showToast } = useToast();
     const [tab, setTab] = useState<(typeof TABS)[number]>('Daily records');
-    const [records, setRecords] = useState<BiometricRecord[]>(initialRecords);
-    const [imports, setImports] =
-        useState<BiometricImportBatch[]>(initialImports);
+    const [records, setRecords] = useState<BiometricLogRow[]>([]);
+    const [imports, setImports] = useState<BiometricImportSummary[]>([]);
+    const [batchOptions, setBatchOptions] = useState<
+        { id: number; batch_code: string }[]
+    >([]);
+    const [loading, setLoading] = useState(true);
     const [query, setQuery] = useState('');
     const [batchFilter, setBatchFilter] = useState('All batches');
     const [importFilter, setImportFilter] = useState('Most recent import');
     const [importModalOpen, setImportModalOpen] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
-    const [editTarget, setEditTarget] = useState<EditTarget>(null);
-    const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
-    const [previewTrainee, setPreviewTrainee] = useState<Trainee | null>(null);
+    const [editTarget, setEditTarget] = useState<BiometricLogRow | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<BiometricLogRow | null>(
+        null,
+    );
+    const [previewTrainee, setPreviewTrainee] = useState<PreviewTrainee>(null);
+
+    async function loadRecords() {
+        const data = await biometricsService.getRecords();
+        setRecords(data);
+    }
+    async function loadImports() {
+        const data = await biometricsService.getImports();
+        setImports(data);
+    }
+    useEffect(() => {
+        setLoading(true);
+        Promise.all([
+            loadRecords(),
+            loadImports(),
+            batchService
+                .searchActive()
+                .then((rows) =>
+                    setBatchOptions(
+                        rows as unknown as { id: number; batch_code: string }[],
+                    ),
+                ),
+        ]).finally(() => setLoading(false));
+    }, []);
+
     const sortedImports = useMemo(
         () =>
-            [...imports].sort((a, b) => (a.importedAt < b.importedAt ? 1 : -1)),
+            [...imports].sort((a, b) => (a.imported_at < b.imported_at ? 1 : -1)),
         [imports],
     );
     const mostRecentImportId = sortedImports[0]?.id ?? null;
     const importOptions = [
         'Most recent import',
         'All records',
-        ...sortedImports.map((i) => i.id),
+        ...sortedImports.map((i) => String(i.id)),
     ];
     const importOptionLabel = (id: string) => {
         if (id === 'Most recent import' || id === 'All records') return id;
-        const imp = imports.find((i) => i.id === id);
-        return imp ? `${imp.fileName} (${imp.importedAt})` : id;
+        const imp = imports.find((i) => String(i.id) === id);
+        return imp ? `${imp.file_name} (${imp.imported_at})` : id;
     };
-    const enriched = useMemo(
-        () =>
-            records
-                .map((record) => ({
-                    record,
-                    trainee: trainees.find((t) => t.id === record.traineeId),
-                }))
-                .filter(
-                    (
-                        x,
-                    ): x is {
-                        record: BiometricRecord;
-                        trainee: Trainee;
-                    } => !!x.trainee,
-                ),
-        [records],
-    );
     const scoped = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return enriched.filter(({ record, trainee }) => {
+        return records.filter((record) => {
             if (
                 importFilter === 'Most recent import' &&
                 mostRecentImportId &&
-                record.importId !== mostRecentImportId
+                record.import_id !== mostRecentImportId
             )
                 return false;
             if (
                 importFilter !== 'Most recent import' &&
                 importFilter !== 'All records' &&
-                record.importId !== importFilter
+                String(record.import_id) !== importFilter
             )
                 return false;
             if (
                 batchFilter !== 'All batches' &&
-                trainee.batchNo !== batchFilter
+                record.batch_code !== batchFilter
             )
                 return false;
-            if (q && !trainee.name.toLowerCase().includes(q)) return false;
+            if (q && !record.trainee_name.toLowerCase().includes(q))
+                return false;
             return true;
         });
-    }, [enriched, importFilter, batchFilter, query, mostRecentImportId]);
+    }, [records, importFilter, batchFilter, query, mostRecentImportId]);
     const dailyRows = useMemo(
-        () =>
-            [...scoped].sort((a, b) =>
-                a.record.date < b.record.date ? 1 : -1,
-            ),
+        () => [...scoped].sort((a, b) => (a.date < b.date ? 1 : -1)),
         [scoped],
     );
     const summaryRows = useMemo(() => {
         const byTrainee = new Map<
-            string,
-            {
-                trainee: Trainee;
-                records: BiometricRecord[];
-            }
+            number,
+            { trainee_name: string; batch_code: string | null; records: BiometricLogRow[] }
         >();
-        for (const { record, trainee } of scoped) {
-            const entry = byTrainee.get(trainee.id) ?? {
-                trainee,
+        for (const record of scoped) {
+            const entry = byTrainee.get(record.trainee_id) ?? {
+                trainee_name: record.trainee_name,
+                batch_code: record.batch_code,
                 records: [],
             };
             entry.records.push(record);
-            byTrainee.set(trainee.id, entry);
+            byTrainee.set(record.trainee_id, entry);
         }
-        return [...byTrainee.values()]
-            .map((e) => ({
+        return [...byTrainee.entries()]
+            .map(([traineeId, e]) => ({
+                traineeId,
                 ...e,
-                totalHours: e.records.reduce(
-                    (sum, r) => sum + computeHoursRendered(r),
-                    0,
-                ),
+                totalHours: e.records.reduce((sum, r) => sum + r.total_hours, 0),
             }))
-            .sort((a, b) => a.trainee.name.localeCompare(b.trainee.name));
+            .sort((a, b) => a.trainee_name.localeCompare(b.trainee_name));
     }, [scoped]);
-    function handleConfirmImport(
+
+    async function handleConfirmImport(
         fileName: string,
         validRows: ParsedRow[],
         totalRows: number,
         errorCount: number,
     ) {
-        const importId = `imp-${Date.now()}`;
-        const newRecords: BiometricRecord[] = validRows.map((r, i) => {
-            const trainee = trainees.find(
-                (t) =>
-                    t.name.trim().toLowerCase() ===
-                    r.traineeName.trim().toLowerCase(),
-            )!;
-            return {
-                id: `bio-${Date.now()}-${i}`,
-                traineeId: trainee.id,
-                date: r.date,
-                timeIn: r.timeIn || undefined,
-                timeOut: r.timeOut || undefined,
-                onLeave: r.onLeave === 'Yes',
-                remarks: r.remarks || undefined,
-                importId,
-            };
-        });
-        const status: ImportStatus =
-            errorCount === 0
-                ? 'success'
-                : validRows.length === 0
-                  ? 'failed'
-                  : 'partial';
-        const newImport: BiometricImportBatch = {
-            id: importId,
-            fileName: fileName || 'import.csv',
-            importedBy: currentUser.name,
-            importedAt: toDateInputValue(TODAY),
-            totalRows,
-            successCount: validRows.length,
-            errorCount,
-            status,
-        };
-        setRecords((prev) => [...newRecords, ...prev]);
-        setImports((prev) => [newImport, ...prev]);
-        setImportModalOpen(false);
-        setImportFilter('Most recent import');
-        if (status === 'success') {
-            showToast(
-                `Import successful \u2014 ${validRows.length} record${validRows.length === 1 ? '' : 's'} added.`,
-                'success',
-            );
-        } else if (status === 'partial') {
-            showToast(
-                `Import partially successful \u2014 ${validRows.length} added, ${errorCount} skipped due to errors.`,
-                'info',
-            );
-        } else {
-            showToast(
-                `Import failed \u2014 all ${totalRows} row(s) had errors. No records were added.`,
-                'error',
-            );
+        try {
+            const result = await biometricsService.import({
+                file_name: fileName || 'import.csv',
+                rows: validRows.map(toImportRow),
+                total_rows: totalRows,
+                error_count: errorCount,
+            });
+            await Promise.all([loadRecords(), loadImports()]);
+            setImportModalOpen(false);
+            setImportFilter('Most recent import');
+            if (result.import.status === 'success') {
+                showToast(
+                    `Import successful — ${result.created_count} record${result.created_count === 1 ? '' : 's'} added.`,
+                    'success',
+                );
+            } else if (result.import.status === 'partial') {
+                showToast(
+                    `Import partially successful — ${result.created_count} added, ${result.skipped_count + errorCount} skipped due to errors.`,
+                    'info',
+                );
+            } else {
+                showToast(
+                    `Import failed — no records were added.`,
+                    'error',
+                );
+            }
+        } catch {
+            showToast('Import failed. Please try again.', 'error');
         }
     }
-    function handleSaveEdit(id: string, values: RecordFormValues) {
-        setRecords((prev) =>
-            prev.map((r) =>
-                r.id === id
-                    ? {
-                          ...r,
-                          date: values.date,
-                          onLeave: values.onLeave,
-                          timeIn: values.onLeave
-                              ? undefined
-                              : values.timeIn || undefined,
-                          timeOut: values.onLeave
-                              ? undefined
-                              : values.timeOut || undefined,
-                          remarks: values.remarks || undefined,
-                      }
-                    : r,
-            ),
-        );
-        setEditTarget(null);
-        showToast('Attendance record updated.', 'success');
+    async function handleSaveEdit(id: number, values: RecordFormValues) {
+        try {
+            await biometricsService.updateRecord(id, {
+                date: values.date,
+                on_leave: values.onLeave,
+                morning_time_in: values.onLeave ? null : values.morningTimeIn || null,
+                lunch_time_out: values.onLeave ? null : values.lunchTimeOut || null,
+                afternoon_time_in: values.onLeave ? null : values.afternoonTimeIn || null,
+                day_time_out: values.onLeave ? null : values.dayTimeOut || null,
+                remarks: values.remarks || null,
+            });
+            await loadRecords();
+            setEditTarget(null);
+            showToast('Attendance record updated.', 'success');
+        } catch {
+            showToast('Failed to update record.', 'error');
+        }
     }
-    function handleInlineTimeChange(
-        id: string,
-        field: 'timeIn' | 'timeOut',
-        value: string,
-        traineeName: string,
-    ) {
-        setRecords((prev) =>
-            prev.map((r) =>
-                r.id === id
-                    ? {
-                          ...r,
-                          [field]: value || undefined,
-                      }
-                    : r,
-            ),
-        );
-        showToast(
-            `${field === 'timeIn' ? 'Time in' : 'Time out'} updated for ${traineeName}.`,
-            'success',
-        );
-    }
-    function confirmDelete() {
+    async function confirmDelete() {
         if (!deleteTarget) return;
-        setRecords((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-        showToast(
-            `Record for ${deleteTarget.traineeName} on ${deleteTarget.date} was deleted.`,
-            'error',
-        );
-        setDeleteTarget(null);
+        try {
+            await biometricsService.deleteRecord(deleteTarget.id);
+            await loadRecords();
+            showToast(
+                `Record for ${deleteTarget.trainee_name} on ${deleteTarget.date} was deleted.`,
+                'error',
+            );
+        } catch {
+            showToast('Failed to delete record.', 'error');
+        } finally {
+            setDeleteTarget(null);
+        }
     }
     const previewRecords = previewTrainee
-        ? enriched
-              .filter((x) => x.trainee.id === previewTrainee.id)
-              .map((x) => x.record)
+        ? scoped.filter(
+              (r) =>
+                  r.trainee_name === previewTrainee.name &&
+                  r.batch_code === previewTrainee.batchCode,
+          )
         : [];
     const previewTotalHours = previewRecords.reduce(
-        (sum, r) => sum + computeHoursRendered(r),
+        (sum, r) => sum + r.total_hours,
         0,
     );
     const printGeneratedAt = new Date().toLocaleString('en-PH', {
@@ -383,7 +330,7 @@ export default function BiometricsPage() {
                     <Dropdown
                         options={[
                             'All batches',
-                            ...batches.map((b) => b.batchNo),
+                            ...batchOptions.map((b) => b.batch_code),
                         ]}
                         value={batchFilter}
                         onChange={setBatchFilter}
@@ -405,7 +352,16 @@ export default function BiometricsPage() {
                 </div>
             </div>
 
-            {tab === 'Daily records' && (
+            {loading && (
+                <div
+                    className="rounded-lg border border-neutral-200 bg-white p-10 text-center text-xs text-neutral-400"
+                    data-cy="index-div-loading"
+                >
+                    Loading biometric records…
+                </div>
+            )}
+
+            {!loading && tab === 'Daily records' && (
                 <>
                     <div
                         className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
@@ -416,7 +372,7 @@ export default function BiometricsPage() {
                             data-cy="index-div-20"
                         >
                             <table
-                                className="w-full min-w-[880px] border-collapse text-sm"
+                                className="w-full min-w-[1080px] border-collapse text-sm"
                                 data-cy="index-table-21"
                             >
                                 <thead data-cy="index-thead-22">
@@ -444,15 +400,27 @@ export default function BiometricsPage() {
                                         </th>
                                         <th
                                             className="px-4 py-2.5 font-medium"
-                                            data-cy="index-th-time-in"
+                                            data-cy="index-th-morning-in"
                                         >
-                                            Time in
+                                            Morning In
                                         </th>
                                         <th
                                             className="px-4 py-2.5 font-medium"
-                                            data-cy="index-th-time-out"
+                                            data-cy="index-th-lunch-out"
                                         >
-                                            Time out
+                                            Lunch Out
+                                        </th>
+                                        <th
+                                            className="px-4 py-2.5 font-medium"
+                                            data-cy="index-th-afternoon-in"
+                                        >
+                                            Afternoon In
+                                        </th>
+                                        <th
+                                            className="px-4 py-2.5 font-medium"
+                                            data-cy="index-th-day-out"
+                                        >
+                                            Day Out
                                         </th>
                                         <th
                                             className="px-4 py-2.5 font-medium"
@@ -475,7 +443,7 @@ export default function BiometricsPage() {
                                     </tr>
                                 </thead>
                                 <tbody data-cy="index-tbody-32">
-                                    {dailyRows.map(({ record, trainee }) => (
+                                    {dailyRows.map((record) => (
                                         <tr
                                             key={record.id}
                                             className="border-t border-neutral-100 transition-colors hover:bg-neutral-50"
@@ -485,13 +453,13 @@ export default function BiometricsPage() {
                                                 className="px-4 py-2.5 font-medium text-ink"
                                                 data-cy="index-td-34"
                                             >
-                                                {trainee.name}
+                                                {record.trainee_name}
                                             </td>
                                             <td
                                                 className="px-4 py-2.5 font-mono text-xs text-neutral-600"
                                                 data-cy="index-td-35"
                                             >
-                                                {trainee.batchNo}
+                                                {record.batch_code}
                                             </td>
                                             <td
                                                 className="px-4 py-2.5 font-mono text-xs text-neutral-600"
@@ -503,57 +471,31 @@ export default function BiometricsPage() {
                                                 className="px-4 py-2.5 text-neutral-600"
                                                 data-cy="index-td-37"
                                             >
-                                                {record.onLeave ? (
-                                                    '\u2014'
-                                                ) : (
-                                                    <input
-                                                        type="time"
-                                                        value={
-                                                            record.timeIn ?? ''
-                                                        }
-                                                        onChange={(e) =>
-                                                            handleInlineTimeChange(
-                                                                record.id,
-                                                                'timeIn',
-                                                                e.target.value,
-                                                                trainee.name,
-                                                            )
-                                                        }
-                                                        className="h-8 w-[110px] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                                        data-cy="index-input-time"
-                                                    />
-                                                )}
+                                                {record.on_leave ? '—' : record.morning_time_in ?? '—'}
+                                            </td>
+                                            <td
+                                                className="px-4 py-2.5 text-neutral-600"
+                                                data-cy="index-td-lunch"
+                                            >
+                                                {record.on_leave ? '—' : record.lunch_time_out ?? '—'}
+                                            </td>
+                                            <td
+                                                className="px-4 py-2.5 text-neutral-600"
+                                                data-cy="index-td-afternoon"
+                                            >
+                                                {record.on_leave ? '—' : record.afternoon_time_in ?? '—'}
                                             </td>
                                             <td
                                                 className="px-4 py-2.5 text-neutral-600"
                                                 data-cy="index-td-39"
                                             >
-                                                {record.onLeave ? (
-                                                    '\u2014'
-                                                ) : (
-                                                    <input
-                                                        type="time"
-                                                        value={
-                                                            record.timeOut ?? ''
-                                                        }
-                                                        onChange={(e) =>
-                                                            handleInlineTimeChange(
-                                                                record.id,
-                                                                'timeOut',
-                                                                e.target.value,
-                                                                trainee.name,
-                                                            )
-                                                        }
-                                                        className="h-8 w-[110px] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                                        data-cy="index-input-time-2"
-                                                    />
-                                                )}
+                                                {record.on_leave ? '—' : record.day_time_out ?? '—'}
                                             </td>
                                             <td
                                                 className="px-4 py-2.5 font-mono text-xs text-neutral-600"
                                                 data-cy="index-td-h"
                                             >
-                                                {computeHoursRendered(record)}h
+                                                {record.total_hours}h
                                             </td>
                                             <td
                                                 className="px-4 py-2.5"
@@ -563,7 +505,7 @@ export default function BiometricsPage() {
                                                     className="flex flex-wrap items-center gap-1"
                                                     data-cy="index-div-43"
                                                 >
-                                                    {record.onLeave && (
+                                                    {record.on_leave && (
                                                         <span
                                                             className="inline-flex items-center rounded-pill bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600"
                                                             data-cy="index-span-on-leave"
@@ -571,23 +513,22 @@ export default function BiometricsPage() {
                                                             On Leave
                                                         </span>
                                                     )}
-                                                    {isRecordFlagged(
-                                                        record,
-                                                    ) && (
-                                                        <span
-                                                            className="inline-flex items-center gap-1 rounded-pill bg-danger-50 px-2.5 py-0.5 text-xs font-medium text-danger-800"
-                                                            data-cy="index-span-45"
-                                                        >
-                                                            <AlertTriangle
-                                                                size={11}
-                                                                data-cy="index-alert-triangle-46"
-                                                            />{' '}
-                                                            {missingPunchLabel(
-                                                                record,
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                    {!record.onLeave &&
+                                                    {!record.on_leave &&
+                                                        record.exceptions.length > 0 && (
+                                                            <span
+                                                                className="inline-flex items-center gap-1 rounded-pill bg-danger-50 px-2.5 py-0.5 text-xs font-medium text-danger-800"
+                                                                data-cy="index-span-45"
+                                                            >
+                                                                <AlertTriangle
+                                                                    size={11}
+                                                                    data-cy="index-alert-triangle-46"
+                                                                />{' '}
+                                                                {missingPunchLabel(
+                                                                    record.exceptions,
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                    {!record.on_leave &&
                                                         record.remarks && (
                                                             <span
                                                                 className="text-xs text-neutral-500"
@@ -610,11 +551,7 @@ export default function BiometricsPage() {
                                                         icon={Pencil}
                                                         label="Edit"
                                                         onClick={() =>
-                                                            setEditTarget({
-                                                                ...record,
-                                                                traineeName:
-                                                                    trainee.name,
-                                                            })
+                                                            setEditTarget(record)
                                                         }
                                                         data-cy="index-tooltip-icon-button-edit"
                                                     />
@@ -623,11 +560,7 @@ export default function BiometricsPage() {
                                                         label="Delete"
                                                         danger
                                                         onClick={() =>
-                                                            setDeleteTarget({
-                                                                ...record,
-                                                                traineeName:
-                                                                    trainee.name,
-                                                            })
+                                                            setDeleteTarget(record)
                                                         }
                                                         data-cy="index-tooltip-icon-button-delete"
                                                     />
@@ -638,7 +571,7 @@ export default function BiometricsPage() {
                                     {dailyRows.length === 0 && (
                                         <tr data-cy="index-tr-52">
                                             <td
-                                                colSpan={8}
+                                                colSpan={10}
                                                 className="px-4 py-10 text-center text-xs text-neutral-400"
                                                 data-cy="index-td-no-biometric-records-match-your-search"
                                             >
@@ -652,24 +585,19 @@ export default function BiometricsPage() {
                         </div>
                     </div>
 
-                    {/* Mobile cards — inline time-editing doesn't fit a small screen, so tapping a card opens the edit modal instead */}
+                    {/* Mobile cards */}
                     <div
                         className="no-print flex flex-col gap-2 sm:hidden"
                         data-cy="index-div-54"
                     >
-                        {dailyRows.map(({ record, trainee }) => (
+                        {dailyRows.map((record) => (
                             <div
                                 key={record.id}
                                 className="rounded-lg border border-neutral-200 bg-white p-3.5"
                                 data-cy="index-div-55"
                             >
                                 <button
-                                    onClick={() =>
-                                        setEditTarget({
-                                            ...record,
-                                            traineeName: trainee.name,
-                                        })
-                                    }
+                                    onClick={() => setEditTarget(record)}
                                     className="flex w-full items-start justify-between gap-2 text-left"
                                     data-cy="index-button-set-edit-target"
                                 >
@@ -681,27 +609,27 @@ export default function BiometricsPage() {
                                             className="truncate text-sm font-semibold text-ink"
                                             data-cy="index-p-58"
                                         >
-                                            {trainee.name}
+                                            {record.trainee_name}
                                         </p>
                                         <p
                                             className="truncate text-xs text-neutral-500"
                                             data-cy="index-p-59"
                                         >
-                                            {trainee.batchNo} · {record.date}
+                                            {record.batch_code} · {record.date}
                                         </p>
                                     </div>
                                     <span
                                         className="shrink-0 font-mono text-xs font-medium text-ink"
                                         data-cy="index-span-h"
                                     >
-                                        {computeHoursRendered(record)}h
+                                        {record.total_hours}h
                                     </span>
                                 </button>
                                 <div
                                     className="mt-2 flex flex-wrap items-center gap-1"
                                     data-cy="index-div-61"
                                 >
-                                    {record.onLeave && (
+                                    {record.on_leave && (
                                         <span
                                             className="inline-flex items-center rounded-pill bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600"
                                             data-cy="index-span-on-leave-2"
@@ -709,26 +637,29 @@ export default function BiometricsPage() {
                                             On Leave
                                         </span>
                                     )}
-                                    {isRecordFlagged(record) && (
-                                        <span
-                                            className="inline-flex items-center gap-1 rounded-pill bg-danger-50 px-2 py-0.5 text-[11px] font-medium text-danger-800"
-                                            data-cy="index-span-63"
-                                        >
-                                            <AlertTriangle
-                                                size={10}
-                                                data-cy="index-alert-triangle-64"
-                                            />{' '}
-                                            {missingPunchLabel(record)}
-                                        </span>
-                                    )}
-                                    {!record.onLeave &&
-                                        !isRecordFlagged(record) && (
+                                    {!record.on_leave &&
+                                        record.exceptions.length > 0 && (
+                                            <span
+                                                className="inline-flex items-center gap-1 rounded-pill bg-danger-50 px-2 py-0.5 text-[11px] font-medium text-danger-800"
+                                                data-cy="index-span-63"
+                                            >
+                                                <AlertTriangle
+                                                    size={10}
+                                                    data-cy="index-alert-triangle-64"
+                                                />{' '}
+                                                {missingPunchLabel(
+                                                    record.exceptions,
+                                                )}
+                                            </span>
+                                        )}
+                                    {!record.on_leave &&
+                                        record.exceptions.length === 0 && (
                                             <span
                                                 className="text-[11px] text-neutral-500"
                                                 data-cy="index-span-65"
                                             >
-                                                {record.timeIn ?? '—'} –{' '}
-                                                {record.timeOut ?? '—'}
+                                                {record.morning_time_in ?? '—'} –{' '}
+                                                {record.day_time_out ?? '—'}
                                             </span>
                                         )}
                                 </div>
@@ -741,12 +672,7 @@ export default function BiometricsPage() {
                                         size="sm"
                                         icon={Pencil}
                                         className="flex-1"
-                                        onClick={() =>
-                                            setEditTarget({
-                                                ...record,
-                                                traineeName: trainee.name,
-                                            })
-                                        }
+                                        onClick={() => setEditTarget(record)}
                                         data-cy="index-button-set-edit-target-2"
                                     >
                                         Edit
@@ -755,12 +681,7 @@ export default function BiometricsPage() {
                                         variant="secondary"
                                         size="sm"
                                         icon={Trash2}
-                                        onClick={() =>
-                                            setDeleteTarget({
-                                                ...record,
-                                                traineeName: trainee.name,
-                                            })
-                                        }
+                                        onClick={() => setDeleteTarget(record)}
                                         data-cy="index-button-set-delete-target"
                                     >
                                         Delete
@@ -781,7 +702,7 @@ export default function BiometricsPage() {
                 </>
             )}
 
-            {tab === 'Trainee summary' && (
+            {!loading && tab === 'Trainee summary' && (
                 <>
                     <div
                         className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
@@ -805,12 +726,6 @@ export default function BiometricsPage() {
                                             data-cy="index-th-full-name"
                                         >
                                             Full name
-                                        </th>
-                                        <th
-                                            className="px-4 py-2.5 font-medium"
-                                            data-cy="index-th-school"
-                                        >
-                                            School
                                         </th>
                                         <th
                                             className="px-4 py-2.5 font-medium"
@@ -839,79 +754,67 @@ export default function BiometricsPage() {
                                     </tr>
                                 </thead>
                                 <tbody data-cy="index-tbody-81">
-                                    {summaryRows.map(
-                                        ({
-                                            trainee,
-                                            records: traineeRecords,
-                                            totalHours,
-                                        }) => (
-                                            <tr
-                                                key={trainee.id}
-                                                className="border-t border-neutral-100 transition-colors hover:bg-neutral-50"
-                                                data-cy="index-tr-82"
+                                    {summaryRows.map((row) => (
+                                        <tr
+                                            key={row.traineeId}
+                                            className="border-t border-neutral-100 transition-colors hover:bg-neutral-50"
+                                            data-cy="index-tr-82"
+                                        >
+                                            <td
+                                                className="px-4 py-2.5 font-medium text-ink"
+                                                data-cy="index-td-83"
                                             >
-                                                <td
-                                                    className="px-4 py-2.5 font-medium text-ink"
-                                                    data-cy="index-td-83"
+                                                {row.trainee_name}
+                                            </td>
+                                            <td
+                                                className="px-4 py-2.5 font-mono text-xs text-neutral-600"
+                                                data-cy="index-td-85"
+                                            >
+                                                {row.batch_code}
+                                            </td>
+                                            <td
+                                                className="px-4 py-2.5 font-mono text-xs font-medium text-ink"
+                                                data-cy="index-td-h-2"
+                                            >
+                                                {row.totalHours}h
+                                            </td>
+                                            <td
+                                                className="max-w-[240px] truncate px-4 py-2.5 text-xs text-neutral-500"
+                                                title={summarizeAttendance(
+                                                    row.records,
+                                                )}
+                                                data-cy="index-td-87"
+                                            >
+                                                {summarizeAttendance(row.records)}
+                                            </td>
+                                            <td
+                                                className="px-4 py-2.5"
+                                                data-cy="index-td-88"
+                                            >
+                                                <div
+                                                    className="flex justify-end gap-0.5"
+                                                    data-cy="index-div-89"
                                                 >
-                                                    {trainee.name}
-                                                </td>
-                                                <td
-                                                    className="px-4 py-2.5 text-neutral-600"
-                                                    data-cy="index-td-84"
-                                                >
-                                                    {trainee.school}
-                                                </td>
-                                                <td
-                                                    className="px-4 py-2.5 font-mono text-xs text-neutral-600"
-                                                    data-cy="index-td-85"
-                                                >
-                                                    {trainee.batchNo}
-                                                </td>
-                                                <td
-                                                    className="px-4 py-2.5 font-mono text-xs font-medium text-ink"
-                                                    data-cy="index-td-h-2"
-                                                >
-                                                    {totalHours}h
-                                                </td>
-                                                <td
-                                                    className="max-w-[240px] truncate px-4 py-2.5 text-xs text-neutral-500"
-                                                    title={summarizeAttendance(
-                                                        traineeRecords,
-                                                    )}
-                                                    data-cy="index-td-87"
-                                                >
-                                                    {summarizeAttendance(
-                                                        traineeRecords,
-                                                    )}
-                                                </td>
-                                                <td
-                                                    className="px-4 py-2.5"
-                                                    data-cy="index-td-88"
-                                                >
-                                                    <div
-                                                        className="flex justify-end gap-0.5"
-                                                        data-cy="index-div-89"
-                                                    >
-                                                        <TooltipIconButton
-                                                            icon={Eye}
-                                                            label="Preview & print"
-                                                            onClick={() =>
-                                                                setPreviewTrainee(
-                                                                    trainee,
-                                                                )
-                                                            }
-                                                            data-cy="index-tooltip-icon-button-set-preview-trainee"
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ),
-                                    )}
+                                                    <TooltipIconButton
+                                                        icon={Eye}
+                                                        label="Preview & print"
+                                                        onClick={() =>
+                                                            setPreviewTrainee({
+                                                                name: row.trainee_name,
+                                                                batchCode:
+                                                                    row.batch_code ?? '',
+                                                            })
+                                                        }
+                                                        data-cy="index-tooltip-icon-button-set-preview-trainee"
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                                     {summaryRows.length === 0 && (
                                         <tr data-cy="index-tr-91">
                                             <td
-                                                colSpan={6}
+                                                colSpan={5}
                                                 className="px-4 py-10 text-center text-xs text-neutral-400"
                                                 data-cy="index-td-no-trainees-match-your-search-or"
                                             >
@@ -930,52 +833,49 @@ export default function BiometricsPage() {
                         className="no-print flex flex-col gap-2 sm:hidden"
                         data-cy="index-div-93"
                     >
-                        {summaryRows.map(
-                            ({
-                                trainee,
-                                records: traineeRecords,
-                                totalHours,
-                            }) => (
-                                <button
-                                    key={trainee.id}
-                                    onClick={() => setPreviewTrainee(trainee)}
-                                    className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-3.5 text-left transition-colors active:bg-neutral-50"
-                                    data-cy="index-button-set-preview-trainee"
+                        {summaryRows.map((row) => (
+                            <button
+                                key={row.traineeId}
+                                onClick={() =>
+                                    setPreviewTrainee({
+                                        name: row.trainee_name,
+                                        batchCode: row.batch_code ?? '',
+                                    })
+                                }
+                                className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-3.5 text-left transition-colors active:bg-neutral-50"
+                                data-cy="index-button-set-preview-trainee"
+                            >
+                                <div
+                                    className="min-w-0 flex-1"
+                                    data-cy="index-div-95"
                                 >
-                                    <div
-                                        className="min-w-0 flex-1"
-                                        data-cy="index-div-95"
+                                    <p
+                                        className="truncate text-sm font-semibold text-ink"
+                                        data-cy="index-p-96"
                                     >
-                                        <p
-                                            className="truncate text-sm font-semibold text-ink"
-                                            data-cy="index-p-96"
-                                        >
-                                            {trainee.name}
-                                        </p>
-                                        <p
-                                            className="truncate text-xs text-neutral-500"
-                                            data-cy="index-p-97"
-                                        >
-                                            {trainee.school} · {trainee.batchNo}
-                                        </p>
-                                        <p
-                                            className="truncate text-xs text-neutral-400"
-                                            data-cy="index-p-98"
-                                        >
-                                            {summarizeAttendance(
-                                                traineeRecords,
-                                            )}
-                                        </p>
-                                    </div>
-                                    <span
-                                        className="shrink-0 font-mono text-sm font-semibold text-ink"
-                                        data-cy="index-span-h-2"
+                                        {row.trainee_name}
+                                    </p>
+                                    <p
+                                        className="truncate text-xs text-neutral-500"
+                                        data-cy="index-p-97"
                                     >
-                                        {totalHours}h
-                                    </span>
-                                </button>
-                            ),
-                        )}
+                                        {row.batch_code}
+                                    </p>
+                                    <p
+                                        className="truncate text-xs text-neutral-400"
+                                        data-cy="index-p-98"
+                                    >
+                                        {summarizeAttendance(row.records)}
+                                    </p>
+                                </div>
+                                <span
+                                    className="shrink-0 font-mono text-sm font-semibold text-ink"
+                                    data-cy="index-span-h-2"
+                                >
+                                    {row.totalHours}h
+                                </span>
+                            </button>
+                        ))}
                         {summaryRows.length === 0 && (
                             <div
                                 className="rounded-lg border border-neutral-200 bg-white p-8 text-center text-xs text-neutral-400"
@@ -1012,7 +912,7 @@ export default function BiometricsPage() {
                 confirmLabel="Delete"
                 description={
                     deleteTarget
-                        ? `Delete the ${deleteTarget.date} attendance record for ${deleteTarget.traineeName}? This cannot be undone.`
+                        ? `Delete the ${deleteTarget.date} attendance record for ${deleteTarget.trainee_name}? This cannot be undone.`
                         : ''
                 }
                 data-cy="index-confirm-dialog-delete-attendance-record"
@@ -1056,7 +956,7 @@ export default function BiometricsPage() {
                                             className="truncate text-sm font-medium text-ink"
                                             data-cy="index-span-110"
                                         >
-                                            {imp.fileName}
+                                            {imp.file_name}
                                         </span>
                                         <span
                                             className={cn(
@@ -1072,18 +972,18 @@ export default function BiometricsPage() {
                                         className="text-xs text-neutral-500"
                                         data-cy="index-div-imported-by"
                                     >
-                                        Imported by {imp.importedBy} on{' '}
-                                        {imp.importedAt}
+                                        Imported by {imp.imported_by} on{' '}
+                                        {imp.imported_at}
                                     </div>
                                     <div
                                         className="mt-1 text-xs text-neutral-500"
                                         data-cy="index-div-row"
                                     >
-                                        {imp.totalRows} row
-                                        {imp.totalRows === 1 ? '' : 's'} total
-                                        \u2014 {imp.successCount} succeeded,{' '}
-                                        {imp.errorCount} error
-                                        {imp.errorCount === 1 ? '' : 's'}
+                                        {imp.total_rows} row
+                                        {imp.total_rows === 1 ? '' : 's'} total —{' '}
+                                        {imp.success_count} succeeded,{' '}
+                                        {imp.error_count} error
+                                        {imp.error_count === 1 ? '' : 's'}
                                     </div>
                                 </div>
                             ))}
@@ -1106,7 +1006,7 @@ export default function BiometricsPage() {
                 open={!!previewTrainee}
                 onClose={() => setPreviewTrainee(null)}
                 title="Print preview"
-                maxWidth={640}
+                maxWidth={720}
                 data-cy="index-modal-print-preview"
             >
                 {previewTrainee && (
@@ -1116,7 +1016,10 @@ export default function BiometricsPage() {
                     >
                         <BiometricsPrint
                             variant="preview"
-                            trainee={previewTrainee}
+                            trainee={{
+                                name: previewTrainee.name,
+                                batchCode: previewTrainee.batchCode,
+                            }}
                             records={previewRecords}
                             totalHours={previewTotalHours}
                             generatedAt={printGeneratedAt}
@@ -1150,7 +1053,10 @@ export default function BiometricsPage() {
             {previewTrainee && (
                 <BiometricsPrint
                     variant="print"
-                    trainee={previewTrainee}
+                    trainee={{
+                        name: previewTrainee.name,
+                        batchCode: previewTrainee.batchCode,
+                    }}
                     records={previewRecords}
                     totalHours={previewTotalHours}
                     generatedAt={printGeneratedAt}
