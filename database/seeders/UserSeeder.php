@@ -19,10 +19,9 @@ class UserSeeder extends Seeder
     {
         $this->makeUser('developer@frontlinebusiness.com.ph', 'Dev', 'Eloper', 'developer');
         $this->makeUser('contact@frontlinebusiness.com.ph', 'Admin', 'Frontline', 'admin');
-        $this->makeUser('emmanuel.manalo@frontlinebusiness.com.ph', 'Emmanuel', 'Manalo', 'trainer');
+        // $this->makeUser('emmanuel.manalo@frontlinebusiness.com.ph', 'Emmanuel', 'Manalo', 'trainer');
         $this->makeUser('vincent.ramirez@frontlinebusiness.com.ph', 'Vincent', 'Ramirez', 'trainer');
-        $this->makeUser('emmszhii@gmail.com', 'James', 'Reid', 'trainee');
-        $this->makeUser('audie@gmail.com', 'Audie', 'Rubico', 'trainee');
+        // $this->makeUser('emmszhii@gmail.com', 'James', 'Reid', 'trainee'); 
     }
 
     protected function makeUser(string $email, string $first, string $last, string $role): User

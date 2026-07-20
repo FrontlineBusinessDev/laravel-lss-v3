@@ -1,12 +1,3 @@
-import { usePage } from '@inertiajs/react';
-import {
-    KeyRound,
-    Pencil,
-    ShieldCheck,
-    Trash2,
-    UserCheck,
-    UserRoundX,
-} from 'lucide-react';
 import { userService } from '@/api-service-layer/admin/user';
 import { useGlobalModal } from '@/components/global-modal';
 import type { RowMenuAction } from '@/components/RowMenu';
@@ -26,6 +17,15 @@ import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
 import type { StatusKind } from '@/types';
 import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
+import { usePage } from '@inertiajs/react';
+import {
+    KeyRound,
+    Pencil,
+    ShieldCheck,
+    Trash2,
+    UserCheck,
+    UserRoundX,
+} from 'lucide-react';
 import type { UserRow } from './UserModal';
 import UserModal from './UserModal';
 
@@ -76,7 +76,9 @@ export default function index() {
             showToast(`A reset link was sent to ${row.email}.`, 'success');
         } catch (err) {
             showToast(
-                err instanceof Error ? err.message : 'Could not send reset email',
+                err instanceof Error
+                    ? err.message
+                    : 'Could not send reset email',
                 'error',
             );
         }
@@ -160,13 +162,14 @@ export default function index() {
                     className="inline-flex items-center gap-1 text-sm text-neutral-600"
                     data-cy="index-div-8"
                 >
-                    {row.role === 'admin' && (
-                        <ShieldCheck
-                            size={12}
-                            className="text-brand-500"
-                            data-cy="index-shield-check-9"
-                        />
-                    )}
+                    {row.role === 'admin' &&
+                        row.email == 'contact@frontlinebusiness.com.ph' && (
+                            <ShieldCheck
+                                size={12}
+                                className="text-brand-500"
+                                data-cy="index-shield-check-9"
+                            />
+                        )}
                     {row.role ? cap(row.role) : '—'}
                 </div>
             </SettingsRow>

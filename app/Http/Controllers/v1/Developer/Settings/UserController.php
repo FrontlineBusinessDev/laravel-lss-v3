@@ -214,13 +214,13 @@ class UserController extends BaseController
             return false;
         }
         // Find the last active admin's ID
-        $lastActiveAdminId = User::role('admin')
-            ->where('status', Statuses::ACTIVE)
-            ->latest('id')
-            ->value('id');
+        // $lastActiveAdminId = User::role('admin')
+        //     ->where('status', Statuses::ACTIVE)
+        //     ->latest('id')
+        //     ->value('id');
 
-        // return User::role('admin')->where('status', Statuses::ACTIVE)->count() <= 1;
-        return $lastActiveAdminId === $user->id;
+        return User::role('admin')->where('status', Statuses::ACTIVE)->count() <= 1;
+        // return $lastActiveAdminId === $user->id;
     }
 
     /** @return array{0: string, 1: string} */
