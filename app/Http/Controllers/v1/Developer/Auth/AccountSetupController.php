@@ -71,6 +71,7 @@ class AccountSetupController extends Controller
             Mail::to($resetUser->email)->queue(new PasswordChangedMail($resetUser));
         }
 
-        return redirect()->route('login')->with('status', __($status));
+        // return redirect()->route('login')->with('status', __($status));
+        return redirect()->route('login')->with('status', __('Password successfully changed.'));
     }
 }

@@ -19,8 +19,9 @@ export function useTraineeOutcomeToggle(
     const isAchieved = (outcome: AppTraineeLearningOutcome) =>
         (override[outcome.id] ?? outcome.status) === 'active';
 
-    const toggle = async (outcome: AppTraineeLearningOutcome) => {
-        const next = isAchieved(outcome) ? 'inactive' : 'active';
+    const setStatus = async (outcome: AppTraineeLearningOutcome, next: 'active' | 'inactive') => {
+        const previous = isAchieved(outcome) ? 'active' : 'inactive';
+        if (previous === next) return;
         setOverride((m) => ({ ...m, [outcome.id]: next }));
         setSavingId(outcome.id);
 
@@ -30,10 +31,7 @@ export function useTraineeOutcomeToggle(
                 { method: 'PATCH', body: JSON.stringify({ status: next }) },
             );
         } catch (err) {
-            setOverride((m) => ({
-                ...m,
-                [outcome.id]: next === 'active' ? 'inactive' : 'active',
-            }));
+            setOverride((m) => ({ ...m, [outcome.id]: previous }));
             showToast(
                 err instanceof Error ? err.message : 'Please try again.',
                 'error',
@@ -43,5 +41,13 @@ export function useTraineeOutcomeToggle(
         }
     };
 
-    return { isAchieved, toggle, savingId };
+    const toggle = (outcome: AppTraineeLearningOutcome) =>
+        setStatus(outcome, isAchieved(outcome) ? 'inactive' : 'active');
+
+    const toggleAll = (
+        outcomes: AppTraineeLearningOutcome[],
+        status: 'active' | 'inactive',
+    ) => Promise.all(outcomes.map((outcome) => setStatus(outcome, status)));
+
+    return { isAchieved, toggle, toggleAll, savingId };
 }

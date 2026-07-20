@@ -47,6 +47,10 @@ class MyInfoController
             // completion badges, not per-task score/comments/evaluator).
             'taskRatings:id,trainee_id,rating,rated_at',
         ]);
+        // Use loadSum on an already existing model instance
+        $trainee->loadSum(['tasks' => function ($query) {
+            $query->where('status', 'completed');
+        }], 'time_spent');
 
         $documentsController = new TraineeDocumentsController();
         $documents = $trainee->documents->map(fn ($document) => $documentsController->transform($document));

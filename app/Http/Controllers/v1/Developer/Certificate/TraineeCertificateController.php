@@ -7,6 +7,7 @@ use App\Models\CertificateCitation;
 use App\Models\CertificateTemplate;
 use App\Models\TraineeCertificate;
 use App\Models\Trainees;
+use App\Models\TrainerEvaluation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class TraineeCertificateController extends Controller
     public function paginationSearch(Request $request): JsonResponse
     {
         $query = Trainees::query()
+            ->withCompletedHours()
             ->with([
                 'batch:id,batch_code',
                 'school:id,school_name',
@@ -59,12 +61,35 @@ class TraineeCertificateController extends Controller
             $query->whereIn('school_id', $schoolIds);
         }
 
+        // withSum's aggregate can't be filtered via HAVING here: Laravel wraps
+        // paginate()'s count query in a subquery with no GROUP BY, which
+        // SQLite (and strict-mode MySQL) reject for a bare HAVING. A
+        // correlated subquery in WHERE works in both the row query and the
+        // wrapped count query.
+        $completedHoursExpr = '(select coalesce(sum(time_spent), 0) from app_tasks'
+            . ' where app_tasks.trainee_id = app_trainees.id and app_tasks.status = \'completed\')';
+
+        // Count of the trainee's assigned-batch trainers who don't yet have a
+        // submitted evaluation from this trainee — certificate issuance is
+        // blocked while this is > 0 (Trainer Evaluation requirement).
+        $pendingTrainerEvalExpr = '(select count(*) from app_batch_trainer'
+            . ' where app_batch_trainer.batch_id = app_trainees.batch_id'
+            . ' and app_batch_trainer.trainer_id not in ('
+            . 'select trainer_id from app_trainer_evaluations'
+            . ' where app_trainer_evaluations.trainee_id = app_trainees.id'
+            . ' and app_trainer_evaluations.submitted_at is not null'
+            . '))';
+
         $status = is_string($filters['status'] ?? null) ? $filters['status'] : 'all';
         match ($status) {
             'issued' => $query->whereHas('certificate', fn(Builder $q) => $q->whereNotNull('issued_at')),
-            'not_issued' => $query->whereColumn('completed_hours', '>=', 'required_hours')
+            'not_issued' => $query->whereRaw("{$completedHoursExpr} >= required_hours")
+                ->whereRaw("{$pendingTrainerEvalExpr} = 0")
                 ->whereDoesntHave('certificate', fn(Builder $q) => $q->whereNotNull('issued_at')),
-            'not_eligible' => $query->whereColumn('completed_hours', '<', 'required_hours'),
+            'not_eligible' => $query->where(function (Builder $q) use ($completedHoursExpr, $pendingTrainerEvalExpr) {
+                $q->whereRaw("{$completedHoursExpr} < required_hours")
+                    ->orWhereRaw("{$pendingTrainerEvalExpr} > 0");
+            }),
             default => null,
         };
 
@@ -103,6 +128,12 @@ class TraineeCertificateController extends Controller
     {
         $traineeModel = Trainees::findOrFail($trainee);
 
+        abort_if(
+            $this->hasPendingTrainerEvaluations($traineeModel),
+            422,
+            'This trainee still has a pending Trainer Evaluation and is not yet eligible for certificate issuance.',
+        );
+
         $validated = $request->validate([
             'citation_id' => [
                 'required',
@@ -139,6 +170,25 @@ class TraineeCertificateController extends Controller
             'message' => 'Certificate issued successfully.',
             'data' => $certificate->load('citation', 'template'),
         ]);
+    }
+
+    /** True when the trainee has at least one assigned-batch trainer without a submitted evaluation. */
+    private function hasPendingTrainerEvaluations(Trainees $trainee): bool
+    {
+        if (! $trainee->batch_id) {
+            return false;
+        }
+
+        $assignedTrainerIds = DB::table('app_batch_trainer')->where('batch_id', $trainee->batch_id)->pluck('trainer_id');
+        if ($assignedTrainerIds->isEmpty()) {
+            return false;
+        }
+
+        $evaluatedTrainerIds = TrainerEvaluation::where('trainee_id', $trainee->id)
+            ->whereNotNull('submitted_at')
+            ->pluck('trainer_id');
+
+        return $assignedTrainerIds->diff($evaluatedTrainerIds)->isNotEmpty();
     }
 
     private function nextCertificateNo(): string

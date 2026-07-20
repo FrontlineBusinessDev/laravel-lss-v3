@@ -81,12 +81,19 @@ class TraineesViewController extends BaseController
                 'batch.academicLevel:id,name,year_level',
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
                 'learningOutcomes:id,learning_outcomes',
-                'payments',
+                'payments', 
                 'user:id,first_name,last_name,email,status',
                 'taskRatings:id,batch_id,trainee_id,task_name,rating,comments,evaluator_id,rated_at',
                 'taskRatings.batch:id,batch_code',
                 'taskRatings.evaluator:id,first_name,last_name',
+                'behavioralEvaluations:id,batch_id,trainee_id,evaluator_id,total_score,remarks,updated_at',
+                'behavioralEvaluations.evaluator:id,first_name,last_name',
+                'behavioralEvaluations.answers:id,evaluation_id,question_id,score,text_answer',
+                'behavioralEvaluations.answers.question:id,section,question,type',
             ])
+            ->withSum(['tasks' => function ($query) {
+                $query->where('status', 'completed');
+                }], 'time_spent')
             ->findOrFail($id);
 
         $name = $trainee['first_name'] . " " . $trainee['last_name'];
@@ -108,7 +115,7 @@ class TraineesViewController extends BaseController
             ->map(fn($outcome) => [
                 'id' => $outcome->id,
                 'title' => $outcome->learning_outcomes,
-                'status' => $achievedStatuses->get($outcome->id, 'inactive'),
+                'status' => $achievedStatuses->get($outcome->id, 'active'),
             ]);
 
         return InertiaPageResponse::csr($view, [

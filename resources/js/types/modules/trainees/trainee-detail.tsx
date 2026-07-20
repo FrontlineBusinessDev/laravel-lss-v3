@@ -111,6 +111,24 @@ export interface AppTraineeTaskRating {
     evaluator: AppTraineeTaskRatingEvaluator | null;
 }
 
+export interface AppTraineeBehavioralAnswer {
+    id: number;
+    question_id: number;
+    score: number | null;
+    text_answer: string | null;
+    question: { id: number; section: string; question: string; type: 'rating' | 'text' } | null;
+}
+
+export interface AppTraineeBehavioralEvaluation {
+    id: number;
+    batch_id: number;
+    total_score: number | null;
+    remarks: string | null;
+    updated_at: string;
+    evaluator: AppTraineeTaskRatingEvaluator | null;
+    answers: AppTraineeBehavioralAnswer[];
+}
+
 export interface TraineeDetail {
     id: number;
     status: string;
@@ -160,6 +178,8 @@ export interface TraineeDetail {
     payments: AppTraineePayment[];
     certificate: AppTraineeCertificate | null;
     task_ratings: AppTraineeTaskRating[];
+    behavioral_evaluations: AppTraineeBehavioralEvaluation[];
     created_at: string;
     updated_at: string;
+    tasks_sum_time_spent?: string | number | null;
 }

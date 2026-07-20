@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,7 +37,6 @@ class Trainees extends Model
         'emergency_contact_name',
         'emergency_contact_number',
         'required_hours',
-        'completed_hours',
         'date_completed',
         'termination_remarks',
         'address',
@@ -49,13 +49,16 @@ class Trainees extends Model
         'gross_amount',
         'total_discount_amount',
         'net_amount_required',
+        'evaluation_access_override',
+        'hour_threshold_notified_at',
     ];
 
     protected $casts = [
         'birthday' => 'date',
         'date_completed' => 'date',
+        'evaluation_access_override' => 'boolean',
+        'hour_threshold_notified_at' => 'datetime',
         'required_hours' => 'decimal:2',
-        'completed_hours' => 'decimal:2',
         'override_rate_per_hour' => 'decimal:2',
         'override_hours_discount_percent' => 'decimal:2',
         'override_group_discount_percent' => 'decimal:2',
@@ -114,6 +117,17 @@ class Trainees extends Model
         return $this->hasMany(Task::class, 'trainee_id');
     }
 
+    public function completedTasks(): HasMany
+    {
+        return $this->tasks()->where('status', 'completed');
+    }
+
+    /** Adds a `completed_hours` aggregate column: sum of completed tasks' time_spent. */
+    public function scopeWithCompletedHours(Builder $query): Builder
+    {
+        return $query->withSum('completedTasks as completed_hours', 'time_spent');
+    }
+
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class, 'trainee_id');
@@ -122,6 +136,16 @@ class Trainees extends Model
     public function taskRatings(): HasMany
     {
         return $this->hasMany(TaskRating::class, 'trainee_id');
+    }
+
+    public function behavioralEvaluations(): HasMany
+    {
+        return $this->hasMany(BehavioralEvaluation::class, 'trainee_id');
+    }
+
+    public function trainerEvaluations(): HasMany
+    {
+        return $this->hasMany(TrainerEvaluation::class, 'trainee_id');
     }
     /** Presigned (or public) URL for the stored avatar, null when none is set. */
     protected function avatarUrl(): Attribute

@@ -11,7 +11,11 @@ export const TaskCompletedPill = memo(function TaskCompletedPill({
 }) {
     return (
         <span
-            className={cn(PILL_BASE, 'bg-success-50 text-success-800', className)}
+            className={cn(
+                PILL_BASE,
+                'bg-success-50 text-success-800',
+                className,
+            )}
             data-cy="task-completed-pill"
         >
             Task Completed
@@ -20,11 +24,7 @@ export const TaskCompletedPill = memo(function TaskCompletedPill({
 });
 
 export const RequiredHoursCompletedPill = memo(
-    function RequiredHoursCompletedPill({
-        className,
-    }: {
-        className?: string;
-    }) {
+    function RequiredHoursCompletedPill({ className }: { className?: string }) {
         return (
             <span
                 className={cn(

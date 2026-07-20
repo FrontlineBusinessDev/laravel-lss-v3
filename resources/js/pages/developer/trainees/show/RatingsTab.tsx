@@ -110,6 +110,102 @@ export default function RatingsTab({ trainee }: { trainee: TraineeDetail }) {
                         ))}
                     </div>
                 </div>
+
+                <div
+                    className="rounded-lg border border-neutral-200 bg-white p-5"
+                    data-cy="ratings-tab-div-behavioral"
+                >
+                    <div
+                        className="mb-4 flex items-center justify-between"
+                        data-cy="ratings-tab-div-behavioral-header"
+                    >
+                        <h3
+                            className="text-sm font-semibold text-ink"
+                            data-cy="ratings-tab-h3-behavioral-ratings"
+                        >
+                            Behavioral ratings
+                        </h3>
+                        {trainee.behavioral_evaluations.length > 0 && (
+                            <StatCard
+                                label="Overall behavioral score"
+                                value={`${(trainee.behavioral_evaluations[0].total_score ?? 0).toFixed(1)} / 100`}
+                                tone="accent"
+                                className="w-44"
+                                data-cy="ratings-tab-stat-card-overall-behavioral-score"
+                            />
+                        )}
+                    </div>
+
+                    {trainee.behavioral_evaluations.length === 0 && (
+                        <div
+                            className="rounded-md border border-dashed border-neutral-200 p-6 text-center text-sm text-neutral-500"
+                            data-cy="ratings-tab-div-no-behavioral-ratings-recorded-yet"
+                        >
+                            No behavioral evaluation recorded yet.
+                        </div>
+                    )}
+
+                    {trainee.behavioral_evaluations.map((evaluation) => (
+                        <div
+                            key={evaluation.id}
+                            className="flex flex-col gap-3"
+                            data-cy="ratings-tab-div-behavioral-evaluation"
+                        >
+                            {evaluation.answers.map((answer) => (
+                                <div
+                                    key={answer.id}
+                                    className="rounded-md border border-neutral-200 p-3.5"
+                                    data-cy="ratings-tab-div-behavioral-answer"
+                                >
+                                    <div
+                                        className="mb-1.5 flex flex-wrap items-center justify-between gap-2"
+                                        data-cy="ratings-tab-div-behavioral-answer-header"
+                                    >
+                                        <span
+                                            className="text-sm font-medium text-ink"
+                                            data-cy="ratings-tab-span-behavioral-question"
+                                        >
+                                            {answer.question?.question ?? 'Untitled question'}
+                                        </span>
+                                        {answer.question?.type === 'rating' && (
+                                            <RatingInput
+                                                value={answer.score ?? 0}
+                                                size="sm"
+                                                data-cy="ratings-tab-rating-input-behavioral"
+                                            />
+                                        )}
+                                    </div>
+                                    {answer.text_answer && (
+                                        <p
+                                            className="text-xs leading-relaxed text-neutral-600"
+                                            data-cy="ratings-tab-p-behavioral-text-answer"
+                                        >
+                                            {answer.text_answer}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                            {evaluation.remarks && (
+                                <div
+                                    className="rounded-md border border-neutral-200 bg-neutral-50 p-3.5 text-xs text-neutral-600"
+                                    data-cy="ratings-tab-div-behavioral-remarks"
+                                >
+                                    <span className="font-medium text-ink">Remarks: </span>
+                                    {evaluation.remarks}
+                                </div>
+                            )}
+                            <div
+                                className="text-xs text-neutral-400"
+                                data-cy="ratings-tab-div-behavioral-evaluated-by"
+                            >
+                                {evaluation.evaluator
+                                    ? `Evaluated by ${evaluation.evaluator.first_name} ${evaluation.evaluator.last_name}`
+                                    : 'Evaluator not recorded'}
+                                {evaluation.updated_at ? ` on ${evaluation.updated_at.slice(0, 10)}` : ''}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </TraineesDetailLayout>
     );

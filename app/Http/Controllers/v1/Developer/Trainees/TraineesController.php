@@ -8,6 +8,7 @@ use App\Mail\UserInviteMail;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
 use App\Support\PasswordSetupUrl;
+use App\Support\RequiredDocumentTypes;
 use App\Support\Statuses;
 use App\Support\TraineeAccountLinker;
 use App\Support\TraineeCascadeDeleter;
@@ -70,7 +71,7 @@ class TraineesController extends BaseController
      */
     protected function newQuery(): Builder
     {
-        $query = parent::newQuery()->with([
+        $query = parent::newQuery()->withCompletedHours()->with([
             'school:id,school_name',
             'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
@@ -111,7 +112,6 @@ class TraineesController extends BaseController
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_number' => ['required', 'string', 'max:50'],
             'required_hours' => ['required', 'numeric', 'min:0', 'max:999.99'],
-            'completed_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'date_completed' => ['nullable', 'date'],
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
@@ -135,7 +135,6 @@ class TraineesController extends BaseController
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_number' => ['required', 'string', 'max:50'],
             'required_hours' => ['required', 'numeric', 'min:0', 'max:999.99'],
-            'completed_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'date_completed' => ['nullable', 'date'],
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
@@ -309,6 +308,66 @@ class TraineesController extends BaseController
         $model->update($validated);
 
         return $this->sendResponse($model, 'Billing override updated successfully.');
+    }
+
+    /**
+     * Active trainees whose document set is incomplete against
+     * RequiredDocumentTypes::TYPES — candidates for the Evaluation module's
+     * admin bypass toggle (see AccessOverridePanel.tsx).
+     */
+    public function evaluationOverrideCandidates(Request $request): JsonResponse
+    {
+        $this->authorize('view', Trainees::class);
+
+        $search = $request->string('search')->toString();
+
+        $candidates = Trainees::query()
+            ->where('status', self::STATUS_ACTIVE)
+            ->with(['batch:id,batch_code', 'documents:id,trainee_id,status,document_type'])
+            ->when($search !== '', fn(Builder $q) => $q->where(function (Builder $q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
+            }))
+            ->orderBy('last_name')
+            ->limit(100)
+            ->get()
+            ->filter(function (Trainees $trainee) {
+                $uploaded = $trainee->documents
+                    ->where('status', self::STATUS_ACTIVE)
+                    ->pluck('document_type')
+                    ->all();
+                $missing = array_diff(RequiredDocumentTypes::TYPES, $uploaded);
+                return count($missing) > 0;
+            })
+            ->map(function (Trainees $trainee) {
+                $uploaded = $trainee->documents->where('status', self::STATUS_ACTIVE)->pluck('document_type')->all();
+                $missing = array_values(array_diff(RequiredDocumentTypes::TYPES, $uploaded));
+                return [
+                    'id' => $trainee->id,
+                    'name' => "{$trainee->first_name} {$trainee->last_name}",
+                    'batch_code' => $trainee->batch?->batch_code,
+                    'missing_documents' => $missing,
+                    'evaluation_access_override' => (bool) $trainee->evaluation_access_override,
+                ];
+            })
+            ->values();
+
+        return $this->sendResponse($candidates);
+    }
+
+    /** Toggle the admin bypass flag that lets a trainee reach the trainer-evaluation gateway despite incomplete documents. */
+    public function toggleEvaluationOverride(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('update', $trainee);
+
+        $validated = $request->validate([
+            'override' => ['required', 'boolean'],
+        ]);
+
+        $trainee->update(['evaluation_access_override' => $validated['override']]);
+
+        return $this->sendResponse($trainee, 'Evaluation access override updated successfully.');
     }
 
     /**

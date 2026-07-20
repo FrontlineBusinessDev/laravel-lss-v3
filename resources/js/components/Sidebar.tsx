@@ -130,6 +130,7 @@ const TRAINER_ITEMS: NavigationItem[] = [
     { to: '/trainer/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/trainer/leave', label: 'Leave', icon: CalendarOff },
     { to: '/trainer/ratings', label: 'Ratings', icon: Star },
+    { to: '/trainer/evaluation', label: 'Evaluation', icon: ClipboardList },
 ];
 
 // Trainee's nav is scoped to its own /trainee/* placeholder pages.
@@ -242,6 +243,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         </>
     );
 }
+
 function UserMenu() {
     const navigate = useNavigate();
     const { displayName, email, initials, role } = useAuth();

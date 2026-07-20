@@ -93,14 +93,19 @@ export default function AcademicInfoTab({
             router.reload({ only: ['trainee'] });
         } catch (error) {
             showToast(
-                error instanceof ApiError ? error.message : 'Failed to save changes',
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to save changes',
                 'error',
             );
         } finally {
             setSaving(false);
         }
     };
-    const hours = getHoursProgress(trainee.completed_hours, saved.required_hours);
+    const hours = getHoursProgress(
+        trainee.tasks_sum_time_spent,
+        saved.required_hours,
+    );
     return (
         <>
             <TraineesDetailLayout trainee={trainee}>
@@ -169,8 +174,8 @@ export default function AcademicInfoTab({
                         <Field
                             label="Academic program"
                             value={
-                                trainee.batch?.academic_program
-                                    ?.course_name ?? ''
+                                trainee.batch?.academic_program?.course_name ??
+                                ''
                             }
                             data-cy="academic-info-tab-field-academic-program"
                         />

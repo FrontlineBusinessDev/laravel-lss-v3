@@ -6,6 +6,7 @@ use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\Trainees;
 use App\Models\User;
+use App\Support\HourThresholdDispatcher;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -194,6 +195,8 @@ class TasksController
             $attributes = $this->foldElapsedTime($model) + $attributes + ['is_running' => false, 'started_at' => null];
         }
         $model->update($attributes);
+
+        HourThresholdDispatcher::maybeDispatch($this->currentTrainee($request));
 
         return $this->sendResponse($model, 'Task marked as complete.');
     }

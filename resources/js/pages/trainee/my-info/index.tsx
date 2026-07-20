@@ -106,7 +106,7 @@ function PersonalInfoSection({ trainee }: { trainee: TraineeDetail }) {
 
 function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
     const hours = getHoursProgress(
-        trainee.completed_hours,
+        trainee.tasks_sum_time_spent,
         trainee.required_hours,
     );
 
@@ -346,7 +346,9 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
             showToast('Document removed', 'success');
         } catch (err) {
             showToast(
-                err instanceof ApiError ? err.message : 'Failed to remove document',
+                err instanceof ApiError
+                    ? err.message
+                    : 'Failed to remove document',
                 'error',
             );
         }
