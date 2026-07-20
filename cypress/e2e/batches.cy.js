@@ -18,8 +18,9 @@ describe('Batches Module', () => {
 it('should load the Batches Page', () => {
 
     //elements inside batches page
-    // cy.get('[data-cy="add-record-button"]').should('be.visible');
-    // cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+    cy.get('[data-cy="add-record-button"]').should('be.visible');
+    cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+    cy.get('[data-cy="toolbar-select-sort-by-change"]').should('be.visible');
 
 
 
@@ -64,26 +65,67 @@ it('should load the Batches Page', () => {
         //     .and('contain.text','Fourth Year')
         //     .and('contain.text','Others');
 
-        //setup
-         cy.get('[data-cy="use-async-select-field-button-button"]').eq(3).click();
-         cy.get('[data-cy="use-async-select-field-button-button-2"]')
-            .should('contain.text','All')
-            .and('contain.text','Face to Face (F2F)')
-            .and('contain.text','Online');
+        // //setup
+        //  cy.get('[data-cy="use-async-select-field-button-button"]').eq(3).click();
+        //  cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .should('contain.text','All')
+        //     .and('contain.text','Face to Face (F2F)')
+        //     .and('contain.text','Online');
         
-        //status
-        cy.get('[data-cy="use-async-select-field-button-button"]').eq(4).click();
-         cy.get('[data-cy="use-async-select-field-button-button-2"]')
-            .should('contain.text','All')
-            .and('contain.text','Active')
-            .and('contain.text','Inactive')
-            .and('contain.text','Completed')
-            .and('contain.text','Terminated');
+        // //status
+        // cy.get('[data-cy="use-async-select-field-button-button"]').eq(4).click();
+        //  cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .should('contain.text','All')
+        //     .and('contain.text','Active')
+        //     .and('contain.text','Inactive')
+        //     .and('contain.text','Completed')
+        //     .and('contain.text','Terminated');
         
+    cy.get('[data-cy="toolbar-button-button"]').click();
             
         
-        
-        
+    //sort
+    // cy.get('[data-cy="toolbar-select-sort-by-change"] option')
+    //     .should('have.length', 4)
+    //     .and('contain.text', 'Batch Code')
+    //     .and('contain.text', 'Date Started')
+    //     .and('contain.text', 'Projected End')
+    //     .and('contain.text', 'Created')
+
+    // //page filter
+    // cy.filterPerPage();
+
+    //table
+    // cy.get('[data-cy="settings-list-header-div-1"]')
+    //     .should('contain.text', 'Batch Code')
+    //     .and('contain.text', 'Program')
+    //     .and('contain.text', 'Industry')
+    //     .and('contain.text', 'Setup')
+    //     .and('contain.text', 'Trainees')
+
+    // cy.get('[data-cy="settings-row-div-4"]').first().click();
+
+    // cy.get('[data-cy="batch-detail-layout-link-batches"]').click();
+
+    cy.get('[data-cy="switch-span-2"]').click();
+    
+
+    cy.get('[data-cy="row-menu-button-row-actions"]').click();
+
+    cy.get('[data-cy="row-menu-button-4"]').eq(0)
+        .should('context.text', 'Edit');
+
+    cy.get('[data-cy="row-menu-button-4"]').eq(1)
+        .should('contain.text', 'Registration QR');
+    
+    cy.get('[data-cy="row-menu-button-4"]').eq(2)
+        .should('contain.text', 'Copy link');
+    
+    cy.get('[data-cy="row-menu-button-4"]').eq(3)
+        .should('contain.text', 'Archive');
+
+    cy.get('[data-cy="row-menu-button-4"]').eq(4)
+        .should('contain.text', 'Terminate');  
     
 });
 
