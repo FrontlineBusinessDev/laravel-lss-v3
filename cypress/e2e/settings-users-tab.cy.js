@@ -1,13 +1,20 @@
 describe('Settings - Users - Users Tab Page', () => {
     beforeEach(() => {
-        cy.session('admin', () => {
-            cy.login(); //login in system
-        });
+        cy.session(
+            'admin',
+            () => {
+                cy.login();
+            },
+            {
+                validate() {
+                    cy.visit('/dashboard');
+                    cy.url().should('include', '/dashboard');
+                },
+            },
+        );
 
         cy.visit('/settings/users');
     });
-
- 
 
     // check users tab page display
     it('should display the Users tab page correctly', () => {

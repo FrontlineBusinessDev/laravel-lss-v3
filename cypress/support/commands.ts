@@ -1,4 +1,6 @@
 Cypress.Commands.add('login', () => {
+    cy.intercept('POST', '**/login').as('login');
+
     cy.visit('/login');
 
     cy.get('[data-cy="login-input-email"]')
@@ -12,6 +14,10 @@ Cypress.Commands.add('login', () => {
         .type(Cypress.env('password'), { log: false });
 
     cy.get('[data-cy="button-button-1"]').should('be.visible').click();
+
+    cy.wait('@login')
+        .its('response.statusCode')
+        .should('be.oneOf', [200, 204, 302]);
 
     cy.url().should('not.include', '/login');
 });

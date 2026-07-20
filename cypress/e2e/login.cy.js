@@ -47,16 +47,19 @@ describe('Login Page', () => {
 
     // check invalid credentials
     it('should display an error message when the user enters invalid credentials', () => {
-        cy.get('input[data-cy="login-input-email"]')
-            .type('herlyn.torres@frontlinebusiness.com.ph')
-            .should('have.value', 'herlyn.torres@frontlinebusiness.com.ph');
-
-        cy.get('input[data-cy="login-input-enter-your-password"]').type(
-            'Herlyntest123*',
+        cy.get('[data-cy="login-input-email"]').type(
+            'torresherlyn28@gmail.com',
         );
-        cy.get('[data-cy="login-eye-16"]').click();
-        cy.get('[data-cy="login-eye-off-15"]').click();
+
+        cy.get('[data-cy="login-input-enter-your-password"]').type(
+            'WrongPassword123!',
+        );
+
         cy.get('[data-cy="button-button-1"]').click();
+
+        cy.get('[data-cy="login-p-9"]')
+            .should('be.visible')
+            .and('contain', 'These credentials do not match our records.');
     });
 
     // check login invalid email format
@@ -79,7 +82,7 @@ describe('Login Page', () => {
         cy.get(
             '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
         ).click();
-        cy.get('[data-cy="forgot-password-div-3"]').should('exist');
+        cy.get('[data-cy="forgot-password-input-email"]').should('exist');
         cy.get('[data-cy="forgot-password-h1-forgot-your-password"]').should(
             'be.visible',
         );
@@ -96,6 +99,10 @@ describe('Login Page', () => {
         cy.get(
             '[data-cy="router-compat-inertia-link-to-/forgot-password"]',
         ).click(); // click forgot password
+
+        cy.get('[data-cy="forgot-password-input-email"]')
+            .should('have.prop', 'validationMessage')
+            .and('not.be.empty');
         cy.get('[data-cy="button-button-1"]').click();
         cy.get('[data-cy="router-compat-inertia-link-to-/login"]').click(); // click back to login
     });
