@@ -29,6 +29,8 @@ use App\Http\Controllers\v1\Developer\Certificate\SeminarCertificateController;
 use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
 use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationSeminarQuestionnaire;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationTrainerQuestionnaire;
 use App\Http\Controllers\v1\Developer\Leave\LeaveController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
 use App\Http\Controllers\v1\NotificationController;
@@ -42,6 +44,9 @@ use App\Http\Controllers\v1\Developer\Tasks\TasksController;
 use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
 use App\Http\Controllers\v1\Developer\Ratings\BehavioralEvaluationController;
 use App\Http\Controllers\v1\Developer\Ratings\BehavioralQuestionController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarEmailNotificationController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarListController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarParticipantsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeBiometricsController as TraineeDetailBiometricsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
@@ -304,11 +309,17 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');
+    Route::get('/evaluation/overview', [EvaluationController::class, 'index'])->name('evaluation.index');
+    Route::get('/evaluation/trainer-questionnaire', [EvaluationTrainerQuestionnaire::class, 'index'])->name('evaluation.trainer-questionnaire.index');
+    Route::get('/evaluation/seminar-questionnaire', [EvaluationSeminarQuestionnaire::class, 'index'])->name('evaluation.seminar-questionnaire.index');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/pagination-search', [PaymentController::class, 'paginationSearch'])->name('payments.pagination-search');
     Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/seminars', [SeminarController::class, 'index'])->name('seminars.index');
+    Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.index');
+    Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
+    Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
     Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 

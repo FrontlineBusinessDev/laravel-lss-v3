@@ -1,33 +1,149 @@
-import { useState } from 'react';
-import { evaluationQuestions as initialQuestions, evaluationResponses as initialResponses, questionSetsByCategory, currentUser } from '@/data/mockData';
+import { useBatches } from '@/context/BatchesContext';
+import { seminars } from '@/data/mockData';
+import EvaluationPrimaryLayout from '@/layouts/evaluation/EvaluationPrimaryLayout';
 import type { EvaluationQuestion, EvaluationResponse } from '@/types';
-import { cn } from '@/lib/utils';
-import { OverviewTab } from './OverviewTab';
-import { TrainersQuestionnaireTab } from './TrainersQuestionnaireTab';
-import { SeminarQuestionnaireTab } from './SeminarQuestionnaireTab';
-const TABS = ['Overview', 'Trainers questionnaire', 'Seminar questionnaire'] as const;
-export default function EvaluationPage() {
-  const [tab, setTab] = useState<typeof TABS[number]>('Overview');
-  const [questions, setQuestions] = useState<EvaluationQuestion[]>(initialQuestions);
-  const [responses, setResponses] = useState<EvaluationResponse[]>(initialResponses);
-  const [trainerSets, setTrainerSets] = useState<string[]>(questionSetsByCategory.Trainer);
-  const [seminarSets, setSeminarSets] = useState<string[]>(questionSetsByCategory.Seminar);
-  return <div data-cy="index-div-1">
-      <div className="mb-4" data-cy="index-div-2">
-        <h1 className="text-xl font-semibold text-ink" data-cy="index-h1-evaluation">Evaluation</h1>
-        <p className="text-sm text-neutral-500" data-cy="index-p-trainee-to-trainer-and-participant-to-speaker-feedback-questionnaires">Trainee-to-trainer and participant-to-speaker feedback questionnaires</p>
-      </div>
+import { useMemo } from 'react';
+import {
+    computeBatchAnswerStats,
+    computeRatingDistribution,
+    computeReminderCandidates,
+    computeSeminarAnswerStats,
+    overallAverage,
+} from './evaluationUtils';
+import { EvaluationRecordsPanel } from './EvaluationRecordsPanel';
+import { StatCard } from '@/components/StatCard';
+import { Bell, ClipboardList, ListChecks, Star } from 'lucide-react';
+import { RatingDistributionChart } from './RatingDistributionChart';
+import { BatchScoreChart } from './BatchScoreChart';
+import { AnswersPerScopeTabs } from './AnswersPerScopeTabs';
+import { NotificationsPanel } from './NotificationsPanel';
 
-      <div className="mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5 lss-scrollbar" data-cy="index-div-5">
-        {TABS.map(t => <button key={t} onClick={() => setTab(t)} className={cn('shrink-0 whitespace-nowrap pb-2.5 text-xs font-medium transition-colors', tab === t ? 'border-b-2 border-brand-500 text-ink font-semibold' : 'text-neutral-500 hover:text-neutral-700')} data-cy="index-button-set-tab">
-            {t}
-          </button>)}
-      </div>
+export default function EvaluationPage({
+    questions = [],
+    responses = [],
+    onChangeResponses,
+}: {
+    questions: EvaluationQuestion[];
+    responses: EvaluationResponse[];
+    onChangeResponses: (next: EvaluationResponse[]) => void;
+}) {
+    const { trainees, batches } = useBatches();
+    const batchStats = useMemo(
+        () => computeBatchAnswerStats(batches, responses),
+        [batches, responses],
+    );
+    const seminarStats = useMemo(
+        () => computeSeminarAnswerStats(seminars, responses),
+        [responses],
+    );
+    const distribution = useMemo(
+        () => computeRatingDistribution(responses),
+        [responses],
+    );
+    const reminderCandidates = useMemo(
+        () => computeReminderCandidates(trainees, responses),
+        [trainees, responses],
+    );
+    const activeQuestionCount = questions.filter(
+        (q) => q.status === 'active',
+    ).length;
+    const activeResponseCount = responses.filter(
+        (r) => r.status === 'active',
+    ).length;
+    const avgScore = overallAverage(responses);
+    return (
+        <>
+            <EvaluationPrimaryLayout>
+                <div
+                    className="flex flex-col gap-4"
+                    data-cy="overview-tab-div-1"
+                >
+                    {/* Records management — prioritized at the top so admins land here first */}
+                    <EvaluationRecordsPanel
+                        responses={responses}
+                        onChange={onChangeResponses}
+                        batchOptions={Array.from(
+                            new Set(
+                                responses
+                                    .filter((r) => r.batchNo)
+                                    .map((r) => r.batchNo!),
+                            ),
+                        ).sort()}
+                        data-cy="overview-tab-evaluation-records-panel-change-responses"
+                    />
 
-      {tab === 'Overview' && <OverviewTab questions={questions} responses={responses} onChangeResponses={setResponses} data-cy="index-overview-tab-7" />}
+                    {/* Stat cards */}
+                    <div
+                        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+                        data-cy="overview-tab-div-3"
+                    >
+                        <StatCard
+                            label="Active questions"
+                            value={activeQuestionCount}
+                            icon={ListChecks}
+                            hint="Across trainer & seminar forms"
+                            data-cy="overview-tab-stat-card-active-questions"
+                        />
+                        <StatCard
+                            label="Total responses"
+                            value={activeResponseCount}
+                            icon={ClipboardList}
+                            hint="Active evaluation records"
+                            data-cy="overview-tab-stat-card-total-responses"
+                        />
+                        <StatCard
+                            label="Average rating"
+                            value={avgScore.toFixed(1)}
+                            icon={Star}
+                            tone="accent"
+                            hint="Out of 5 stars"
+                            data-cy="overview-tab-stat-card-average-rating"
+                        />
+                        <StatCard
+                            label="Pending reminders"
+                            value={reminderCandidates.length}
+                            icon={Bell}
+                            tone={
+                                reminderCandidates.length > 0
+                                    ? 'warning'
+                                    : 'default'
+                            }
+                            hint="Hours met, evaluation not yet submitted"
+                            data-cy="overview-tab-stat-card-pending-reminders"
+                        />
+                    </div>
 
-      {tab === 'Trainers questionnaire' && <TrainersQuestionnaireTab questions={questions} onChange={setQuestions} currentUserName={currentUser.name} sets={trainerSets} onAddSet={name => setTrainerSets(prev => [...prev, name])} data-cy="index-trainers-questionnaire-tab-set-questions" />}
+                    {/* Charts */}
+                    <div
+                        className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+                        data-cy="overview-tab-div-8"
+                    >
+                        <RatingDistributionChart
+                            data={distribution}
+                            data-cy="overview-tab-rating-distribution-chart-9"
+                        />
+                        <BatchScoreChart
+                            stats={batchStats}
+                            data-cy="overview-tab-batch-score-chart-10"
+                        />
+                    </div>
 
-      {tab === 'Seminar questionnaire' && <SeminarQuestionnaireTab questions={questions} onChange={setQuestions} currentUserName={currentUser.name} sets={seminarSets} onAddSet={name => setSeminarSets(prev => [...prev, name])} data-cy="index-seminar-questionnaire-tab-set-questions" />}
-    </div>;
+                    {/* Answers per batch / seminar — tabbed, click through to individual answers */}
+                    <AnswersPerScopeTabs
+                        batchStats={batchStats}
+                        seminarStats={seminarStats}
+                        responses={responses}
+                        data-cy="overview-tab-answers-per-scope-tabs-11"
+                    />
+
+                    {/* Notifications */}
+                    <NotificationsPanel
+                        candidates={reminderCandidates}
+                        data-cy="overview-tab-notifications-panel-12"
+                    />
+                </div>
+                ;
+            </EvaluationPrimaryLayout>
+        </>
+    );
 }

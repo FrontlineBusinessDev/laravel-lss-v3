@@ -133,6 +133,11 @@ class Trainees extends Model
     {
         return $this->hasMany(TaskRating::class, 'trainee_id');
     }
+
+    public function behavioralEvaluations(): HasMany
+    {
+        return $this->hasMany(BehavioralEvaluation::class, 'trainee_id');
+    }
     /** Presigned (or public) URL for the stored avatar, null when none is set. */
     protected function avatarUrl(): Attribute
     {

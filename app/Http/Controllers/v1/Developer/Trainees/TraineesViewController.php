@@ -86,6 +86,10 @@ class TraineesViewController extends BaseController
                 'taskRatings:id,batch_id,trainee_id,task_name,rating,comments,evaluator_id,rated_at',
                 'taskRatings.batch:id,batch_code',
                 'taskRatings.evaluator:id,first_name,last_name',
+                'behavioralEvaluations:id,batch_id,trainee_id,evaluator_id,total_score,remarks,updated_at',
+                'behavioralEvaluations.evaluator:id,first_name,last_name',
+                'behavioralEvaluations.answers:id,evaluation_id,question_id,score,text_answer',
+                'behavioralEvaluations.answers.question:id,section,question,type',
             ])
             ->withSum(['tasks' => function ($query) {
                 $query->where('status', 'completed');
