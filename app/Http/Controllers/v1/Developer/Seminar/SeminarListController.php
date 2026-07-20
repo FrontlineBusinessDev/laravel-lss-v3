@@ -15,6 +15,6 @@ class SeminarListController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/seminar/index')->asCsr();
+        return Inertia::render('developer/seminars/index')->asCsr();
     }
 }

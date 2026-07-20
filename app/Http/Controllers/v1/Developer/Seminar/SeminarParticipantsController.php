@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\v1\Developer\Seminar;
 
+use App\Http\Controllers\v1\Controller;
 use Illuminate\Http\Request;
-use Inertia\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +15,6 @@ class SeminarParticipantsController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/seminar/participants/index')->asCsr();
+        return Inertia::render('developer/seminars/participants/index')->asCsr();
     }
 }

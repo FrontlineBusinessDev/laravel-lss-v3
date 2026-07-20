@@ -25,7 +25,7 @@ const NAV_LINKS = [
     {
         id: 'Email notifications',
         label: 'Email notifications',
-        href: '/seminars/email-notifications',
+        href: '/seminars/email-notification',
         permission: 'manage seminars',
     },
 ] as const;

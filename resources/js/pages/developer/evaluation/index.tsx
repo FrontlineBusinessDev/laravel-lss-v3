@@ -1,149 +1,133 @@
-import { useBatches } from '@/context/BatchesContext';
-import { seminars } from '@/data/mockData';
-import EvaluationPrimaryLayout from '@/layouts/evaluation/EvaluationPrimaryLayout';
-import type { EvaluationQuestion, EvaluationResponse } from '@/types';
-import { useMemo } from 'react';
-import {
-    computeBatchAnswerStats,
-    computeRatingDistribution,
-    computeReminderCandidates,
-    computeSeminarAnswerStats,
-    overallAverage,
-} from './evaluationUtils';
-import { EvaluationRecordsPanel } from './EvaluationRecordsPanel';
+import { evaluationOverviewService } from '@/api-service-layer/admin/evaluation';
 import { StatCard } from '@/components/StatCard';
-import { Bell, ClipboardList, ListChecks, Star } from 'lucide-react';
-import { RatingDistributionChart } from './RatingDistributionChart';
-import { BatchScoreChart } from './BatchScoreChart';
-import { AnswersPerScopeTabs } from './AnswersPerScopeTabs';
-import { NotificationsPanel } from './NotificationsPanel';
+import EvaluationPrimaryLayout from '@/layouts/evaluation/EvaluationPrimaryLayout';
+import { useQuery } from '@tanstack/react-query';
+import { ClipboardList, ListChecks, Star } from 'lucide-react';
 
-export default function EvaluationPage({
-    questions = [],
-    responses = [],
-    onChangeResponses,
+function BarList({
+    rows,
+    labelKey,
+    empty,
 }: {
-    questions: EvaluationQuestion[];
-    responses: EvaluationResponse[];
-    onChangeResponses: (next: EvaluationResponse[]) => void;
+    rows: Array<{ answer_count: number } & Record<string, unknown>>;
+    labelKey: string;
+    empty: string;
 }) {
-    const { trainees, batches } = useBatches();
-    const batchStats = useMemo(
-        () => computeBatchAnswerStats(batches, responses),
-        [batches, responses],
-    );
-    const seminarStats = useMemo(
-        () => computeSeminarAnswerStats(seminars, responses),
-        [responses],
-    );
-    const distribution = useMemo(
-        () => computeRatingDistribution(responses),
-        [responses],
-    );
-    const reminderCandidates = useMemo(
-        () => computeReminderCandidates(trainees, responses),
-        [trainees, responses],
-    );
-    const activeQuestionCount = questions.filter(
-        (q) => q.status === 'active',
-    ).length;
-    const activeResponseCount = responses.filter(
-        (r) => r.status === 'active',
-    ).length;
-    const avgScore = overallAverage(responses);
+    const max = Math.max(1, ...rows.map((r) => r.answer_count));
+
+    if (rows.length === 0) {
+        return (
+            <div className="py-6 text-center text-sm text-neutral-400">
+                {empty}
+            </div>
+        );
+    }
+
     return (
-        <>
-            <EvaluationPrimaryLayout>
+        <div className="flex flex-col gap-2.5">
+            {rows.map((row, i) => (
+                <div key={i} className="flex items-center gap-3">
+                    <span className="w-28 shrink-0 truncate text-xs text-neutral-600">
+                        {String(row[labelKey] ?? '—')}
+                    </span>
+                    <div className="h-2.5 flex-1 overflow-hidden rounded-pill bg-neutral-100">
+                        <div
+                            className="h-full rounded-pill bg-brand-500"
+                            style={{
+                                width: `${Math.max(4, (row.answer_count / max) * 100)}%`,
+                            }}
+                        />
+                    </div>
+                    <span className="w-6 shrink-0 text-right text-xs font-medium text-ink">
+                        {row.answer_count}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+export default function EvaluationOverviewPage() {
+    const { data, isLoading } = useQuery({
+        queryKey: ['evaluation-overview-metrics'],
+        queryFn: evaluationOverviewService.metrics,
+    });
+
+    return (
+        <EvaluationPrimaryLayout>
+            <div className="flex flex-col gap-4" data-cy="overview-tab-div-1">
                 <div
-                    className="flex flex-col gap-4"
-                    data-cy="overview-tab-div-1"
+                    className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+                    data-cy="overview-tab-div-3"
                 >
-                    {/* Records management — prioritized at the top so admins land here first */}
-                    <EvaluationRecordsPanel
-                        responses={responses}
-                        onChange={onChangeResponses}
-                        batchOptions={Array.from(
-                            new Set(
-                                responses
-                                    .filter((r) => r.batchNo)
-                                    .map((r) => r.batchNo!),
-                            ),
-                        ).sort()}
-                        data-cy="overview-tab-evaluation-records-panel-change-responses"
+                    <StatCard
+                        label="Active questions"
+                        value={
+                            isLoading
+                                ? '—'
+                                : (data?.active_trainer_questions ?? 0) +
+                                  (data?.active_seminar_questions ?? 0)
+                        }
+                        icon={ListChecks}
+                        hint="Across trainer & seminar forms"
+                        data-cy="overview-tab-stat-card-active-questions"
                     />
-
-                    {/* Stat cards */}
-                    <div
-                        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
-                        data-cy="overview-tab-div-3"
-                    >
-                        <StatCard
-                            label="Active questions"
-                            value={activeQuestionCount}
-                            icon={ListChecks}
-                            hint="Across trainer & seminar forms"
-                            data-cy="overview-tab-stat-card-active-questions"
-                        />
-                        <StatCard
-                            label="Total responses"
-                            value={activeResponseCount}
-                            icon={ClipboardList}
-                            hint="Active evaluation records"
-                            data-cy="overview-tab-stat-card-total-responses"
-                        />
-                        <StatCard
-                            label="Average rating"
-                            value={avgScore.toFixed(1)}
-                            icon={Star}
-                            tone="accent"
-                            hint="Out of 5 stars"
-                            data-cy="overview-tab-stat-card-average-rating"
-                        />
-                        <StatCard
-                            label="Pending reminders"
-                            value={reminderCandidates.length}
-                            icon={Bell}
-                            tone={
-                                reminderCandidates.length > 0
-                                    ? 'warning'
-                                    : 'default'
-                            }
-                            hint="Hours met, evaluation not yet submitted"
-                            data-cy="overview-tab-stat-card-pending-reminders"
-                        />
-                    </div>
-
-                    {/* Charts */}
-                    <div
-                        className="grid grid-cols-1 gap-4 lg:grid-cols-2"
-                        data-cy="overview-tab-div-8"
-                    >
-                        <RatingDistributionChart
-                            data={distribution}
-                            data-cy="overview-tab-rating-distribution-chart-9"
-                        />
-                        <BatchScoreChart
-                            stats={batchStats}
-                            data-cy="overview-tab-batch-score-chart-10"
-                        />
-                    </div>
-
-                    {/* Answers per batch / seminar — tabbed, click through to individual answers */}
-                    <AnswersPerScopeTabs
-                        batchStats={batchStats}
-                        seminarStats={seminarStats}
-                        responses={responses}
-                        data-cy="overview-tab-answers-per-scope-tabs-11"
+                    <StatCard
+                        label="Total submissions"
+                        value={
+                            isLoading
+                                ? '—'
+                                : (data?.total_trainer_submissions ?? 0) +
+                                  (data?.total_seminar_submissions ?? 0)
+                        }
+                        icon={ClipboardList}
+                        hint="Submitted trainer + seminar evaluations"
+                        data-cy="overview-tab-stat-card-total-responses"
                     />
-
-                    {/* Notifications */}
-                    <NotificationsPanel
-                        candidates={reminderCandidates}
-                        data-cy="overview-tab-notifications-panel-12"
+                    <StatCard
+                        label="Avg. trainer rating"
+                        value={data?.average_trainer_score?.toFixed(1) ?? '—'}
+                        icon={Star}
+                        tone="accent"
+                        hint="Out of 5 stars"
+                        data-cy="overview-tab-stat-card-average-trainer-rating"
+                    />
+                    <StatCard
+                        label="Avg. seminar rating"
+                        value={data?.average_seminar_score?.toFixed(1) ?? '—'}
+                        icon={Star}
+                        tone="accent"
+                        hint="Out of 5 stars"
+                        data-cy="overview-tab-stat-card-average-seminar-rating"
                     />
                 </div>
-                ;
-            </EvaluationPrimaryLayout>
-        </>
+
+                <div
+                    className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+                    data-cy="overview-tab-div-8"
+                >
+                    <div className="rounded-lg border border-neutral-200 bg-white p-5">
+                        <h3 className="mb-3 text-sm font-semibold text-ink">
+                            Trainer evaluation answers by batch
+                        </h3>
+                        <BarList
+                            rows={data?.answers_by_batch ?? []}
+                            labelKey="batch_code"
+                            empty="No trainer evaluations submitted yet."
+                        />
+                    </div>
+                    <div className="rounded-lg border border-neutral-200 bg-white p-5">
+                        <h3 className="mb-3 text-sm font-semibold text-ink">
+                            Seminar evaluation answers by seminar
+                        </h3>
+                        <BarList
+                            rows={data?.answers_by_seminar ?? []}
+                            labelKey="topic"
+                            empty="No seminar evaluations submitted yet."
+                        />
+                    </div>
+                </div>
+            </div>
+        </EvaluationPrimaryLayout>
     );
 }

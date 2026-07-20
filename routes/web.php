@@ -28,9 +28,9 @@ use App\Http\Controllers\v1\Developer\Certificate\CertificateTemplateController;
 use App\Http\Controllers\v1\Developer\Certificate\SeminarCertificateController;
 use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
 use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
-use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationSeminarQuestionnaire;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationTrainerQuestionnaire;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationViewController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
 use App\Http\Controllers\v1\NotificationController;
@@ -208,6 +208,12 @@ Route::middleware('auth')->group(function () {
     // segments (pagination-search, search-active, lookup) win the route
     // match against the `{id}` wildcard used by the tab views.
     Route::crudModule('/trainees', TraineesController::class, 'trainees');
+    // Same static-segment-before-wildcard rule as above — backs the
+    // Evaluation module's AccessOverridePanel bypass toggle.
+    Route::middleware('permission:' . Permissions::MANAGE_EVALUATION)->group(function () {
+        Route::get('/trainees/evaluation-override-candidates', [TraineesController::class, 'evaluationOverrideCandidates'])->name('trainees.evaluation-override-candidates');
+        Route::patch('/trainees/{id}/evaluation-override', [TraineesController::class, 'toggleEvaluationOverride'])->name('trainees.evaluation-override.update');
+    });
     Route::get('/trainees/{id}', [TraineesViewController::class, 'personalInformationTab'])->name('trainees.personalInformationTab');
     Route::get('/trainees/{id}/academic-information', [TraineesViewController::class, 'academicInfoTab'])->name('trainees.academicInfoTab');
     Route::get('/trainees/{id}/documents', [TraineesViewController::class, 'documents'])->name('trainees.documents');
@@ -308,19 +314,27 @@ Route::middleware('auth')->group(function () {
             });
     });
 
-    Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');
-    Route::get('/evaluation/overview', [EvaluationController::class, 'index'])->name('evaluation.index');
-    Route::get('/evaluation/trainer-questionnaire', [EvaluationTrainerQuestionnaire::class, 'index'])->name('evaluation.trainer-questionnaire.index');
-    Route::get('/evaluation/seminar-questionnaire', [EvaluationSeminarQuestionnaire::class, 'index'])->name('evaluation.seminar-questionnaire.index');
+    // Evaluation module: Overview (analytics), Trainer Questionnaire and
+    // Seminar Questionnaire question banks. Gated by `manage evaluation`,
+    // matching the Ratings/Tasks module convention.
+    Route::middleware('permission:' . Permissions::MANAGE_EVALUATION)->group(function () {
+        Route::redirect('/evaluation', '/evaluation/overview')->name('evaluation.index');
+        Route::get('/evaluation/overview', [EvaluationViewController::class, 'index'])->name('evaluation.overview.index');
+        Route::get('/evaluation/overview/metrics', [EvaluationViewController::class, 'metrics'])->name('evaluation.overview.metrics');
+        Route::crudModule('/evaluation/trainer-questionnaire', EvaluationTrainerQuestionnaire::class, 'evaluation.trainer-questionnaire');
+        Route::crudModule('/evaluation/seminar-questionnaire', EvaluationSeminarQuestionnaire::class, 'evaluation.seminar-questionnaire');
+    });
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/pagination-search', [PaymentController::class, 'paginationSearch'])->name('payments.pagination-search');
     Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-    Route::get('/seminars', [SeminarController::class, 'index'])->name('seminars.index');
-    Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.index');
-    Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
-    Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
-    Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
+    Route::middleware('permission:' . Permissions::MANAGE_SEMINARS)->group(function () {
+        Route::redirect('/seminars', '/seminars/list-of-seminars')->name('seminars.index');
+        Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.list-of-seminars.index');
+        Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
+        Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
+        Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
+    });
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     // ==========================================

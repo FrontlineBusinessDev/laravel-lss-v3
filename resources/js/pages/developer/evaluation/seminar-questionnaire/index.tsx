@@ -1,32 +1,10 @@
-import { evaluationQuestions, questionSetsByCategory } from '@/data/mockData';
 import EvaluationPrimaryLayout from '@/layouts/evaluation/EvaluationPrimaryLayout';
-import { EvaluationQuestion } from '@/types';
-import { QuestionsPanel } from '../QuestionsPanel';
+import { EvaluationQuestionnaireSetup } from '../EvaluationQuestionnaireSetup';
 
-export default function index({
-    questions,
-    onChange,
-    currentUserName,
-    sets,
-    onAddSet,
-}: {
-    questions: EvaluationQuestion[];
-    onChange: (next: EvaluationQuestion[]) => void;
-    currentUserName: string;
-    sets: string[];
-    onAddSet: (name: string) => void;
-}) {
+export default function SeminarQuestionnairePage() {
     return (
         <EvaluationPrimaryLayout>
-            <QuestionsPanel
-                category="Seminar"
-                questions={evaluationQuestions}
-                onChange={onChange}
-                currentUserName={currentUserName}
-                sets={questionSetsByCategory.Seminar}
-                onAddSet={onAddSet}
-                data-cy="seminar-questionnaire-tab-questions-panel-change"
-            />
+            <EvaluationQuestionnaireSetup category="Seminar" />
         </EvaluationPrimaryLayout>
     );
 }
