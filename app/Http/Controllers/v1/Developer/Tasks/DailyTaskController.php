@@ -116,12 +116,17 @@ class DailyTaskController extends Controller
         $traineeIds = $tasks->pluck('trainee_id')->unique()->values();
         $leaves = LeaveRequest::where('status', 'approved')
             ->whereIn('trainee_id', $traineeIds)
-            ->get(['trainee_id', 'leave_type', 'leave_date', 'return_date', 'reason']);
+            ->with('leaveCategory:id,name')
+            ->get(['id', 'trainee_id', 'leave_category_id', 'leave_date', 'return_date', 'reason']);
 
         return $tasks->map(function (Task $task) use ($leaves) {
             $leave = $leaves->first(fn($l) => $l->trainee_id === $task->trainee_id
                 && $task->date->toDateString() >= $l->leave_date->toDateString()
                 && $task->date->toDateString() <= $l->return_date->toDateString());
+
+            $leaveRemarks = $leave
+                ? sprintf('[Approved] %s - %s', $leave->leaveCategory->name ?? 'Leave', $leave->reason)
+                : null;
 
             return [
                 'id' => $task->id,
@@ -130,12 +135,12 @@ class DailyTaskController extends Controller
                 'description' => $task->description,
                 'time_goal' => (float) $task->time_goal,
                 'time_spent' => $leave ? 0 : (float) $task->time_spent,
-                'remarks' => $leave ? $leave->leave_type . ': ' . $leave->reason : $task->remarks,
+                'remarks' => $leave ? $leaveRemarks : $task->remarks,
                 'trainee' => trim($task->trainee?->first_name . ' ' . $task->trainee?->last_name),
                 'trainer' => trim($task->trainer?->first_name . ' ' . $task->trainer?->last_name),
                 'date' => $task->date->toDateString(),
                 'on_leave' => (bool) $leave,
-                'leave_reason' => $leave ? $leave->leave_type . ': ' . $leave->reason : null,
+                'leave_reason' => $leaveRemarks,
             ];
         })->values();
     }

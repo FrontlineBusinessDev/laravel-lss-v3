@@ -8,6 +8,7 @@ use App\Mail\LeaveSubmittedMail;
 use App\Models\LeaveCategory;
 use App\Models\LeaveRequest;
 use App\Models\Notification;
+use App\Models\Task;
 use App\Models\Trainees;
 use App\Models\User;
 use App\Traits\ScopesToAssignedBatches;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -145,11 +147,31 @@ class LeaveRequestController extends BaseController
         $leaveRequest = $this->resolveModel($id);
         $this->authorize('approve', $leaveRequest);
         abort_if($leaveRequest->status !== 'pending', 422, 'Only pending requests can be approved.');
-        $leaveRequest->update([
-            'status' => 'approved',
-            'decided_by_id' => auth()->id(),
-            'decided_at' => now(),
-        ]);
+
+        DB::transaction(function () use ($leaveRequest) {
+            $leaveRequest->update([
+                'status' => 'approved',
+                'decided_by_id' => auth()->id(),
+                'decided_at' => now(),
+            ]);
+
+            $leaveRequest->loadMissing('leaveCategory');
+            $remarks = sprintf(
+                '[Approved] %s - %s',
+                $leaveRequest->leaveCategory->name ?? 'Leave',
+                $leaveRequest->reason,
+            );
+
+            // Keep the task for auditing rather than deleting it: clear its
+            // time and tag the remarks with the approved leave. Only open
+            // tasks are swept — completed/locked tasks are already finalized.
+            Task::where('trainee_id', $leaveRequest->trainee_id)
+                ->where('status', 'open')
+                ->whereDate('date', '>=', $leaveRequest->leave_date)
+                ->whereDate('date', '<=', $leaveRequest->return_date)
+                ->update(['time_spent' => 0, 'remarks' => $remarks]);
+        });
+
         $this->notifyTraineeOfDecision($leaveRequest->fresh(['trainee', 'leaveCategory']));
 
         return $this->sendResponse($leaveRequest, 'Leave request approved.');

@@ -66,7 +66,7 @@ class DashboardController
 
         return [
             'required_hours' => (float) $trainee->required_hours,
-            'completed_hours' => (float) $trainee->completed_hours,
+            'completed_hours' => (float) ($trainee->completed_hours ?? 0),
             'batch_code' => $trainee->batch?->batch_code,
             'average_rating' => $ratingResult->average !== null
                 ? round((float) $ratingResult->average, 1)
@@ -138,7 +138,7 @@ class DashboardController
     /** @return array{status: string, reasons: array<int, string>} */
     private function computeEligibility(Trainees $trainee): array
     {
-        $hoursOk = (float) $trainee->completed_hours >= (float) $trainee->required_hours;
+        $hoursOk = (float) ($trainee->completed_hours ?? 0) >= (float) $trainee->required_hours;
 
         $submittedTypes = $trainee->documents()->pluck('document_type')->all();
         $missingDocs = array_values(array_diff(RequiredDocumentTypes::TYPES, $submittedTypes));
@@ -158,7 +158,7 @@ class DashboardController
         if (! $hoursOk) {
             $reasons[] = sprintf(
                 '%.1f of %.1f required hours completed',
-                (float) $trainee->completed_hours,
+                (float) ($trainee->completed_hours ?? 0),
                 (float) $trainee->required_hours,
             );
         }
@@ -190,6 +190,6 @@ class DashboardController
 
     private function currentTrainee(): Trainees
     {
-        return Trainees::where('user_id', auth()->id())->firstOrFail();
+        return Trainees::query()->withCompletedHours()->where('user_id', auth()->id())->firstOrFail();
     }
 }

@@ -70,7 +70,7 @@ class TraineesController extends BaseController
      */
     protected function newQuery(): Builder
     {
-        $query = parent::newQuery()->with([
+        $query = parent::newQuery()->withCompletedHours()->with([
             'school:id,school_name',
             'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
@@ -111,7 +111,6 @@ class TraineesController extends BaseController
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_number' => ['required', 'string', 'max:50'],
             'required_hours' => ['required', 'numeric', 'min:0', 'max:999.99'],
-            'completed_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'date_completed' => ['nullable', 'date'],
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],
@@ -135,7 +134,6 @@ class TraineesController extends BaseController
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_number' => ['required', 'string', 'max:50'],
             'required_hours' => ['required', 'numeric', 'min:0', 'max:999.99'],
-            'completed_hours' => ['nullable', 'numeric', 'min:0', 'max:999.99'],
             'date_completed' => ['nullable', 'date'],
             'termination_remarks' => ['nullable', 'string'],
             'address' => ['required', 'string'],

@@ -242,6 +242,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         </>
     );
 }
+
 function UserMenu() {
     const navigate = useNavigate();
     const { displayName, email, initials, role } = useAuth();

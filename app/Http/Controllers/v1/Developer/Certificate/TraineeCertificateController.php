@@ -31,6 +31,7 @@ class TraineeCertificateController extends Controller
     public function paginationSearch(Request $request): JsonResponse
     {
         $query = Trainees::query()
+            ->withCompletedHours()
             ->with([
                 'batch:id,batch_code',
                 'school:id,school_name',
@@ -59,12 +60,20 @@ class TraineeCertificateController extends Controller
             $query->whereIn('school_id', $schoolIds);
         }
 
+        // withSum's aggregate can't be filtered via HAVING here: Laravel wraps
+        // paginate()'s count query in a subquery with no GROUP BY, which
+        // SQLite (and strict-mode MySQL) reject for a bare HAVING. A
+        // correlated subquery in WHERE works in both the row query and the
+        // wrapped count query.
+        $completedHoursExpr = '(select coalesce(sum(time_spent), 0) from app_tasks'
+            . ' where app_tasks.trainee_id = app_trainees.id and app_tasks.status = \'completed\')';
+
         $status = is_string($filters['status'] ?? null) ? $filters['status'] : 'all';
         match ($status) {
             'issued' => $query->whereHas('certificate', fn(Builder $q) => $q->whereNotNull('issued_at')),
-            'not_issued' => $query->whereColumn('completed_hours', '>=', 'required_hours')
+            'not_issued' => $query->whereRaw("{$completedHoursExpr} >= required_hours")
                 ->whereDoesntHave('certificate', fn(Builder $q) => $q->whereNotNull('issued_at')),
-            'not_eligible' => $query->whereColumn('completed_hours', '<', 'required_hours'),
+            'not_eligible' => $query->whereRaw("{$completedHoursExpr} < required_hours"),
             default => null,
         };
 
