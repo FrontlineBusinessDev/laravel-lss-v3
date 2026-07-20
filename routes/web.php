@@ -44,6 +44,9 @@ use App\Http\Controllers\v1\Developer\Tasks\TasksController;
 use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
 use App\Http\Controllers\v1\Developer\Ratings\BehavioralEvaluationController;
 use App\Http\Controllers\v1\Developer\Ratings\BehavioralQuestionController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarEmailNotificationController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarListController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarParticipantsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeBiometricsController as TraineeDetailBiometricsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
@@ -314,6 +317,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::get('/seminars', [SeminarController::class, 'index'])->name('seminars.index');
+    Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.index');
+    Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
+    Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
     Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
