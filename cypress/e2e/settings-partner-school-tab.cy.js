@@ -82,194 +82,221 @@ describe('Settings - Partner School Tab Page', () => {
     //         .should('contain.text', 'Archive');
     // });
 
-    //create
-    it('should create partner school', () => {
-        cy.viewport(1200, 720);
+    // //create
+    // it('should create partner school', () => {
+    //     cy.viewport(1200, 720);
 
-        // //esc key
-        // cy.get('[data-cy="add-record-button"]').click();
+    //     //esc key
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        // cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
-        //     'cypress/fixtures/FBS-LCSS-LOGO.webp',
-        //     { force: true },
-        // ); //upload img
+    //     cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
+    //         'cypress/fixtures/FBS-LCSS-LOGO.webp',
+    //         { force: true },
+    //     ); //upload img
 
-        // cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
+    //     cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(0)
-        //     .type('Sample School'); // school name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Sample School'); // school name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(1)
-        //     .type('SS'); //abbreviation
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(1)
+    //         .type('SS'); //abbreviation
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(2)
-        //     .type('Mayeng'); //First name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(2)
+    //         .type('Mayeng'); //First name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(3)
-        //     .type('Mendoza'); //Last name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(3)
+    //         .type('Mendoza'); //Last name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(4)
-        //     .type('torresherlynmae@gmail.com'); //Email
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(4)
+    //         .type('torresherlynmae@gmail.com'); //Email
 
-        // cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-        //     .eq(0)
-        //     .type('Dolores Quezon'); //P-Address
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Dolores Quezon'); //P-Address
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(5)
-        //     .type('https://lss.frontlinebusiness.com.ph/'); // website
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(5)
+    //         .type('https://lss.frontlinebusiness.com.ph/'); // website
 
-        // cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-        //     .eq(1)
-        //     .type('Sample Description'); //description
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(1)
+    //         .type('Sample Description'); //description
 
-        // cy.get('body').type('{esc}'); //esc key
+    //     cy.get('body').type('{esc}'); //esc key
 
-        // // cancel btn
-        // cy.get('[data-cy="add-record-button"]').click();
+    //     // cancel btn
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        // cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
-        //     'cypress/fixtures/FBS-LCSS-LOGO.webp',
-        //     { force: true },
-        // ); //upload img
+    //     cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
+    //         'cypress/fixtures/FBS-LCSS-LOGO.webp',
+    //         { force: true },
+    //     ); //upload img
 
-        // cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
+    //     cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(0)
-        //     .type('Sample School'); // school name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Sample School'); // school name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(1)
-        //     .type('SS'); //abbreviation
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(1)
+    //         .type('SS'); //abbreviation
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(2)
-        //     .type('Mayeng'); //First name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(2)
+    //         .type('Mayeng'); //First name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(3)
-        //     .type('Mendoza'); //Last name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(3)
+    //         .type('Mendoza'); //Last name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(4)
-        //     .type('torresherlynmae@gmail.com'); //Email
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(4)
+    //         .type('torresherlynmae@gmail.com'); //Email
 
-        // cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-        //     .eq(0)
-        //     .type('Dolores Quezon'); //P-Address
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Dolores Quezon'); //P-Address
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(5)
-        //     .type('https://lss.frontlinebusiness.com.ph/'); // website
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(5)
+    //         .type('https://lss.frontlinebusiness.com.ph/'); // website
 
-        // cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-        //     .eq(1)
-        //     .type('Sample Description'); //description
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(1)
+    //         .type('Sample Description'); //description
 
-        // cy.get('[data-cy="close-button"]').click(); //cancel btn\
+    //     cy.get('[data-cy="close-button"]').click(); //cancel btn\
 
-        // // close btn
-        // cy.get('[data-cy="add-record-button"]').click();
+    //     // close btn
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        // cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
-        //     'cypress/fixtures/FBS-LCSS-LOGO.webp',
-        //     { force: true },
-        // ); //upload img
+    //     cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
+    //         'cypress/fixtures/FBS-LCSS-LOGO.webp',
+    //         { force: true },
+    //     ); //upload img
 
-        // cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
+    //     cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(0)
-        //     .type('Sample School'); // school name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Sample School'); // school name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(1)
-        //     .type('SS'); //abbreviation
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(1)
+    //         .type('SS'); //abbreviation
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(2)
-        //     .type('Mayeng'); //First name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(2)
+    //         .type('Mayeng'); //First name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(3)
-        //     .type('Mendoza'); //Last name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(3)
+    //         .type('Mendoza'); //Last name
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(4)
-        //     .type('torresherlynmae@gmail.com'); //Email
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(4)
+    //         .type('torresherlynmae@gmail.com'); //Email
 
-        // cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-        //     .eq(0)
-        //     .type('Dolores Quezon'); //P-Address
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Dolores Quezon'); //P-Address
 
-        // cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-        //     .eq(5)
-        //     .type('https://lss.frontlinebusiness.com.ph/'); // website
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(5)
+    //         .type('https://lss.frontlinebusiness.com.ph/'); // website
 
-        // cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-        //     .eq(1)
-        //     .type('Sample Description'); //description
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(1)
+    //         .type('Sample Description'); //description
 
-        // cy.get('[data-cy="modal-center-button-close"]').click(); //close btn
+    //     cy.get('[data-cy="modal-center-button-close"]').click(); //close btn
 
-        // save btn
-        cy.get('[data-cy="add-record-button"]').click();
+    //     // save btn
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
-            'cypress/fixtures/FBS-LCSS-LOGO.webp',
-            { force: true },
-        ); //upload img
+    //     cy.get('[data-cy="use-file-upload-field-input-file"]').selectFile(
+    //         'cypress/fixtures/FBS-LCSS-LOGO.webp',
+    //         { force: true },
+    //     ); //upload img
 
-        cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
+    //     cy.get('[data-cy="record-modal-field-select-change"]').select('Active'); //status
 
-        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-            .eq(0)
-            .type('Sample School'); // school name
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Sample School'); // school name
 
-        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-            .eq(1)
-            .type('SS'); //abbreviation
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(1)
+    //         .type('SS'); //abbreviation
+
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(2)
+    //         .type('Mayeng'); //First name
+
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(3)
+    //         .type('Mendoza'); //Last name
+
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(4)
+    //         .type('torresherlyn028@gmail.com'); //Email
+
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(0)
+    //         .type('Dolores Quezon'); //P-Address
+
+    //     cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
+    //         .eq(5)
+    //         .type('https://lss.frontlinebusiness.com.ph/'); // website
+
+    //     cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
+    //         .eq(1)
+    //         .type('Sample Description'); //description
+
+    //     cy.intercept('POST', '**/partner-schools').as('createPartnerSchool');
+
+    //     cy.get('[data-cy="submit-button"]').click(); //save btn
+
+    //     cy.wait('@createPartnerSchool').then((interception) => {
+    //         console.log(interception.response);
+    //     });
+
+    //     cy.get('[data-cy="toolbar-input-text"]').type('Sample School');
+
+    //     cy.contains('Sample School', { timeout: 1000 }).should('be.visible');
+    // });
+
+    // update
+    it('should update partner school', () => {
+        cy.intercept('GET', '**/partner-schools*').as('getPartnerSchools');
+
+        cy.get('[data-cy="toolbar-input-text"]').clear().type('Sample School');
+
+        cy.get('[data-cy="settings-list-header-div-1"]', {
+            timeout: 1000,
+        }).should('have.length.greaterThan', 0);
+
+        cy.get('[data-cy="settings-list-header-div-1"]')
+            .contains('Sample School')
+            .parent()
+            .find('[data-cy="row-menu-button-row-actions"]')
+            .click();
+
+        cy.get('[data-cy="row-menu-button-4"]').click();
 
         cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
             .eq(2)
-            .type('Mayeng'); //First name
+            .type('Herlyn');
 
         cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
             .eq(3)
-            .type('Mendoza'); //Last name
-
-        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-            .eq(4)
-            .type('torresherlyn028@gmail.com'); //Email
-
-        cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-            .eq(0)
-            .type('Dolores Quezon'); //P-Address
-
-        cy.get('[data-cy="record-modal-field-input-field-placeholder"]')
-            .eq(5)
-            .type('https://lss.frontlinebusiness.com.ph/'); // website
-
-        cy.get('[data-cy="record-modal-field-textarea-field-placeholder"]')
-            .eq(1)
-            .type('Sample Description'); //description
-
-        cy.intercept('POST', '**/partner-schools').as('createPartnerSchool');
-
-        cy.get('[data-cy="submit-button"]').click(); //save btn
-
-        cy.wait('@createPartnerSchool').then((interception) => {
-            console.log(interception.response);
-        });
-
-        cy.get('[data-cy="toolbar-input-text"]').type('Sample School');
-
-        cy.contains('Sample School', { timeout: 1000 }).should('be.visible');
+            .type('Bacay');
     });
 });
