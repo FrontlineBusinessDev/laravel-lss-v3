@@ -81,12 +81,15 @@ class TraineesViewController extends BaseController
                 'batch.academicLevel:id,name,year_level',
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
                 'learningOutcomes:id,learning_outcomes',
-                'payments',
+                'payments', 
                 'user:id,first_name,last_name,email,status',
                 'taskRatings:id,batch_id,trainee_id,task_name,rating,comments,evaluator_id,rated_at',
                 'taskRatings.batch:id,batch_code',
                 'taskRatings.evaluator:id,first_name,last_name',
             ])
+            ->withSum(['tasks' => function ($query) {
+                $query->where('status', 'completed');
+                }], 'time_spent')
             ->findOrFail($id);
 
         $name = $trainee['first_name'] . " " . $trainee['last_name'];

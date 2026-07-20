@@ -162,4 +162,5 @@ export interface TraineeDetail {
     task_ratings: AppTraineeTaskRating[];
     created_at: string;
     updated_at: string;
+    tasks_sum_time_spent?: string | number | null;
 }
