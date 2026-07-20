@@ -29,6 +29,8 @@ use App\Http\Controllers\v1\Developer\Certificate\SeminarCertificateController;
 use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
 use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationController;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationSeminarQuestionnaire;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationTrainerQuestionnaire;
 use App\Http\Controllers\v1\Developer\Leave\LeaveController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
 use App\Http\Controllers\v1\NotificationController;
@@ -304,6 +306,9 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/evaluation', [EvaluationController::class, 'index'])->name('evaluation.index');
+    Route::get('/evaluation/overview', [EvaluationController::class, 'index'])->name('evaluation.index');
+    Route::get('/evaluation/trainer-questionnaire', [EvaluationTrainerQuestionnaire::class, 'index'])->name('evaluation.trainer-questionnaire.index');
+    Route::get('/evaluation/seminar-questionnaire', [EvaluationSeminarQuestionnaire::class, 'index'])->name('evaluation.seminar-questionnaire.index');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/pagination-search', [PaymentController::class, 'paginationSearch'])->name('payments.pagination-search');
     Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
