@@ -15,6 +15,7 @@ class SeminarEvaluation extends Model
     protected $casts = [
         'total_score' => 'float',
         'submitted_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     public function seminar(): BelongsTo

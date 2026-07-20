@@ -49,11 +49,15 @@ class Trainees extends Model
         'gross_amount',
         'total_discount_amount',
         'net_amount_required',
+        'evaluation_access_override',
+        'hour_threshold_notified_at',
     ];
 
     protected $casts = [
         'birthday' => 'date',
         'date_completed' => 'date',
+        'evaluation_access_override' => 'boolean',
+        'hour_threshold_notified_at' => 'datetime',
         'required_hours' => 'decimal:2',
         'override_rate_per_hour' => 'decimal:2',
         'override_hours_discount_percent' => 'decimal:2',
@@ -137,6 +141,11 @@ class Trainees extends Model
     public function behavioralEvaluations(): HasMany
     {
         return $this->hasMany(BehavioralEvaluation::class, 'trainee_id');
+    }
+
+    public function trainerEvaluations(): HasMany
+    {
+        return $this->hasMany(TrainerEvaluation::class, 'trainee_id');
     }
     /** Presigned (or public) URL for the stored avatar, null when none is set. */
     protected function avatarUrl(): Attribute

@@ -57,6 +57,7 @@ use App\Http\Controllers\v1\Trainer\Batches\BatchesController as TrainerBatchesC
 use App\Http\Controllers\v1\Trainer\Batches\BatchTraineesController as TrainerBatchTraineesController;
 use App\Http\Controllers\v1\Trainer\Batches\BatchViewController as TrainerBatchViewController;
 use App\Http\Controllers\v1\Trainer\Dashboard\DashboardController as TrainerDashboardController;
+use App\Http\Controllers\v1\Trainer\Evaluations\EvaluationsController as TrainerEvaluationsController;
 use App\Http\Controllers\v1\Trainer\Ratings\RatingsController as TrainerRatingsController;
 use App\Http\Controllers\v1\Trainer\Schedule\ScheduleController as TrainerScheduleController;
 use App\Http\Controllers\v1\Trainer\Tasks\TasksController as TrainerTasksController;
@@ -321,7 +322,18 @@ Route::middleware('auth')->group(function () {
         Route::redirect('/evaluation', '/evaluation/overview')->name('evaluation.index');
         Route::get('/evaluation/overview', [EvaluationViewController::class, 'index'])->name('evaluation.overview.index');
         Route::get('/evaluation/overview/metrics', [EvaluationViewController::class, 'metrics'])->name('evaluation.overview.metrics');
+        Route::get('/evaluation/overview/records/pagination-search', [EvaluationViewController::class, 'records'])->name('evaluation.overview.records');
+        Route::patch('/evaluation/overview/records/{type}/{id}/archive', [EvaluationViewController::class, 'archiveRecord'])->name('evaluation.overview.records.archive');
+        Route::delete('/evaluation/overview/records/{type}/{id}', [EvaluationViewController::class, 'destroyRecord'])->name('evaluation.overview.records.destroy');
+        Route::get('/evaluation/overview/batch-progress', [EvaluationViewController::class, 'batchProgress'])->name('evaluation.overview.batch-progress');
+        Route::get('/evaluation/overview/seminar-progress', [EvaluationViewController::class, 'seminarProgress'])->name('evaluation.overview.seminar-progress');
+        Route::get('/evaluation/overview/reminders', [EvaluationViewController::class, 'reminders'])->name('evaluation.overview.reminders');
+        Route::post('/evaluation/overview/reminders/notify', [EvaluationViewController::class, 'notifyReminders'])->name('evaluation.overview.reminders.notify');
+        Route::get('/evaluation/trainer-questionnaire/categories', [EvaluationTrainerQuestionnaire::class, 'categories'])->name('evaluation.trainer-questionnaire.categories');
+        Route::get('/evaluation/trainer-questionnaire/for-category', [EvaluationTrainerQuestionnaire::class, 'forCategory'])->name('evaluation.trainer-questionnaire.for-category');
         Route::crudModule('/evaluation/trainer-questionnaire', EvaluationTrainerQuestionnaire::class, 'evaluation.trainer-questionnaire');
+        Route::get('/evaluation/seminar-questionnaire/categories', [EvaluationSeminarQuestionnaire::class, 'categories'])->name('evaluation.seminar-questionnaire.categories');
+        Route::get('/evaluation/seminar-questionnaire/for-category', [EvaluationSeminarQuestionnaire::class, 'forCategory'])->name('evaluation.seminar-questionnaire.for-category');
         Route::crudModule('/evaluation/seminar-questionnaire', EvaluationSeminarQuestionnaire::class, 'evaluation.seminar-questionnaire');
     });
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
@@ -434,6 +446,14 @@ Route::middleware('auth')->group(function () {
         // JSON API (LeaveRequestPolicy::viewAny() grants trainers read access);
         // no submit/approve UI, no email per the trainer-visibility requirement.
         Route::get('/leave', [TrainerLeaveController::class, 'index'])->name('leave');
+        // Read-only Evaluation Overview — trainee-submitted app_trainer_evaluations
+        // rows, scoped to the trainer's assigned batches by EvaluationsController's
+        // newQuery()/metrics() overrides (ScopesToAssignedBatches).
+        Route::prefix('evaluation')->name('evaluation.')->group(function () {
+            Route::get('/', [TrainerEvaluationsController::class, 'index'])->name('index');
+            Route::get('/pagination-search', [TrainerEvaluationsController::class, 'paginationSearch'])->name('pagination-search');
+            Route::get('/metrics', [TrainerEvaluationsController::class, 'metrics'])->name('metrics');
+        });
     });
 
     // Trainee-only placeholder module — same rationale as above.
@@ -455,7 +475,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/announcements', [TraineeAnnouncementsController::class, 'index'])->name('announcements');
         Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
         Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
-        Route::get('/evaluations', [TraineeEvaluationsController::class, 'index'])->name('evaluations');
+        Route::middleware('permission:' . Permissions::MANAGE_OWN_EVALUATION)
+            ->prefix('evaluations')->name('evaluations.')->group(function () {
+                Route::get('/', [TraineeEvaluationsController::class, 'index'])->name('index');
+                Route::get('/gateway', [TraineeEvaluationsController::class, 'gateway'])->name('gateway');
+                Route::get('/questions', [TraineeEvaluationsController::class, 'activeQuestions'])->name('questions');
+                Route::post('/', [TraineeEvaluationsController::class, 'store'])->name('store');
+            });
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/', [TraineeSelfPaymentsController::class, 'index'])->name('index');
             Route::get('/pagination-search', [TraineeSelfPaymentsController::class, 'paginationSearch'])->name('pagination-search');

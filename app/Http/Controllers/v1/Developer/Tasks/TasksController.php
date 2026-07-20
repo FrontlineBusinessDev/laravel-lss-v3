@@ -5,7 +5,9 @@ namespace App\Http\Controllers\v1\Developer\Tasks;
 use App\Http\Controllers\v1\BaseController;
 use App\Models\LeaveRequest;
 use App\Models\Task;
+use App\Models\Trainees;
 use App\Models\User;
+use App\Support\HourThresholdDispatcher;
 use App\Traits\ScopesToAssignedBatches;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -256,6 +258,11 @@ class TasksController extends BaseController
         abort_if($model->status === 'locked', 422, 'Locked tasks can no longer be edited or completed.');
 
         $model->update(['status' => 'completed', 'completed_at' => now()]);
+
+        $trainee = Trainees::whereKey($model->trainee_id)->first();
+        if ($trainee) {
+            HourThresholdDispatcher::maybeDispatch($trainee);
+        }
 
         return $this->sendResponse($model, 'Task marked as complete.');
     }

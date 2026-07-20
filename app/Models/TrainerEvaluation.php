@@ -15,6 +15,7 @@ class TrainerEvaluation extends Model
     protected $casts = [
         'total_score' => 'float',
         'submitted_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     public function batch(): BelongsTo

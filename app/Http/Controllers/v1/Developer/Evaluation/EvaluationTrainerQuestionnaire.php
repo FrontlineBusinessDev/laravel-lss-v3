@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\v1\Developer\Evaluation;
 
 use App\Http\Controllers\v1\BaseController;
+use App\Models\AcademicIndustry;
 use App\Models\EvaluationTrainerQuestion;
 use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
@@ -39,6 +42,7 @@ class EvaluationTrainerQuestionnaire extends BaseController
         return [
             'question' => ['required', 'string'],
             'section' => ['required', 'string', 'max:255'],
+            'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
             'type' => ['required', Rule::in(['rating', 'text'])],
             'order' => ['nullable', 'integer', 'min:0'],
             'is_critical' => ['nullable', 'boolean'],
@@ -49,6 +53,64 @@ class EvaluationTrainerQuestionnaire extends BaseController
     protected function updateRules(Model $model): array
     {
         return $this->storeRules();
+    }
+
+    /** Stamps the creating admin on new questions only — never overwritten on update. */
+    protected function beforeSave(array $validated, ?Model $model = null): array
+    {
+        if ($model === null) {
+            $validated['created_by'] = auth()->id();
+        }
+
+        return $validated;
+    }
+
+    /**
+     * Distinct in-use categories (industries that already have at least one
+     * question) plus the full active AcademicIndustry list, so "Add set" can
+     * still offer an industry with zero questions yet.
+     */
+    public function categories(): JsonResponse
+    {
+        $inUse = EvaluationTrainerQuestion::query()
+            ->whereNotNull('academic_industry_id')
+            ->join('app_settings_academic_industry', 'app_settings_academic_industry.id', '=', 'app_evaluation_trainer_questions.academic_industry_id')
+            ->distinct()
+            ->orderBy('app_settings_academic_industry.name')
+            ->get(['app_settings_academic_industry.id', 'app_settings_academic_industry.name']);
+
+        $available = AcademicIndustry::query()
+            ->where('status', Statuses::ACTIVE)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json(['data' => ['in_use' => $inUse, 'available' => $available]]);
+    }
+
+    /**
+     * Full (non-paginated) ordered question list for one Academic Industry —
+     * the questionnaire tab groups these by `section` client-side.
+     */
+    public function forCategory(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'academic_industry_id' => ['required', 'integer'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in(Statuses::all())],
+        ]);
+
+        $questions = EvaluationTrainerQuestion::query()
+            ->where('academic_industry_id', $validated['academic_industry_id'])
+            ->when(
+                $validated['search'] ?? null,
+                fn($q, $search) => $q->where('question', 'like', "%{$search}%"),
+            )
+            ->when($validated['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->with('creator:id,first_name,last_name')
+            ->orderBy('order')
+            ->get();
+
+        return response()->json(['data' => $questions]);
     }
 
     /**

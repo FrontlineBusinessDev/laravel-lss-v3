@@ -19,6 +19,8 @@ export const TYPE_LABEL = {
 
 interface Props {
     category: 'Trainer' | 'Seminar';
+    /** The currently-selected pill's value — every new question is created under it. */
+    categoryValue: number | string | null;
     open: boolean;
     onClose: () => void;
     row: EvaluationTrainerQuestion | EvaluationSeminarQuestion | null;
@@ -26,6 +28,7 @@ interface Props {
 
 export default function EvaluationQuestionModal({
     category,
+    categoryValue,
     open,
     onClose,
     row,
@@ -103,13 +106,19 @@ export default function EvaluationQuestionModal({
             row={(row as EvaluationTrainerQuestion) ?? undefined}
             fields={fields}
             submitLabel={isEdit ? 'Save changes' : 'Create'}
-            mutationFn={(payload) =>
-                (isEdit && row
-                    ? service.update(row.id, payload as EvaluationQuestionInput)
-                    : service.create(
-                          payload as EvaluationQuestionInput,
-                      )) as Promise<EvaluationTrainerQuestion>
-            }
+            mutationFn={(payload) => {
+                const withCategory: EvaluationQuestionInput = {
+                    ...(payload as EvaluationQuestionInput),
+                    ...(category === 'Trainer'
+                        ? { academic_industry_id: Number(categoryValue) }
+                        : { category: String(categoryValue) }),
+                };
+                return (
+                    isEdit && row
+                        ? service.update(row.id, withCategory)
+                        : service.create(withCategory)
+                ) as Promise<EvaluationTrainerQuestion>;
+            }}
             invalidateKeys={tableListInvalidateKeys(queryKey)}
             onSuccess={() =>
                 showToast(
