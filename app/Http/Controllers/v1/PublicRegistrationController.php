@@ -177,7 +177,7 @@ class PublicRegistrationController extends Controller
         $validated = $request->validate($this->storeRules());
 
         $trainee = null;
-        DB::transaction(function () use ($request, $validated, $batch, &$trainee) {
+        $trainee = DB::transaction(function () use ($request, $validated, $batch, &$trainee) {
             $trainee = Trainees::create([
                 'batch_id' => $batch->id,
                 'school_id' => $validated['school_id'],

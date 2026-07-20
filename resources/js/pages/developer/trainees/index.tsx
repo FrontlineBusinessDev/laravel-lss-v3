@@ -2,7 +2,11 @@ import { router } from '@inertiajs/react';
 import { Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import type { RowMenuAction } from '@/components/RowMenu';
-import { SettingsListHeader, SettingsRow, TextCell } from '@/components/settings';
+import {
+    SettingsListHeader,
+    SettingsRow,
+    TextCell,
+} from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
