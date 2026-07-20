@@ -8,15 +8,23 @@ export default function index({
     questions = [],
     onChange,
     currentUserName,
-    sets,
     onAddSet,
+    sets,
 }: {
     questions: EvaluationQuestion[];
     onChange: (next: EvaluationQuestion[]) => void;
     currentUserName: string;
-    sets: string[];
     onAddSet: (name: string) => void;
+    sets: string[];
 }) {
+    let uniqueArray = Array.from(
+        new Set(
+            Object.values(sets)
+                .filter((i: any) => i.name !== '')
+                .map((i: any) => i.name),
+        ),
+    );
+
     return (
         <EvaluationPrimaryLayout>
             <div
@@ -28,7 +36,7 @@ export default function index({
                     questions={evaluationQuestions}
                     onChange={onChange}
                     currentUserName={currentUserName}
-                    sets={questionSetsByCategory.Trainer}
+                    sets={uniqueArray}
                     onAddSet={onAddSet}
                     data-cy="trainers-questionnaire-tab-questions-panel-change"
                 />
