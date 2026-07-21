@@ -50,10 +50,25 @@ function appendNestedObject(
     });
 }
 
+/** True for the `FileUploadField` state shape (`{ existing, files, removedIds }`), regardless of field key name. */
+function isFileFieldValue(
+    value: unknown,
+): value is { existing: unknown[]; files: unknown[]; removedIds: unknown[] } {
+    return (
+        !!value &&
+        typeof value === 'object' &&
+        'files' in value &&
+        Array.isArray((value as { files?: unknown }).files)
+    );
+}
+
 /**
- * Flattens a payload into multipart FormData. Intercepts the `image` file-state
- * wrapper (`{ files: [File] }`) so PHP receives a clean `image` key rather than
- * the mangled `image_files` that never reaches the controller.
+ * Flattens a payload into multipart FormData. Intercepts any `type: 'file'`
+ * FieldDef's state wrapper (`{ existing, files, removedIds }`) so PHP receives
+ * a clean `{key}` (or `{key}[]` when multiple files are attached) rather than
+ * the mangled `{key}[files][]` string that never reaches the controller as a
+ * real upload. A single-file field with no new file but a removed existing one
+ * sends `remove_{key}`, matching HandlesFileUploads::fileWasRemoved()'s contract.
  */
 export function buildFormData(data: Record<string, unknown>): FormData {
     const formData = new FormData();
@@ -63,11 +78,20 @@ export function buildFormData(data: Record<string, unknown>): FormData {
             return;
         }
 
-        if (key === 'image' && value && typeof value === 'object' && 'files' in value) {
-            const actualFile = (value as { files?: unknown[] }).files?.[0];
+        if (isFileFieldValue(value)) {
+            const files = value.files.filter(
+                (f): f is File | Blob => f instanceof File || f instanceof Blob,
+            );
 
-            if (actualFile instanceof File || actualFile instanceof Blob) {
-                formData.append('image', actualFile);
+            if (files.length > 1) {
+                files.forEach((f) => formData.append(`${key}[]`, f));
+                value.removedIds.forEach((id) =>
+                    formData.append(`removed_${key}[]`, String(id)),
+                );
+            } else if (files.length === 1) {
+                formData.append(key, files[0]);
+            } else if (value.removedIds.length > 0) {
+                formData.append(`remove_${key}`, 'true');
             }
 
             return;

@@ -22,6 +22,7 @@ type ModalSideProps<T> = {
     ModalComponent: React.ComponentType<ModalComponentProps<T>>;
     closeOnEscape?: boolean;
     closeOnOverlayClick?: boolean;
+    'data-cy'?: string;
 };
 
 /** Edge anchoring + matching slide-in, keyed off the `side` prop. */
@@ -41,6 +42,7 @@ export function ModalSide<T>({
     ModalComponent,
     closeOnEscape = true,
     closeOnOverlayClick = true,
+    'data-cy': dataCy = 'modal-side-div-title',
 }: ModalSideProps<T>) {
     const { overlayRef, handleOverlayClick } = useModalBehavior({
         show,
@@ -75,7 +77,7 @@ export function ModalSide<T>({
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
-                data-cy="modal-side-div-title"
+                data-cy={dataCy}
             >
                 {(title || subtitle) && (
                     <header

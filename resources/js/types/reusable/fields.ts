@@ -91,6 +91,8 @@ export interface FieldDef<T = unknown> {
     label: string;
     type?: FieldType;
     required?: boolean;
+    /** Explicit data-cy override; falls back to a slug of `key` when omitted. */
+    dataCy?: string;
     placeholder?: string;
     helpText?: string;
     disabled?: boolean | ((mode: ModalMode, row?: T) => boolean);

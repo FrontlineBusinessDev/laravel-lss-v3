@@ -21,6 +21,7 @@ type ModalCenterProps<T> = {
     ModalComponent: React.ComponentType<ModalComponentProps<T>>;
     closeOnEscape?: boolean;
     closeOnOverlayClick?: boolean;
+    'data-cy'?: string;
 };
 export function ModalCenter<T>({
     show,
@@ -31,6 +32,7 @@ export function ModalCenter<T>({
     ModalComponent,
     closeOnEscape = true,
     closeOnOverlayClick = true,
+    'data-cy': dataCy = 'modal-center-div-title',
 }: ModalCenterProps<T>) {
     const { overlayRef, handleOverlayClick } = useModalBehavior({
         show,
@@ -38,7 +40,10 @@ export function ModalCenter<T>({
         closeOnEscape,
         closeOnOverlayClick,
     });
-    if (!show) return null;
+
+    if (!show) {
+return null;
+}
 
     return (
         <div
@@ -61,7 +66,7 @@ export function ModalCenter<T>({
                 role="dialog"
                 aria-modal="true"
                 aria-label={title}
-                data-cy="modal-center-div-title"
+                data-cy={dataCy}
             >
                 {title && (
                     <header

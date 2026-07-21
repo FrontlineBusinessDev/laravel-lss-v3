@@ -135,6 +135,7 @@ interface FileUploadFieldProps {
   preview?: boolean;
   disabled?: boolean;
   error?: string;
+  'data-cy'?: string;
 }
 export function FileUploadField({
   value,
@@ -145,7 +146,8 @@ export function FileUploadField({
   maxFiles,
   preview = true,
   disabled,
-  error
+  error,
+  'data-cy': dataCy = 'use-file-upload-field-input-file'
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -231,7 +233,7 @@ export function FileUploadField({
                     {atCapacity ? 'Maximum number of files reached' : `Drag & drop ${multiple ? 'files' : 'a file'} here, or click to browse`}
                 </p>
                 {accept && !atCapacity && <p className="text-xs text-slate-400" data-cy="use-file-upload-field-p-8">{accept}</p>}
-                <input ref={inputRef} type="file" multiple={multiple} accept={accept} disabled={disabled} onChange={handleInputChange} className="hidden" data-cy="use-file-upload-field-input-file" />
+                <input ref={inputRef} type="file" multiple={multiple} accept={accept} disabled={disabled} onChange={handleInputChange} className="hidden" data-cy={dataCy} />
             </div>
 
             {(localError || error) && <p className="mt-1 text-xs text-rose-500" data-cy="use-file-upload-field-p-10">

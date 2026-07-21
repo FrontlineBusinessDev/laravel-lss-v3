@@ -8,6 +8,7 @@ use App\Models\AcademicLevel;
 use App\Models\AcademicProgram;
 use App\Models\Batches;
 use App\Models\PartnerSchools;
+use App\Models\PaymentMethod;
 use App\Models\Trainees;
 use App\Models\TraineeDocument;
 use App\Models\User;
@@ -34,6 +35,7 @@ class ActivityLogServiceProvider extends ServiceProvider
         AcademicProgram::class,
         AcademicLearningOutcomes::class,
         PartnerSchools::class,
+        PaymentMethod::class,
         Role::class,
     ];
 

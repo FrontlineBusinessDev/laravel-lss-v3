@@ -9,6 +9,7 @@ class Permissions
      */
     const MANAGE_SETTINGS = 'manage settings';
     const MANAGE_SETTINGS_PARTNER_SCHOOLS = 'manage settings partner schools';
+    const MANAGE_SETTINGS_PAYMENT_METHODS = 'manage settings payment methods';
     const MANAGE_SETTINGS_ACADEMIC = 'manage settings academic';
     const MANAGE_SETTINGS_RATES = 'manage settings rates';
     /**
@@ -55,6 +56,7 @@ class Permissions
             'Settings' => [
                 self::MANAGE_SETTINGS,
                 self::MANAGE_SETTINGS_PARTNER_SCHOOLS,
+                self::MANAGE_SETTINGS_PAYMENT_METHODS,
                 self::MANAGE_SETTINGS_ACADEMIC,
                 self::MANAGE_SETTINGS_RATES,
             ],

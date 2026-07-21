@@ -24,6 +24,8 @@ export interface FormModalConfig<T extends object = Record<string, unknown>> {
     /** Real upload progress (0–100) while a file is being sent, else null. */
     uploadProgress?: number | null;
     mutation?: T;
+    submitButtonDataCy?: string;
+    closeButtonDataCy?: string;
 }
 
 export interface FormModalProps<T extends object = Record<string, unknown>> {
@@ -61,4 +63,9 @@ export interface FormModalProps<T extends object = Record<string, unknown>> {
     uploadProgress?: number | null;
     /** Optional extra content rendered above the footer. */
     children?: ReactNode;
+    /** data-cy override for the modal shell's dialog root. */
+    'data-cy'?: string;
+    /** data-cy override for the submit/cancel footer buttons. */
+    submitButtonDataCy?: string;
+    closeButtonDataCy?: string;
 }

@@ -34,7 +34,15 @@ export function FormModalBody({
         return null;
     }
 
-    const { mode, row, submitLabel, cancelLabel, uploadProgress } = data;
+    const {
+        mode,
+        row,
+        submitLabel,
+        cancelLabel,
+        uploadProgress,
+        submitButtonDataCy,
+        closeButtonDataCy,
+    } = data;
 
     return (
         <form
@@ -106,7 +114,7 @@ export function FormModalBody({
                     onClick={close}
                     disabled={formik.isSubmitting}
                     className="inline-flex w-2/3 justify-center rounded-md border border-neutral-200 px-4 py-2 text-center text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
-                    data-cy={`close-button`}
+                    data-cy={closeButtonDataCy ?? 'close-button'}
                 >
                     {cancelLabel}
                 </button>
@@ -114,7 +122,7 @@ export function FormModalBody({
                     type="submit"
                     disabled={formik.isSubmitting}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
-                    data-cy={`submit-button`}
+                    data-cy={submitButtonDataCy ?? 'submit-button'}
                 >
                     {formik.isSubmitting && (
                         <Loader2 className="h-4 w-4 animate-spin" />

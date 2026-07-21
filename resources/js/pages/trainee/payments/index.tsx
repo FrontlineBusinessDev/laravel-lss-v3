@@ -1,28 +1,30 @@
+import { FileText } from 'lucide-react';
+import { useState } from 'react';
 import { AttachmentViewerModal } from '@/components/modal/AttachmentViewerModal';
 import { StatCard } from '@/components/StatCard';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { formatCell } from '@/components/table/utils';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import type { CardActions } from '@/types/reusable/card';
 import type {
+    PaymentMethod,
     TraineePaymentRow,
     TraineePaymentSummary,
 } from '@/types/modules/payments/trainee-payment';
 import { columns } from '@/types/modules/payments/trainee-payment';
-import { ExternalLink, FileText } from 'lucide-react';
-import { useState } from 'react';
+import type { CardActions } from '@/types/reusable/card';
+import { PaymentMethodSelector } from './PaymentMethodSelector';
 
 const currency = (value: string | number) =>
     `₱${Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
 interface Props {
     summary: TraineePaymentSummary;
-    gcashPaymentUrl: string;
+    paymentMethods: PaymentMethod[];
 }
 
 export default function TraineePaymentsPage({
     summary,
-    gcashPaymentUrl,
+    paymentMethods,
 }: Props) {
     const [viewingReceipt, setViewingReceipt] =
         useState<TraineePaymentRow | null>(null);
@@ -80,27 +82,7 @@ export default function TraineePaymentsPage({
                 />
             </div>
 
-            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="mb-1.5 text-sm font-semibold text-ink">
-                    How to make a payment
-                </h2>
-                <p className="mb-3 text-sm text-neutral-600">
-                    Payments are processed through our official payment
-                    gateway. Please keep your reference number and official
-                    receipt for your records — it will be reflected in your
-                    transaction history below once recorded by the admin
-                    team.
-                </p>
-                <a
-                    href={gcashPaymentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-                >
-                    Open GCash Payment Form
-                    <ExternalLink className="size-3.5" />
-                </a>
-            </div>
+            <PaymentMethodSelector paymentMethods={paymentMethods} />
 
             <h2 className="mb-3 text-sm font-semibold text-ink">
                 Payment transaction history

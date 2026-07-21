@@ -10,6 +10,7 @@ use App\Http\Controllers\v1\Developer\Settings\GroupDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\HoursDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\LeaveCategoryController;
 use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
+use App\Http\Controllers\v1\Developer\Settings\PaymentMethodsController;
 use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
@@ -125,6 +126,8 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::crudModule('/roles', RoleController::class, 'roles');
     // Partner School Management
     Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
+    // Payment Method Management
+    Route::crudModule('/payment-methods', PaymentMethodsController::class, 'payment-methods');
     // Leave category limits (max days / instances per category), enforced by
     // LeaveRequestController on submission.
     Route::crudModule('/leave-categories', LeaveCategoryController::class, 'leave-categories');

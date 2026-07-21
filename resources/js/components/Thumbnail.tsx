@@ -8,6 +8,8 @@ interface ThumbnailProps {
   className?: string;
   /** Rendered when there is no `src` or the image fails to load. */
   fallback?: ReactNode;
+  /** data-cy applied to whichever branch actually renders (img, error icon, or empty fallback). */
+  'data-cy'?: string;
 }
 
 /**
@@ -20,13 +22,14 @@ export function Thumbnail({
   src,
   alt = '',
   className,
-  fallback
+  fallback,
+  'data-cy': dataCy
 }: ThumbnailProps) {
   const [errored, setErrored] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   if (!src || errored) {
-    return <>{fallback ?? <span className="text-sm text-slate-400" data-cy="thumbnail-span-1">—</span>}</>;
+    return <>{fallback ?? <span className="text-sm text-slate-400" data-cy={dataCy ?? 'thumbnail-span-1'}>—</span>}</>;
   }
 
   // if (isLoading) {
@@ -35,7 +38,7 @@ export function Thumbnail({
 
   return <>
             {isError ? <>
-                    <div data-cy="thumbnail-div-2">
+                    <div data-cy={dataCy ?? 'thumbnail-div-2'}>
                         <File className="size-5" data-cy="thumbnail-file-3" />
                     </div>
                 </> : <>
@@ -44,7 +47,7 @@ export function Thumbnail({
       }} onErrorCapture={() => {
         setIsError(true);
         setIsLoading(false);
-      }} data-cy="thumbnail-img-4" />
+      }} data-cy={dataCy ?? 'thumbnail-img-4'} />
                 </>}
         </>;
 }

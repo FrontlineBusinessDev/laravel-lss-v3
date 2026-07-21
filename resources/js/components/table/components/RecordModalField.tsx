@@ -12,8 +12,8 @@
 import { Field, inputCls, textareaCls } from '@/components/form/Field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { FileUploadField } from '@/hooks/use-file-upload-field';
-import type { FieldDef } from '../types';
 import type { FileFieldValue } from '@/types/reusable/fields';
+import type { FieldDef } from '../types';
 interface DynamicFieldProps<T> {
     field: FieldDef<T>;
     value: unknown;
@@ -31,6 +31,9 @@ export function DynamicField<T>({
     initialLabel,
     onChange,
 }: DynamicFieldProps<T>) {
+    const fieldDataCy =
+        field.dataCy ?? `input-${field.key.replace(/_/g, '-')}`;
+
     if (field.type === 'file') {
         return (
             <Field
@@ -38,7 +41,7 @@ export function DynamicField<T>({
                 required={field.required}
                 helpText={field.helpText}
                 error={error}
-                data-cy="record-modal-field-field-field-label"
+                data-cy={`${fieldDataCy}-field`}
             >
                 <FileUploadField
                     value={
@@ -56,11 +59,12 @@ export function DynamicField<T>({
                     preview={field.preview}
                     disabled={disabled}
                     error={error}
-                    data-cy="record-modal-field-file-upload-field-change"
+                    data-cy={fieldDataCy}
                 />
             </Field>
         );
     }
+
     if (field.type === 'async-select') {
         return (
             <Field
@@ -85,6 +89,7 @@ export function DynamicField<T>({
             </Field>
         );
     }
+
     if (field.type === 'checkbox') {
         return (
             <div data-cy="record-modal-field-div-checkbox-wrapper">
@@ -118,20 +123,21 @@ export function DynamicField<T>({
             </div>
         );
     }
+
     return (
         <Field
             label={field.label}
             required={field.required}
             helpText={field.helpText}
             error={error}
-            data-cy="record-modal-field-field-field-label-3"
+            data-cy={`${fieldDataCy}-field`}
         >
             <FieldControl
                 field={field}
                 value={value}
                 disabled={disabled}
                 onChange={onChange}
-                data-cy="record-modal-field-field-control-change"
+                dataCy={fieldDataCy}
             />
         </Field>
     );
@@ -143,11 +149,13 @@ function FieldControl<T>({
     value,
     disabled,
     onChange,
+    dataCy,
 }: {
     field: FieldDef<T>;
     value: unknown;
     disabled?: boolean;
     onChange: (value: unknown) => void;
+    dataCy: string;
 }) {
     if (field.type === 'textarea') {
         return (
@@ -158,10 +166,11 @@ function FieldControl<T>({
                 placeholder={field.placeholder}
                 onChange={(e) => onChange(e.target.value)}
                 className={textareaCls}
-                data-cy="record-modal-field-textarea-field-placeholder"
+                data-cy={dataCy}
             />
         );
     }
+
     if (field.type === 'select') {
         return (
             <select
@@ -169,7 +178,7 @@ function FieldControl<T>({
                 disabled={disabled}
                 onChange={(e) => onChange(e.target.value)}
                 className={inputCls}
-                data-cy="record-modal-field-select-change"
+                data-cy={dataCy}
             >
                 <option
                     value=""
@@ -191,6 +200,7 @@ function FieldControl<T>({
             </select>
         );
     }
+
     return (
         <input
             type={field.type ?? 'text'}
@@ -205,7 +215,7 @@ function FieldControl<T>({
                 )
             }
             className={inputCls}
-            data-cy="record-modal-field-input-field-placeholder"
+            data-cy={dataCy}
         />
     );
 }

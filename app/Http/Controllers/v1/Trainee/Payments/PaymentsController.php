@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\v1\Trainee\Payments;
 
+use App\Models\PaymentMethod;
 use App\Models\Trainees;
 use App\Models\TraineesPayments;
+use App\Support\Statuses;
+use App\Traits\HandlesFileUploads;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,9 +20,20 @@ use Inertia\Response;
  */
 class PaymentsController
 {
+    use HandlesFileUploads;
+
+    protected array $fileFields = ['logo', 'qr_code'];
+    protected int $fileUrlExpiry = 60;
+
     public function index(): Response
     {
         $trainee = $this->currentTrainee();
+
+        $paymentMethods = PaymentMethod::query()
+            ->where('status', Statuses::ACTIVE)
+            ->orderBy('display_order')
+            ->get()
+            ->map(fn (PaymentMethod $method) => $this->transformFileUrls($method));
 
         return Inertia::render('trainee/payments/index', [
             'summary' => [
@@ -29,7 +43,7 @@ class PaymentsController
                 'total_paid' => $trainee->total_paid,
                 'outstanding_balance' => $trainee->outstanding_balance,
             ],
-            'gcashPaymentUrl' => config('app.gcash_payment_url'),
+            'paymentMethods' => $paymentMethods,
         ])->asCsr();
     }
 
