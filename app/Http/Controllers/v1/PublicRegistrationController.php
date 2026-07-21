@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Support\OgImage;
 use App\Support\QrCode;
 use App\Support\Statuses;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
@@ -162,8 +162,15 @@ class PublicRegistrationController extends Controller
     /**
      * Persist a guest trainee's registration into app_trainees, plus any
      * uploaded documents into app_trainees_documents.
+     *
+     * Returns the app's standard JSON envelope (see BaseController::respond())
+     * rather than an Inertia redirect — the frontend submits via the axios
+     * `http` client (resources/js/api-service-layer/public/register.ts), not
+     * an Inertia form visit. Validation failures fall through to Laravel's
+     * default JSON-shaped 422 ({message, errors}) since the axios client
+     * always sends `Accept: application/json`.
      */
-    public function store(Request $request, string $token): RedirectResponse
+    public function store(Request $request, string $token): JsonResponse
     {
         $batch = $this->resolveBatch($token);
 
@@ -171,7 +178,10 @@ class PublicRegistrationController extends Controller
         // link is enabled (mirrors the show() gate, so a disabled link can't be
         // submitted to directly).
         if ($batch->status !== Statuses::ACTIVE || ! $batch->is_public_url_enable) {
-            return back()->with('error', 'Registration for this batch is closed.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration for this batch is closed.',
+            ], 422);
         }
 
         $validated = $request->validate($this->storeRules());
@@ -221,9 +231,11 @@ class PublicRegistrationController extends Controller
             }
         }
 
-        return redirect()
-            ->route('public.register', $token)
-            ->with('success', 'Registration submitted successfully. Our team will be in touch.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration submitted successfully. Our team will be in touch.',
+            'data' => ['batch_code' => $batch->batch_code],
+        ]);
     }
 
     /**
