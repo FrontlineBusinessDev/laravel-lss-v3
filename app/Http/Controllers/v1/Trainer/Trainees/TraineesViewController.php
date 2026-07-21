@@ -102,7 +102,7 @@ class TraineesViewController extends BaseController
             ->map(fn($outcome) => [
                 'id' => $outcome->id,
                 'title' => $outcome->learning_outcomes,
-                'status' => $achievedStatuses->get($outcome->id, 'inactive'),
+                'status' => $achievedStatuses->get($outcome->id, 'active'),
             ]);
 
         return InertiaPageResponse::csr($view, [

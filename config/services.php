@@ -47,4 +47,11 @@ return [
         'secret' => env('CRON_SECRET'),
     ],
 
+    // Incoming webhook URL for the "trainee hours met" Google Chat alert
+    // (HourThresholdDispatcher). Leave unset to skip the Chat leg — email +
+    // in-app notification still fire.
+    'google_chat' => [
+        'webhook_url' => env('GOOGLE_CHAT_WEBHOOK_URL'),
+    ],
+
 ];

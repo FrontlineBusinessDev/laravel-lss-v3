@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
 export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetail }) {
-    const { isAchieved, toggle, savingId } = useTraineeOutcomeToggle(
+    const { isAchieved, toggle, toggleAll, savingId } = useTraineeOutcomeToggle(
         trainee.id,
         '/trainer/trainees',
     );
@@ -27,9 +27,27 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                                 Select the ones achieved by the trainee.
                             </p>
                         </div>
-                        <span className="text-xs text-neutral-500">
-                            {achievedCount} / {outcomes.length} achieved
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs text-neutral-500">
+                                {achievedCount} / {outcomes.length} achieved
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => toggleAll(outcomes, 'active')}
+                                disabled={outcomes.length === 0}
+                                className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+                            >
+                                Check all
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => toggleAll(outcomes, 'inactive')}
+                                disabled={outcomes.length === 0}
+                                className="text-xs font-medium text-neutral-500 hover:text-neutral-700 disabled:opacity-50"
+                            >
+                                Uncheck all
+                            </button>
+                        </div>
                     </div>
 
                     {outcomes.length === 0 && (
