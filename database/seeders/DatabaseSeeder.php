@@ -25,6 +25,15 @@ class DatabaseSeeder extends Seeder
             AcademicLevelSeeder::class,
             AcademicProgramSeeder::class,
             AcademicLearningOutcomesSeeder::class,
+            RateSeeder::class,
+            HoursDiscountSeeder::class,
+            GroupDiscountSeeder::class,
+            BatchSeeder::class,
+            TraineeSeeder::class,
+            TraineePaymentSeeder::class,
+            TaskSeeder::class,
+            SeminarSeeder::class,
+            SeminarParticipantSeeder::class,
         ]);
     }
 }

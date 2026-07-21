@@ -350,7 +350,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
         Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
     });
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::redirect('/reports', '/reports/annual')->name('reports.index');
+    Route::get('/reports/annual', [ReportController::class, 'annual'])->name('reports.annual.index');
+    Route::get('/reports/annual/pagination-search', [ReportController::class, 'annualSummary'])->name('reports.annual.summary');
+    Route::get('/reports/batch', [ReportController::class, 'batch'])->name('reports.batch.index');
+    Route::get('/reports/batch/pagination-search', [ReportController::class, 'batchSummary'])->name('reports.batch.summary');
 
     // ==========================================
     // CERTIFICATES MODULE GROUP — Trainees / Seminar / Citations are distinct
@@ -393,6 +397,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:developer')->group(function () {
         Route::get('/system-log', [SystemLogController::class, 'index'])->name('system-log.index');
         Route::get('/system-log/pagination-search', [SystemLogController::class, 'paginationSearch'])->name('system-log.pagination-search');
+        Route::delete('/system-log', [SystemLogController::class, 'deleteRange'])->name('system-log.delete-range');
     });
 
     // Trainer-only placeholder module — role-gated, deliberately NOT reusing
