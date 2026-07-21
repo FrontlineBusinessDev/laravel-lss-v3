@@ -38,7 +38,7 @@ class TraineesFactory extends Factory
     {
         return $this->state(fn() => [
             'status' => 'completed',
-            'date_completed' => fake()->dateTimeBetween('-6 months', 'now'),
+            'date_completed' => fake()->dateTimeBetween('2020-06-01', 'now'),
         ]);
     }
 

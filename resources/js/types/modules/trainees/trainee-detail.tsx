@@ -54,6 +54,7 @@ export interface AppTraineeDocument {
     created_at: string;
     view_url: string | null;
     download_url: string | null;
+    file_missing?: boolean;
 }
 
 export interface AppTraineeLearningOutcome {

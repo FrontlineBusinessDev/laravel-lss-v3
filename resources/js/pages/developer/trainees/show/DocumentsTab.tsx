@@ -5,6 +5,7 @@ import { apiFetchJson, ApiError } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import {
+    AlertTriangle,
     CheckCircle2,
     Circle,
     ExternalLink,
@@ -58,6 +59,7 @@ interface DocState {
     mode: Mode;
     error?: string;
     uploading?: boolean;
+    fileMissing?: boolean;
 }
 
 function toDocState(doc: TraineeDetail['documents'][number]): DocState {
@@ -72,6 +74,7 @@ function toDocState(doc: TraineeDetail['documents'][number]): DocState {
         viewUrl: doc.view_url ?? undefined,
         downloadUrl: doc.download_url ?? undefined,
         mode: doc.file_path ? 'upload' : 'link',
+        fileMissing: doc.file_missing ?? false,
     };
 }
 
@@ -394,41 +397,64 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                                 </div>
                                             ) : state.fileName ? (
                                                 <div
-                                                    className="flex items-center justify-between gap-2 rounded-md border border-success-100 bg-success-50 px-3 py-2.5"
+                                                    className={cn(
+                                                        'flex items-center justify-between gap-2 rounded-md border px-3 py-2.5',
+                                                        state.fileMissing
+                                                            ? 'border-danger-100 bg-danger-50'
+                                                            : 'border-success-100 bg-success-50',
+                                                    )}
                                                     data-cy="documents-tab-div-25"
                                                 >
                                                     <button
                                                         type="button"
                                                         onClick={() =>
+                                                            !state.fileMissing &&
                                                             openPreview(item.type)
                                                         }
-                                                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                                        disabled={state.fileMissing}
+                                                        className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-not-allowed"
                                                         data-cy="documents-tab-button-preview"
                                                     >
-                                                        <FileText
-                                                            size={15}
-                                                            className="text-success-700 shrink-0"
-                                                            data-cy="documents-tab-file-text-27"
-                                                        />
+                                                        {state.fileMissing ? (
+                                                            <AlertTriangle
+                                                                size={15}
+                                                                className="text-danger-700 shrink-0"
+                                                                data-cy="documents-tab-alert-triangle"
+                                                            />
+                                                        ) : (
+                                                            <FileText
+                                                                size={15}
+                                                                className="text-success-700 shrink-0"
+                                                                data-cy="documents-tab-file-text-27"
+                                                            />
+                                                        )}
                                                         <div
                                                             className="min-w-0"
                                                             data-cy="documents-tab-div-28"
                                                         >
                                                             <div
-                                                                className="truncate text-xs font-medium text-ink hover:underline"
+                                                                className={cn(
+                                                                    'truncate text-xs font-medium',
+                                                                    state.fileMissing
+                                                                        ? 'text-danger-700'
+                                                                        : 'text-ink hover:underline',
+                                                                )}
                                                                 data-cy="documents-tab-div-29"
                                                             >
-                                                                {state.fileName}
+                                                                {state.fileMissing
+                                                                    ? 'File unavailable — contact an admin to re-upload'
+                                                                    : state.fileName}
                                                             </div>
                                                             <div
                                                                 className="text-[11px] text-neutral-500"
                                                                 data-cy="documents-tab-div-30"
                                                             >
-                                                                {state.fileSize
-                                                                    ? formatSize(
-                                                                          state.fileSize,
-                                                                      )
-                                                                    : ''}
+                                                                {!state.fileMissing &&
+                                                                    (state.fileSize
+                                                                        ? formatSize(
+                                                                              state.fileSize,
+                                                                          )
+                                                                        : '')}
                                                             </div>
                                                         </div>
                                                     </button>

@@ -32,8 +32,17 @@ class DatabaseSeeder extends Seeder
             TraineeSeeder::class,
             TraineePaymentSeeder::class,
             TaskSeeder::class,
+            TaskRatingSeeder::class,
             SeminarSeeder::class,
             SeminarParticipantSeeder::class,
+            AnnouncementSeeder::class,
+            LeaveCategorySeeder::class,
+            LeaveRequestSeeder::class,
+            BehavioralQuestionSeeder::class,
+            BehavioralEvaluationSeeder::class,
+            CertificateCitationSeeder::class,
+            CertificateTemplateSeeder::class,
+            CertificateSeeder::class,
         ]);
     }
 }

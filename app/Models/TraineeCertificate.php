@@ -11,6 +11,7 @@ class TraineeCertificate extends Model
 
     protected $fillable = [
         'trainee_id',
+        'eligibility_status',
         'certificate_no',
         'citation_id',
         'template_id',

@@ -1,10 +1,15 @@
 /**
  * @file api-service-layer/developer/report.ts
  * Reports are computed aggregations, not a CRUD resource — plain GET wrappers
- * over the two summary endpoints rather than createCrudResource().
+ * over the summary/totals/export endpoints rather than createCrudResource().
+ * `annualSummary`/`batchSummary` back <DataTableCardField> (paginated); the
+ * totals endpoints aggregate over the whole filtered set independent of
+ * pagination (for the stat cards); the export endpoints are unpaginated
+ * (for the Print views, which must include every matching batch).
  */
 
 import type { StatusKind } from '@/types';
+import type { PaginatedResponse } from '@/types/reusable/pagination';
 import { http, unwrap } from '../client';
 import { buildQueryString } from '../form-data';
 
@@ -39,7 +44,7 @@ export interface ReportActivity {
     date: string;
 }
 
-export interface ReportBatch {
+export interface ReportBatch extends Record<string, unknown> {
     id: number;
     batchNo: string;
     programType: string;
@@ -54,18 +59,27 @@ export interface ReportBatch {
     activities?: ReportActivity[];
 }
 
-export interface ReportFilters {
+export interface ReportQueryParams {
+    page?: number;
+    per_page?: number;
     search?: string;
-    date_from?: string;
-    date_to?: string;
+    sort_by?: string;
+    sort_dir?: 'asc' | 'desc';
+    filters?: Record<string, unknown>;
 }
 
-export interface AnnualSummaryResponse {
+export interface ReportTotals {
+    financials: ReportFinancials;
+    batchCount: number;
+    seminarRevenue?: number;
+}
+
+export interface AnnualExportResponse {
     batches: ReportBatch[];
     seminarRevenue: number;
 }
 
-export interface BatchSummaryResponse {
+export interface BatchExportResponse {
     batches: ReportBatch[];
 }
 
@@ -78,14 +92,44 @@ function query(params?: object): string {
 }
 
 export const reportService = {
-    annualSummary: async (filters: ReportFilters): Promise<AnnualSummaryResponse> =>
-        unwrap<AnnualSummaryResponse>(
-            await http.get(`/reports/annual/pagination-search${query(filters)}`),
+    annualSummary: async (
+        params: ReportQueryParams,
+    ): Promise<PaginatedResponse<ReportBatch>> =>
+        unwrap<PaginatedResponse<ReportBatch>>(
+            await http.get(`/reports/annual/pagination-search${query(params)}`),
+        ),
+    annualTotals: async (
+        filters: Record<string, unknown>,
+        search: string,
+    ): Promise<ReportTotals> =>
+        unwrap<ReportTotals>(
+            await http.get(`/reports/annual/totals${query({ filters, search: search || undefined })}`),
+        ),
+    annualExport: async (
+        filters: Record<string, unknown>,
+        search: string,
+    ): Promise<AnnualExportResponse> =>
+        unwrap<AnnualExportResponse>(
+            await http.get(`/reports/annual/export${query({ filters, search: search || undefined })}`),
         ),
     batchSummary: async (
-        filters: ReportFilters & { academic_industry_id?: number },
-    ): Promise<BatchSummaryResponse> =>
-        unwrap<BatchSummaryResponse>(
-            await http.get(`/reports/batch/pagination-search${query(filters)}`),
+        params: ReportQueryParams,
+    ): Promise<PaginatedResponse<ReportBatch>> =>
+        unwrap<PaginatedResponse<ReportBatch>>(
+            await http.get(`/reports/batch/pagination-search${query(params)}`),
+        ),
+    batchTotals: async (
+        filters: Record<string, unknown>,
+        search: string,
+    ): Promise<ReportTotals> =>
+        unwrap<ReportTotals>(
+            await http.get(`/reports/batch/totals${query({ filters, search: search || undefined })}`),
+        ),
+    batchExport: async (
+        filters: Record<string, unknown>,
+        search: string,
+    ): Promise<BatchExportResponse> =>
+        unwrap<BatchExportResponse>(
+            await http.get(`/reports/batch/export${query({ filters, search: search || undefined })}`),
         ),
 };

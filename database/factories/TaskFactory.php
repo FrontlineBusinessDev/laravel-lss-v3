@@ -23,8 +23,8 @@ class TaskFactory extends Factory
             'description' => fake()->boolean(50) ? fake()->sentence() : null,
             'time_goal' => $timeGoal,
             'time_spent' => $status === 'completed' ? $timeGoal : fake()->randomFloat(2, 0, $timeGoal),
-            'date' => fake()->dateTimeBetween('-12 months', 'now'),
-            'completed_at' => $status === 'completed' ? fake()->dateTimeBetween('-12 months', 'now') : null,
+            'date' => fake()->dateTimeBetween('2020-01-01', 'now'),
+            'completed_at' => $status === 'completed' ? fake()->dateTimeBetween('2020-01-01', 'now') : null,
         ];
     }
 }

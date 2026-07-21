@@ -21,6 +21,8 @@ export interface AdminDashboardMetrics {
     total_trainees: number;
     ongoing_trainees: number;
     total_earnings: number;
+    average_rating: number;
+    total_ratings: number;
 }
 
 export interface RecentBatch {

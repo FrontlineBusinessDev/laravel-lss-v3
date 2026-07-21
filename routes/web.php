@@ -353,8 +353,12 @@ Route::middleware('auth')->group(function () {
     Route::redirect('/reports', '/reports/annual')->name('reports.index');
     Route::get('/reports/annual', [ReportController::class, 'annual'])->name('reports.annual.index');
     Route::get('/reports/annual/pagination-search', [ReportController::class, 'annualSummary'])->name('reports.annual.summary');
+    Route::get('/reports/annual/totals', [ReportController::class, 'annualTotals'])->name('reports.annual.totals');
+    Route::get('/reports/annual/export', [ReportController::class, 'annualExport'])->name('reports.annual.export');
     Route::get('/reports/batch', [ReportController::class, 'batch'])->name('reports.batch.index');
     Route::get('/reports/batch/pagination-search', [ReportController::class, 'batchSummary'])->name('reports.batch.summary');
+    Route::get('/reports/batch/totals', [ReportController::class, 'batchTotals'])->name('reports.batch.totals');
+    Route::get('/reports/batch/export', [ReportController::class, 'batchExport'])->name('reports.batch.export');
 
     // ==========================================
     // CERTIFICATES MODULE GROUP — Trainees / Seminar / Citations are distinct

@@ -39,6 +39,7 @@ export function NearingEndWidget() {
             error={error}
             isEmpty={rows.length === 0}
             emptyMessage="No batches ending within the next 2 weeks."
+            className="max-h-28.5 min-h-28.5"
         >
             <ul className="flex flex-col gap-2">
                 {rows.map((row) => {
@@ -62,7 +63,8 @@ export function NearingEndWidget() {
                                     <div className="text-xs text-neutral-500">
                                         {row.trainee_count} trainee
                                         {row.trainee_count === 1 ? '' : 's'} ·
-                                        ends {formatDate(row.projected_end_date)}
+                                        ends{' '}
+                                        {formatDate(row.projected_end_date)}
                                     </div>
                                 </div>
                                 <span

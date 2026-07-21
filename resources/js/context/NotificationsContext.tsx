@@ -1,3 +1,4 @@
+import { router } from '@inertiajs/react';
 import {
     createContext,
     ReactNode,
@@ -8,6 +9,20 @@ import {
     useState,
 } from 'react';
 import { notificationService } from '@/api-service-layer/notification';
+
+/**
+ * `NotificationsProvider` sits above Inertia's `<App>` in the tree (see
+ * AppProviders.tsx), so `usePage()` can't be used here — there's no Inertia
+ * page context yet at this level. `router.on('navigate', ...)` fires on
+ * every visit (including the initial page load) with the page's props in
+ * `event.detail.page.props`, which is how we track auth state outside of
+ * React's context.
+ */
+function authUserFromNavigateEvent(
+    event: CustomEvent<{ page?: { props?: { auth?: { user?: unknown } } } }>,
+): unknown {
+    return event.detail.page?.props?.auth?.user;
+}
 import type { NotificationRow } from '@/api-service-layer/notification';
 import type { AppNotification } from '@/types';
 
@@ -57,8 +72,15 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 let idCounter = 1000;
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<unknown>(undefined);
     const [items, setItems] = useState<AppNotification[]>([]);
     const [realItems, setRealItems] = useState<AppNotification[]>([]);
+
+    useEffect(() => {
+        return router.on('navigate', (event) =>
+            setUser(authUserFromNavigateEvent(event)),
+        );
+    }, []);
 
     const refreshReal = useCallback(async () => {
         try {
@@ -70,10 +92,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }, []);
 
     useEffect(() => {
+        // Guest pages (login, register, forgot-password) mount this provider
+        // too, since it wraps every Inertia page — skip the fetch/interval
+        // entirely when there's no authenticated user to poll for.
+        if (!user) {
+            return;
+        }
         refreshReal();
         const id = setInterval(refreshReal, 20000);
         return () => clearInterval(id);
-    }, [refreshReal]);
+    }, [refreshReal, user]);
 
     const notify = useCallback((n: Omit<AppNotification, 'id' | 'read'>) => {
         const created: AppNotification = {

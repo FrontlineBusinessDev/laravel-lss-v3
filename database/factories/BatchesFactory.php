@@ -18,7 +18,7 @@ class BatchesFactory extends Factory
 
     public function definition(): array
     {
-        $dateStarted = fake()->dateTimeBetween('-18 months', 'now');
+        $dateStarted = fake()->dateTimeBetween('2020-01-01', 'now');
 
         return [
             'status' => 'active',

@@ -23,6 +23,7 @@ export function RecentBatchesWidget() {
             error={error}
             isEmpty={rows.length === 0}
             emptyMessage="No batches yet."
+            className="max-h-82 min-h-82"
         >
             <ul className="flex flex-col gap-1.5">
                 {rows.map((batch) => (
@@ -40,9 +41,7 @@ export function RecentBatchesWidget() {
                                     {batch.program_type ?? '—'}
                                 </div>
                             </div>
-                            <StatusBadge
-                                status={batch.status as StatusKind}
-                            />
+                            <StatusBadge status={batch.status as StatusKind} />
                         </button>
                     </li>
                 ))}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1\Developer\Dashboard;
 use App\Http\Controllers\v1\Controller;
 use App\Models\Announcement;
 use App\Models\Batches;
+use App\Models\BehavioralEvaluation;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\Trainees;
@@ -39,12 +40,18 @@ class DashboardController extends Controller
             Carbon::now(),
         ])->sum('amount_paid');
 
+        $ratingRow = BehavioralEvaluation::whereNotNull('total_score')
+            ->selectRaw('AVG(total_score) as average, COUNT(*) as total')
+            ->first();
+
         return $this->respond([
             'total_batches' => Batches::count(),
             'active_batches' => Batches::where('status', 'active')->count(),
             'total_trainees' => Trainees::count(),
             'ongoing_trainees' => Trainees::where('status', 'active')->count(),
             'total_earnings' => (float) $totalEarnings,
+            'average_rating' => round((float) ($ratingRow?->average ?? 0), 1),
+            'total_ratings' => (int) ($ratingRow?->total ?? 0),
         ]);
     }
 
@@ -139,7 +146,7 @@ class DashboardController extends Controller
         $rows = $baseQuery->clone()
             ->with(['trainee:id,first_name,last_name', 'batch:id,batch_code'])
             ->orderBy('date')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(fn(Task $task) => [
                 'id' => $task->id,

@@ -3,9 +3,7 @@ import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { StatCard } from '@/components/StatCard';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
 
-const OVERALL_PROGRAM_RATING = 4.6;
-
-/** Top-line metric cards: total batches, total trainees, ongoing trainees, and the static program rating. */
+/** Top-line metric cards: total batches, total trainees, ongoing trainees, and the program rating (AVG of BehavioralEvaluation.total_score). */
 export function MetricsRow() {
     const { data, isLoading, error } = useDashboardWidget(
         () => adminDashboardService.getMetrics(),
@@ -39,10 +37,13 @@ export function MetricsRow() {
             />
             <StatCard
                 label="Overall LS program rating"
-                value={OVERALL_PROGRAM_RATING.toFixed(1)}
+                value={isLoading ? '—' : (data?.average_rating ?? 0).toFixed(1)}
                 icon={Star}
                 tone="warning"
-                hint="Based on partner school & trainee feedback"
+                hint={
+                    error ??
+                    `${data?.total_ratings ?? 0} evaluation${data?.total_ratings === 1 ? '' : 's'} recorded`
+                }
             />
         </div>
     );

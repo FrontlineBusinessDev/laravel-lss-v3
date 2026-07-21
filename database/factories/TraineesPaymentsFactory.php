@@ -16,7 +16,7 @@ class TraineesPaymentsFactory extends Factory
     {
         return [
             'amount_paid' => fake()->randomFloat(2, 500, 5000),
-            'payment_date' => fake()->dateTimeBetween('-12 months', 'now'),
+            'payment_date' => fake()->dateTimeBetween('2020-01-01', 'now'),
             'reference_no' => fake()->bothify('REF-#####??'),
             'notes' => fake()->boolean(30) ? fake()->sentence() : null,
         ];
