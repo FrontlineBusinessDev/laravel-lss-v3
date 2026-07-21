@@ -209,7 +209,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/trainees/{id}/documents', [TraineeDocumentsController::class, 'uploadDocument'])->name('trainees.documents.store');
     Route::delete('/trainees/{id}/documents/{documentId}', [TraineeDocumentsController::class, 'deleteDocument'])->name('trainees.documents.destroy');
     Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'learningOutcomes'])->name('trainees.learningOutcomes');
-    Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TraineesController::class, 'updateLearningOutcomeStatus'])->name('trainees.learningOutcomes.updateStatus');
+    Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TraineesController::class, 'updateLearningOutcomeStatus'])->name('trainees.learningOutcomes.updateStatus')->middleware('throttle:500,1');
     Route::post('/trainees/{id}/avatar', [TraineesController::class, 'updateAvatar'])->name('trainees.updateAvatar');
     Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
     Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
