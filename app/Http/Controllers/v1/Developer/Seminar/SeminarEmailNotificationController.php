@@ -15,6 +15,6 @@ class SeminarEmailNotificationController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('developer/seminar/email-notification/index')->asCsr();
+        return Inertia::render('developer/seminars/email-notification/index')->asCsr();
     }
 }

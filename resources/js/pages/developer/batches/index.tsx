@@ -41,7 +41,7 @@ const customGRID =
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
-        labels={['Batch Code', 'Program', 'Industry', 'Setup', 'Trainees']}
+        labels={['Status', 'Topic', 'Date', 'Setup', 'Trainees']}
         data-cy="index-settings-list-header-1"
     />
 );
@@ -107,7 +107,9 @@ export default function BatchesListPage() {
             setTerminateTarget(null);
         } catch (err) {
             showToast(
-                err instanceof Error ? err.message : 'Failed to terminate batch.',
+                err instanceof Error
+                    ? err.message
+                    : 'Failed to terminate batch.',
                 'error',
             );
         } finally {

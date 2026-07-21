@@ -342,7 +342,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::middleware('permission:' . Permissions::MANAGE_SEMINARS)->group(function () {
         Route::redirect('/seminars', '/seminars/list-of-seminars')->name('seminars.index');
-        Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.list-of-seminars.index');
+        Route::crudModule('/seminars/list-of-seminars', SeminarListController::class, 'index');
         Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
         Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
         Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');

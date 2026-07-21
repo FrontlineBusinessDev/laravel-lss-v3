@@ -56,6 +56,7 @@ export default function SeminarPrimaryLayout({
                             {seminarParticipants.length} participants
                         </p>
                     </div>
+
                     <div>{actionNode}</div>
                 </div>
                 <div

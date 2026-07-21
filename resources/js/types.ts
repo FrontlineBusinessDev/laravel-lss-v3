@@ -122,10 +122,7 @@ export interface TraineePayment {
 }
 
 export type PaymentStatus =
-    | 'Unpaid'
-    | 'Partially paid'
-    | 'Fully paid'
-    | 'Overpaid';
+    'Unpaid' | 'Partially paid' | 'Fully paid' | 'Overpaid';
 
 /** A volume-based pricing tier: the per-hour training fee applied once a school reaches a given trainee headcount. */
 export interface PricingTier {
@@ -385,6 +382,7 @@ export interface Seminar {
     /** Auto-generated on creation. Stays reachable while status === 'active'. */
     registrationLink: string;
     createdAt?: string; // ISO date
+    is_public_url_enable: boolean;
 }
 
 export type SeminarParticipantStatus =
@@ -452,9 +450,7 @@ export interface SeminarEmailTemplate {
 }
 
 export type SeminarAdminAlertKey =
-    | 'new_registration'
-    | 'feedback_submitted'
-    | 'capacity_reached';
+    'new_registration' | 'feedback_submitted' | 'capacity_reached';
 
 /** Admin-facing notification toggle (Email Notifications tab > Admin Notifications). */
 export interface SeminarAdminAlertSetting {

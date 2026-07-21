@@ -21,9 +21,11 @@ return new class extends Migration
             $table->string('venue')->nullable();
             $table->decimal('fee', 10, 2)->default(0);
             $table->unsignedInteger('max_participants')->nullable();
-            $table->enum('status', ['active', 'completed', 'closed', 'dissolved'])->default('active');
+            $table->string('status')->default('active');
             $table->string('type')->nullable();
             $table->string('registration_link')->nullable();
+            $table->boolean('is_public_url_enable');
+            $table->string('seminar_code', 50)->unique();
             $table->timestamps();
         });
     }
