@@ -10,8 +10,8 @@ interface LayoutProps {
 
 const NAV_LINKS = [
     {
-        id: 'task rating',
-        label: 'task rating',
+        id: 'Task rating',
+        label: 'Task rating',
         href: '/ratings/task-rating',
         permissions: ['manage ratings'],
     },

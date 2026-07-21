@@ -1,4 +1,5 @@
-import type { Batch, StatusKind, Trainee } from '@/types'
+import type { StatusKind } from '@/types'
+import type { ScheduleApiBatch, ScheduleApiEntry, ScheduleApiTrainee } from '@/types/modules/schedule/schedule'
 
 /**
  * A single row on the Schedule board: one batch, enriched with the trainee
@@ -6,11 +7,11 @@ import type { Batch, StatusKind, Trainee } from '@/types'
  * school breakdown for color coding, program/industry rollups).
  */
 export interface ScheduleEntry {
-  batch: Batch
-  trainees: Trainee[]
-  /** Earliest trainee.dateStarted in the batch (falls back to batch.started). */
+  batch: ScheduleApiBatch
+  trainees: ScheduleApiTrainee[]
+  /** Earliest trainee start date in the batch (batch.date_started, per-trainee start dates aren't tracked). */
   start: Date
-  /** Latest trainee.dateCompleted in the batch (falls back to batch.projectedEnd). */
+  /** Latest real-or-projected trainee completion date in the batch. */
   end: Date
   /** Trainee count per school, sorted descending. */
   schoolCounts: { school: string; count: number }[]
@@ -21,44 +22,24 @@ export interface ScheduleEntry {
   status: StatusKind
 }
 
-/** Parses the human-readable date strings used on Batch ("Apr 14, 2026") and ISO strings alike. */
-export function parseAnyDate(value: string): Date {
-  const d = new Date(value)
+/** Parses the ISO date strings returned by ScheduleController; falls back to "now" if absent/invalid. */
+export function parseAnyDate(value: string | null | undefined): Date {
+  const d = new Date(value ?? '')
   return isNaN(d.getTime()) ? new Date() : d
 }
 
-export function buildScheduleEntries(batches: Batch[], trainees: Trainee[]): ScheduleEntry[] {
-  return batches.map((batch) => {
-    const batchTrainees = trainees.filter((t) => t.batchNo === batch.batchNo)
-
-    const startDates = batchTrainees.map((t) => parseAnyDate(t.dateStarted))
-    const endDates = batchTrainees.map((t) => parseAnyDate(t.dateCompleted))
-
-    const start = startDates.length ? new Date(Math.min(...startDates.map((d) => d.getTime()))) : parseAnyDate(batch.started)
-    const end = endDates.length ? new Date(Math.max(...endDates.map((d) => d.getTime()))) : parseAnyDate(batch.projectedEnd)
-
-    const schoolTally = new Map<string, number>()
-    for (const t of batchTrainees) {
-      schoolTally.set(t.school, (schoolTally.get(t.school) ?? 0) + 1)
-    }
-    const schoolCounts = Array.from(schoolTally.entries())
-      .map(([school, count]) => ({ school, count }))
-      .sort((a, b) => b.count - a.count)
-
-    const primarySchool = schoolCounts[0]?.school ?? 'Unassigned'
-    const programs = Array.from(new Set(batchTrainees.map((t) => t.academicProgram))).filter(Boolean)
-
-    return {
-      batch,
-      trainees: batchTrainees,
-      start,
-      end,
-      schoolCounts,
-      primarySchool,
-      programs,
-      status: batch.status,
-    }
-  })
+/** Adapts the server-computed schedule entries (already aggregated in PHP) into display-ready ScheduleEntry rows. */
+export function adaptScheduleEntries(apiEntries: ScheduleApiEntry[]): ScheduleEntry[] {
+  return apiEntries.map((entry) => ({
+    batch: entry.batch,
+    trainees: entry.trainees,
+    start: parseAnyDate(entry.start),
+    end: parseAnyDate(entry.end),
+    schoolCounts: entry.school_counts,
+    primarySchool: entry.primary_school,
+    programs: entry.programs,
+    status: entry.batch.status as StatusKind,
+  }))
 }
 
 // ---------------------------------------------------------------------------

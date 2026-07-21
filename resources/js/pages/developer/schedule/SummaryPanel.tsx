@@ -30,7 +30,7 @@ export function SummaryPanel({
     const map = new Map<string, number>();
     for (const e of activeEntries) {
       for (const p of e.programs) {
-        const traineesInProgram = e.trainees.filter(t => t.academicProgram === p).length;
+        const traineesInProgram = e.trainees.filter(t => t.academic_program === p).length;
         map.set(p, (map.get(p) ?? 0) + traineesInProgram);
       }
     }
@@ -41,7 +41,7 @@ export function SummaryPanel({
   }, [activeEntries]);
   const rows = tab === 'school' ? bySchool : byProgram;
   const maxCount = Math.max(1, ...rows.map(r => r.count));
-  return <div className="rounded-lg border border-neutral-200 bg-white p-4" data-cy="summary-panel-div-1">
+  return <div className="rounded-lg border border-neutral-200 bg-white p-4" data-cy="schedule-summary-panel">
       <div className="mb-3 flex items-center justify-between" data-cy="summary-panel-div-2">
         <h2 className="text-sm font-semibold text-ink" data-cy="summary-panel-h2-active-schedules-summary">Active schedules summary</h2>
         <div className="flex rounded-md border border-neutral-200 p-0.5" data-cy="summary-panel-div-4">

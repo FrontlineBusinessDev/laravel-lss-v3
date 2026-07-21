@@ -42,26 +42,26 @@ export function ScheduleFilters({
         <MultiSelectDropdown options={options.schools} value={filters.schools} placeholder="School" onChange={v => onChange({
         ...filters,
         schools: v
-      })} className="sm:w-40" data-cy="schedule-filters-multi-select-dropdown-school" />
+      })} className="sm:w-40" data-cy="schedule-filter-school" />
         <MultiSelectDropdown options={options.programs} value={filters.programs} placeholder="Academic program" onChange={v => onChange({
         ...filters,
         programs: v
-      })} className="sm:w-44" data-cy="schedule-filters-multi-select-dropdown-academic-program" />
+      })} className="sm:w-44" data-cy="schedule-filter-program" />
         <MultiSelectDropdown options={options.batches} value={filters.batches} placeholder="Batch" onChange={v => onChange({
         ...filters,
         batches: v
-      })} className="sm:w-36" data-cy="schedule-filters-multi-select-dropdown-batch" />
+      })} className="sm:w-36" data-cy="schedule-filter-batch" />
         <MultiSelectDropdown options={options.industries} value={filters.industries} placeholder="Industry" onChange={v => onChange({
         ...filters,
         industries: v
-      })} className="sm:w-36" data-cy="schedule-filters-multi-select-dropdown-industry" />
+      })} className="sm:w-36" data-cy="schedule-filter-industry" />
         <MultiSelectDropdown options={options.statuses.map(s => STATUS_LABELS[s] ?? s)} value={filters.statuses.map(s => STATUS_LABELS[s] ?? s)} placeholder="Status" onChange={labels => {
         const reverse = Object.fromEntries(Object.entries(STATUS_LABELS).map(([k, v]) => [v, k]));
         onChange({
           ...filters,
           statuses: labels.map(l => reverse[l] ?? l)
         });
-      }} className="sm:w-32" data-cy="schedule-filters-multi-select-dropdown-status" />
+      }} className="sm:w-32" data-cy="schedule-filter-status" />
       </div>
       {hasActive && <button onClick={() => onChange(EMPTY_FILTERS)} className="flex h-9 items-center gap-1 rounded-md px-2 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700" data-cy="schedule-filters-button-change">
           <X size={13} data-cy="schedule-filters-x-9" />

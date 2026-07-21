@@ -48,7 +48,7 @@ export function MiniCalendar({
   while (cells.length % 7 !== 0) cells.push(null);
   const selectedEvents = selectedKey ? eventsByDate.get(selectedKey) ?? [] : [];
   const todayKey = toKey(initialDate.getFullYear(), initialDate.getMonth(), initialDate.getDate());
-  return <div className="rounded-lg border border-neutral-200 bg-white p-3.5" data-cy="mini-calendar-div-1">
+  return <div className="rounded-lg border border-neutral-200 bg-white p-3.5" data-cy="dashboard-calendar-widget">
       <div className="mb-3 flex items-center justify-between" data-cy="mini-calendar-div-2">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink" data-cy="mini-calendar-h2-3">
           <CalendarDays size={15} className="text-neutral-400" data-cy="mini-calendar-calendar-days-4" />
@@ -82,16 +82,16 @@ export function MiniCalendar({
         const dayEvents = eventsByDate.get(key) ?? [];
         const isSelected = key === selectedKey;
         const isToday = key === todayKey;
-        return <button key={i} onClick={() => setSelectedKey(key)} className={cn('relative mx-auto flex h-7 w-7 flex-col items-center justify-center rounded-md text-xs font-medium transition-colors', isSelected ? 'bg-brand-500 text-white' : isToday ? 'bg-brand-50 text-brand-700' : 'text-neutral-600 hover:bg-neutral-100')} data-cy="mini-calendar-button-set-selected-key">
+        return <button key={i} onClick={() => setSelectedKey(key)} className={cn('relative mx-auto flex h-7 w-7 flex-col items-center justify-center rounded-md text-xs font-medium transition-colors', isSelected ? 'bg-brand-500 text-white' : isToday ? 'bg-brand-50 text-brand-700' : 'text-neutral-600 hover:bg-neutral-100')} data-cy="calendar-date-cell">
               {day}
               {dayEvents.length > 0 && <span className="mt-0.5 flex gap-0.5" data-cy="mini-calendar-span-14">
-                  {dayEvents.slice(0, 3).map((ev, idx) => <span key={idx} className={cn('h-1 w-1 rounded-full', isSelected ? 'bg-white' : TYPE_DOT[ev.type])} data-cy="mini-calendar-span-15" />)}
+                  {dayEvents.slice(0, 3).map((ev, idx) => <span key={idx} className={cn('h-1 w-1 rounded-full', isSelected ? 'bg-white' : TYPE_DOT[ev.type])} data-cy="calendar-event-dot" />)}
                 </span>}
             </button>;
       })}
       </div>
 
-      <div className="mt-3 border-t border-neutral-100 pt-3" data-cy="mini-calendar-div-16">
+      <div className="mt-3 border-t border-neutral-100 pt-3" data-cy="event-detail-popover">
         {selectedEvents.length > 0 ? <ul className="flex flex-col gap-2" data-cy="mini-calendar-ul-17">
             {selectedEvents.map(ev => <li key={ev.id} className="flex items-start gap-2 text-xs" data-cy="mini-calendar-li-18">
                 <span className={cn('mt-1 h-1.5 w-1.5 shrink-0 rounded-full', TYPE_DOT[ev.type])} data-cy="mini-calendar-span-19" />
