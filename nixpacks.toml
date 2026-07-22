@@ -5,15 +5,16 @@ pkgs = ["php", "composer", "nodejs", "npm"]
 
 [phases.install]
 cmds = [
-  "composer install --no-interaction --prefer-dist",
+  "composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader",
   "npm ci",
   "php artisan octane:install --server=frankenphp --no-interaction"
 ]
 
 [phases.build]
 cmds = [
-  "npm run build"
+  "npm run build",
+  "chmod +x frankenphp"
 ]
 
 [start]
-cmd = "chmod +x frankenphp && php artisan migrate --force && if [ \"$APP_ENV\" = \"production\" ]; then php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache; else php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan cache:clear; fi && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
+cmd = "bash scripts/deploy.sh"
