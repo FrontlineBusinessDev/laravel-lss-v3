@@ -7,6 +7,15 @@ pkgs = ["php", "composer", "nodejs", "npm"]
 cmds = [
   "composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader",
   "npm ci",
+  # Pinned FrankenPHP binary (not `octane:install`'s own downloader): the
+  # upstream "latest" GitHub release intermittently ships without the
+  # `-gnu` asset (see laravel/octane#975, php/frankenphp#1276), which makes
+  # `octane:install --server=frankenphp` fail the build with "FrankenPHP
+  # asset not found." Fetching a known-good release ourselves first means
+  # octane:install finds this binary already in place and skips its own
+  # (flaky) download. Bump the version below if a newer release is needed.
+  "curl -fL -o frankenphp https://github.com/php/frankenphp/releases/download/v1.12.5/frankenphp-linux-x86_64-gnu",
+  "chmod +x frankenphp",
   "php artisan octane:install --server=frankenphp --no-interaction"
 ]
 
