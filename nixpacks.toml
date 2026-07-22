@@ -6,7 +6,8 @@ pkgs = ["php", "composer", "nodejs", "npm"]
 
 [phases.install]
 cmds = [
-  "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
+#  "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
+  "composer install --no-interaction --prefer-dist",
   "npm ci",
   "php artisan octane:install --server=frankenphp --no-interaction"
 ]
