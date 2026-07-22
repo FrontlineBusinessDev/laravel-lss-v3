@@ -211,12 +211,13 @@ cy.get('[data-cy="use-async-select-field-button-button"]')
     .click();
 
 //type/search option
-// cy.get('[data-cy="use-async-select-field-input-placeholder"]')
-//   .type('Bachelor of Science in Business Administration');
+cy.get('[data-cy="use-async-select-field-input-placeholder"]')
+  .type('Computer Science');
 
 //select result
-cy.contains('Accountancy, Business, and Management (ABM)')
-   .click();
+cy.get('[data-cy="use-async-select-field-button-button-2"]')
+  .contains('Bachelor of Science in Computer Science')
+  .click();
 
 cy.get('[data-cy="use-async-select-field-button-button"]')
     .eq(1)
@@ -229,24 +230,56 @@ cy.get('[data-cy="use-async-select-field-button-button"]')
     .eq(2)
     .click();
 
+cy.get('[data-cy="use-async-select-field-input-placeholder"]')
+  .type('Fourth Year');
+
 cy.contains('Fourth Year')
-   .click();
+   .should('be.visible')
+   .click({force:true});
 
 cy.get('[data-cy="create-batch-modal-input-date"]')
-    .type('07/27/2026');
+    .type('2026-07-27');
 
 cy.get('[data-cy="create-batch-modal-input-projected-end-date"]')
-    .type('08/28/2026');
+    .type('2026-08-28');
 
 cy.get('[data-cy="create-batch-modal-input-checkbox"]')
   .check()
   .should('be.checked');
 
-// cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+ cy.intercept('POST', '**/batches').as('createBatch');
+
+//add batch btn
+  cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+
+cy.wait('@createBatch').then((interception) => {
+    console.log(interception.response);
+});
+
+// //add batch inc details
+// cy.get('[data-cy="add-record-button"]').click();
+
+// cy.get('[data-cy="use-async-select-field-button-button"]')
+//     .eq(1)
+//     .click();
+
+// cy.contains('Accounting (ACCT)')
+//    .click();
+
+// cy.get('[data-cy="create-batch-modal-input-date"]')
+//     .type('2026-07-27');
+
+// cy.get('[data-cy="create-batch-modal-input-projected-end-date"]')
+//     .type('2026-08-28');
+
+// cy.get('[data-cy="create-batch-modal-input-checkbox"]')
+//   .check()
+//   .should('be.checked');
 
 
 
-})
+});
+
 
 });
 
