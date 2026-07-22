@@ -3,6 +3,7 @@ set -e
 
 if [ "$APP_ENV" = "production" ] || [ "$APP_ENV" = "staging" ] || [ "$APP_ENV" = "development" ]; then
     php artisan migrate --force
+    php artisan db:seed --class=RoleSeeder
 fi
 
 if [ "$APP_ENV" = "production" ]; then
