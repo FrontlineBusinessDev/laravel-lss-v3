@@ -50,9 +50,8 @@ test('model changes are logged with actor snapshot and old/new diff', function (
     $program = AcademicProgram::create([
         'status' => 'active',
         'name' => 'LOG-TEST',
-        'course_name' => 'Logging 101',
     ]);
-    $program->update(['course_name' => 'Logging 102']);
+    $program->update(['name' => 'LOG-TEST-2']);
     $program->update(['status' => 'inactive']); // archive
 
     $actions = AppLogger::where('loggable_type', AcademicProgram::class)
@@ -80,7 +79,6 @@ test('a log entry survives deletion of the acting user (no FK block)', function 
     AcademicProgram::create([
         'status' => 'active',
         'name' => 'KEEP-LOG',
-        'course_name' => 'Retention',
     ]);
 
     $logId = AppLogger::where('subject_label', 'KEEP-LOG')->value('id');

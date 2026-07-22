@@ -5,6 +5,7 @@ export interface AppTrainees extends Record<string, unknown> {
     status: string;
     batch_id: number;
     school_id: number;
+    academic_level_id: number | null;
     public_url_id: string;
     first_name: string;
     last_name: string;

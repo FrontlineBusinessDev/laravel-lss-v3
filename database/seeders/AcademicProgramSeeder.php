@@ -35,8 +35,6 @@ class AcademicProgramSeeder extends Seeder
             DB::table('app_settings_academic_program')->updateOrInsert(
                 ['name' => $program['name']], // Unique identifier to prevent duplicates if run twice
                 [
-                    'course_name' => $program['course_name'],
-                    'specialization' => $program['specialization'],
                     'status' => strtolower($program['status']),
                     'created_at' => now(),
                     'updated_at' => now(),

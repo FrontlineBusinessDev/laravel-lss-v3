@@ -50,7 +50,6 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Others',
-                'year_level' => '2',
                 'status' => 'active',
                 'description' => 'Other unclassified.',
                 'created_at' => now(),
@@ -58,7 +57,6 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Second Year',
-                'year_level' => '8',
                 'status' => 'active',
                 'description' => 'Second year college/university level.',
                 'created_at' => now(),
@@ -66,7 +64,6 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Third Year',
-                'year_level' => '16',
                 'status' => 'active',
                 'description' => 'Third year college/university level.',
                 'created_at' => now(),

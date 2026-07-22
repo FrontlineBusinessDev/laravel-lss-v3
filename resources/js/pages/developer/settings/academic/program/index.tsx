@@ -17,11 +17,11 @@ import { columns } from '@/types/modules/settings/academic/program';
 import AcademicProgramModal from './AcademicProgramModal';
 
 const PERMISSION = 'manage settings academic';
-const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
+const customGRID = 'sm:grid-cols-[2fr_1fr_1fr]!';
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
-        labels={['Name', 'Course Name', 'Specialization']}
+        labels={['Name']}
         data-cy="index-settings-list-header-1"
     />
 );
@@ -41,10 +41,6 @@ const renderRow = (row: AcademicProgram, actions: CardActions) => {
             data-cy="index-settings-row-2"
         >
             <TextCell data-cy="index-text-cell-4">{row.name}</TextCell>
-            <TextCell data-cy="index-text-cell-5">{row.course_name}</TextCell>
-            <TextCell data-cy="index-text-cell-6">
-                {row.specialization}
-            </TextCell>
         </SettingsRow>
     );
 };

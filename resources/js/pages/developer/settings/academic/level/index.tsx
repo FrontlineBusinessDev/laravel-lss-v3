@@ -17,11 +17,11 @@ import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsAcademicLayout from '@/layouts/settings/SettingsAcademicLayout';
 
 const PERMISSION = 'manage settings academic';
-const customGRID = 'sm:grid-cols-[1.6fr_1fr_2.2fr_2.5rem]';
+const customGRID = 'sm:grid-cols-[1.6fr_2.2fr_1fr_2.5rem]';
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
-        labels={['Name', 'Year Level', 'Description']}
+        labels={['Name', 'Description']}
         data-cy="index-settings-list-header-1"
     />
 );
@@ -41,7 +41,6 @@ const renderRow = (row: AcademicLevel, actions: CardActions) => {
             data-cy="index-settings-row-2"
         >
             <TextCell data-cy="index-text-cell-4">{row.name}</TextCell>
-            <TextCell data-cy="index-text-cell-5">{row.year_level}</TextCell>
             <TextCell data-cy="index-text-cell-6">{row.description}</TextCell>
         </SettingsRow>
     );

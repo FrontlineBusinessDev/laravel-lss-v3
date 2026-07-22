@@ -23,7 +23,6 @@ class Batches extends Model
         'projected_end_date',
         'setup',
         'academic_industry_id',
-        'academic_level_id',
         'academic_program_id',
     ];
 
@@ -36,11 +35,6 @@ class Batches extends Model
     public function academicIndustry(): BelongsTo
     {
         return $this->belongsTo(AcademicIndustry::class, 'academic_industry_id');
-    }
-
-    public function academicLevel(): BelongsTo
-    {
-        return $this->belongsTo(AcademicLevel::class, 'academic_level_id');
     }
 
     public function academicProgram(): BelongsTo

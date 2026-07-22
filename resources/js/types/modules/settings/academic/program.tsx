@@ -6,8 +6,6 @@ export interface AcademicProgram extends Record<string, unknown> {
     id: number;
     status: string;
     name: string;
-    course_name: string;
-    specialization: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -27,17 +25,6 @@ export const columns: ColumnDef<AcademicProgram>[] = [
         label: 'Program Abbreviation',
         searchable: true,
         filterable: true,
-    },
-    {
-        key: 'course_name',
-        label: 'Course Title',
-        searchable: true,
-        filterable: true,
-    },
-    {
-        key: 'specialization',
-        label: 'Specialization',
-        searchable: true,
     },
     { key: 'created_at', label: 'Created At' },
 ];
@@ -59,21 +46,6 @@ export const fields: FieldDef<AcademicProgram>[] = [
         type: 'text',
         placeholder: 'BSCS',
         required: true,
-        colSpan: 2,
-    },
-    {
-        key: 'course_name',
-        label: 'Full Course Title',
-        type: 'text',
-        placeholder: 'Bachelor of Science in Computer Science',
-        required: true,
-        colSpan: 2,
-    },
-    {
-        key: 'specialization',
-        label: 'Specialization (Tracks)',
-        type: 'text',
-        placeholder: 'Software Engineering (Optional)',
         colSpan: 2,
     },
 ];

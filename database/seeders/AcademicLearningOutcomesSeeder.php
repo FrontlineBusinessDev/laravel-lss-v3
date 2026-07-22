@@ -20,12 +20,12 @@ class AcademicLearningOutcomesSeeder extends Seeder
 
         // 2. Seed Academic Programs and keep track of their IDs
         $programs = [
-            'ABM'  => ['name' => 'Accountancy, Business, and Management (ABM)', 'course_name' => 'Business Administration'],
-            'ACCT' => ['name' => 'Accounting (ACCT)', 'course_name' => 'Bachelor of Science in Accountancy'],
-            'ICT'  => ['name' => 'Information and Communications Technology (ICT)', 'course_name' => 'ICT Tech Vocational'],
-            'IT'   => ['name' => 'Information Technology (IT)', 'course_name' => 'Bachelor of Science in Information Technology'],
-            'MGMT' => ['name' => 'Management (MGMT)', 'course_name' => 'Business Management'],
-            'STEM' => ['name' => 'Science, Technology, Engineering, and Mathematics (STEM)', 'course_name' => 'General STEM'],
+            'ABM'  => ['name' => 'Accountancy, Business, and Management (ABM)'],
+            'ACCT' => ['name' => 'Accounting (ACCT)'],
+            'ICT'  => ['name' => 'Information and Communications Technology (ICT)'],
+            'IT'   => ['name' => 'Information Technology (IT)'],
+            'MGMT' => ['name' => 'Management (MGMT)'],
+            'STEM' => ['name' => 'Science, Technology, Engineering, and Mathematics (STEM)'],
         ];
 
         $programIds = [];
@@ -33,8 +33,6 @@ class AcademicLearningOutcomesSeeder extends Seeder
             $programIds[$code] = DB::table('app_settings_academic_program')->insertGetId([
                 'status' => 'active',
                 'name' => $info['name'],
-                'course_name' => $info['course_name'],
-                'specialization' => $code,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
