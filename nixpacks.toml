@@ -1,34 +1,19 @@
-# OPTIMIZED LAREVEL OCTANE (FRANKENPHP) + INERTIA SSR CONFIG
+# OPTIMIZED LARAVEL OCTANE (FRANKENPHP) + INERTIA SSR CONFIG
 
 [phases.setup]
-# Force Nixpacks to include both PHP/Composer and Node/NPM in the final production container
 pkgs = ["php", "composer", "nodejs", "npm"]
 
 [phases.install]
 cmds = [
-#  "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
   "composer install --no-interaction --prefer-dist",
   "npm ci",
   "php artisan octane:install --server=frankenphp --no-interaction"
 ]
 
 [phases.build]
-# Only compile assets here to avoid build-time database connection errors
 cmds = [
   "npm run build"
 ]
 
 [start]
-# 1. Ensure the FrankenPHP binary has executable permissions
-# 2. Run database migrations safely
-# 3. Cache configuration and routes at runtime (where the DB is accessible)
-# 4. Start the Inertia SSR process in the background
-# 5. Start a self-restarting queue worker in the background (QUEUE_CONNECTION=database
-#    means queued mail/jobs otherwise pile up in the `jobs` table with nothing to
-#    process them — this container has no separate worker service, so it must run here)
-# 6. Boot FrankenPHP Octane server in the foreground
-cmd = "chmod +x frankenphp && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
-
-# NEW
-# cmd = "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) && php artisan octane:frankenphp --host=0.0.0.0 --port=8000"
-# cmd = "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
+cmd = "chmod +x frankenphp && php artisan migrate --force && if [ \"$APP_ENV\" = \"production\" ]; then php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache; else php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan cache:clear; fi && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
