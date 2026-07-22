@@ -22,7 +22,6 @@ return new class extends Migration
             $table->decimal('fee', 10, 2)->default(0);
             $table->unsignedInteger('max_participants')->nullable();
             $table->string('status')->default('active');
-            $table->string('type')->nullable();
             $table->string('registration_link')->nullable();
             $table->boolean('is_public_url_enable');
             $table->string('seminar_code', 50)->unique();

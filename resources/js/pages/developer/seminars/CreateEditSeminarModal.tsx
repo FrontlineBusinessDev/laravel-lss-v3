@@ -8,18 +8,15 @@ import { AppSeminar } from '@/types/modules/seminar/seminar';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { Loader2 } from 'lucide-react';
 
-const SEMINAR_TYPES = [
-    'Technical & Automation Workshops',
-    'Compliance & Softskills Seminars',
-];
 export interface SeminarDraft {
     topic: string;
     description: string;
     date: string;
     venue: string;
     fee: string;
-    maxParticipants: string;
-    type: string;
+    registered_count: number;
+    registration_link: string;
+    max_participants: string;
 }
 const EMPTY_DRAFT: SeminarDraft = {
     topic: '',
@@ -27,8 +24,9 @@ const EMPTY_DRAFT: SeminarDraft = {
     date: '',
     venue: '',
     fee: '',
-    maxParticipants: '',
-    type: SEMINAR_TYPES[0],
+    registered_count: 0,
+    registration_link: '',
+    max_participants: '',
 };
 interface Props {
     open: boolean;
@@ -66,35 +64,31 @@ export function CreateEditSeminarModal({
                 date: editing.date,
                 venue: editing.venue,
                 fee: String(editing.fee ?? ''),
-                maxParticipants: editing.maxParticipants
-                    ? String(editing.maxParticipants)
+                registered_count: editing.registered_count,
+                registration_link: editing.registration_link,
+                max_participants: editing.max_participants
+                    ? String(editing.max_participants)
                     : '',
-                type: editing.type,
             });
         } else {
             setDraft(EMPTY_DRAFT);
         }
     }, [open, editing]);
-    const isValid =
-        draft.topic.trim() &&
-        draft.description.trim() &&
-        draft.date &&
-        draft.venue.trim() &&
-        draft.fee !== '';
+
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const [values, setValues] = useState<Seminar>(() => ({
-        id: row?.id ?? 'f2f',
+        id: row?.id ?? '',
         topic: row?.topic ?? '',
         description: row?.description ?? '',
         date: row?.date ? String(row.date).slice(0, 10) : '',
         venue: row?.venue ?? '',
         fee: row?.fee ?? 0, // Fallback to number 0
-        maxParticipants: row?.maxParticipants ?? undefined, // Optional field
+        max_participants: row?.max_participants ?? undefined, // Optional field
         status: row?.status ?? 'active',
-        registeredCount: row?.registeredCount ?? 0, // Fallback to number 0
+        registered_count: row?.registered_count ?? 0, // Fallback to number 0
         type: row?.type ?? '',
-        registrationLink: row?.registrationLink ?? '',
+        registration_link: row?.registration_link ?? '',
         is_public_url_enable: row?.is_public_url_enable ?? false,
     }));
 
@@ -117,12 +111,14 @@ export function CreateEditSeminarModal({
             });
             return;
         }
-        const url = row ? `/batches/${row.id}` : '/batches';
+        const url = row
+            ? `/seminars/list-of-seminars/${row.id}`
+            : '/seminars/list-of-seminars';
         const response = await apiFetchJson<AppSeminar>(url, {
             method: row ? 'PUT' : 'POST',
             body: JSON.stringify(values),
         });
-        showToast(row ? 'Batch updated' : 'Batch created', 'success');
+        showToast(row ? 'seminar updated' : 'seminar created', 'success');
         onSaved?.(response.data);
         onClose();
     };
@@ -137,7 +133,9 @@ export function CreateEditSeminarModal({
             await persist();
         } catch (err: unknown) {
             const error =
-                err instanceof Error ? err : new Error('Failed to save batch.');
+                err instanceof Error
+                    ? err
+                    : new Error('Failed to save seminar.');
             const apiErrors = (
                 error as Error & {
                     errors?: Record<string, string[]>;
@@ -170,7 +168,7 @@ export function CreateEditSeminarModal({
             <form
                 onSubmit={handleSubmit}
                 className="space-y-4"
-                data-cy="create-batch-modal-form-submit"
+                data-cy="create-seminar-modal-form-submit"
             >
                 <TextField
                     label="Seminar topic"
@@ -248,11 +246,11 @@ export function CreateEditSeminarModal({
                     type="number"
                     placeholder="Leave blank for unlimited"
                     optional
-                    value={draft.maxParticipants}
+                    value={draft.max_participants}
                     onChange={(e) =>
                         setDraft((d) => ({
                             ...d,
-                            maxParticipants: e.target.value,
+                            max_participants: e.target.value,
                         }))
                     }
                     data-cy="create-edit-seminar-modal-text-field-maximum-participants"
@@ -260,7 +258,7 @@ export function CreateEditSeminarModal({
 
                 <label
                     className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5"
-                    data-cy="create-batch-modal-label-12"
+                    data-cy="create-seminar-modal-label-12"
                 >
                     <input
                         type="checkbox"
@@ -269,25 +267,25 @@ export function CreateEditSeminarModal({
                             set('is_public_url_enable', e.target.checked)
                         }
                         className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-100"
-                        data-cy="create-batch-modal-input-checkbox"
+                        data-cy="create-seminar-modal-input-checkbox"
                     />
                     <span
                         className="text-sm font-medium text-neutral-700"
-                        data-cy="create-batch-modal-span-enable-public-registration-url"
+                        data-cy="create-seminar-modal-span-enable-public-registration-url"
                     >
                         Enable public registration URL
                     </span>
                 </label>
                 <div
                     className="flex items-center justify-end gap-2 pt-2"
-                    data-cy="create-batch-modal-div-16"
+                    data-cy="create-seminar-modal-div-16"
                 >
                     <button
                         type="button"
                         onClick={onClose}
                         disabled={submitting}
                         className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
-                        data-cy="create-batch-modal-button-button"
+                        data-cy="create-seminar-modal-button-button"
                     >
                         Cancel
                     </button>
@@ -295,15 +293,15 @@ export function CreateEditSeminarModal({
                         type="submit"
                         disabled={submitting}
                         className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
-                        data-cy="create-batch-modal-button-submit"
+                        data-cy="create-seminar-modal-button-submit"
                     >
                         {submitting && (
                             <Loader2
                                 className="h-4 w-4 animate-spin"
-                                data-cy="create-batch-modal-loader2-19"
+                                data-cy="create-seminar-modal-loader2-19"
                             />
                         )}
-                        {isEdit ? 'Save changes' : 'Create batch'}
+                        {isEdit ? 'Save changes' : 'Create seminar'}
                     </button>
                 </div>
             </form>

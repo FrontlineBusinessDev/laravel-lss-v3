@@ -66,11 +66,9 @@ class SeminarListController extends BaseController
             'date' => ['required', 'date'],
             'venue' => ['required', 'string', 'max:255', 'unique:app_seminars,venue'],
             'fee' => ['required', 'numeric'],
-            'max_participants' => ['nullable', 'integer', 'exists:app_seminars,max_participants'],
+            'max_participants' => ['nullable', 'integer', 'min:1'],
             'status' => ['required', Rule::in(Statuses::all())],
             'type' => ['required', 'string'],
-            'registration_link' => ['required', 'string'],
-            'seminar_code' => ['required', 'string', 'max:50', 'unique:app_seminars,seminar_code'],
             'is_public_url_enable' => ['required', 'boolean'],
             // seminar_code + registration_link are intentionally absent:
             // they are system-generated and must never be user-supplied.
@@ -80,16 +78,16 @@ class SeminarListController extends BaseController
     protected function updateRules(Model $model): array
     {
         return [
-            'topic' => ['required', 'string', 'max:255', 'unique:app_seminars,topic'],
+            'topic' => ['required', 'string', 'max:255', Rule::unique('app_seminars', 'topic')->ignore($model->id)],
+            'venue' => ['required', 'string', 'max:255', Rule::unique('app_seminars', 'venue')->ignore($model->id)],
+            'seminar_code' => ['required', 'string', 'max:50', Rule::unique('app_seminars', 'seminar_code')->ignore($model->id)],
             'description' => ['required', 'string'],
             'date' => ['required', 'date'],
-            'venue' => ['required', 'string', 'max:255', 'unique:app_seminars,venue'],
             'fee' => ['required', 'numeric'],
-            'max_participants' => ['nullable', 'integer', 'exists:app_seminars,max_participants'],
+            'max_participants' => ['nullable', 'integer', 'min:1'],
             'status' => ['required', Rule::in(Statuses::all())],
-            'type' => ['required', 'string'],
+            'registered_count' => ['required', 'string'],
             'registration_link' => ['required', 'string'],
-            'seminar_code' => ['required', 'string', 'max:50', 'unique:app_seminars,seminar_code'],
             'is_public_url_enable' => ['required', 'boolean'],
         ];
     }

@@ -374,13 +374,13 @@ export interface Seminar {
     date: string;
     venue: string;
     fee: number;
-    maxParticipants?: number;
+    max_participants?: number;
     status: 'active' | 'completed' | 'closed' | 'dissolved';
-    registeredCount: number;
+    registered_count: number;
     /** Seminar type/track (e.g. "Technical & Automation Workshops"). Determines which seminar question set applies. */
     type: string;
     /** Auto-generated on creation. Stays reachable while status === 'active'. */
-    registrationLink: string;
+    registration_link: string;
     createdAt?: string; // ISO date
     is_public_url_enable: boolean;
 }
