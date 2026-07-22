@@ -40,3 +40,29 @@ export interface TaskRatingSubmission {
     description: string;
     hours_spent: string | null;
 }
+
+/** A single edit captured in a task rating's audit trail (print/history view-model). */
+export interface TaskRatingHistoryEntry {
+    rating: number;
+    comments: string;
+    evaluator: string;
+    ratedAt: string; // ISO date
+}
+
+/**
+ * Print/report view-model for one trainee's rating on one task, built
+ * client-side from the real `TaskRatingEntry` API row (see TaskRatingPage's
+ * `toTaskRating()`).
+ */
+export interface TaskRating {
+    id: string;
+    batchNo: string;
+    taskName: string;
+    traineeId: string;
+    traineeName: string;
+    rating: number; // 1–100
+    comments: string;
+    evaluator: string;
+    ratedAt: string; // ISO date of the most recent save
+    history: TaskRatingHistoryEntry[];
+}

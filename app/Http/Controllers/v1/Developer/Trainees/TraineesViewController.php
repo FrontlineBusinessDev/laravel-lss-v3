@@ -79,6 +79,8 @@ class TraineesViewController extends BaseController
                 'batch:id,batch_code,date_started,setup,academic_industry_id,academic_program_id',
                 'batch.academicIndustry:id,name',
                 'batch.academicProgram:id,name',
+                'certificate.citation:id,title',
+                'certificate.template',
                 'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
                 'learningOutcomes:id,learning_outcomes',
                 'payments', 

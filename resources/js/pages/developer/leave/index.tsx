@@ -3,7 +3,7 @@ import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { columns } from '@/types/modules/leave/leave-requests';
 import { CheckCircle2, Eye, Trash2, XCircle } from 'lucide-react';

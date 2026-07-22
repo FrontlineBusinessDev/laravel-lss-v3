@@ -1,4 +1,4 @@
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import { cn } from '@/lib/utils';
 const STATUS_STYLES: Record<StatusKind, string> = {
   active: 'bg-success-50 text-success-800',

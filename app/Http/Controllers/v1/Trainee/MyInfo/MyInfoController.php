@@ -42,7 +42,7 @@ class MyInfoController
             'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
             'learningOutcomes:id,learning_outcomes',
             'payments',
-            'certificate.citation:id,name',
+            'certificate.citation:id,title',
             // Aggregate-only view (per RBAC decision: trainees see hours/task-
             // completion badges, not per-task score/comments/evaluator).
             'taskRatings:id,trainee_id,rating,rated_at',

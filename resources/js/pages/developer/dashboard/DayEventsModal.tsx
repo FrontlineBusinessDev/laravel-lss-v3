@@ -1,5 +1,5 @@
 import type { ModalComponentProps } from '@/components/modal/ModalCenter';
-import type { CalendarEvent } from '@/types';
+import type { CalendarEvent } from '@/types/modules/dashboard/calendar-event';
 import { cn } from '@/lib/utils';
 
 const TYPE_DOT: Record<CalendarEvent['type'], string> = {

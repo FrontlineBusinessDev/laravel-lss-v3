@@ -8,7 +8,7 @@
  * (for the Print views, which must include every matching batch).
  */
 
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { PaginatedResponse } from '@/types/reusable/pagination';
 import { http, unwrap } from '../client';
 import { buildQueryString } from '../form-data';

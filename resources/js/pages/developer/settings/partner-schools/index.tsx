@@ -11,7 +11,7 @@ import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { Thumbnail } from '@/components/Thumbnail';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { PartnerSchools } from '@/types/modules/settings/partner-schools';
 import { columns } from '@/types/modules/settings/partner-schools';
 import PartnerSchoolModal from './PartnerSchoolModal';

@@ -24,7 +24,7 @@ function authUserFromNavigateEvent(
     return event.detail.page?.props?.auth?.user;
 }
 import type { NotificationRow } from '@/api-service-layer/notification';
-import type { AppNotification } from '@/types';
+import type { AppNotification } from '@/types/modules/notifications/notification';
 
 /** Resolves the click-through target by notification type — new types add a case here. */
 function linkFor(row: NotificationRow): string {

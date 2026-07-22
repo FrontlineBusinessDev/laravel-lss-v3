@@ -6,7 +6,10 @@ import { StatCard } from '@/components/StatCard';
 import { useToast } from '@/components/Toast';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { apiFetchJson } from '@/lib/apiFetch';
-import type { TaskRating, TaskRatingHistoryEntry } from '@/types';
+import type {
+    TaskRating,
+    TaskRatingHistoryEntry,
+} from '@/types/modules/ratings/task-rating';
 import type {
     TaskRatingEntry,
     TaskRatingHistoryApiEntry,

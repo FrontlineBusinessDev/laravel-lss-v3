@@ -11,7 +11,7 @@ import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import SettingsAcademicLayout from '@/layouts/settings/SettingsAcademicLayout';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AcademicProgram } from '@/types/modules/settings/academic/program';
 import { columns } from '@/types/modules/settings/academic/program';
 import AcademicProgramModal from './AcademicProgramModal';

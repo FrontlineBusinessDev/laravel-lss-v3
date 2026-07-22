@@ -4,7 +4,7 @@ import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 
 /** The 4 most recently created batches. */
 export function RecentBatchesWidget() {

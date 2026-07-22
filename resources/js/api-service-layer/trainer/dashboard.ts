@@ -5,7 +5,7 @@
  * props (see resources/js/pages/trainer/dashboard/index.tsx).
  */
 
-import type { CalendarEvent } from '@/types';
+import type { CalendarEvent } from '@/types/modules/dashboard/calendar-event';
 import type {
     DashboardAnnouncement,
     DashboardMetrics,

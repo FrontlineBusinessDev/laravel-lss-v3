@@ -5,6 +5,8 @@
  * relation objects, distinct from `AppTrainees` (the flat DataTable row shape
  * used by the trainees index).
  */
+import type { CertificateTemplate } from '@/pages/developer/certificates/types';
+
 export interface AppTraineeSchool {
     id: number;
     school_name: string;
@@ -88,7 +90,8 @@ export interface AppTraineeCertificate {
     id: number;
     certificate_no: string;
     issued_at: string | null;
-    citation: { id: number; name: string } | null;
+    citation: { id: number; title: string } | null;
+    template?: CertificateTemplate | null;
 }
 
 export interface AppTraineeTaskRatingEvaluator {

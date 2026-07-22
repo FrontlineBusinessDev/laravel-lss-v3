@@ -15,7 +15,7 @@ import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import { Thumbnail } from '@/components/Thumbnail';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { PaymentMethod } from '@/types/modules/settings/payment-methods';
 import { columns } from '@/types/modules/settings/payment-methods';
 import PaymentMethodModal from './PaymentMethodModal';

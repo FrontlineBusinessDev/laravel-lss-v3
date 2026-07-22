@@ -840,7 +840,7 @@ function CertificateSection({ trainee }: { trainee: TraineeDetail }) {
                         label="Certificate no."
                         value={cert.certificate_no}
                     />
-                    <Field label="Citation" value={cert.citation?.name ?? ''} />
+                    <Field label="Citation" value={cert.citation?.title ?? ''} />
                     <Field
                         label="Issued on"
                         value={cert.issued_at?.slice(0, 10) ?? ''}

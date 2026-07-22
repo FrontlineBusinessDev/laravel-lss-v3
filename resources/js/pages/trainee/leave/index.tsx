@@ -11,7 +11,7 @@ import {
 } from '@/hooks/use-file-upload-field';
 import { useToast } from '@/components/Toast';
 import TraineeLayout from '@/layouts/trainee/TraineeLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { traineeColumns } from '@/types/modules/leave/leave-requests';
 import type { CardActions } from '@/types/reusable/card';
