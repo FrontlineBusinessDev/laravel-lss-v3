@@ -8,15 +8,14 @@ pkgs = ["php", "composer", "nodejs", "npm"]
 cmds = [
   "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
   "npm ci",
+  "php artisan octane:install --server=frankenphp --no-interaction"
 ]
-#  "php artisan octane:install --server=frankenphp --no-interaction"
 
 [phases.build]
 # Only compile assets here to avoid build-time database connection errors
 cmds = [
   "npm run build"
 ]
-
 
 [start]
 # 1. Ensure the FrankenPHP binary has executable permissions
