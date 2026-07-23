@@ -9,6 +9,7 @@ use App\Observers\TraineeObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -55,6 +56,15 @@ class AppServiceProvider extends ServiceProvider
          */
         if (app()->environment('production') || app()->environment('staging')) {
             URL::forceScheme('https');
+        }
+
+        /**
+         * DEV-ONLY STRICTNESS: surfaces lazy-loading, missing-attribute, and
+         * silently-discarded-attribute bugs as exceptions instead of letting
+         * them fail silently in staging/production.
+         */
+        if (app()->environment(['local', 'development'])) {
+            Model::shouldBeStrict();
         }
     }
 

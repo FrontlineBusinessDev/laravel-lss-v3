@@ -122,15 +122,11 @@ function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
                 />
                 <Field
                     label="Academic program"
-                    value={trainee.batch?.academic_program?.course_name ?? ''}
+                    value={trainee.batch?.academic_program?.name ?? ''}
                 />
                 <Field
                     label="Academic level"
-                    value={
-                        trainee.batch?.academic_level
-                            ? `${trainee.batch.academic_level.name} · ${trainee.batch.academic_level.year_level}`
-                            : ''
-                    }
+                    value={trainee.academic_level?.name ?? ''}
                 />
                 <Field
                     label="Program type"
@@ -844,7 +840,7 @@ function CertificateSection({ trainee }: { trainee: TraineeDetail }) {
                         label="Certificate no."
                         value={cert.certificate_no}
                     />
-                    <Field label="Citation" value={cert.citation?.name ?? ''} />
+                    <Field label="Citation" value={cert.citation?.title ?? ''} />
                     <Field
                         label="Issued on"
                         value={cert.issued_at?.slice(0, 10) ?? ''}

@@ -22,12 +22,6 @@ const NAV_LINKS = [
         permission: 'manage settings partner schools',
     },
     {
-        id: 'Payment methods',
-        label: 'Payment Methods',
-        href: '/settings/payment-methods',
-        permission: 'manage settings payment methods',
-    },
-    {
         id: 'Academic',
         label: 'Academic',
         href: '/settings/academic',
@@ -44,6 +38,12 @@ const NAV_LINKS = [
         label: 'Leave Categories',
         href: '/settings/leave-categories',
         permission: 'manage leave',
+    },
+    {
+        id: 'Payment methods',
+        label: 'Payment Methods',
+        href: '/settings/payment-methods',
+        permission: 'manage settings payment methods',
     },
 ] as const;
 
@@ -82,8 +82,8 @@ export default function SettingsPrimaryLayout({
                     {NAV_LINKS.map((link) => {
                         // 2. Filter tabs out dynamically based on user permissions
                         if (!can(link.permission)) {
-return null;
-}
+                            return null;
+                        }
 
                         // 3. Determine if the link is currently active
                         const isActive = url.startsWith(link.href);

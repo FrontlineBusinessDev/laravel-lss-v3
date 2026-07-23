@@ -50,7 +50,6 @@ class BatchViewController extends BaseController
         $batch = Batches::query()
             ->with([
                 'academicIndustry:id,name',
-                'academicLevel:id,name',
                 'academicProgram:id,name',
                 'trainers:id,first_name,last_name,email',
             ])

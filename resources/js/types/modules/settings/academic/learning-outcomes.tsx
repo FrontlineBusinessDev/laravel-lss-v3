@@ -14,7 +14,6 @@ export interface AcademicLearningOutcomes extends Record<string, unknown> {
     academic_program?: {
         id: number;
         name: string;
-        course_name: string;
     } | null;
     created_at: string;
     updated_at: string;

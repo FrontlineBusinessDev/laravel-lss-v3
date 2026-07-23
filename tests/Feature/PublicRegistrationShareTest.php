@@ -14,8 +14,7 @@ use Illuminate\Support\Str;
 function makeShareBatch(array $overrides = []): Batches
 {
     $industryId = DB::table('app_settings_academic_industry')->insertGetId(['name' => 'Information Technology']);
-    $levelId = DB::table('app_settings_academic_level')->insertGetId(['name' => 'Tertiary', 'year_level' => '4th Year']);
-    $programId = DB::table('app_settings_academic_program')->insertGetId(['name' => 'BS Computer Science', 'course_name' => 'Computer Science']);
+    $programId = DB::table('app_settings_academic_program')->insertGetId(['name' => 'BS Computer Science']);
 
     return Batches::create(array_merge([
         'status' => 'active',
@@ -25,7 +24,6 @@ function makeShareBatch(array $overrides = []): Batches
         'date_started' => now()->toDateString(),
         'setup' => 'f2f',
         'academic_industry_id' => $industryId,
-        'academic_level_id' => $levelId,
         'academic_program_id' => $programId,
     ], $overrides));
 }

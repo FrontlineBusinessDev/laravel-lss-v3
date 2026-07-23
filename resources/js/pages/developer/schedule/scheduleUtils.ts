@@ -1,4 +1,4 @@
-import type { StatusKind } from '@/types'
+import type { StatusKind } from '@/types/reusable/status-kind'
 import type { ScheduleApiBatch, ScheduleApiEntry, ScheduleApiTrainee } from '@/types/modules/schedule/schedule'
 
 /**

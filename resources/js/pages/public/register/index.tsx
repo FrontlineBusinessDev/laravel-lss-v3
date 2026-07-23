@@ -16,10 +16,13 @@ interface PublicBatch {
     is_public_url_enable: boolean;
     date_started: string | null;
     industry: string | null;
-    level: string | null;
     program: string | null;
 }
 interface School {
+    id: number;
+    name: string;
+}
+interface AcademicLevelOption {
     id: number;
     name: string;
 }
@@ -35,6 +38,7 @@ const EMPTY_FORM: RegisterPayload = {
     emergency_contact_name: '',
     emergency_contact_number: '',
     school_id: '',
+    academic_level_id: '',
     required_hours: '',
     resume: null,
     endorsement_letter: null,
@@ -127,11 +131,13 @@ export default function PublicRegisterPage({
     token,
     batch,
     schools,
+    academicLevels,
     metaDescription,
 }: {
     token: string;
     batch: PublicBatch;
     schools: School[];
+    academicLevels: AcademicLevelOption[];
     metaDescription: string;
 }) {
     const pageTitle = `Batch Registration · ${batch.batch_code}`;
@@ -471,6 +477,37 @@ export default function PublicRegisterPage({
                                     data-cy="index-option-49"
                                 >
                                     {s.name}
+                                </option>
+                            ))}
+                        </select>
+                    </Field>
+                    <Field
+                        label="Academic level"
+                        error={errors.academic_level_id}
+                        data-cy="index-field-academic-level"
+                    >
+                        <select
+                            className={inputCls}
+                            value={data.academic_level_id}
+                            onChange={(e) =>
+                                setField('academic_level_id', e.target.value)
+                            }
+                            data-cy="index-select-set-data-3"
+                        >
+                            <option
+                                value=""
+                                disabled
+                                data-cy="index-option-select-academic-level"
+                            >
+                                Select academic level…
+                            </option>
+                            {academicLevels.map((l) => (
+                                <option
+                                    key={l.id}
+                                    value={l.id}
+                                    data-cy="index-option-academic-level"
+                                >
+                                    {l.name}
                                 </option>
                             ))}
                         </select>

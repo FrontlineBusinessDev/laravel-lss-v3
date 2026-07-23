@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcademicIndustry extends Model
 {
-    use HasFactory;
+    // use HasFactory;
 
     protected $table = 'app_settings_academic_industry';
 

@@ -171,7 +171,7 @@ class ReportController extends Controller
     protected function baseQuery(array $filters): Builder
     {
         return Batches::query()
-            ->with(['academicIndustry:id,name', 'academicLevel:id,name', 'academicProgram:id,name'])
+            ->with(['academicIndustry:id,name', 'academicProgram:id,name'])
             ->when($filters['date_from'] ?? null, fn($q, $v) => $q->whereDate('date_started', '>=', $v))
             ->when($filters['date_to'] ?? null, fn($q, $v) => $q->whereDate('date_started', '<=', $v))
             ->when($filters['search'] ?? null, function ($q, $term) {

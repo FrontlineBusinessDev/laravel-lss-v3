@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { Avatar } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { cn } from '@/lib/utils';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
 const STATUS_BADGE: Record<string, StatusKind> = {

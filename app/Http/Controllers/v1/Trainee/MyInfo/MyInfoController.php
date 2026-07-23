@@ -35,14 +35,14 @@ class MyInfoController
 
         $trainee->load([
             'school:id,school_name',
-            'batch:id,batch_code,date_started,setup,academic_industry_id,academic_program_id,academic_level_id',
+            'academicLevel:id,name',
+            'batch:id,batch_code,date_started,setup,academic_industry_id,academic_program_id',
             'batch.academicIndustry:id,name',
-            'batch.academicProgram:id,name,course_name',
-            'batch.academicLevel:id,name,year_level',
+            'batch.academicProgram:id,name',
             'documents:id,trainee_id,status,document_type,original_name,file_name,file_path,mime_type,url_link,file_size,created_at',
             'learningOutcomes:id,learning_outcomes',
             'payments',
-            'certificate.citation:id,name',
+            'certificate.citation:id,title',
             // Aggregate-only view (per RBAC decision: trainees see hours/task-
             // completion badges, not per-task score/comments/evaluator).
             'taskRatings:id,trainee_id,rating,rated_at',

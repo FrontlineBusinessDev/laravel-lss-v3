@@ -4,7 +4,7 @@ import { SettingsListHeader, SettingsRow, TextCell } from '@/components/settings
 import { StatusBadge } from '@/components/StatusBadge';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AppTrainees } from '@/types/modules/trainees/trainees';
 import { columns } from '@/types/modules/trainees/trainees';
 

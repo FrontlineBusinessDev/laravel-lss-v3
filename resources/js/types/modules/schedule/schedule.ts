@@ -4,7 +4,7 @@
  * props by ScheduleController::index() (see app/Support/Schedule/ScheduleEntryBuilder.php).
  */
 
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 
 export interface ScheduleApiTrainee {
     id: number;

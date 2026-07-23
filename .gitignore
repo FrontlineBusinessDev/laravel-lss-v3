@@ -34,3 +34,6 @@ yarn-error.log
 frankenphp
 frankenphp-worker.php
 cypress.env.json
+**/caddy
+frankenphp
+frankenphp-worker.php

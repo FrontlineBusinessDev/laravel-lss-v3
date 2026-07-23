@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { DailyTaskSheetPrint } from '@/pages/developer/tasks/DailyTaskSheetPrint';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
-import type { TaskRecord } from '@/types';
+import type { TaskRecord } from '@/types/modules/tasks/daily-task';
 
 interface ApiDailyTaskRow {
     id: number;

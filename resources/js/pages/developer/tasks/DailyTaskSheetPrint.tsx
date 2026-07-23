@@ -1,5 +1,5 @@
 import { LogoMark } from '@/components/Logo';
-import type { TaskRecord } from '@/types';
+import type { TaskRecord } from '@/types/modules/tasks/daily-task';
 interface DailyTaskSheetPrintProps {
   rows: TaskRecord[];
   generatedAt: string;

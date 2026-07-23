@@ -73,10 +73,10 @@ class TraineesController extends BaseController
     {
         $query = parent::newQuery()->withCompletedHours()->with([
             'school:id,school_name',
-            'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
+            'academicLevel:id,name',
+            'batch:id,batch_code,setup,academic_industry_id,academic_program_id',
             'batch.academicIndustry:id,name',
-            'batch.academicProgram:id,name,course_name',
-            'batch.academicLevel:id,name,name',
+            'batch.academicProgram:id,name',
         ]);
 
         // Opt-in exclusion for the task-assignment trainee picker: pass

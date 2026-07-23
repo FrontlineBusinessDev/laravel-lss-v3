@@ -9,7 +9,7 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AcademicIndustry } from '@/types/modules/settings/academic/industry';
 import { columns } from '@/types/modules/settings/academic/industry';
 import AcademicIndustryModal from './AcademicIndustryModal';

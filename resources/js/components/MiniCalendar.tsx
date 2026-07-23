@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
-import type { CalendarEvent } from '@/types';
+import type { CalendarEvent } from '@/types/modules/dashboard/calendar-event';
 import { cn } from '@/lib/utils';
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_NAMES = [

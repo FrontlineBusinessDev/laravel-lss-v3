@@ -5,6 +5,8 @@
  * relation objects, distinct from `AppTrainees` (the flat DataTable row shape
  * used by the trainees index).
  */
+import type { CertificateTemplate } from '@/pages/developer/certificates/types';
+
 export interface AppTraineeSchool {
     id: number;
     school_name: string;
@@ -18,13 +20,11 @@ export interface AppTraineeAcademicIndustry {
 export interface AppTraineeAcademicProgram {
     id: number;
     name: string;
-    course_name: string;
 }
 
 export interface AppTraineeAcademicLevel {
     id: number;
     name: string;
-    year_level: string;
 }
 
 export interface AppTraineeBatch {
@@ -34,10 +34,8 @@ export interface AppTraineeBatch {
     setup: 'F2F' | 'Online';
     academic_industry_id: number;
     academic_program_id: number;
-    academic_level_id: number;
     academic_industry?: AppTraineeAcademicIndustry;
     academic_program?: AppTraineeAcademicProgram;
-    academic_level?: AppTraineeAcademicLevel;
 }
 
 export interface AppTraineeDocument {
@@ -92,7 +90,8 @@ export interface AppTraineeCertificate {
     id: number;
     certificate_no: string;
     issued_at: string | null;
-    citation: { id: number; name: string } | null;
+    citation: { id: number; title: string } | null;
+    template?: CertificateTemplate | null;
 }
 
 export interface AppTraineeTaskRatingEvaluator {
@@ -137,6 +136,8 @@ export interface TraineeDetail {
     user: AppTraineeUser | null;
     batch_id: number;
     school_id: number;
+    academic_level_id: number | null;
+    academic_level?: AppTraineeAcademicLevel;
     avatar_path: string | null;
     avatar_url: string | null;
     public_url_id: string;
