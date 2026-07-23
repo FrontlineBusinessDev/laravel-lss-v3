@@ -17,79 +17,79 @@ describe('Settings - Partner School Tab Page', () => {
     });
 
     // check partner school display
-    // it('should display partner school page correctly', () => {
-    //     cy.viewport(1280, 720);
+    it('should display partner school page correctly', () => {
+        cy.viewport(1280, 720);
 
-    //     //check settings title
-    //     cy.verifySettingsModuleHeader();
+        //check settings title
+        cy.verifySettingsModuleHeader();
 
-    //     cy.get('[data-cy="add-record-button"]').should('be.visible'); //add btn
-    //     cy.get('[data-cy="toolbar-input-text"]').should('be.visible'); //search btn
+        cy.get('[data-cy="add-record-button"]').should('be.visible'); //add btn
+        cy.get('[data-cy="toolbar-input-text"]').should('be.visible'); //search btn
 
-    //     //sort
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"] option')
-    //         .should('have.length', 9)
-    //         .and('contain.text', 'Status')
-    //         .and('contain.text', 'School Name')
-    //         .and('contain.text', 'Abbreviation')
-    //         .and('contain.text', 'Logo')
-    //         .and('contain.text', 'First name')
-    //         .and('contain.text', 'Last name')
-    //         .and('contain.text', 'Email')
-    //         .and('contain.text', 'Address')
-    //         .and('contain.text', 'Joined');
+        //sort
+        cy.get('[data-cy="toolbar-select-sort-by-change"] option')
+            .should('have.length', 9)
+            .and('contain.text', 'Status')
+            .and('contain.text', 'School Name')
+            .and('contain.text', 'Abbreviation')
+            .and('contain.text', 'Logo')
+            .and('contain.text', 'First name')
+            .and('contain.text', 'Last name')
+            .and('contain.text', 'Email')
+            .and('contain.text', 'Address')
+            .and('contain.text', 'Joined');
 
-    //     //pages
-    //     cy.filterPerPage();
+        //pages
+        cy.filterPerPage();
 
-    //     //filter
-    //     cy.get('[data-cy="toolbar-button-button"]').click();
+        //filter
+        cy.get('[data-cy="toolbar-button-button"]').click();
 
-    //     //status
-    //     cy.get('[data-cy="dropdown-button-button"]').click();
+        //status
+        cy.get('[data-cy="dropdown-button-button"]').click();
 
-    //     cy.contains('All Status').should('be.visible');
-    //     cy.contains('Active').should('be.visible');
-    //     cy.contains('Inactive').should('be.visible');
+        cy.contains('All Status').should('be.visible');
+        cy.contains('Active').should('be.visible');
+        cy.contains('Inactive').should('be.visible');
 
-    //     //filter input fields
-    //     cy.get('[data-cy="data-input-school_name"]').should('be.visible');
-    //     cy.get('[data-cy="data-input-abbreviation"]').should('be.visible');
-    //     cy.get('[data-cy="data-input-contact_first_name"]').should(
-    //         'be.visible',
-    //     );
-    //     cy.get('[data-cy="data-input-contact_last_name"]').should('be.visible');
-    //     cy.get('[data-cy="data-input-contact_email"]').should('be.visible');
-    //     cy.get('[data-cy="data-input-physical_address"]').should('be.visible');
+        //filter input fields
+        cy.get('[data-cy="data-input-school_name"]').should('be.visible');
+        cy.get('[data-cy="data-input-abbreviation"]').should('be.visible');
+        cy.get('[data-cy="data-input-contact_first_name"]').should(
+            'be.visible',
+        );
+        cy.get('[data-cy="data-input-contact_last_name"]').should('be.visible');
+        cy.get('[data-cy="data-input-contact_email"]').should('be.visible');
+        cy.get('[data-cy="data-input-physical_address"]').should('be.visible');
 
-    //     //table column
-    //     cy.get('[data-cy="settings-list-header-div-1"]')
-    //         .should('contain.text', 'Logo')
-    //         .and('contain.text', 'School Name')
-    //         .and('contain.text', 'Abbreviation')
-    //         .and('contain.text', 'Contact Name')
-    //         .and('contain.text', 'Email')
-    //         .and('contain.text', 'Status');
+        //table column
+        cy.get('[data-cy="settings-list-header-div-1"]')
+            .should('contain.text', 'Logo')
+            .and('contain.text', 'School Name')
+            .and('contain.text', 'Abbreviation')
+            .and('contain.text', 'Contact Name')
+            .and('contain.text', 'Email')
+            .and('contain.text', 'Status');
 
-    //     //actions
-    //     cy.get('[data-cy="row-menu-button-row-actions"]').first().click();
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(0)
-    //         .should('contain.text', 'Edit');
+        //actions
+        cy.get('[data-cy="row-menu-button-row-actions"]').first().click();
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(0)
+            .should('contain.text', 'Edit');
 
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(1)
-    //         .should('contain.text', 'Archive');
-    // });
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(1)
+            .should('contain.text', 'Archive');
+    });
 
-    // // search and clear
-    // it('should search and clear the search input', () => {
-    //     cy.get('[data-cy="toolbar-input-text"]').type('Bicol');
-    //     cy.get('[data-cy="toolbar-x-7"]').click();
+    // search and clear
+    it('should search and clear the search input', () => {
+        cy.get('[data-cy="toolbar-input-text"]').type('Bicol');
+        cy.get('[data-cy="toolbar-x-7"]').click();
 
-    //     cy.get('[data-cy="toolbar-input-text"]').type('Lipa');
-    //     cy.get('[data-cy="clear-all"]').click();
-    // });
+        cy.get('[data-cy="toolbar-input-text"]').type('Lipa');
+        cy.get('[data-cy="clear-all"]').click();
+    });
 
     // filter
     it('should filter partner schools by status', () => {
@@ -103,7 +103,203 @@ describe('Settings - Partner School Tab Page', () => {
     });
     it('should filter partner schools by school name', () => {
         cy.get('[data-cy="toolbar-button-button"]').click();
-        cy.get('[data-cy="data-input-school_name"]').type('Greenville');
+        cy.get('[data-cy="data-input-school_name"]', { timeout: 1000 }).type(
+            'Greenville',
+        );
+    });
+    it('should filter partner schools by abbreviation', () => {
+        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.get('[data-cy="data-input-abbreviation"]', { timeout: 1000 }).type(
+            'BSU - Lipa',
+        );
+    });
+    it('should filter partner schools by first name', () => {
+        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.get('[data-cy="data-input-contact_first_name"]', {
+            timeout: 1000,
+        }).type('Emilio');
+    });
+    it('should filter partner schools by last name', () => {
+        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.get('[data-cy="data-input-contact_last_name"]', {
+            timeout: 1000,
+        }).type('Coronado');
+    });
+    it('should filter partner schools by email', () => {
+        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.get('[data-cy="data-input-contact_email"]', { timeout: 1000 }).type(
+            'naborda@nu-laguna.edu.ph',
+        );
+    });
+    it('should filter partner schools by address', () => {
+        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.get('[data-cy="data-input-physical_address"]', {
+            timeout: 1000,
+        }).type('38M6+6VQ, Cosico Ave, San Pablo City, 4000 Laguna');
+    });
+
+    //  sorting
+
+    it('should sort partner schools by status', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Status')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Status',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by school name', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('School Name')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: School Name',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by abbreviation', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Abbreviation')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Abbreviation',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by logo', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Logo')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Logo',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by first name', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('First name')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: First name',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by first name', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('First name')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: First name',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by last name', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Last name')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Last name',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by email', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Email')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Email',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by address', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Address')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Address',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+    it('should sort partner schools by joined', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortPartnerSchools');
+
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Joined')
+            .should('exist');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Joined',
+        );
+
+        cy.wait('@sortPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
+    });
+
+    //   // per page
+    it('should display correct number of records when changing rows per page', () => {
+        cy.intercept('GET', '**/pagination-search*').as('getPartnerSchools');
+
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('25');
+
+        cy.wait('@getPartnerSchools')
+            .its('response.statusCode')
+            .should('eq', 200);
     });
 
     // create
