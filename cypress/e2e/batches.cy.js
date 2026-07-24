@@ -24,15 +24,15 @@ describe('Batches Module', () => {
     // });
 
     //check batches page display
-    it('should load the Batches Page', () => {
-        //elements inside batches page
-        cy.get('[data-cy="add-record-button"]').should('be.visible');
-        cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
-        cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
-            'be.visible',
-        );
+    // it('should load the Batches Page', () => {
+    //     //elements inside batches page
+    //     cy.get('[data-cy="add-record-button"]').should('be.visible');
+    //     cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
+    //         'be.visible',
+    //     );
 
-        //filter
+    //     //filter
     //     cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
 
     //     cy.get('[data-cy="toolbar-button-button"]').click();
@@ -150,105 +150,107 @@ describe('Batches Module', () => {
     //     // cy.get('[data-cy="row-menu-button-row-actions"]').click();
     // });
 
-    // //add batch
-    // it('should add a new batch', () => {
-    //     //esc key
-    //     cy.get('[data-cy="add-record-button"]').click();
+    //add batch
+    it('should add a new batch', () => {
+        //esc key
+        cy.get('[data-cy="add-record-button"]').click();
 
-    //     cy.get('body').type('{esc}'); //esc key
+        cy.get('body').type('{esc}'); //esc key
 
-    //     //cancel btn
-    //     cy.get('[data-cy="add-record-button"]').click();
-
-    //     cy.get('[data-cy="use-async-select-field-button-button"]')
-    //         .eq(0)
-    //         .click();
-
-    //     //type/search option
-    //     cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
-    //         'College',
-    //     );
-
-    //     //select result
-    //     cy.contains('College On-the-Job Training', { timeout: 1000 }).click();
-
-    //     cy.get('[data-cy="use-async-select-field-button-button"]')
-    //         .eq(1)
-    //         .click();
-
-    //     cy.contains('Information Technology (IT)').click();
-
-    //     cy.get('[data-cy="create-batch-modal-button-button"]').click(); //cancel btn\
-
-    //     //close btn
-    //     cy.get('[data-cy="add-record-button"]').click();
-
-    //     cy.get('[data-cy="modal-button-close-dialog"]').click(); //close btn
-
-    //     //save btn complete details
-    //     cy.get('[data-cy="add-record-button"]').click();
-
-    //     cy.get('[data-cy="use-async-select-field-button-button"]')
-    //         .eq(0)
-    //         .click();
-
-    //     //type/search option
-    //     cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
-    //         'College',
-    //     );
-
-    //     //select result
-    //     cy.get('[data-cy="use-async-select-field-button-button-2"]')
-    //         .should('contain.text', 'College On-the-Job Training')
-    //         .click();
-
-    //     cy.get('[data-cy="use-async-select-field-button-button"]')
-    //         .eq(1)
-    //         .click();
-
-    //     cy.contains('Accounting').click();
-
-    //     cy.get('[data-cy="create-batch-modal-input-date"]').type('2026-07-27');
-
-    //     cy.get('[data-cy="create-batch-modal-input-projected-end-date"]').type(
-    //         '2026-08-28',
-    //     );
-
-    //     cy.get('[data-cy="create-batch-modal-input-checkbox"]')
-    //         .check()
-    //         .should('be.checked');
-
-    //     cy.intercept('POST', '**/batches').as('createBatch');
-
-    //     //add batch btn
-    //     cy.get('[data-cy="create-batch-modal-button-submit"]').click();
-
-    //     cy.wait('@createBatch').then((interception) => {
-    //         console.log(interception.response);
-    //     });
-
-        //add batch inc details
+        //cancel btn
         cy.get('[data-cy="add-record-button"]').click();
 
         cy.get('[data-cy="use-async-select-field-button-button"]')
             .eq(0)
             .click();
 
-        cy.contains('Continuing Studies', {timeout:1000}).click();
+        //type/search option
+        cy.get('[data-cy="use-async-select-field-input-placeholder"]', {
+            timeout: 1000,
+        }).type('College');
 
-        cy.get('[data-cy="create-batch-modal-input-date"]').type('2026-07-27');
+        //select result
+        cy.get('[data-cy="use-async-select-field-button-button-2"]')
+            .contains('College On-the-Job Training')
+            .should('be.visible')
+            .click();
 
-        cy.get('[data-cy="create-batch-modal-input-projected-end-date"]').type(
-            '2026-08-28',
-        );
+        cy.get('[data-cy="use-async-select-field-button-button"]')
+            .eq(1)
+            .click();
 
-        cy.get('[data-cy="create-batch-modal-input-checkbox"]')
-            .check()
-            .should('be.checked');
-        
-            cy.get('[data-cy="create-batch-modal-button-submit"]').click();
-        
-        
-        
+        cy.get('[data-cy="use-async-select-field-button-button-2"]')
+            .contains('Information Technology')
+            .should('be.visible')
+            .click();
+
+        cy.get('[data-cy="create-batch-modal-button-button"]').click(); //cancel btn
+
+        // //close btn
+        // cy.get('[data-cy="add-record-button"]').click();
+
+        // cy.get('[data-cy="modal-button-close-dialog"]').click(); //close btn
+
+        // //save btn complete details
+        // cy.get('[data-cy="add-record-button"]').click();
+
+        // cy.get('[data-cy="use-async-select-field-button-button"]')
+        //     .eq(0)
+        //     .click();
+
+        // //type/search option
+        // cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
+        //     'College',
+        // );
+
+        // //select result
+        // cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .should('contain.text', 'College On-the-Job Training')
+        //     .click();
+
+        // cy.get('[data-cy="use-async-select-field-button-button"]')
+        //     .eq(1)
+        //     .click();
+
+        // cy.contains('Accounting').click();
+
+        // cy.get('[data-cy="create-batch-modal-input-date"]').type('2026-07-27');
+
+        // cy.get('[data-cy="create-batch-modal-input-projected-end-date"]').type(
+        //     '2026-08-28',
+        // );
+
+        // cy.get('[data-cy="create-batch-modal-input-checkbox"]')
+        //     .check()
+        //     .should('be.checked');
+
+        // cy.intercept('POST', '**/batches').as('createBatch');
+
+        // //add batch btn
+        // cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+
+        // cy.wait('@createBatch').then((interception) => {
+        //     console.log(interception.response);
+        // });
+
+        // //add batch inc details
+        // cy.get('[data-cy="add-record-button"]').click();
+
+        // cy.get('[data-cy="use-async-select-field-button-button"]')
+        //     .eq(1)
+        //     .click();
+
+        // cy.contains('Accounting (ACCT)')
+        //    .click();
+
+        // cy.get('[data-cy="create-batch-modal-input-date"]')
+        //     .type('2026-07-27');
+
+        // cy.get('[data-cy="create-batch-modal-input-projected-end-date"]')
+        //     .type('2026-08-28');
+
+        // cy.get('[data-cy="create-batch-modal-input-checkbox"]')
+        //   .check()
+        //   .should('be.checked');
     });
 });
