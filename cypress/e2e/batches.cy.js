@@ -153,104 +153,109 @@ describe('Batches Module', () => {
     //add batch
     it('should add a new batch', () => {
         //esc key
-        cy.get('[data-cy="add-record-button"]').click();
-
-        cy.get('body').type('{esc}'); //esc key
-
-        //cancel btn
-        cy.get('[data-cy="add-record-button"]').click();
-
-        cy.get('[data-cy="use-async-select-field-button-button"]')
-            .eq(0)
-            .click();
-
-        //type/search option
-        cy.get('[data-cy="use-async-select-field-input-placeholder"]', {
-            timeout: 1000,
-        }).type('College');
-
-        //select result
-        cy.get('[data-cy="use-async-select-field-button-button-2"]')
-            .contains('College On-the-Job Training')
-            .should('be.visible')
-            .click();
-
-        cy.get('[data-cy="use-async-select-field-button-button"]')
-            .eq(1)
-            .click();
-
-        cy.get('[data-cy="use-async-select-field-button-button-2"]')
-            .contains('Information Technology')
-            .should('be.visible')
-            .click();
-
-        cy.get('[data-cy="create-batch-modal-button-button"]').click(); //cancel btn
-
-        // //close btn
         // cy.get('[data-cy="add-record-button"]').click();
-
-        // cy.get('[data-cy="modal-button-close-dialog"]').click(); //close btn
-
-        // //save btn complete details
+        // cy.get('body').type('{esc}'); //esc key
+        // //cancel btn
         // cy.get('[data-cy="add-record-button"]').click();
-
         // cy.get('[data-cy="use-async-select-field-button-button"]')
         //     .eq(0)
         //     .click();
-
+        // //type/search option
+        // cy.get('[data-cy="use-async-select-field-input-placeholder"]', {
+        //     timeout: 1000,
+        // }).type('College');
+        // //select result
+        // cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .contains('College On-the-Job Training')
+        //     .should('be.visible')
+        //     .click();
+        // cy.get('[data-cy="use-async-select-field-button-button"]')
+        //     .eq(1)
+        //     .click();
+        // cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .contains('Information Technology')
+        //     .should('be.visible')
+        //     .click();
+        // cy.get('[data-cy="create-batch-modal-button-button"]').click(); //cancel btn
+        // //close btn
+        // cy.get('[data-cy="add-record-button"]').click();
+        // cy.get('[data-cy="modal-button-close-dialog"]').click(); //close btn
+        //save btn complete details
+        // cy.get('[data-cy="add-record-button"]').click();
+        // cy.get('[data-cy="use-async-select-field-button-button"]')
+        //     .eq(0)
+        //     .click();
         // //type/search option
         // cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
         //     'College',
         // );
-
         // //select result
         // cy.get('[data-cy="use-async-select-field-button-button-2"]')
-        //     .should('contain.text', 'College On-the-Job Training')
+        //     .contains('College On-the-Job Training')
+        //     .should('be.visible')
         //     .click();
-
         // cy.get('[data-cy="use-async-select-field-button-button"]')
         //     .eq(1)
         //     .click();
-
-        // cy.contains('Accounting').click();
-
+        // cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .contains('Accounting')
+        //     .should('be.visible')
+        //     .click();
         // cy.get('[data-cy="create-batch-modal-input-date"]').type('2026-07-27');
-
         // cy.get('[data-cy="create-batch-modal-input-projected-end-date"]').type(
         //     '2026-08-28',
         // );
-
         // cy.get('[data-cy="create-batch-modal-input-checkbox"]')
         //     .check()
         //     .should('be.checked');
-
         // cy.intercept('POST', '**/batches').as('createBatch');
-
         // //add batch btn
         // cy.get('[data-cy="create-batch-modal-button-submit"]').click();
-
         // cy.wait('@createBatch').then((interception) => {
         //     console.log(interception.response);
         // });
-
-        // //add batch inc details
+        //add batch inc details
         // cy.get('[data-cy="add-record-button"]').click();
-
         // cy.get('[data-cy="use-async-select-field-button-button"]')
         //     .eq(1)
         //     .click();
-
-        // cy.contains('Accounting (ACCT)')
-        //    .click();
-
-        // cy.get('[data-cy="create-batch-modal-input-date"]')
-        //     .type('2026-07-27');
-
-        // cy.get('[data-cy="create-batch-modal-input-projected-end-date"]')
-        //     .type('2026-08-28');
-
+        // cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        //     .contains('Accounting')
+        //     .should('be.visible')
+        //     .click();
+        // cy.get('[data-cy="create-batch-modal-input-date"]').type('2026-07-27');
+        // cy.get('[data-cy="create-batch-modal-input-projected-end-date"]').type(
+        //     '2026-08-28',
+        // );
         // cy.get('[data-cy="create-batch-modal-input-checkbox"]')
-        //   .check()
-        //   .should('be.checked');
+        //     .check()
+        //     .should('be.checked');
+        // cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+        // cy.contains('Program type is required.').should('be.visible');
+        // cy.get('[data-cy="create-batch-modal-button-button"]').click();
+        //add batch w/o content
+        // cy.get('[data-cy="add-record-button"]').click();
+        // cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+        // cy.contains('Program type is required.').should('be.visible');
+        // cy.contains('Industry is required').should('be.visible');
+        // cy.contains('Start date is required').should('be.visible');
+        // cy.get('[data-cy="create-batch-modal-button-button"]').click();
+    });
+
+    //edit
+    it('should edit a batch', () => {
+        cy.intercept('GET', '**/pagination-search*').as('searchBatch');
+
+        cy.intercept('POST', '**/batches**').as('updateBatch');
+
+        //search a batch
+        cy.get('[data-cy="toolbar-input-text"]').click();
+
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9738');
+
+        cy.contains('FBS-9738', { timeout: 1000 }).should('be.visible');
+
+        //open action menu
+        
     });
 });
