@@ -610,7 +610,6 @@ describe('Settings - Partner School Tab Page', () => {
 
     // delete
     it('should delete partner school', () => {
-        // cancel
         cy.intercept('GET', '**/pagination-search*').as('searchPartnerSchools');
         cy.intercept('GET', '**/settings/partner-schools/**').as(
             'archivePartnerSchool',
