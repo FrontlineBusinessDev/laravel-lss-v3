@@ -16,7 +16,7 @@ describe('Settings - Users - Users Tab Page', () => {
         cy.visit('/settings/users');
     });
 
-    // check users tab page display
+    // // check users tab page display
     // it('should display the Users tab page correctly', () => {
     //     cy.viewport(1280, 720);
     //     cy.verifySettingsModuleHeader(); //settings module title
@@ -81,7 +81,70 @@ describe('Settings - Users - Users Tab Page', () => {
     //         .should('contain.text', 'Suspend');
     // });
 
-    //CREATE
+    //search and clear
+    it('should search and clear the search input', () => {
+        cy.get('[data-cy="toolbar-input-text"]', { timeout: 10000 }).type(
+            'Admin',
+        );
+        cy.get('[data-cy="toolbar-button-clear-search"]').click();
+
+        cy.get('[data-cy="toolbar-input-text"]', { timeout: 10000 }).type(
+            'Veronica',
+        );
+        cy.get('[data-cy="clear-all"]').click();
+    });
+
+    //  sorting
+    // it('should sort user by status', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('sortUser');
+
+    //     cy.get('[data-cy="toolbar-option-sort"]')
+    //         .contains('Status')
+    //         .should('exist');
+
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+    //         'Sort: Status',
+    //     );
+
+    //     cy.wait('@sortUser').its('response.statusCode').should('eq', 200);
+    // });
+    // it('should sort user by name', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('sortUser');
+
+    //     cy.get('[data-cy="toolbar-option-sort"]')
+    //         .contains('Name')
+    //         .should('exist');
+
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+    //         'Sort: Name',
+    //     );
+
+    //     cy.wait('@sortUser').its('response.statusCode').should('eq', 200);
+    // });
+    // it('should sort user by email', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('sortUser');
+
+    //     cy.get('[data-cy="toolbar-option-sort"]')
+    //         .contains('Email')
+    //         .should('exist');
+
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+    //         'Sort: Email',
+    //     );
+
+    //     cy.wait('@sortUser').its('response.statusCode').should('eq', 200);
+    // });
+
+    //  // per page
+    // it('should display correct number of records when changing rows per page', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('getUser');
+
+    //     cy.get('[data-cy="toolbar-select-rows-per-page"]').select('25');
+
+    //     cy.wait('@getUser').its('response.statusCode').should('eq', 200);
+    // });
+
+    // //CREATE
     // it('should create a user', () => {
     //     cy.viewport(1280, 720);
     //     //esc key
@@ -148,33 +211,191 @@ describe('Settings - Users - Users Tab Page', () => {
     //     );
     // });
 
-    // UPDATE
-    it('should update a user', () => {
-        cy.intercept('GET', '**/pagination-search*').as('searchUser');
+    // // UPDATE
+    // it('should update a user', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('searchUser');
 
-        cy.intercept('POST', '**/settings-users/**').as('updateUser');
+    //     cy.intercept('POST', '**/settings-users/**').as('updateUser');
 
-        //close btn
-        //search user
-        cy.get('[data-cy="toolbar-input-text"]').clear().type('Herlyn');
+    //     //close btn
+    //     //search user
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Herlyn');
 
-        //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'Herlyn')
-            .should('be.visible')
-            .first()
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
+    //     //open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Herlyn')
+    //         .should('be.visible')
+    //         .first()
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
 
-        //chose edit and click it to open the modal
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
-            .should('be.visible')
-            .click();
-    });
+    //     //chose edit and click it to open the modal
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(0)
+    //         .should('be.visible')
+    //         .click();
 
-    // ARCHIVE
+    //     //close btn
+    //     cy.get('[data-cy="modal-center-button-close"]').click();
 
-    // RESTORE
+    //     //cancel btn
+    //     //search user
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Herlyn');
 
-    // DELETE
+    //     //open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Herlyn')
+    //         .should('be.visible')
+    //         .first()
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     //chose edit and click it to open the modal
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(0)
+    //         .should('be.visible')
+    //         .click();
+
+    //     //cancel btn
+    //     cy.get('[data-cy="close-button"]').click();
+
+    //     //esc btn
+    //     //search user
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Herlyn');
+
+    //     //open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Herlyn')
+    //         .should('be.visible')
+    //         .first()
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     //chose edit and click it to open the modal
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(0)
+    //         .should('be.visible')
+    //         .click();
+
+    //     //esc btn
+    //     cy.get('body').type('{esc}');
+
+    //     //save btn
+    //     //search user
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Herlyn');
+
+    //     //open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Herlyn')
+    //         .should('be.visible')
+    //         .first()
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     // Click Edit
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(0)
+    //         .should('be.visible')
+    //         .click();
+
+    //     // Update First Name
+    //     cy.get('[data-cy="input-first-name"]')
+    //         .clear()
+    //         .type('Mayeng')
+    //         .should('have.value', 'Mayeng');
+
+    //     // Save
+    //     cy.get('[data-cy="submit-button"]').click();
+    // });
+
+    // // ARCHIVE
+    // it('should archive user', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('searchUser');
+    //     cy.intercept('GET', '**/settings/partner-schools/**').as('archiveUser');
+
+    //     // Search Partner School
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Mayeng');
+
+    //     cy.wait('@searchUser');
+
+    //     //open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Mayeng')
+    //         .should('be.visible')
+    //         .first()
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     // Click archive
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(2)
+    //         .should('be.visible')
+    //         .click();
+
+    //     cy.get('[data-cy="toast-div-3"]').should('be.visible');
+    // });
+
+    // // RESTORE
+    // it('should restore user', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('searchUser');
+    //     cy.intercept('GET', '**/settings/partner-schools/**').as('restoreUser');
+
+    //     // Search Partner School
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Mayeng');
+
+    //     cy.wait('@searchUser');
+
+    //     //open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Mayeng')
+    //         .should('be.visible')
+    //         .first()
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     // Click restore
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(2)
+    //         .should('be.visible')
+    //         .click();
+
+    //     cy.get('[data-cy="toast-div-3"]').should('be.visible');
+    // });
+
+    // // DELETE
+    // it('should delete user', () => {
+    //     cy.intercept('GET', '**/pagination-search*').as('searchUser');
+    //     cy.intercept('POST', '**/settings-users/**').as('archiveUser');
+    //     cy.intercept('DELETE', '**/settings-users/**').as('deleteUser');
+
+    //     // Search user
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Mayeng');
+
+    //     // Open action menu
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Mayeng')
+    //         .should('be.visible')
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     // Click Archive
+    //     cy.get('[data-cy="row-menu-button-4"]', { timeout: 1000 })
+    //         .eq(2)
+    //         .should('be.visible')
+    //         .click();
+
+    //     // Search user
+    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Mayeng');
+
+    //     // Open action menu again
+    //     cy.contains('[data-cy="settings-row-div-4"]', 'Mayeng')
+    //         .should('be.visible')
+    //         .find('[data-cy="row-menu-button-row-actions"]')
+    //         .click();
+
+    //     // Click Delete
+    //     cy.contains('[data-cy="row-menu-button-4"]', 'Delete')
+    //         .should('contain.text', 'Delete')
+    //         .click();
+
+    //     // Click delete confirmation
+    //     cy.get('[data-cy="confirm-delete-modal-button-button-2"]')
+    //         .should('be.visible')
+    //         .click();
+
+    //     cy.get('[data-cy="toast-div-3"]').should('be.visible');
+    // });
 });
