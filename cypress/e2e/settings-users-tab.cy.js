@@ -88,8 +88,10 @@ describe('Settings - Users - Users Tab Page', () => {
         );
         cy.get('[data-cy="toolbar-button-clear-search"]').click();
 
-        // cy.get('[data-cy="toolbar-input-text"]').type('Veronica');
-        // cy.get('[data-cy="clear-all"]').click();
+        cy.get('[data-cy="toolbar-input-text"]', { timeout: 10000 }).type(
+            'Veronica',
+        );
+        cy.get('[data-cy="clear-all"]').click();
     });
 
     //  sorting
