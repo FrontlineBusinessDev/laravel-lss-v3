@@ -265,6 +265,8 @@ describe('Batches Module', () => {
 
         cy.contains('FBS-9725', { timeout: 1000 }).should('be.visible');
 
-        //open action menu
+    //open action menu
+    
+
     });
 });
