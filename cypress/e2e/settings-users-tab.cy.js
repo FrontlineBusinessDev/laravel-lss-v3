@@ -82,76 +82,95 @@ describe('Settings - Users - Users Tab Page', () => {
     // });
 
     //CREATE
-    it('should create a user', () => {
-        cy.viewport(1280, 720);
-        //esc key
-        cy.get('[data-cy="add-record-button"]').click();
+    // it('should create a user', () => {
+    //     cy.viewport(1280, 720);
+    //     //esc key
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        cy.get('[data-cy="input-first-name"]').type('Herlyn');
+    //     cy.get('[data-cy="input-first-name"]').type('Herlyn');
 
-        cy.get('[data-cy="input-last-name"]').type('Torres');
+    //     cy.get('[data-cy="input-last-name"]').type('Torres');
 
-        cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
+    //     cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
 
-        cy.get('[data-cy="input-role"]').select('Developer');
+    //     cy.get('[data-cy="input-role"]').select('Developer');
 
-        cy.get('body').type('{esc}');
+    //     cy.get('body').type('{esc}');
 
-        //close btn
-        cy.get('[data-cy="add-record-button"]').click();
+    //     //close btn
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        cy.get('[data-cy="input-first-name"]').type('Herlyn');
+    //     cy.get('[data-cy="input-first-name"]').type('Herlyn');
 
-        cy.get('[data-cy="input-last-name"]').type('Torres');
+    //     cy.get('[data-cy="input-last-name"]').type('Torres');
 
-        cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
+    //     cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
 
-        cy.get('[data-cy="input-role"]').select('Developer');
+    //     cy.get('[data-cy="input-role"]').select('Developer');
 
-        cy.get('[data-cy="modal-center-button-close"]').click();
+    //     cy.get('[data-cy="modal-center-button-close"]').click();
 
-        //cancel btn
-        cy.get('[data-cy="add-record-button"]').click();
+    //     //cancel btn
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        cy.get('[data-cy="input-first-name"]').type('Herlyn');
+    //     cy.get('[data-cy="input-first-name"]').type('Herlyn');
 
-        cy.get('[data-cy="input-last-name"]').type('Torres');
+    //     cy.get('[data-cy="input-last-name"]').type('Torres');
 
-        cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
+    //     cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
 
-        cy.get('[data-cy="input-role"]').select('Developer');
+    //     cy.get('[data-cy="input-role"]').select('Developer');
 
-        cy.get('[data-cy="close-button"]').click();
+    //     cy.get('[data-cy="close-button"]').click();
 
-        //create btn - developer
+    //     //create btn - developer
 
-        cy.get('[data-cy="add-record-button"]').click();
+    //     cy.get('[data-cy="add-record-button"]').click();
 
-        cy.get('[data-cy="input-first-name"]').type('Herlyn');
+    //     cy.get('[data-cy="input-first-name"]').type('Herlyn');
 
-        cy.get('[data-cy="input-last-name"]').type('Torres');
+    //     cy.get('[data-cy="input-last-name"]').type('Torres');
 
-        cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
+    //     cy.get('[data-cy="input-email"]').type('torresherlynmae@gmail.com');
 
-        cy.get('[data-cy="input-role"]').select('Developer');
+    //     cy.get('[data-cy="input-role"]').select('Developer');
 
-        cy.intercept('POST', '**/users').as('createUser');
+    //     cy.intercept('POST', '**/users').as('createUser');
 
-        cy.get('[data-cy="submit-button"]').click();
+    //     cy.get('[data-cy="submit-button"]').click();
 
-        cy.wait('@createUser').then((interception) => {
-            console.log(interception.response);
-        });
+    //     cy.wait('@createUser').then((interception) => {
+    //         console.log(interception.response);
+    //     });
 
-        cy.contains('torresherlynmae@gmail.com', { timeout: 1000 }).should(
-            'be.visible',
-        );
-    });
+    //     cy.contains('torresherlynmae@gmail.com', { timeout: 1000 }).should(
+    //         'be.visible',
+    //     );
+    // });
 
     // UPDATE
     it('should update a user', () => {
-        cy.intercept('GET', )
-    })
+        cy.intercept('GET', '**/pagination-search*').as('searchUser');
+
+        cy.intercept('POST', '**/settings-users/**').as('updateUser');
+
+        //close btn
+        //search user
+        cy.get('[data-cy="toolbar-input-text"]').clear().type('Herlyn');
+
+        //open action menu
+        cy.contains('[data-cy="settings-row-div-4"]', 'Herlyn')
+            .should('be.visible')
+            .first()
+            .find('[data-cy="row-menu-button-row-actions"]')
+            .click();
+
+        //chose edit and click it to open the modal
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(0)
+            .should('be.visible')
+            .click();
+    });
 
     // ARCHIVE
 

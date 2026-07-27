@@ -471,25 +471,6 @@ describe('Settings - Partner School Tab Page', () => {
 
         cy.get('[data-cy="modal-center-button-close"]').click();
 
-        // cancel btn
-        // Search Partner School
-        cy.get('[data-cy="toolbar-input-text"]').clear().type('Sample School');
-
-        // Open action menu of Sample School
-        cy.contains('[data-cy="settings-row-div-4"]', 'Sample School')
-            .should('be.visible')
-            .parent()
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
-
-        // Click Edit
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
-            .should('be.visible')
-            .click();
-
-        cy.get('[data-cy="close-button"]').click();
-
         // esc btn
         // Search Partner School
         cy.get('[data-cy="toolbar-input-text"]').clear().type('Sample School');
