@@ -5,6 +5,8 @@ namespace App\Http\Controllers\v1\Developer\Developer;
 use App\Http\Controllers\v1\BaseController;
 use App\Models\AppLogger;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * Read-only developer view over the audit trail. Reuses BaseController's
@@ -52,5 +54,30 @@ class SystemLogController extends BaseController
         }
 
         return $query;
+    }
+
+    /**
+     * Permanently deletes every log row in [created_at_from, created_at_to],
+     * re-authenticating the developer's password first (same `current_password`
+     * rule ChangePasswordController uses). No soft-deletes on AppLogger — this
+     * is a hard delete by design.
+     */
+    public function deleteRange(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'created_at_from' => ['required', 'date'],
+            'created_at_to' => ['required', 'date', 'after_or_equal:created_at_from'],
+        ]);
+
+        $deleted = AppLogger::whereBetween('created_at', [
+            $validated['created_at_from'] . ' 00:00:00',
+            $validated['created_at_to'] . ' 23:59:59',
+        ])->delete();
+
+        return $this->sendResponse(
+            ['deleted' => $deleted],
+            "Deleted {$deleted} log entr" . ($deleted === 1 ? 'y.' : 'ies.'),
+        );
     }
 }

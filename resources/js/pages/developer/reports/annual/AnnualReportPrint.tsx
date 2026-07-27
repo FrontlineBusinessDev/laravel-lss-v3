@@ -1,21 +1,24 @@
 import { LogoMark } from '@/components/Logo';
-import type { Batch, Trainee } from '@/types';
-import { computePaymentBreakdown } from '@/data/mockData';
-import { computeGroupFinancials, formatCurrency } from './reportsUtils';
+import type { ReportBatch } from '@/api-service-layer/developer/report';
+import { formatCurrency } from '../reportsUtils';
+
 interface AnnualReportPrintProps {
-  batches: Batch[];
-  traineesByBatch: Map<string, Trainee[]>;
+  batches: ReportBatch[];
   generatedAt: string;
   dateRangeLabel: string;
 }
 export function AnnualReportPrint({
   batches,
-  traineesByBatch,
   generatedAt,
   dateRangeLabel
 }: AnnualReportPrintProps) {
-  const allTrainees = batches.flatMap(b => traineesByBatch.get(b.batchNo) ?? []);
-  const overall = computeGroupFinancials(allTrainees);
+  const overall = batches.reduce((acc, b) => ({
+    traineeCount: acc.traineeCount + b.financials.traineeCount,
+    completedCount: acc.completedCount + b.financials.completedCount,
+    terminatedCount: acc.terminatedCount + b.financials.terminatedCount,
+    totalReceived: acc.totalReceived + b.financials.totalReceived,
+    totalBalance: acc.totalBalance + b.financials.totalBalance,
+  }), { traineeCount: 0, completedCount: 0, terminatedCount: 0, totalReceived: 0, totalBalance: 0 });
   return <div className="hidden print:block print-area bg-white text-ink" data-cy="annual-report-print-div-1">
       <section className="p-8" data-cy="annual-report-print-section-2">
         <header className="mb-5 flex items-center justify-between border-b-2 border-ink pb-4" data-cy="annual-report-print-header-3">
@@ -57,8 +60,8 @@ export function AnnualReportPrint({
         </table>
 
         {batches.map(batch => {
-        const list = traineesByBatch.get(batch.batchNo) ?? [];
-        const fin = computeGroupFinancials(list);
+        const list = batch.trainees;
+        const fin = batch.financials;
         return <div key={batch.id} className="mb-6" style={{
           pageBreakInside: 'avoid'
         }} data-cy="annual-report-print-div-30">
@@ -81,7 +84,6 @@ export function AnnualReportPrint({
                 </thead>
                 <tbody data-cy="annual-report-print-tbody-43">
                   {list.map(t => {
-                const b = computePaymentBreakdown(t);
                 const completed = t.status === 'completed' || t.completedHrs >= t.requiredHrs;
                 return <tr key={t.id} data-cy="annual-report-print-tr-44">
                         <td className="border border-ink px-2 py-1.5" data-cy="annual-report-print-td-45">{t.name}</td>
@@ -92,8 +94,8 @@ export function AnnualReportPrint({
                         <td className="border border-ink px-2 py-1.5" data-cy="annual-report-print-td-48">
                           {t.status === 'terminated' ? 'Terminated' : completed ? 'Completed' : t.status}
                         </td>
-                        <td className="border border-ink px-2 py-1.5 text-right" data-cy="annual-report-print-td-49">{formatCurrency(b.totalAmountPaid)}</td>
-                        <td className="border border-ink px-2 py-1.5 text-right" data-cy="annual-report-print-td-50">{formatCurrency(Math.max(0, b.outstandingBalance))}</td>
+                        <td className="border border-ink px-2 py-1.5 text-right" data-cy="annual-report-print-td-49">{formatCurrency(t.totalAmountPaid)}</td>
+                        <td className="border border-ink px-2 py-1.5 text-right" data-cy="annual-report-print-td-50">{formatCurrency(Math.max(0, t.outstandingBalance))}</td>
                       </tr>;
               })}
                   {list.length === 0 && <tr data-cy="annual-report-print-tr-51">

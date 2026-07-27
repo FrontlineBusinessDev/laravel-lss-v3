@@ -28,7 +28,6 @@ type Values = {
     setup: 'f2f' | 'online';
     academic_program_id: string | number;
     academic_industry_id: string | number;
-    academic_level_id: string | number;
     date_started: string;
     projected_end_date: string;
     is_public_url_enable: boolean;
@@ -51,13 +50,6 @@ const LOOKUPS = [
         label: 'Industry',
         endpoint: '/settings/academic/industry',
         placeholder: 'Select industry',
-    },
-    {
-        key: 'academic_level_id',
-        rel: 'academic_level',
-        label: 'Academic level',
-        endpoint: '/settings/academic/level',
-        placeholder: 'Select academic level',
     },
 ] as const satisfies ReadonlyArray<{
     key: keyof Values;
@@ -88,7 +80,6 @@ export function CreateBatchModal({
         setup: batch?.setup ?? 'f2f',
         academic_program_id: batch?.academic_program_id ?? '',
         academic_industry_id: batch?.academic_industry_id ?? '',
-        academic_level_id: batch?.academic_level_id ?? '',
         date_started: batch?.date_started
             ? String(batch.date_started).slice(0, 10)
             : '',
@@ -120,9 +111,6 @@ export function CreateBatchModal({
         }
         if (!values.academic_industry_id) {
             next.academic_industry_id = 'Industry is required.';
-        }
-        if (!values.academic_level_id) {
-            next.academic_level_id = 'Academic level is required.';
         }
         if (!values.date_started) {
             next.date_started = 'Start date is required.';

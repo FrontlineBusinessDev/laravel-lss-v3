@@ -8,19 +8,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcademicLevel extends Model
 {
-    use HasFactory;
+    // use HasFactory;
 
     protected $table = 'app_settings_academic_level';
 
     protected $fillable = [
         'status',
         'name',
-        'year_level',
         'description',
     ];
 
-    public function batches(): HasMany
+    public function trainees(): HasMany
     {
-        return $this->hasMany(Batches::class, 'academic_level_id');
+        return $this->hasMany(Trainees::class, 'academic_level_id');
     }
 }

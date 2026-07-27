@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { GlobalModalProvider } from './components/global-modal';
 import { SystemToastProvider } from './components/Toast';
-import { BatchesProvider } from './context/BatchesContext';
 import { NotificationsProvider } from './context/NotificationsContext';
 
 /**
@@ -40,11 +39,9 @@ export function AppProviders({
         >
             <SystemToastProvider data-cy="app-providers-system-toast-provider-2">
                 <NotificationsProvider data-cy="app-providers-notifications-provider-4">
-                    <BatchesProvider data-cy="app-providers-batches-provider-5">
-                        <GlobalModalProvider data-cy="app-providers-batches-provider-6">
-                            {children}
-                        </GlobalModalProvider>
-                    </BatchesProvider>
+                    <GlobalModalProvider data-cy="app-providers-batches-provider-6">
+                        {children}
+                    </GlobalModalProvider>
                 </NotificationsProvider>
             </SystemToastProvider>
         </QueryClientProvider>

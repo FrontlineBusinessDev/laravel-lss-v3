@@ -10,6 +10,7 @@ use App\Http\Controllers\v1\Developer\Settings\GroupDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\HoursDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\LeaveCategoryController;
 use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
+use App\Http\Controllers\v1\Developer\Settings\PaymentMethodsController;
 use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
@@ -125,6 +126,8 @@ Route::prefix('settings')->name('settings.')->group(function () {
     Route::crudModule('/roles', RoleController::class, 'roles');
     // Partner School Management
     Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
+    // Payment Method Management
+    Route::crudModule('/payment-methods', PaymentMethodsController::class, 'payment-methods');
     // Leave category limits (max days / instances per category), enforced by
     // LeaveRequestController on submission.
     Route::crudModule('/leave-categories', LeaveCategoryController::class, 'leave-categories');
@@ -221,7 +224,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/trainees/{id}/documents', [TraineeDocumentsController::class, 'uploadDocument'])->name('trainees.documents.store');
     Route::delete('/trainees/{id}/documents/{documentId}', [TraineeDocumentsController::class, 'deleteDocument'])->name('trainees.documents.destroy');
     Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'learningOutcomes'])->name('trainees.learningOutcomes');
-    Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TraineesController::class, 'updateLearningOutcomeStatus'])->name('trainees.learningOutcomes.updateStatus');
+    Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TraineesController::class, 'updateLearningOutcomeStatus'])->name('trainees.learningOutcomes.updateStatus')->middleware('throttle:120,1');
     Route::post('/trainees/{id}/avatar', [TraineesController::class, 'updateAvatar'])->name('trainees.updateAvatar');
     Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
     Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
@@ -347,7 +350,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
         Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
     });
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::redirect('/reports', '/reports/annual')->name('reports.index');
+    Route::get('/reports/annual', [ReportController::class, 'annual'])->name('reports.annual.index');
+    Route::get('/reports/annual/pagination-search', [ReportController::class, 'annualSummary'])->name('reports.annual.summary');
+    Route::get('/reports/annual/totals', [ReportController::class, 'annualTotals'])->name('reports.annual.totals');
+    Route::get('/reports/annual/export', [ReportController::class, 'annualExport'])->name('reports.annual.export');
+    Route::get('/reports/batch', [ReportController::class, 'batch'])->name('reports.batch.index');
+    Route::get('/reports/batch/pagination-search', [ReportController::class, 'batchSummary'])->name('reports.batch.summary');
+    Route::get('/reports/batch/totals', [ReportController::class, 'batchTotals'])->name('reports.batch.totals');
+    Route::get('/reports/batch/export', [ReportController::class, 'batchExport'])->name('reports.batch.export');
 
     // ==========================================
     // CERTIFICATES MODULE GROUP — Trainees / Seminar / Citations are distinct
@@ -390,6 +401,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:developer')->group(function () {
         Route::get('/system-log', [SystemLogController::class, 'index'])->name('system-log.index');
         Route::get('/system-log/pagination-search', [SystemLogController::class, 'paginationSearch'])->name('system-log.pagination-search');
+        Route::delete('/system-log', [SystemLogController::class, 'deleteRange'])->name('system-log.delete-range');
     });
 
     // Trainer-only placeholder module — role-gated, deliberately NOT reusing

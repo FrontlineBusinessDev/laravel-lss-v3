@@ -12,20 +12,19 @@ class AcademicLevelController extends BaseController
 {
     protected string $model = AcademicLevel::class;
     protected string $view = 'developer/settings/academic/level/index';
-    protected array $searchable = ['name', 'year_level', 'description'];
-    protected array $filterable = ['status', 'name', 'year_level'];
-    protected array $sortable = ['id', 'name', 'year_level'];
+    protected array $searchable = ['name', 'description'];
+    protected array $filterable = ['status', 'name'];
+    protected array $sortable = ['id', 'name'];
 
-    protected array $activeColumns = ['id', 'name', 'year_level'];
-    protected string $sortBy = 'year_level';
-    // Blocks deletion if referenced by active batches
-    protected array $inUseRelations = ['batches'];
+    protected array $activeColumns = ['id', 'name'];
+    protected string $sortBy = 'name';
+    // Blocks deletion if referenced by active trainees
+    protected array $inUseRelations = ['trainees'];
     protected function storeRules(): array
     {
         return [
             'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
-            'year_level' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
         ];
     }
@@ -35,7 +34,6 @@ class AcademicLevelController extends BaseController
         return [
             'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
-            'year_level' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
         ];
     }

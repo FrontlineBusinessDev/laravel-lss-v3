@@ -28,7 +28,7 @@ import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/components/Toast';
 import { useBatchLinkActions } from '@/hooks/use-batch-link-actions';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import { columns } from '@/types/modules/batches/batches';
 import { BatchRegistrationModal } from './BatchRegistrationModal';

@@ -17,7 +17,7 @@ import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/components/Toast';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 import type { PermissionModules, RoleRow } from './RoleModal';
 import { RoleModal } from './RoleModal';

@@ -10,7 +10,7 @@ import {
 import { StatusBadge } from '@/components/StatusBadge';
 import type { CardActions } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AppTrainees } from '@/types/modules/trainees/trainees';
 import { columns } from '@/types/modules/trainees/trainees';
 

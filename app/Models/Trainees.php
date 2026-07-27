@@ -24,6 +24,7 @@ class Trainees extends Model
         'user_id',
         'batch_id',
         'school_id',
+        'academic_level_id',
         'avatar_path',
         'public_url_id',
         'first_name',
@@ -87,6 +88,11 @@ class Trainees extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(PartnerSchools::class, 'school_id');
+    }
+
+    public function academicLevel(): BelongsTo
+    {
+        return $this->belongsTo(AcademicLevel::class, 'academic_level_id');
     }
 
     public function documents(): HasMany

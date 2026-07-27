@@ -79,12 +79,19 @@ class TraineeDocumentsController extends BaseController
     /** Serialize a document with presigned view/download URLs for a private upload, or its raw link. */
     public function transform(TraineeDocument $document): array
     {
+        $disk = config('filesystems.default');
         $url = null;
+        $fileMissing = false;
+
         if ($document->file_path) {
-            try {
-                $url = Storage::temporaryUrl($document->file_path, now()->addMinutes($this->fileUrlExpiry));
-            } catch (\RuntimeException $e) {
-                $url = Storage::url($document->file_path);
+            if (Storage::disk($disk)->exists($document->file_path)) {
+                try {
+                    $url = Storage::temporaryUrl($document->file_path, now()->addMinutes($this->fileUrlExpiry));
+                } catch (\RuntimeException $e) {
+                    $url = Storage::url($document->file_path);
+                }
+            } else {
+                $fileMissing = true;
             }
         }
 
@@ -92,6 +99,7 @@ class TraineeDocumentsController extends BaseController
             ...$document->toArray(),
             'view_url' => $url ?? $document->url_link,
             'download_url' => $url ?? $document->url_link,
+            'file_missing' => $fileMissing,
         ];
     }
 }

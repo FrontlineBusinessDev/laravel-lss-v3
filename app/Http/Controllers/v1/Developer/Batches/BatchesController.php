@@ -47,7 +47,6 @@ class BatchesController extends BaseController
         'status',
         'setup',
         'academic_industry_id',
-        'academic_level_id',
         'academic_program_id',
     ];
 
@@ -56,7 +55,6 @@ class BatchesController extends BaseController
         'status',
         'setup',
         'academic_industry_id',
-        'academic_level_id',
         'academic_program_id',
     ];
 
@@ -76,7 +74,6 @@ class BatchesController extends BaseController
         return parent::newQuery()
             ->with([
                 'academicIndustry:id,name',
-                'academicLevel:id,name',
                 'academicProgram:id,name',
             ])
             ->withCount('trainees');
@@ -90,7 +87,6 @@ class BatchesController extends BaseController
             'date_started' => ['required', 'date'],
             'projected_end_date' => ['nullable', 'date', 'after_or_equal:date_started'],
             'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
-            'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
             'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program,id'],
             // batch_code + public_registration_url_id are intentionally absent:
             // they are system-generated and must never be user-supplied.
@@ -105,7 +101,6 @@ class BatchesController extends BaseController
             'date_started' => ['required', 'date'],
             'projected_end_date' => ['nullable', 'date', 'after_or_equal:date_started'],
             'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
-            'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
             'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program,id'],
         ];
     }

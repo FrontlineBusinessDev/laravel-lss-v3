@@ -14,7 +14,7 @@ import { useToast } from '@/components/Toast';
 import { useAuth } from '@/hooks/use-auth';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import SettingsUsersLayout from '@/layouts/settings/SettingsUsersLayout';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import { ROLE_FILTER_PAIRS } from '@/types/reusable/roles';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 import { usePage } from '@inertiajs/react';

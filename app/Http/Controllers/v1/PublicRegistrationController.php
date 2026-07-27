@@ -6,6 +6,7 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Rules\UniqueEmailAcrossIdentities;
 use App\Mail\ApplicationSubmittedMail;
 use App\Mail\NewApplicationAdminMail;
+use App\Models\AcademicLevel;
 use App\Models\Batches;
 use App\Models\Notification;
 use App\Models\PartnerSchools;
@@ -14,7 +15,7 @@ use App\Models\User;
 use App\Support\OgImage;
 use App\Support\QrCode;
 use App\Support\Statuses;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
@@ -74,7 +75,6 @@ class PublicRegistrationController extends Controller
                 'is_public_url_enable' => (bool) $batch->is_public_url_enable,
                 'date_started' => $batch->date_started?->toDateString(),
                 'industry' => $batch->academicIndustry?->name,
-                'level' => $batch->academicLevel?->name,
                 'program' => $batch->academicProgram?->name,
             ],
             'metaDescription' => $metaDescription,
@@ -87,6 +87,14 @@ class PublicRegistrationController extends Controller
                 ->orderBy('school_name')
                 ->get(['id', 'school_name'])
                 ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
+            // Academic Level is now chosen per-trainee at registration time
+            // (it used to be a fixed batch attribute), so it's passed as a
+            // guest-reachable prop list the same way `schools` is.
+            'academicLevels' => AcademicLevel::query()
+                ->where('status', Statuses::ACTIVE)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn(AcademicLevel $l) => ['id' => $l->id, 'name' => $l->name]),
         ])->withViewData([
             // Server-rendered into the Blade <head> so Facebook's non-JS crawler
             // sees the og tags (the Inertia <Head> versions only exist after
@@ -162,8 +170,15 @@ class PublicRegistrationController extends Controller
     /**
      * Persist a guest trainee's registration into app_trainees, plus any
      * uploaded documents into app_trainees_documents.
+     *
+     * Returns the app's standard JSON envelope (see BaseController::respond())
+     * rather than an Inertia redirect — the frontend submits via the axios
+     * `http` client (resources/js/api-service-layer/public/register.ts), not
+     * an Inertia form visit. Validation failures fall through to Laravel's
+     * default JSON-shaped 422 ({message, errors}) since the axios client
+     * always sends `Accept: application/json`.
      */
-    public function store(Request $request, string $token): RedirectResponse
+    public function store(Request $request, string $token): JsonResponse
     {
         $batch = $this->resolveBatch($token);
 
@@ -171,7 +186,10 @@ class PublicRegistrationController extends Controller
         // link is enabled (mirrors the show() gate, so a disabled link can't be
         // submitted to directly).
         if ($batch->status !== Statuses::ACTIVE || ! $batch->is_public_url_enable) {
-            return back()->with('error', 'Registration for this batch is closed.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Registration for this batch is closed.',
+            ], 422);
         }
 
         $validated = $request->validate($this->storeRules());
@@ -188,6 +206,7 @@ class PublicRegistrationController extends Controller
                 // provisions the account. See that controller for the
                 // status=>active transition.
                 'status' => Statuses::PENDING,
+                'academic_level_id' => $validated['academic_level_id'],
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => $validated['email'],
@@ -221,9 +240,11 @@ class PublicRegistrationController extends Controller
             }
         }
 
-        return redirect()
-            ->route('public.register', $token)
-            ->with('success', 'Registration submitted successfully. Our team will be in touch.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration submitted successfully. Our team will be in touch.',
+            'data' => ['batch_code' => $batch->batch_code],
+        ]);
     }
 
     /**
@@ -236,7 +257,7 @@ class PublicRegistrationController extends Controller
     {
         return Batches::query()
             ->where('public_registration_url_id', $token)
-            ->with(['academicIndustry:id,name', 'academicLevel:id,name', 'academicProgram:id,name'])
+            ->with(['academicIndustry:id,name', 'academicProgram:id,name'])
             ->firstOrFail();
     }
 
@@ -260,6 +281,7 @@ class PublicRegistrationController extends Controller
             'required_hours' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'address' => ['required', 'string', 'max:1000'],
             'school_id' => ['required', 'integer', 'exists:app_settings_partner_schools,id'],
+            'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
             'resume' => ['required', ...$file],
             'endorsement_letter' => ['nullable', ...$file],
             'moa' => ['nullable', ...$file],

@@ -40,7 +40,7 @@ class AcademicLearningOutcomesController extends BaseController
     {
         return parent::newQuery()->with([
             'academicIndustry:id,name',
-            'academicProgram:id,name,course_name',
+            'academicProgram:id,name',
         ]);
     }
 

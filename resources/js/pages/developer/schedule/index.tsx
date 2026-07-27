@@ -1,34 +1,32 @@
 import { useMemo, useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import type { PageProps } from '@inertiajs/core';
 import { CalendarDays, GanttChartSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useBatches } from '@/context/BatchesContext';
-import { partnerSchools } from '@/data/mockData';
+import type { ScheduleApiEntry } from '@/types/modules/schedule/schedule';
 import { ScheduleFilters, EMPTY_FILTERS, type ScheduleFilterState } from './ScheduleFilters';
 import { SummaryPanel } from './SummaryPanel';
 import { YearlyTimeline } from './YearlyTimeline';
 import { YearlyCalendarView } from './YearlyCalendarView';
 import { ScheduleEntryModal } from './ScheduleEntryModal';
-import { buildScheduleEntries, getSchoolColor, type ScheduleEntry } from './scheduleUtils';
+import { adaptScheduleEntries, getSchoolColor, type ScheduleEntry } from './scheduleUtils';
 type ViewMode = 'timeline' | 'calendar';
 export default function SchedulePage() {
-  const {
-    batches,
-    trainees
-  } = useBatches();
+  const { entries: apiEntries } = usePage<PageProps & { entries: ScheduleApiEntry[] }>().props;
   const [view, setView] = useState<ViewMode>('timeline');
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [filters, setFilters] = useState<ScheduleFilterState>(EMPTY_FILTERS);
   const [selected, setSelected] = useState<ScheduleEntry | null>(null);
-  const allEntries = useMemo(() => buildScheduleEntries(batches, trainees), [batches, trainees]);
+  const allEntries = useMemo(() => adaptScheduleEntries(apiEntries), [apiEntries]);
   const filterOptions = useMemo(() => {
-    const schools = new Set<string>(partnerSchools.filter(s => s.status === 'active').map(s => s.name));
+    const schools = new Set<string>();
     const programs = new Set<string>();
     const industries = new Set<string>();
     const statuses = new Set<string>();
     const batchNos = new Set<string>();
     for (const e of allEntries) {
-      batchNos.add(e.batch.batchNo);
-      industries.add(e.batch.industry);
+      batchNos.add(e.batch.batch_code);
+      if (e.batch.industry) industries.add(e.batch.industry);
       statuses.add(e.batch.status);
       for (const p of e.programs) programs.add(p);
       for (const {
@@ -47,8 +45,8 @@ export default function SchedulePage() {
     return allEntries.filter(e => {
       if (filters.schools.length && !e.schoolCounts.some(s => filters.schools.includes(s.school))) return false;
       if (filters.programs.length && !e.programs.some(p => filters.programs.includes(p))) return false;
-      if (filters.batches.length && !filters.batches.includes(e.batch.batchNo)) return false;
-      if (filters.industries.length && !filters.industries.includes(e.batch.industry)) return false;
+      if (filters.batches.length && !filters.batches.includes(e.batch.batch_code)) return false;
+      if (filters.industries.length && !filters.industries.includes(e.batch.industry ?? '')) return false;
       if (filters.statuses.length && !filters.statuses.includes(e.batch.status)) return false;
       return true;
     });
@@ -74,7 +72,7 @@ export default function SchedulePage() {
       <ScheduleFilters filters={filters} onChange={setFilters} options={filterOptions} data-cy="index-schedule-filters-set-filters" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]" data-cy="index-div-12">
-        <div className="min-w-0" data-cy="index-div-13">
+        <div className="min-w-0" data-cy="schedule-year-view">
           {view === 'timeline' ? <YearlyTimeline entries={filteredEntries} year={year} onYearChange={setYear} onSelect={setSelected} data-cy="index-yearly-timeline-set-selected" /> : <YearlyCalendarView entries={filteredEntries} year={year} onYearChange={setYear} onSelect={setSelected} data-cy="index-yearly-calendar-view-set-selected" />}
 
           {/* School color legend */}

@@ -17,14 +17,12 @@ export interface AppBatches extends Record<string, unknown> {
     projected_end_date: string | null;
     setup: 'f2f' | 'online';
     academic_industry_id: number;
-    academic_level_id: number;
     academic_program_id: number;
     trainees_count?: number;
     is_public_url_enable?: boolean;
     // Eager-loaded relations (serialized snake_case by Laravel) — present when
     // the list query uses `with()`. Used for list cells + async-select labels.
     academic_industry?: { id: number; name: string } | null;
-    academic_level?: { id: number; name: string } | null;
     academic_program?: { id: number; name: string } | null;
     trainers?: { id: number; first_name: string; last_name: string; email: string }[];
     created_at: string;
@@ -62,14 +60,6 @@ export const columns: ColumnDef<AppBatches>[] = [
         filterable: true,
         sortable: false,
         loadOptions: (q) => loadLookupOptions('/settings/academic/industry', q),
-    },
-    {
-        key: 'academic_level_id',
-        label: 'Level',
-        type: 'async-select',
-        filterable: true,
-        sortable: false,
-        loadOptions: (q) => loadLookupOptions('/settings/academic/level', q),
     },
     {
         key: 'setup',
@@ -114,16 +104,6 @@ export const fields: FieldDef<AppBatches>[] = [
         colSpan: 2,
         loadOptions: (q) => loadLookupOptions('/settings/academic/industry', q),
         initialLabel: (row) => row.academic_industry?.name,
-    },
-    {
-        key: 'academic_level_id',
-        label: 'Academic Level',
-        type: 'async-select',
-        required: true,
-        placeholder: 'Select level…',
-        colSpan: 2,
-        loadOptions: (q) => loadLookupOptions('/settings/academic/level', q),
-        initialLabel: (row) => row.academic_level?.name,
     },
     {
         key: 'is_public_url_enable',

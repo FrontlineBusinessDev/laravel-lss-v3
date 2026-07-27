@@ -8,6 +8,7 @@ interface ModalProps {
   description?: string;
   children: ReactNode;
   maxWidth?: number;
+  'data-cy'?: string;
 }
 export function Modal({
   open,
@@ -15,7 +16,8 @@ export function Modal({
   title,
   description,
   children,
-  maxWidth = 440
+  maxWidth = 440,
+  'data-cy': dataCy = 'modal-div-2'
 }: ModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -31,7 +33,7 @@ export function Modal({
   return createPortal(<div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4 animate-fadeIn" onMouseDown={e => e.target === e.currentTarget && onClose()} data-cy="modal-div-1">
       <div role="dialog" aria-modal="true" aria-labelledby="modal-title" className="w-full rounded-lg bg-white p-6 shadow-modal animate-scaleIn max-h-[90vh] overflow-y-auto lss-scrollbar" style={{
       maxWidth
-    }} data-cy="modal-div-2">
+    }} data-cy={dataCy}>
         <div className="mb-1 flex items-start justify-between gap-4" data-cy="modal-div-3">
           <h2 id="modal-title" className="text-lg font-semibold text-ink" data-cy="modal-h2-modal-title">
             {title}

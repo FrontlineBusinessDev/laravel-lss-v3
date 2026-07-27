@@ -27,7 +27,7 @@ import { copyText } from '@/lib/clipboard';
 import { cn } from '@/lib/utils';
 import { CreateBatchModal } from '@/pages/developer/batches/CreateBatchModal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AppBatches } from '@/types/modules/batches/batches';
 
 // Batch statuses onto the shared StatusBadge palette (inactive → archived).

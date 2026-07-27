@@ -1,24 +1,22 @@
 import { LogoMark } from '@/components/Logo';
-import type { Batch } from '@/types';
-import { getCompletedActivitiesForBatch, computeGroupFinancials, formatCurrency } from './reportsUtils';
-import type { Trainee } from '@/types';
+import type { ReportBatch } from '@/api-service-layer/developer/report';
+import { formatCurrency } from '../reportsUtils';
+
 interface BatchReportPrintProps {
-  batches: Batch[];
-  traineesByBatch: Map<string, Trainee[]>;
+  batches: ReportBatch[];
   generatedAt: string;
   dateRangeLabel: string;
 }
 export function BatchReportPrint({
   batches,
-  traineesByBatch,
   generatedAt,
   dateRangeLabel
 }: BatchReportPrintProps) {
   return <div className="hidden print:block print-area bg-white text-ink" data-cy="batch-report-print-div-1">
       {batches.map((batch, idx) => {
-      const activities = getCompletedActivitiesForBatch(batch.batchNo);
-      const list = traineesByBatch.get(batch.batchNo) ?? [];
-      const fin = computeGroupFinancials(list);
+      const activities = batch.activities ?? [];
+      const list = batch.trainees;
+      const fin = batch.financials;
       return <section key={batch.id} className="p-8" style={{
         pageBreakAfter: idx < batches.length - 1 ? 'always' : 'auto'
       }} data-cy="batch-report-print-section-2">

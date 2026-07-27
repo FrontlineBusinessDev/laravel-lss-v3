@@ -1,5 +1,5 @@
 import { LogoMark } from '@/components/Logo';
-import type { TaskRating } from '@/types';
+import type { TaskRating } from '@/types/modules/ratings/task-rating';
 
 interface RatingSheetPrintProps {
     batchNo: string;

@@ -1,78 +1,50 @@
+import { useState } from 'react';
+import { router } from '@inertiajs/react';
+import { Printer, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { Dropdown } from '@/components/Dropdown';
-import { useToast } from '@/components/Toast';
-import { certificateCitations } from '@/data/mockData';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import {
     CertificateBatchPrint,
     CertificateSheet,
+    type CertificateDoc,
 } from '@/pages/developer/certificates/CertificatePrint';
-import type { Trainee } from '@/types';
-import { Info, Printer, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { renderCitation } from '@/pages/developer/certificates/certificateUtils';
+import { IssueCertificateModal } from '@/pages/developer/certificates/IssueCertificateModal';
+import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
-/** Local (mock-data-shaped) citation helpers for this trainee-detail sub-tab — kept independent of the real /certificates module's citation utils, which operate on the new API row shapes. */
-function selectableMockCitations(citationId: string) {
-    return certificateCitations.filter(
-        (c) =>
-            (c.status === 'active' || c.id === citationId) &&
-            (c.appliesTo === 'Trainee' || c.appliesTo === 'Both'),
-    );
-}
-function renderMockCitation(bodyText: string, trainee: Trainee): string {
-    const tokens: Record<string, string | number> = {
-        name: trainee.name ?? '',
-        school: trainee.school,
-        program: trainee.programType,
-        industry: trainee.industry,
-        hours: trainee.requiredHrs,
+function buildDoc(trainee: TraineeDetail): CertificateDoc {
+    const subtitle = [
+        trainee.batch?.academic_program?.name,
+        trainee.batch?.academic_industry?.name,
+    ]
+        .filter(Boolean)
+        .join(' — ');
+
+    return {
+        key: trainee.id,
+        recipientName: trainee.name,
+        subtitle,
+        citationText: renderCitation(
+            'This is to certify that {{name}} has completed {{hours}} hours of training.',
+            { name: trainee.name, hours: trainee.required_hours },
+        ),
+        certificateNo: trainee.certificate?.certificate_no ?? '—',
+        issuedDate: trainee.certificate?.issued_at,
+        template: trainee.certificate?.template,
     };
-    return bodyText.replace(/{{\s*(\w+)\s*}}/g, (_match, key: string) =>
-        key in tokens ? String(tokens[key]) : '—',
-    );
 }
 
-export default function CertificateTab({ trainee }: { trainee: Trainee }) {
-    const { showToast } = useToast();
-    const [certificate, setCertificate] = useState(
-        trainee.certificate ?? {
-            issued: false,
-            certificateNo: `CERT-${new Date().getFullYear()}-0000`,
-        },
-    );
-    const [citationId, setCitationId] = useState(
-        certificate.citationId ??
-            certificateCitations.find(
-                (c) => c.appliesTo !== 'Seminar' && c.status === 'active',
-            )?.id ??
-            '',
-    );
-    const [regenerating, setRegenerating] = useState(false);
+export default function CertificateTab({ trainee }: { trainee: TraineeDetail }) {
     const [printing, setPrinting] = useState(false);
-    const canIssue = trainee.completedHrs >= trainee.requiredHrs;
-    const options = selectableMockCitations(citationId);
-    const selectedCitation =
-        options.find((c) => c.id === citationId) ?? options[0];
-    const citationText = selectedCitation
-        ? renderMockCitation(selectedCitation.bodyText, trainee)
-        : `This is to certify that ${trainee.name} has completed ${trainee.requiredHrs} hours of training in ${trainee.industry} under the ${trainee.programType} program.`;
-    const handleGenerate = () => {
-        setRegenerating(true);
-        setTimeout(() => {
-            const wasIssued = certificate.issued;
-            setCertificate((c) => ({
-                ...c,
-                issued: true,
-                issuedDate: new Date().toISOString().slice(0, 10),
-                citationId: selectedCitation?.id,
-            }));
-            setRegenerating(false);
-            showToast(
-                `Certificate ${wasIssued ? 'regenerated' : 'generated'} for ${trainee.name}.`,
-                'success',
-            );
-        }, 500);
-    };
+    const [issueOpen, setIssueOpen] = useState(false);
+
+    const completedHours = Number(trainee.tasks_sum_time_spent ?? 0);
+    const requiredHours = Number(trainee.required_hours);
+    const canIssue = completedHours >= requiredHours;
+    const issued = !!trainee.certificate?.issued_at;
+
+    const doc = buildDoc(trainee);
+
     const handlePrint = () => {
         setPrinting(true);
         setTimeout(() => {
@@ -80,14 +52,7 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
             setPrinting(false);
         }, 50);
     };
-    const doc = {
-        key: trainee.id,
-        recipientName: trainee.name,
-        subtitle: `${trainee.programType} — ${trainee.industry}`,
-        citationText,
-        certificateNo: certificate.certificateNo,
-        issuedDate: certificate.issuedDate,
-    };
+
     return (
         <>
             <TraineesDetailLayout trainee={trainee}>
@@ -111,9 +76,9 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
                                     className="text-xs text-neutral-500"
                                     data-cy="certificate-tab-p-6"
                                 >
-                                    {certificate.issued
-                                        ? `Issued on ${certificate.issuedDate}`
-                                        : 'Not yet generated for this trainee'}
+                                    {issued
+                                        ? `Issued on ${trainee.certificate?.issued_at}`
+                                        : 'Not yet issued for this trainee'}
                                 </p>
                             </div>
                             <div
@@ -125,7 +90,7 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
                                     size="sm"
                                     icon={Printer}
                                     onClick={handlePrint}
-                                    disabled={!certificate.issued || printing}
+                                    disabled={!issued || printing}
                                     data-cy="certificate-tab-button-print"
                                 >
                                     Print
@@ -134,13 +99,11 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
                                     variant="primary"
                                     size="sm"
                                     icon={RefreshCw}
-                                    onClick={handleGenerate}
-                                    disabled={!canIssue || regenerating}
+                                    onClick={() => setIssueOpen(true)}
+                                    disabled={!canIssue}
                                     data-cy="certificate-tab-button-generate"
                                 >
-                                    {certificate.issued
-                                        ? 'Regenerate'
-                                        : 'Generate'}
+                                    {issued ? 'Reissue' : 'Issue'}
                                 </Button>
                             </div>
                         </div>
@@ -150,48 +113,12 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
                                 className="mb-4 rounded-md bg-warning-50 px-3.5 py-2.5 text-xs text-warning-800"
                                 data-cy="certificate-tab-div-certificate-can-only-be-generated-once"
                             >
-                                Certificate can only be generated once the
-                                trainee completes {trainee.requiredHrs} required
-                                hours ({trainee.completedHrs} /{' '}
-                                {trainee.requiredHrs} so far).
+                                Certificate can only be issued once the
+                                trainee completes {trainee.required_hours}{' '}
+                                required hours ({completedHours} /{' '}
+                                {trainee.required_hours} so far).
                             </div>
                         )}
-
-                        <div
-                            className="mb-4 flex flex-col gap-1.5 sm:max-w-xs"
-                            data-cy="certificate-tab-div-11"
-                        >
-                            <label
-                                className="text-xs font-medium text-neutral-600"
-                                data-cy="certificate-tab-label-citation"
-                            >
-                                Citation
-                            </label>
-                            <Dropdown
-                                options={options.map((c) => c.title)}
-                                value={selectedCitation?.title}
-                                onChange={(title) => {
-                                    const match = options.find(
-                                        (c) => c.title === title,
-                                    );
-                                    if (match) setCitationId(match.id);
-                                }}
-                                data-cy="certificate-tab-dropdown-13"
-                            />
-                            <p
-                                className="flex items-start gap-1 text-[11px] text-neutral-400"
-                                data-cy="certificate-tab-p-managed-in-certificates-citation-selecting"
-                            >
-                                <Info
-                                    size={12}
-                                    className="mt-0.5 shrink-0"
-                                    data-cy="certificate-tab-info-15"
-                                />
-                                Managed in Certificates &rarr; Citation.
-                                Selecting a citation here applies it the next
-                                time this certificate is generated.
-                            </p>
-                        </div>
 
                         <div
                             className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-6"
@@ -204,7 +131,7 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
                         </div>
                     </div>
 
-                    {certificate.issued && (
+                    {issued && (
                         <CertificateBatchPrint
                             docs={[doc]}
                             data-cy="certificate-tab-certificate-batch-print-18"
@@ -212,6 +139,15 @@ export default function CertificateTab({ trainee }: { trainee: Trainee }) {
                     )}
                 </div>
             </TraineesDetailLayout>
+
+            <IssueCertificateModal
+                open={issueOpen}
+                recipientName={trainee.name}
+                appliesTo="trainee"
+                issueUrl={`/certificates/trainees/${trainee.id}/issue`}
+                onClose={() => setIssueOpen(false)}
+                onIssued={() => router.reload({ only: ['trainee'] })}
+            />
         </>
     );
 }

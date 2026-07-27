@@ -1,4 +1,5 @@
 import { ListTodo } from 'lucide-react';
+import { useNavigate } from '@/lib/router-compat';
 import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
@@ -14,6 +15,7 @@ function formatDate(value: string): string {
 
 /** Active (not-yet-completed) tasks across every batch. */
 export function OngoingTasksWidget() {
+    const navigate = useNavigate();
     const { data, isLoading, error } = useDashboardWidget(
         () => adminDashboardService.getOngoingTasks(),
         [],
@@ -29,6 +31,7 @@ export function OngoingTasksWidget() {
             error={error}
             isEmpty={rows.length === 0}
             emptyMessage="No ongoing tasks right now."
+            className="max-h-76.5 min-h-76.5"
         >
             <ul className="flex flex-col gap-2">
                 {rows.map((row) => (
@@ -51,9 +54,13 @@ export function OngoingTasksWidget() {
                 ))}
             </ul>
             {remaining > 0 && (
-                <p className="mt-2 text-xs text-neutral-400">
-                    +{remaining} more
-                </p>
+                <button
+                    type="button"
+                    onClick={() => navigate('/tasks')}
+                    className="mt-2 text-xs font-medium text-brand-600 hover:underline"
+                >
+                    View {remaining} more
+                </button>
             )}
         </DashboardWidgetCard>
     );

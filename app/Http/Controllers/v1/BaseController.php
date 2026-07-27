@@ -62,7 +62,7 @@ abstract class BaseController extends Controller implements HasMiddleware
 
     public static function middleware(): array
     {
-        return [new Middleware(['auth', 'throttle:60,1'])];
+        return [new Middleware(['auth', 'throttle:120,1'])];
     }
 
     public function index(Request $request): mixed

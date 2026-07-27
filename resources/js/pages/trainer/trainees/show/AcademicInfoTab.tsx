@@ -29,7 +29,7 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                     />
                     <Field
                         label="Level"
-                        value={trainee.batch?.academic_level?.name}
+                        value={trainee.academic_level?.name}
                     />
                     <Field
                         label="Setup"

@@ -8,13 +8,15 @@ interface MultiSelectProps {
   placeholder: string;
   onChange: (value: string[]) => void;
   className?: string;
+  'data-cy'?: string;
 }
 export function MultiSelectDropdown({
   options,
   value,
   placeholder,
   onChange,
-  className
+  className,
+  'data-cy': dataCy = 'multi-select-dropdown-button-button'
 }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({
@@ -56,7 +58,7 @@ export function MultiSelectDropdown({
     onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt]);
   };
   return <>
-      <button ref={btnRef} type="button" onClick={() => setOpen(v => !v)} aria-haspopup="listbox" aria-expanded={open} className={cn('flex h-9 w-full items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-card transition-all duration-150 hover:border-neutral-300 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-brand-100', open && 'border-brand-400 ring-2 ring-brand-100', value.length === 0 && 'text-neutral-400', className)} data-cy="multi-select-dropdown-button-button">
+      <button ref={btnRef} type="button" onClick={() => setOpen(v => !v)} aria-haspopup="listbox" aria-expanded={open} className={cn('flex h-9 w-full items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-card transition-all duration-150 hover:border-neutral-300 hover:shadow-none focus:outline-none focus:ring-2 focus:ring-brand-100', open && 'border-brand-400 ring-2 ring-brand-100', value.length === 0 && 'text-neutral-400', className)} data-cy={dataCy}>
         <span className="truncate" data-cy="multi-select-dropdown-span-2">{value.length === 0 ? placeholder : `${placeholder} (${value.length})`}</span>
         <ChevronDown size={14} className={cn('shrink-0 text-neutral-400 transition-transform duration-150', open && 'rotate-180 text-brand-500')} data-cy="multi-select-dropdown-chevron-down-3" />
       </button>

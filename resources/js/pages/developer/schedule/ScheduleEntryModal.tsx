@@ -22,12 +22,12 @@ export function ScheduleEntryModal({
     start,
     end
   } = entry;
-  return <Modal open={!!entry} onClose={onClose} title={batch.batchNo} maxWidth={640} data-cy="schedule-entry-modal-modal-batch-batch-no">
+  return <Modal open={!!entry} onClose={onClose} title={batch.batch_code} maxWidth={640} data-cy="schedule-detail-modal">
       <div className="-mt-1 flex flex-wrap items-center gap-2" data-cy="schedule-entry-modal-div-2">
         <StatusBadge status={batch.status} data-cy="schedule-entry-modal-status-badge-3" />
         <span className="rounded-sm bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600" data-cy="schedule-entry-modal-span-4">{batch.setup}</span>
         <span className="text-xs text-neutral-400" data-cy="schedule-entry-modal-span-5">·</span>
-        <span className="text-xs text-neutral-500" data-cy="schedule-entry-modal-span-6">{batch.programType}</span>
+        <span className="text-xs text-neutral-500" data-cy="schedule-entry-modal-span-6">{batch.program_type}</span>
       </div>
 
       {/* Key facts */}
@@ -107,7 +107,7 @@ export function ScheduleEntryModal({
                     <span className="truncate text-sm font-medium text-ink" data-cy="schedule-entry-modal-span-41">{t.name}</span>
                   </div>
                   <p className="truncate pl-3 text-[11px] text-neutral-500" data-cy="schedule-entry-modal-p-42">
-                    {t.school} · {t.academicProgram}
+                    {t.school} · {t.academic_program}
                   </p>
                 </div>
                 <StatusBadge status={t.status} className="shrink-0" data-cy="schedule-entry-modal-status-badge-43" />

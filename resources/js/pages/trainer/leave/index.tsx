@@ -7,7 +7,7 @@ import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import { LeaveDetailsModal } from '@/pages/developer/leave/LeaveDetailsModal';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { columns as baseColumns } from '@/types/modules/leave/leave-requests';
 

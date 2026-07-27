@@ -27,7 +27,6 @@ class BatchesController extends BaseController
         'status',
         'setup',
         'academic_industry_id',
-        'academic_level_id',
         'academic_program_id',
     ];
 
@@ -35,7 +34,6 @@ class BatchesController extends BaseController
         'status',
         'setup',
         'academic_industry_id',
-        'academic_level_id',
         'academic_program_id',
     ];
 
@@ -51,7 +49,6 @@ class BatchesController extends BaseController
         return parent::newQuery()
             ->with([
                 'academicIndustry:id,name',
-                'academicLevel:id,name',
                 'academicProgram:id,name',
             ])
             ->withCount('trainees')

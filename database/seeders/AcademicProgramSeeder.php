@@ -14,81 +14,19 @@ class AcademicProgramSeeder extends Seeder
     {
         $programs = [
             [
-                'name' => 'Accountancy, Business and Management',
-                'course_name' => 'ABM',
-                'specialization' => 'ABM75',
+                'name' => 'College On-the-Job Training',
                 'status' => 'active',
             ],
             [
-                'name' => 'Bachelor of Electronics Engineering',
-                'course_name' => 'BSECE',
-                'specialization' => 'IT1',
+                'name' => 'Continuing Studies',
                 'status' => 'active',
             ],
             [
-                'name' => 'Bachelor of Science in Accountancy',
-                'course_name' => 'BSA',
-                'specialization' => 'ACCT1',
+                'name' => 'Senior High School Work Immersion',
                 'status' => 'active',
             ],
             [
-                'name' => 'Bachelor of Science in Business Administration',
-                'course_name' => 'BSBA',
-                'specialization' => 'ACCT2',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Bachelor of Science in Computer Engineering',
-                'course_name' => 'BSCpE',
-                'specialization' => 'IT22',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Bachelor of Science in Computer Science',
-                'course_name' => 'BSCS',
-                'specialization' => 'IT30',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Bachelor of Science in Industrial Education',
-                'course_name' => 'BSIE',
-                'specialization' => 'EDUC1',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Bachelor of Science in Information Technology',
-                'course_name' => 'BSIT',
-                'specialization' => 'IT43',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Bachelor of Science in Psychology',
-                'course_name' => 'BSP',
-                'specialization' => 'MGMT4',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Humanities and Social Sciences',
-                'course_name' => 'HUMSS',
-                'specialization' => 'MGMT32',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Information and Communication Technology',
-                'course_name' => 'ICT',
-                'specialization' => 'ICT123',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Others',
-                'course_name' => 'Others',
-                'specialization' => 'Others2',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Science, Technology, Engineering, and Math.',
-                'course_name' => 'STEM',
-                'specialization' => 'ICT88',
+                'name' => 'Upskill Training',
                 'status' => 'active',
             ],
         ];
@@ -97,8 +35,6 @@ class AcademicProgramSeeder extends Seeder
             DB::table('app_settings_academic_program')->updateOrInsert(
                 ['name' => $program['name']], // Unique identifier to prevent duplicates if run twice
                 [
-                    'course_name' => $program['course_name'],
-                    'specialization' => $program['specialization'],
                     'status' => strtolower($program['status']),
                     'created_at' => now(),
                     'updated_at' => now(),

@@ -15,7 +15,6 @@ class AcademicLevelSeeder extends Seeder
         $data = [
             [
                 'name' => 'Continuing Studies',
-                'year_level' => '10',
                 'status' => 'active',
                 'description' => 'Continuing Studies program level.',
                 'created_at' => now(),
@@ -23,7 +22,6 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'First Year',
-                'year_level' => '4',
                 'status' => 'active',
                 'description' => 'First year college/university level.',
                 'created_at' => now(),
@@ -31,15 +29,13 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Fourth Year',
-                'year_level' => '66', // Adjusted based on your raw input "Fourth Year66"
                 'status' => 'active',
                 'description' => 'Fourth year college/university level.',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Grade 1',
-                'year_level' => '10', // Adjusted based on your raw input "Grade 110"
+                'name' => 'Grade 11',
                 'status' => 'active',
                 'description' => 'Grade 1 primary level.',
                 'created_at' => now(),
@@ -47,7 +43,6 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Grade 12',
-                'year_level' => '318', // Adjusted based on your raw input "Grade 12318"
                 'status' => 'active',
                 'description' => 'Grade 12 senior high level.',
                 'created_at' => now(),
@@ -55,15 +50,13 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Others',
-                'year_level' => '2',
                 'status' => 'active',
-                'description' => 'Other unclassified academic levels.',
+                'description' => 'Other unclassified.',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'name' => 'Second Year',
-                'year_level' => '8',
                 'status' => 'active',
                 'description' => 'Second year college/university level.',
                 'created_at' => now(),
@@ -71,7 +64,6 @@ class AcademicLevelSeeder extends Seeder
             ],
             [
                 'name' => 'Third Year',
-                'year_level' => '16',
                 'status' => 'active',
                 'description' => 'Third year college/university level.',
                 'created_at' => now(),

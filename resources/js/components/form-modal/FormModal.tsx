@@ -11,13 +11,13 @@
  * everything else — seeding, validation, submit, error mapping — is handled here.
  */
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Formik } from 'formik';
+import { useMemo } from 'react';
 import { ModalCenter } from '@/components/modal/ModalCenter';
 import { ModalSide } from '@/components/modal/ModalSide';
 import { isFieldVisible } from '@/components/table/utils';
 import { ApiError } from '@/lib/apiFetch';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Formik } from 'formik';
-import { useMemo } from 'react';
 import { buildYupSchema } from './build-yup-schema';
 import {
     buildInitialValues,
@@ -51,6 +51,9 @@ export function FormModal<T extends object = Record<string, unknown>>({
     closeOnEscape = true,
     closeOnOverlayClick = true,
     uploadProgress = null,
+    'data-cy': dataCy,
+    submitButtonDataCy,
+    closeButtonDataCy,
 }: FormModalProps<T>) {
     const queryClient = useQueryClient();
     const visibleFields = useMemo(
@@ -91,10 +94,15 @@ export function FormModal<T extends object = Record<string, unknown>>({
         cancelLabel,
         uploadProgress,
         mutation,
+        submitButtonDataCy,
+        closeButtonDataCy,
     } as unknown as FormModalConfig;
 
     const handleClose = () => {
-        if (mutation.isPending) return;
+        if (mutation.isPending) {
+return;
+}
+
         onClose();
     };
 
@@ -106,6 +114,7 @@ export function FormModal<T extends object = Record<string, unknown>>({
                 enableReinitialize={false}
                 onSubmit={async (values, helpers) => {
                     helpers.setStatus(undefined);
+
                     try {
                         await mutation.mutateAsync(
                             buildPayload(visibleFields, values),
@@ -115,6 +124,7 @@ export function FormModal<T extends object = Record<string, unknown>>({
                         if (err instanceof ApiError && err.errors) {
                             helpers.setErrors(mapApiErrorsToFormik(err.errors));
                         }
+
                         helpers.setStatus(
                             err instanceof Error
                                 ? err.message
@@ -137,6 +147,7 @@ export function FormModal<T extends object = Record<string, unknown>>({
                         ModalComponent={FormModalBody}
                         closeOnEscape={closeOnEscape}
                         closeOnOverlayClick={closeOnOverlayClick}
+                        data-cy={dataCy}
                     />
                 ) : (
                     <ModalCenter<FormModalConfig>
@@ -148,6 +159,7 @@ export function FormModal<T extends object = Record<string, unknown>>({
                         ModalComponent={FormModalBody}
                         closeOnEscape={closeOnEscape}
                         closeOnOverlayClick={closeOnOverlayClick}
+                        data-cy={dataCy}
                     />
                 )}
             </Formik>

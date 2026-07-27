@@ -21,7 +21,14 @@ class UserSeeder extends Seeder
         $this->makeUser('contact@frontlinebusiness.com.ph', 'Admin', 'Frontline', 'admin');
         // $this->makeUser('emmanuel.manalo@frontlinebusiness.com.ph', 'Emmanuel', 'Manalo', 'trainer');
         $this->makeUser('vincent.ramirez@frontlinebusiness.com.ph', 'Vincent', 'Ramirez', 'trainer');
-        // $this->makeUser('emmszhii@gmail.com', 'James', 'Reid', 'trainee'); 
+        // $this->makeUser('emmszhii@gmail.com', 'James', 'Reid', 'trainee');
+
+        // A couple more trainers so seeded Tasks (see TaskSeeder) have varied
+        // trainer_id assignments instead of piling everything onto one account.
+        User::factory()
+            ->count(2)
+            ->create()
+            ->each(fn(User $user) => $user->assignRole('trainer'));
     }
 
     protected function makeUser(string $email, string $first, string $last, string $role): User

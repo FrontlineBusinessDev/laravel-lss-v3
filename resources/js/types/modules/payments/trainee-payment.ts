@@ -1,5 +1,7 @@
 import type { ColumnDef } from '@/types/reusable/data-table';
 
+export type { PaymentMethod } from '@/types/modules/settings/payment-methods';
+
 /** Row shape returned by `/trainee/payments/pagination-search`. */
 export interface TraineePaymentRow extends Record<string, unknown> {
     id: number;

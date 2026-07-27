@@ -91,13 +91,13 @@ export function YearlyCalendarView({
             {selectedEntries.map(e => {
           const color = getSchoolColor(e.primarySchool);
           return <li key={e.batch.id} data-cy="yearly-calendar-view-li-23">
-                  <button onClick={() => onSelect(e)} className="flex w-full items-center gap-2 rounded-md border border-neutral-200 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-neutral-50" data-cy="yearly-calendar-view-button-select">
+                  <button onClick={() => onSelect(e)} className="flex w-full items-center gap-2 rounded-md border border-neutral-200 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-neutral-50" data-cy="schedule-entry-card">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{
                 backgroundColor: color.solid
               }} data-cy="yearly-calendar-view-span-25" />
-                    <span className="font-mono font-medium text-ink" data-cy="yearly-calendar-view-span-26">{e.batch.batchNo}</span>
+                    <span className="font-mono font-medium text-ink" data-cy="yearly-calendar-view-span-26">{e.batch.batch_code}</span>
                     <span className="truncate text-neutral-500" data-cy="yearly-calendar-view-span-27">
-                      {e.batch.programType} · {e.primarySchool}
+                      {e.batch.program_type} · {e.primarySchool}
                     </span>
                   </button>
                 </li>;

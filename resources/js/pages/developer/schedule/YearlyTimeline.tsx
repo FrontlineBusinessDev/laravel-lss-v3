@@ -51,22 +51,22 @@ export function YearlyTimeline({
             const widthPct = Math.max(1.5, (dayOfYear(rangeEnd) - dayOfYear(rangeStart)) / totalDays * 100);
             return <div key={entry.batch.id} className="flex items-center gap-2" data-cy="yearly-timeline-div-15">
                   <div className="w-44 shrink-0 pr-2" data-cy="yearly-timeline-div-16">
-                    <div className="truncate font-mono text-xs font-medium text-ink" data-cy="yearly-timeline-div-17">{entry.batch.batchNo}</div>
-                    <div className="truncate text-[11px] text-neutral-400" data-cy="yearly-timeline-div-18">{entry.batch.programType}</div>
+                    <div className="truncate font-mono text-xs font-medium text-ink" data-cy="yearly-timeline-div-17">{entry.batch.batch_code}</div>
+                    <div className="truncate text-[11px] text-neutral-400" data-cy="yearly-timeline-div-18">{entry.batch.program_type}</div>
                   </div>
                   <div className="relative h-8 flex-1 rounded-sm bg-neutral-50" data-cy="yearly-timeline-div-19">
-                    <button onClick={() => onSelect(entry)} title={`${entry.batch.batchNo} · ${formatShortDate(entry.start)} – ${formatShortDate(entry.end)}`} className="group absolute top-1/2 flex h-5 -translate-y-1/2 items-center gap-1.5 rounded-pill px-2 text-[11px] font-medium shadow-card transition-all hover:h-6 hover:shadow-popover" style={{
+                    <button onClick={() => onSelect(entry)} title={`${entry.batch.batch_code} · ${formatShortDate(entry.start)} – ${formatShortDate(entry.end)}`} className="group absolute top-1/2 flex h-5 -translate-y-1/2 items-center gap-1.5 rounded-pill px-2 text-[11px] font-medium shadow-card transition-all hover:h-6 hover:shadow-popover" style={{
                   left: `${leftPct}%`,
                   width: `${widthPct}%`,
                   minWidth: '28px',
                   backgroundColor: color.bg,
                   color: color.text,
                   border: `1px solid ${color.border}`
-                }} data-cy="yearly-timeline-button-select">
+                }} data-cy="schedule-entry-card">
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{
                     backgroundColor: color.solid
                   }} data-cy="yearly-timeline-span-21" />
-                      <span className="truncate" data-cy="yearly-timeline-span-22">{entry.trainees.length || entry.batch.trainees}</span>
+                      <span className="truncate" data-cy="yearly-timeline-span-22">{entry.trainees.length}</span>
                     </button>
                   </div>
                 </div>;
@@ -82,19 +82,19 @@ export function YearlyTimeline({
         const color = getSchoolColor(entry.primarySchool);
         return <button key={entry.batch.id} onClick={() => onSelect(entry)} className="rounded-lg border border-neutral-200 p-3 text-left transition-colors active:bg-neutral-50" style={{
           borderLeft: `3px solid ${color.solid}`
-        }} data-cy="yearly-timeline-button-select-2">
+        }} data-cy="schedule-entry-card">
               <div className="mb-1 flex items-center justify-between gap-2" data-cy="yearly-timeline-div-26">
-                <span className="font-mono text-sm font-semibold text-ink" data-cy="yearly-timeline-span-27">{entry.batch.batchNo}</span>
+                <span className="font-mono text-sm font-semibold text-ink" data-cy="yearly-timeline-span-27">{entry.batch.batch_code}</span>
                 <StatusBadge status={entry.batch.status} data-cy="yearly-timeline-status-badge-28" />
               </div>
-              <p className="text-xs text-neutral-500" data-cy="yearly-timeline-p-29">{entry.batch.programType}</p>
+              <p className="text-xs text-neutral-500" data-cy="yearly-timeline-p-29">{entry.batch.program_type}</p>
               <div className="mt-1.5 flex items-center justify-between text-xs text-neutral-500" data-cy="yearly-timeline-div-30">
                 <span data-cy="yearly-timeline-span-31">
                   {formatShortDate(entry.start)} &ndash; {formatShortDate(entry.end)}
                 </span>
                 <span className="flex items-center gap-1" data-cy="yearly-timeline-span-32">
                   <Users size={12} data-cy="yearly-timeline-users-33" />
-                  {entry.trainees.length || entry.batch.trainees}
+                  {entry.trainees.length}
                 </span>
               </div>
             </button>;

@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import BatchDetailLayout from '@/layouts/batches/BatchDetailLayout';
 import { cn } from '@/lib/utils';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import type { AppBatches } from '@/types/modules/batches/batches';
 import type { TraineeRow } from '@/types/modules/batches/trainees';
 import { columns } from '@/types/modules/batches/trainees';

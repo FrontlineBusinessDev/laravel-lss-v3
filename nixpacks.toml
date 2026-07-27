@@ -1,29 +1,29 @@
-# OPTIMIZED LAREVEL OCTANE (FRANKENPHP) + INERTIA SSR CONFIG
+# OPTIMIZED LARAVEL OCTANE (FRANKENPHP) + INERTIA SSR CONFIG
 
 [phases.setup]
-# Force Nixpacks to include both PHP/Composer and Node/NPM in the final production container
 pkgs = ["php", "composer", "nodejs", "npm"]
 
 [phases.install]
 cmds = [
-  "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev",
+  "composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader",
   "npm ci",
+  # Pinned FrankenPHP binary (not `octane:install`'s own downloader): the
+  # upstream "latest" GitHub release intermittently ships without the
+  # `-gnu` asset (see laravel/octane#975, php/frankenphp#1276), which makes
+  # `octane:install --server=frankenphp` fail the build with "FrankenPHP
+  # asset not found." Fetching a known-good release ourselves first means
+  # octane:install finds this binary already in place and skips its own
+  # (flaky) download. Bump the version below if a newer release is needed.
+  "curl -fL -o frankenphp https://github.com/php/frankenphp/releases/download/v1.12.5/frankenphp-linux-x86_64-gnu",
+  "chmod +x frankenphp",
   "php artisan octane:install --server=frankenphp --no-interaction"
 ]
 
 [phases.build]
-# Only compile assets here to avoid build-time database connection errors
 cmds = [
-  "npm run build"
+  "npm run build",
+  "chmod +x frankenphp"
 ]
 
 [start]
-# 1. Ensure the FrankenPHP binary has executable permissions
-# 2. Run database migrations safely
-# 3. Cache configuration and routes at runtime (where the DB is accessible)
-# 4. Start the Inertia SSR process in the background
-# 5. Start a self-restarting queue worker in the background (QUEUE_CONNECTION=database
-#    means queued mail/jobs otherwise pile up in the `jobs` table with nothing to
-#    process them — this container has no separate worker service, so it must run here)
-# 6. Boot FrankenPHP Octane server in the foreground
-cmd = "chmod +x frankenphp && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache && (php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &) && (while true; do php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1; sleep 2; done &) && php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000"
+cmd = "bash scripts/deploy.sh"

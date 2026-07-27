@@ -4,7 +4,7 @@ import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
-import type { StatusKind } from '@/types';
+import type { StatusKind } from '@/types/reusable/status-kind';
 
 /** The 4 most recently created batches. */
 export function RecentBatchesWidget() {
@@ -23,6 +23,7 @@ export function RecentBatchesWidget() {
             error={error}
             isEmpty={rows.length === 0}
             emptyMessage="No batches yet."
+            className="max-h-82 min-h-82"
         >
             <ul className="flex flex-col gap-1.5">
                 {rows.map((batch) => (
@@ -40,9 +41,7 @@ export function RecentBatchesWidget() {
                                     {batch.program_type ?? '—'}
                                 </div>
                             </div>
-                            <StatusBadge
-                                status={batch.status as StatusKind}
-                            />
+                            <StatusBadge status={batch.status as StatusKind} />
                         </button>
                     </li>
                 ))}

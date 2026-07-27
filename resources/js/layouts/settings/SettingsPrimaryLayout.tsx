@@ -1,7 +1,7 @@
+import { Link, usePage } from '@inertiajs/react';
+import type { ReactNode } from 'react';
 import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
-import { Link, usePage } from '@inertiajs/react';
-import { ReactNode } from 'react';
 
 interface LayoutProps {
     children: ReactNode;
@@ -39,6 +39,12 @@ const NAV_LINKS = [
         href: '/settings/leave-categories',
         permission: 'manage leave',
     },
+    {
+        id: 'Payment methods',
+        label: 'Payment Methods',
+        href: '/settings/payment-methods',
+        permission: 'manage settings payment methods',
+    },
 ] as const;
 
 export default function SettingsPrimaryLayout({
@@ -75,9 +81,13 @@ export default function SettingsPrimaryLayout({
                 >
                     {NAV_LINKS.map((link) => {
                         // 2. Filter tabs out dynamically based on user permissions
-                        if (!can(link.permission)) return null;
+                        if (!can(link.permission)) {
+                            return null;
+                        }
+
                         // 3. Determine if the link is currently active
                         const isActive = url.startsWith(link.href);
+
                         return (
                             <Link
                                 key={link.id}
