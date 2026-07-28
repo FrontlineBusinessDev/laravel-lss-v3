@@ -1,3 +1,4 @@
+import { formatDateShort } from '@/lib/date'
 import type { StatusKind } from '@/types/reusable/status-kind'
 import type { ScheduleApiBatch, ScheduleApiEntry, ScheduleApiTrainee } from '@/types/modules/schedule/schedule'
 
@@ -106,7 +107,7 @@ export function daysInYear(year: number): number {
 }
 
 export function formatShortDate(d: Date): string {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return formatDateShort(d)
 }
 
 export function toKey(y: number, m: number, d: number): string {

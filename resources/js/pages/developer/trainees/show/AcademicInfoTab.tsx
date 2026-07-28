@@ -178,12 +178,12 @@ export default function AcademicInfoTab({
                         />
                         <Field
                             label="Academic level"
-                            value={trainee.academic_level?.name ?? ''}
+                            value={trainee.batch?.academic_level?.name ?? ''}
                             data-cy="academic-info-tab-field-academic-level"
                         />
                         <Field
                             label="Program type"
-                            value={trainee.batch?.setup ?? ''}
+                            value={trainee.academic_program_type?.name ?? ''}
                             data-cy="academic-info-tab-field-program-type"
                         />
                         <Field

@@ -2,13 +2,7 @@ import { UserX } from 'lucide-react';
 import { trainerDashboardService } from '@/api-service-layer/trainer/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-    });
-}
+import { formatDate } from '@/lib/date';
 
 /** Trainees currently on approved leave, across this trainer's assigned batches. */
 export function OnLeaveTrackerCard() {

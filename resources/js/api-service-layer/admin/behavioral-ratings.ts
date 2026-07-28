@@ -36,6 +36,26 @@ export const behavioralQuestionsService = {
                 '/ratings/behavioral-questions/lookup?status=all&per_page=50',
             ),
         ),
+    /** Distinct in-use sections (free text) — the Setup tab's grouping pills. */
+    sections: async (): Promise<string[]> =>
+        unwrap<string[]>(
+            await http.get('/ratings/behavioral-questions/sections'),
+        ),
+    /** Full (non-paginated) ordered question list for one section. */
+    forSection: async (params: {
+        section: string;
+        search?: string;
+        status?: string;
+    }): Promise<BehavioralQuestion[]> =>
+        unwrap<BehavioralQuestion[]>(
+            await http.get('/ratings/behavioral-questions/for-section', {
+                params,
+            }),
+        ),
+    /** Persists a drag-and-drop reorder — ids in their new display order. */
+    reorder: async (ids: number[]): Promise<void> => {
+        await http.post('/ratings/behavioral-questions/reorder', { ids });
+    },
     create: crud.create,
     update: crud.update,
     archive: crud.archive,

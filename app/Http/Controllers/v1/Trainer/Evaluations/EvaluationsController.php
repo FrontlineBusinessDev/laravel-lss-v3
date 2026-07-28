@@ -34,7 +34,7 @@ class EvaluationsController extends BaseController
             ->join('app_trainees', 'app_trainees.id', '=', 'app_trainer_evaluations.trainee_id')
             ->whereNotNull('app_trainer_evaluations.submitted_at')
             ->whereIn('app_trainer_evaluations.batch_id', $this->assignedBatchIds())
-            ->with(['trainee:id,first_name,last_name', 'trainer:id,first_name,last_name', 'batch:id,batch_code'])
+            ->with(['trainee:id,first_name,last_name,avatar_path,net_amount_required', 'trainer:id,first_name,last_name', 'batch:id,batch_code'])
             ->select('app_trainer_evaluations.*');
     }
 

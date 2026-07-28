@@ -1,4 +1,5 @@
 import { apiFetchJson } from '@/lib/apiFetch';
+import { formatDate } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import type { FieldOption } from '@/types/reusable/fields';
 
@@ -48,7 +49,7 @@ export const columns: ColumnDef<TraineeTaskRatingRow>[] = [
         sortable: true,
         filterable: true,
         type: 'date-range',
-        render: (value) => (value as string).slice(0, 10),
+        render: (value) => formatDate(value as string),
     },
     {
         key: 'hours_spent',

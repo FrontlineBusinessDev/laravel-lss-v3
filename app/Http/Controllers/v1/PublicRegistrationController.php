@@ -6,7 +6,7 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Rules\UniqueEmailAcrossIdentities;
 use App\Mail\ApplicationSubmittedMail;
 use App\Mail\NewApplicationAdminMail;
-use App\Models\AcademicLevel;
+use App\Models\AcademicProgramType;
 use App\Models\Batches;
 use App\Models\Notification;
 use App\Models\PartnerSchools;
@@ -87,14 +87,14 @@ class PublicRegistrationController extends Controller
                 ->orderBy('school_name')
                 ->get(['id', 'school_name'])
                 ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
-            // Academic Level is now chosen per-trainee at registration time
-            // (it used to be a fixed batch attribute), so it's passed as a
-            // guest-reachable prop list the same way `schools` is.
-            'academicLevels' => AcademicLevel::query()
+            // Academic Program Type is chosen per-trainee at registration time
+            // (Academic Level now lives on the batch instead), so it's passed
+            // as a guest-reachable prop list the same way `schools` is.
+            'academicProgramTypes' => AcademicProgramType::query()
                 ->where('status', Statuses::ACTIVE)
                 ->orderBy('name')
                 ->get(['id', 'name'])
-                ->map(fn(AcademicLevel $l) => ['id' => $l->id, 'name' => $l->name]),
+                ->map(fn(AcademicProgramType $t) => ['id' => $t->id, 'name' => $t->name]),
         ])->withViewData([
             // Server-rendered into the Blade <head> so Facebook's non-JS crawler
             // sees the og tags (the Inertia <Head> versions only exist after
@@ -206,7 +206,7 @@ class PublicRegistrationController extends Controller
                 // provisions the account. See that controller for the
                 // status=>active transition.
                 'status' => Statuses::PENDING,
-                'academic_level_id' => $validated['academic_level_id'],
+                'academic_program_type_id' => $validated['academic_program_type_id'],
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => $validated['email'],
@@ -281,7 +281,7 @@ class PublicRegistrationController extends Controller
             'required_hours' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'address' => ['required', 'string', 'max:1000'],
             'school_id' => ['required', 'integer', 'exists:app_settings_partner_schools,id'],
-            'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
+            'academic_program_type_id' => ['required', 'integer', 'exists:app_settings_academic_program_type,id'],
             'resume' => ['required', ...$file],
             'endorsement_letter' => ['nullable', ...$file],
             'moa' => ['nullable', ...$file],

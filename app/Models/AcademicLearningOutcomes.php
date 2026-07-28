@@ -16,16 +16,10 @@ class AcademicLearningOutcomes extends Model
         'status',
         'learning_outcomes',
         'academic_industry_id',
-        'academic_program_id',
     ];
 
     public function academicIndustry(): BelongsTo
     {
         return $this->belongsTo(AcademicIndustry::class, 'academic_industry_id');
-    }
-
-    public function academicProgram(): BelongsTo
-    {
-        return $this->belongsTo(AcademicProgram::class, 'academic_program_id');
     }
 }

@@ -6,16 +6,10 @@ import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
 import { ModalCenter } from '@/components/modal/ModalCenter';
 import { useState } from 'react';
 import type { ModalComponentProps } from '@/components/modal/ModalCenter';
+import { formatDate } from '@/lib/date';
 import type { OnLeaveTrainee } from '@/types/modules/dashboard/trainer-dashboard';
 
 const MAX_VISIBLE = 5;
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-    });
-}
 
 function OnLeaveRow({
     row,

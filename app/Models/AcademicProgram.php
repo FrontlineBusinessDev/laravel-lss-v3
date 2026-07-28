@@ -15,12 +15,8 @@ class AcademicProgram extends Model
     protected $fillable = [
         'status',
         'name',
+        'abbreviation',
     ];
-
-    public function learningOutcomes(): HasMany
-    {
-        return $this->hasMany(AcademicLearningOutcomes::class, 'academic_program_id');
-    }
 
     public function batches(): HasMany
     {

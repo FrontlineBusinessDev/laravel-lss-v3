@@ -19,7 +19,7 @@ class AcademicLevelController extends BaseController
     protected array $activeColumns = ['id', 'name'];
     protected string $sortBy = 'name';
     // Blocks deletion if referenced by active trainees
-    protected array $inUseRelations = ['trainees'];
+    protected array $inUseRelations = ['batches'];
     protected function storeRules(): array
     {
         return [
