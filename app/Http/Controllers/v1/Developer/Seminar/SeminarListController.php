@@ -68,7 +68,6 @@ class SeminarListController extends BaseController
             'fee' => ['required', 'numeric'],
             'max_participants' => ['nullable', 'integer', 'min:1'],
             'status' => ['required', Rule::in(Statuses::all())],
-            'type' => ['required', 'string'],
             'is_public_url_enable' => ['required', 'boolean'],
             // seminar_code + registration_link are intentionally absent:
             // they are system-generated and must never be user-supplied.

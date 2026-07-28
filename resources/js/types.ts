@@ -382,6 +382,7 @@ export interface Seminar {
     /** Auto-generated on creation. Stays reachable while status === 'active'. */
     registration_link: string;
     createdAt?: string; // ISO date
+    seminar_code?: string; // ISO date
     is_public_url_enable: boolean;
 }
 

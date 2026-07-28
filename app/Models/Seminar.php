@@ -17,6 +17,7 @@ class Seminar extends Model
         'fee',
         'max_participants',
         'status',
+        'seminar_code',
         'type',
         'registration_link',
     ];

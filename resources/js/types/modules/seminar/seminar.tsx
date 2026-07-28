@@ -14,12 +14,12 @@ export interface AppSeminar extends Record<string, unknown> {
     date: string;
     venue: string;
     fee: number;
-    maxParticipants?: number;
-    registeredCount: number;
+    max_participants?: number;
+    registered_count: number;
     /** Seminar type/track (e.g. "Technical & Automation Workshops"). Determines which seminar question set applies. */
     type: string;
     /** Auto-generated on creation. Stays reachable while status === 'active'. */
-    registrationLink: string;
+    registration_link: string;
     createdAt?: string; // ISO date
     is_public_url_enable: boolean;
     created_at: string;
@@ -35,7 +35,7 @@ export const STATUS_OPTIONS: FieldOption[] = [
 ];
 
 export const columns: ColumnDef<AppSeminar>[] = [
-    { key: 'saminar_code', label: 'Seminar Code', searchable: true },
+    { key: 'seminar_code', label: 'Seminar Code', searchable: true },
     {
         key: 'status',
         label: 'Status',
@@ -48,7 +48,7 @@ export const columns: ColumnDef<AppSeminar>[] = [
     { key: 'created_at', label: 'Created' },
 ];
 
-// Create/edit modal fields. saminar_code and public_registration_url_id are
+// Create/edit modal fields. seminar_code and public_registration_url_id are
 // intentionally absent — both are system-generated and protected from input.
 export const fields: FieldDef<AppSeminar>[] = [
     {

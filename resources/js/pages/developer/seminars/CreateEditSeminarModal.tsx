@@ -7,6 +7,7 @@ import type { Seminar } from '@/types';
 import { AppSeminar } from '@/types/modules/seminar/seminar';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { Loader2 } from 'lucide-react';
+import { Field } from '../batches/CreateBatchFields';
 
 export interface SeminarDraft {
     topic: string;
@@ -16,6 +17,7 @@ export interface SeminarDraft {
     fee: string;
     registered_count: number;
     registration_link: string;
+    seminar_code?: string;
     max_participants: string;
 }
 const EMPTY_DRAFT: SeminarDraft = {
@@ -26,6 +28,7 @@ const EMPTY_DRAFT: SeminarDraft = {
     fee: '',
     registered_count: 0,
     registration_link: '',
+    seminar_code: '',
     max_participants: '',
 };
 interface Props {
@@ -66,6 +69,7 @@ export function CreateEditSeminarModal({
                 fee: String(editing.fee ?? ''),
                 registered_count: editing.registered_count,
                 registration_link: editing.registration_link,
+                seminar_code: editing.seminar_code,
                 max_participants: editing.max_participants
                     ? String(editing.max_participants)
                     : '',
@@ -77,11 +81,15 @@ export function CreateEditSeminarModal({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    console.log('row', row);
+
     const [values, setValues] = useState<Seminar>(() => ({
         id: row?.id ?? '',
         topic: row?.topic ?? '',
         description: row?.description ?? '',
-        date: row?.date ? String(row.date).slice(0, 10) : '',
+        date: row?.date
+            ? String(row.date).slice(0, 10)
+            : new Date().toISOString().slice(0, 10),
         venue: row?.venue ?? '',
         fee: row?.fee ?? 0, // Fallback to number 0
         max_participants: row?.max_participants ?? undefined, // Optional field
@@ -89,6 +97,7 @@ export function CreateEditSeminarModal({
         registered_count: row?.registered_count ?? 0, // Fallback to number 0
         type: row?.type ?? '',
         registration_link: row?.registration_link ?? '',
+        seminar_code: row?.seminar_code ?? '',
         is_public_url_enable: row?.is_public_url_enable ?? false,
     }));
 
@@ -153,6 +162,7 @@ export function CreateEditSeminarModal({
             }
             setFormError(error.message);
         } finally {
+            showToast(row ? 'seminar updated' : 'seminar created', 'success');
             setSubmitting(false);
         }
     };
@@ -160,11 +170,10 @@ export function CreateEditSeminarModal({
         <Modal
             open={open}
             onClose={onClose}
-            title={editing ? 'Edit seminar' : 'Add seminar'}
+            title={isEdit ? 'Edit seminar' : 'Add seminar'}
             maxWidth={460}
             data-cy="create-edit-seminar-modal-modal-close"
         >
-            {' '}
             <form
                 onSubmit={handleSubmit}
                 className="space-y-4"
@@ -173,13 +182,8 @@ export function CreateEditSeminarModal({
                 <TextField
                     label="Seminar topic"
                     placeholder="e.g. AI Automation for HR"
-                    value={draft.topic}
-                    onChange={(e) =>
-                        setDraft((d) => ({
-                            ...d,
-                            topic: e.target.value,
-                        }))
-                    }
+                    value={values.topic}
+                    onChange={(e) => set('topic', e.target.value)}
                     className={
                         touched && !draft.topic.trim()
                             ? 'border-danger-300!'
@@ -190,13 +194,8 @@ export function CreateEditSeminarModal({
                 <TextAreaField
                     label="Description"
                     placeholder="Seminar description"
-                    value={draft.description}
-                    onChange={(e) =>
-                        setDraft((d) => ({
-                            ...d,
-                            description: e.target.value,
-                        }))
-                    }
+                    value={values.description}
+                    onChange={(e) => set('description', e.target.value)}
                     data-cy="create-edit-seminar-modal-text-area-field-description"
                 />
                 <div
@@ -206,39 +205,24 @@ export function CreateEditSeminarModal({
                     <TextField
                         label="Date"
                         type="date"
-                        value={draft.date}
-                        onChange={(e) =>
-                            setDraft((d) => ({
-                                ...d,
-                                date: e.target.value,
-                            }))
-                        }
+                        value={values.date}
+                        onChange={(e) => set('date', e.target.value)}
                         data-cy="create-edit-seminar-modal-text-field-date"
                     />
                     <TextField
                         label="Registration fee (PHP)"
                         type="number"
                         placeholder="0"
-                        value={draft.fee}
-                        onChange={(e) =>
-                            setDraft((d) => ({
-                                ...d,
-                                fee: e.target.value,
-                            }))
-                        }
+                        value={values.fee}
+                        onChange={(e) => set('fee', Number(e.target.value))}
                         data-cy="create-edit-seminar-modal-text-field-0"
                     />
                 </div>
                 <TextField
                     label="Venue / Platform"
                     placeholder="Online or physical location"
-                    value={draft.venue}
-                    onChange={(e) =>
-                        setDraft((d) => ({
-                            ...d,
-                            venue: e.target.value,
-                        }))
-                    }
+                    value={values.venue}
+                    onChange={(e) => set('venue', e.target.value)}
                     data-cy="create-edit-seminar-modal-text-field-venue-platform"
                 />
                 <TextField
@@ -246,12 +230,9 @@ export function CreateEditSeminarModal({
                     type="number"
                     placeholder="Leave blank for unlimited"
                     optional
-                    value={draft.max_participants}
+                    value={values.max_participants}
                     onChange={(e) =>
-                        setDraft((d) => ({
-                            ...d,
-                            max_participants: e.target.value,
-                        }))
+                        set('max_participants', Number(e.target.value))
                     }
                     data-cy="create-edit-seminar-modal-text-field-maximum-participants"
                 />
@@ -262,7 +243,6 @@ export function CreateEditSeminarModal({
                 >
                     <input
                         type="checkbox"
-                        // checked={draft.is_public_url_enable}
                         onChange={(e) =>
                             set('is_public_url_enable', e.target.checked)
                         }
@@ -276,6 +256,16 @@ export function CreateEditSeminarModal({
                         Enable public registration URL
                     </span>
                 </label>
+
+                {formError && (
+                    <p
+                        className="text-danger-700 rounded-md bg-danger-50 px-3 py-2 text-xs"
+                        data-cy="create-batch-modal-p-15"
+                    >
+                        {formError}
+                    </p>
+                )}
+
                 <div
                     className="flex items-center justify-end gap-2 pt-2"
                     data-cy="create-seminar-modal-div-16"
