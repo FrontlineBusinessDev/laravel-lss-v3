@@ -99,6 +99,9 @@ export interface AppTraineeCertificate {
     issued_at: string | null;
     citation: { id: number; title: string } | null;
     template?: CertificateTemplate | null;
+    // Frozen at issue()/reissue() time — the outcomes the trainee had achieved
+    // as of that moment, independent of their current live outcome state.
+    learning_outcomes_snapshot?: { id: number; title: string }[] | null;
 }
 
 export interface AppTraineeTaskRatingEvaluator {

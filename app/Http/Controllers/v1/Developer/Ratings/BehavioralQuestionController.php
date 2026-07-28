@@ -6,6 +6,9 @@ use App\Http\Controllers\v1\BaseController;
 use App\Models\BehavioralQuestion;
 use App\Support\Statuses;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -50,6 +53,68 @@ class BehavioralQuestionController extends BaseController
     protected function updateRules(Model $model): array
     {
         return $this->storeRules();
+    }
+
+    /**
+     * Distinct in-use sections (free text) — the Setup tab's grouping pills,
+     * mirroring EvaluationSeminarQuestionnaire::categories().
+     */
+    public function sections(): JsonResponse
+    {
+        $inUse = BehavioralQuestion::query()
+            ->whereNotNull('section')
+            ->distinct()
+            ->orderBy('section')
+            ->pluck('section');
+
+        return response()->json(['data' => $inUse]);
+    }
+
+    /**
+     * Full (non-paginated) ordered question list for one section, mirroring
+     * EvaluationSeminarQuestionnaire::forCategory().
+     */
+    public function forSection(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'section' => ['required', 'string', 'max:255'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in(Statuses::all())],
+        ]);
+
+        $questions = BehavioralQuestion::query()
+            ->where('section', $validated['section'])
+            ->when(
+                $validated['search'] ?? null,
+                fn($q, $search) => $q->where('question', 'like', "%{$search}%"),
+            )
+            ->when($validated['status'] ?? null, fn($q, $status) => $q->where('status', $status))
+            ->orderBy('order')
+            ->get();
+
+        return response()->json(['data' => $questions]);
+    }
+
+    /**
+     * Persists a drag-and-drop reorder within one section — `ids` is the
+     * full, already-reordered id list; each gets its array index as its new
+     * `order`. Scoped to whatever subset the caller drags (a full,
+     * unfiltered section in practice), so it never touches ids outside it.
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:app_behavioral_questions,id'],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['ids'] as $index => $id) {
+                BehavioralQuestion::where('id', $id)->update(['order' => $index]);
+            }
+        });
+
+        return response()->json(['success' => true]);
     }
 
     /**

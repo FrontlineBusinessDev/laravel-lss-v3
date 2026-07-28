@@ -11,9 +11,11 @@ interface DailyTaskSheetPrintProps {
  * shown only inside the print media query (`print:block`, combined with the
  * global `.print-area` isolation rule in index.css).
  *
- * Per trainee: Trainee Name, Batch, Trainer, and their list of
- * Task / Description / Time Goal / Time Spent / Remarks / Date — with a
- * signature line, matching the spec's "Daily Task Sheet" contents.
+ * Per trainee: Trainee Name, Batch, and their list of Date / Task /
+ * Description / Time Goal / Time Spent / Remarks / Trainer — with a
+ * signature line, matching the spec's "Daily Task Sheet" contents. Trainer
+ * rides per-row (not the summary header) since a trainee's tasks across a
+ * date range can span more than one trainer.
  */
 export function DailyTaskSheetPrint({
   rows,
@@ -30,7 +32,6 @@ export function DailyTaskSheetPrint({
       {[...byTrainee.entries()].map(([trainee, tasks], idx) => {
       const totalTimeSpent = tasks.reduce((sum, t) => sum + (t.onLeave ? 0 : t.timeSpent), 0);
       const totalTimeGoal = tasks.reduce((sum, t) => sum + t.timeGoal, 0);
-      const trainers = [...new Set(tasks.map(t => t.trainer))].join(', ');
       const batchNo = tasks[0]?.batchNo ?? '';
       return <section key={trainee} className="p-8" style={{
         pageBreakAfter: idx < byTrainee.size - 1 ? 'always' : 'auto'
@@ -52,7 +53,6 @@ export function DailyTaskSheetPrint({
             <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs" data-cy="daily-task-sheet-print-div-12">
               <div data-cy="daily-task-sheet-print-div-13"><span className="font-semibold" data-cy="daily-task-sheet-print-span-trainee-name">Trainee Name:</span> {trainee}</div>
               <div data-cy="daily-task-sheet-print-div-15"><span className="font-semibold" data-cy="daily-task-sheet-print-span-batch">Batch:</span> {batchNo}</div>
-              <div data-cy="daily-task-sheet-print-div-17"><span className="font-semibold" data-cy="daily-task-sheet-print-span-trainer-s">Trainer(s):</span> {trainers}</div>
               <div data-cy="daily-task-sheet-print-div-19"><span className="font-semibold" data-cy="daily-task-sheet-print-span-report-generated">Report generated:</span> {generatedAt}</div>
             </div>
 
@@ -65,6 +65,7 @@ export function DailyTaskSheetPrint({
                   <th className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-th-time-goal">Time Goal</th>
                   <th className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-th-time-spent">Time Spent</th>
                   <th className="border border-ink px-2 py-1.5 text-left" data-cy="daily-task-sheet-print-th-remarks">Remarks</th>
+                  <th className="border border-ink px-2 py-1.5 text-left" data-cy="daily-task-sheet-print-th-trainer">Trainer</th>
                 </tr>
               </thead>
               <tbody data-cy="daily-task-sheet-print-tbody-30">
@@ -75,6 +76,7 @@ export function DailyTaskSheetPrint({
                     <td className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-td-h">{t.timeGoal}h</td>
                     <td className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-td-36">{t.onLeave ? '0h' : `${t.timeSpent}h`}</td>
                     <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-37">{t.onLeave ? t.leaveReason ?? 'On approved leave' : t.remarks ?? '\u2014'}</td>
+                    <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-trainer">{t.trainer}</td>
                   </tr>)}
               </tbody>
               <tfoot data-cy="daily-task-sheet-print-tfoot-38">
@@ -83,6 +85,7 @@ export function DailyTaskSheetPrint({
                   <td className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-td-h-2">{totalTimeGoal}h</td>
                   <td className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-td-h-3">{totalTimeSpent}h</td>
                   <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-43" />
+                  <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-trainer-total" />
                 </tr>
               </tfoot>
             </table>

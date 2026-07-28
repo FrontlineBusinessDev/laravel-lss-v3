@@ -226,7 +226,7 @@ class ReportController extends Controller
 
     protected function mapBatch(Batches $batch, bool $withActivities = false): array
     {
-        $trainees = $batch->trainees()->withCompletedHours()->get();
+        $trainees = $batch->trainees()->withCompletedHours()->with('school')->get();
         $financials = BatchFinancialsCalculator::forTrainees($trainees);
 
         $data = [

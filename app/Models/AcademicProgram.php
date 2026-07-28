@@ -18,11 +18,6 @@ class AcademicProgram extends Model
         'abbreviation',
     ];
 
-    public function learningOutcomes(): HasMany
-    {
-        return $this->hasMany(AcademicLearningOutcomes::class, 'academic_program_id');
-    }
-
     public function batches(): HasMany
     {
         return $this->hasMany(Batches::class, 'academic_program_id');

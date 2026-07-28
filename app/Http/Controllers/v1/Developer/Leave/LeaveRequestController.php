@@ -56,7 +56,7 @@ class LeaveRequestController extends BaseController
         /** @var User $user */
         $user = auth()->user();
         $query = LeaveRequest::query()->with([
-            'trainee:id,first_name,last_name,batch_id',
+            'trainee:id,first_name,last_name,batch_id,avatar_path,net_amount_required',
             'batch:id,batch_code',
             'leaveCategory:id,name,requires_document',
             'decidedBy:id,first_name,last_name',

@@ -227,6 +227,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/trainees/{id}/documents/{documentId}', [TraineeDocumentsController::class, 'deleteDocument'])->name('trainees.documents.destroy');
     Route::get('/trainees/{id}/learning-outcomes', [TraineesViewController::class, 'learningOutcomes'])->name('trainees.learningOutcomes');
     Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}', [TraineesController::class, 'updateLearningOutcomeStatus'])->name('trainees.learningOutcomes.updateStatus')->middleware('throttle:120,1');
+    Route::patch('/trainees/{id}/learning-outcomes/{outcomeId}/bulk', [TraineesController::class, 'bulkUpdateLearningOutcomeStatus'])->name('trainees.learningOutcomes.bulkUpdateStatus')->middleware('throttle:30,1');
     Route::post('/trainees/{id}/avatar', [TraineesController::class, 'updateAvatar'])->name('trainees.updateAvatar');
     Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
     Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
@@ -277,9 +278,14 @@ Route::middleware('auth')->group(function () {
             Route::post('/{id}', [TasksController::class, 'update'])->name('update');
             Route::patch('/{id}/complete', [TasksController::class, 'completeAction'])->name('complete');
             Route::patch('/{id}/lock', [TasksController::class, 'lockAction'])->name('lock');
+            Route::patch('/{id}/reopen', [TasksController::class, 'reopenAction'])->name('reopen');
             Route::patch('/{id}/remarks', [TasksController::class, 'updateRemarks'])->name('remarks');
             Route::patch('/{id}/time-spent', [TasksController::class, 'updateTimeSpent'])->name('time-spent');
             Route::delete('/{id}', [TasksController::class, 'destroy'])->name('destroy');
+            Route::get('/groups/{groupId}/roster', [TasksController::class, 'roster'])->name('groups.roster');
+            Route::patch('/groups/{groupId}/complete', [TasksController::class, 'completeGroupAction'])->name('groups.complete');
+            Route::patch('/groups/{groupId}/lock', [TasksController::class, 'lockGroupAction'])->name('groups.lock');
+            Route::delete('/groups/{groupId}', [TasksController::class, 'destroyGroup'])->name('groups.destroy');
             Route::prefix('daily-task')->name('daily-task.')->group(function () {
                 Route::get('/', [DailyTaskController::class, 'index'])->name('index');
                 Route::get('/list', [DailyTaskController::class, 'list'])->name('list');
@@ -318,6 +324,9 @@ Route::middleware('auth')->group(function () {
         });
         Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
             ->group(function () {
+                Route::get('/ratings/behavioral-questions/sections', [BehavioralQuestionController::class, 'sections'])->name('ratings.behavioral-questions.sections');
+                Route::get('/ratings/behavioral-questions/for-section', [BehavioralQuestionController::class, 'forSection'])->name('ratings.behavioral-questions.for-section');
+                Route::post('/ratings/behavioral-questions/reorder', [BehavioralQuestionController::class, 'reorder'])->name('ratings.behavioral-questions.reorder');
                 Route::crudModule('ratings/behavioral-questions', BehavioralQuestionController::class, 'ratings.behavioral-questions');
             });
     });

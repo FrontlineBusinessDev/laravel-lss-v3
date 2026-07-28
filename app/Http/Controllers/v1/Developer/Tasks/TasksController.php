@@ -39,7 +39,13 @@ class TasksController extends BaseController
     {
         $query = parent::newQuery()->with([
             'batch:id,batch_code',
-            'trainee:id,first_name,last_name',
+            // Trainees::$appends (avatar_url/total_paid/outstanding_balance/
+            // payment_status) reads avatar_path/net_amount_required off the
+            // model on serialization — a narrower select throws
+            // MissingAttributeException the moment this relation is returned
+            // as JSON (e.g. roster()), so both must ride along even though
+            // only first/last name are displayed here.
+            'trainee:id,first_name,last_name,avatar_path,net_amount_required',
             'trainer:id,first_name,last_name',
         ]);
 
@@ -358,8 +364,9 @@ class TasksController extends BaseController
             $validated['trainer_id'] = $user->id;
         }
 
-        $ids = DB::transaction(function () use ($validated) {
-            return collect($validated['trainee_ids'])->map(function ($traineeId) use ($validated) {
+        $groupId = (string) Str::uuid();
+        $ids = DB::transaction(function () use ($validated, $groupId) {
+            return collect($validated['trainee_ids'])->map(function ($traineeId) use ($validated, $groupId) {
                 return Task::create([
                     'date' => $validated['date'],
                     'batch_id' => $validated['batch_id'],
@@ -371,6 +378,7 @@ class TasksController extends BaseController
                     'priority' => $validated['priority'] ?? null,
                     'status' => 'open',
                     'time_spent' => 0,
+                    'task_group_id' => $groupId,
                 ])->id;
             });
         });
@@ -380,12 +388,16 @@ class TasksController extends BaseController
         return $this->sendResponse($records, 'Task(s) created successfully.', 201);
     }
 
-    /** Mark a task complete — locks in the trainee's time spent for reporting. */
+    /**
+     * Mark a task complete — locks in the trainee's time spent for reporting.
+     * Allowed even while Locked (authorized users can still close out a
+     * locked task); only the general remarks/time-spent edits stay blocked
+     * by assertTimeEntryEditable() while Locked.
+     */
     public function completeAction(int|string $id): JsonResponse
     {
         $model = $this->resolveModel($id);
         $this->authorize('update', $model);
-        abort_if($model->status === 'locked', 422, 'Locked tasks can no longer be edited or completed.');
 
         $model->update(['status' => 'completed', 'completed_at' => now()]);
 
@@ -406,6 +418,17 @@ class TasksController extends BaseController
         $model->update(['status' => 'locked', 'locked_at' => now()]);
 
         return $this->sendResponse($model, 'Task locked.');
+    }
+
+    /** Reopen a completed or locked task back to Open — clears the completed/locked timestamps. */
+    public function reopenAction(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        $model->update(['status' => 'open', 'completed_at' => null, 'locked_at' => null]);
+
+        return $this->sendResponse($model, 'Task reopened.');
     }
 
     /** Trainer/admin remarks on the task — blocked while Locked or while the trainee is on approved leave for that date. */

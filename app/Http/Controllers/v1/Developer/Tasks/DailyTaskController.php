@@ -124,9 +124,9 @@ class DailyTaskController extends Controller
                 && $task->date->toDateString() >= $l->leave_date->toDateString()
                 && $task->date->toDateString() <= $l->return_date->toDateString());
 
-            $leaveRemarks = $leave
-                ? sprintf('[Approved] %s - %s', $leave->leaveCategory->name ?? 'Leave', $leave->reason)
-                : null;
+            // Remarks shows only the Leave Type while on leave (e.g. "Vacation
+            // Leave") — no free-text reason or "[Approved]" prefix.
+            $leaveRemarks = $leave ? ($leave->leaveCategory->name ?? 'Leave') : null;
 
             return [
                 'id' => $task->id,

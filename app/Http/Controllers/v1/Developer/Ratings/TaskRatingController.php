@@ -52,7 +52,7 @@ class TaskRatingController extends Controller
         $trainees = Trainees::where('batch_id', $validated['batch_id'])
             ->where('status', 'active')
             ->orderBy('first_name')
-            ->get(['id', 'first_name', 'last_name']);
+            ->get(['id', 'first_name', 'last_name', 'avatar_path', 'net_amount_required']);
 
         return response()->json(['data' => $trainees]);
     }
@@ -68,7 +68,7 @@ class TaskRatingController extends Controller
 
         $ratings = TaskRating::where('batch_id', $validated['batch_id'])
             ->where('task_name', $validated['task_name'])
-            ->with(['trainee:id,first_name,last_name', 'evaluator:id,first_name,last_name'])
+            ->with(['trainee:id,first_name,last_name,avatar_path,net_amount_required', 'evaluator:id,first_name,last_name'])
             ->get();
 
         return response()->json(['data' => $ratings]);
@@ -113,7 +113,7 @@ class TaskRatingController extends Controller
             return $rating;
         });
 
-        return response()->json(['data' => $rating->load(['trainee:id,first_name,last_name', 'evaluator:id,first_name,last_name'])]);
+        return response()->json(['data' => $rating->load(['trainee:id,first_name,last_name,avatar_path,net_amount_required', 'evaluator:id,first_name,last_name'])]);
     }
 
     /** Audit trail for one rating, newest first. */

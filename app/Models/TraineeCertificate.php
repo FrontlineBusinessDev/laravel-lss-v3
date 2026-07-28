@@ -17,10 +17,12 @@ class TraineeCertificate extends Model
         'template_id',
         'issued_at',
         'issued_by',
+        'learning_outcomes_snapshot',
     ];
 
     protected $casts = [
         'issued_at' => 'date',
+        'learning_outcomes_snapshot' => 'array',
     ];
 
     public function trainee(): BelongsTo

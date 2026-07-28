@@ -74,7 +74,6 @@ export default function TaskRatingPage({
                 rating: number;
                 comments: string;
                 description: string;
-                hoursSpent: string;
             }
         >
     >({});
@@ -143,7 +142,6 @@ export default function TaskRatingPage({
                 rating: existing?.rating ?? 0,
                 comments: existing?.comments ?? '',
                 description: existing?.description ?? '',
-                hoursSpent: existing?.hours_spent ?? '',
             }
         );
     }
@@ -153,7 +151,6 @@ export default function TaskRatingPage({
             rating: number;
             comments: string;
             description: string;
-            hoursSpent: string;
         }>,
         existing?: TaskRatingEntry,
     ) {
@@ -181,7 +178,7 @@ export default function TaskRatingPage({
                 rating: draft.rating,
                 comments: draft.comments,
                 description: draft.description,
-                hours_spent: draft.hoursSpent || null,
+                hours_spent: null,
             });
             const entries = await taskRatingsService.entries(batchId, taskName);
             setRatings(entries);
@@ -365,12 +362,6 @@ export default function TaskRatingPage({
                                         </th>
                                         <th
                                             className="px-4 py-2.5 font-medium"
-                                            data-cy="task-rating-page-th-hours-spent"
-                                        >
-                                            Hours spent
-                                        </th>
-                                        <th
-                                            className="px-4 py-2.5 font-medium"
                                             data-cy="task-rating-page-th-comments-optional"
                                         >
                                             Comments (optional)
@@ -466,33 +457,6 @@ export default function TaskRatingPage({
                                                         placeholder="What this task involved..."
                                                         className="w-full min-w-[180px] resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                                                         data-cy="task-rating-page-textarea-description"
-                                                    />
-                                                </td>
-                                                <td
-                                                    className="px-4 py-3"
-                                                    data-cy="task-rating-page-td-hours-spent"
-                                                >
-                                                    <input
-                                                        type="number"
-                                                        min={0}
-                                                        step={0.5}
-                                                        value={
-                                                            draft.hoursSpent
-                                                        }
-                                                        onChange={(e) =>
-                                                            setDraft(
-                                                                traineeId,
-                                                                {
-                                                                    hoursSpent:
-                                                                        e.target
-                                                                            .value,
-                                                                },
-                                                                existingApi,
-                                                            )
-                                                        }
-                                                        placeholder="0.0"
-                                                        className="w-20 rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                                        data-cy="task-rating-page-input-hours-spent"
                                                     />
                                                 </td>
                                                 <td
@@ -652,25 +616,6 @@ export default function TaskRatingPage({
                                         placeholder="What this task involved..."
                                         className="mb-2.5 w-full resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                                         data-cy="task-rating-page-textarea-description-2"
-                                    />
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        step={0.5}
-                                        value={draft.hoursSpent}
-                                        onChange={(e) =>
-                                            setDraft(
-                                                traineeId,
-                                                {
-                                                    hoursSpent:
-                                                        e.target.value,
-                                                },
-                                                existingApi,
-                                            )
-                                        }
-                                        placeholder="Hours spent"
-                                        className="mb-2.5 w-full rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                                        data-cy="task-rating-page-input-hours-spent-2"
                                     />
                                     <textarea
                                         rows={2}

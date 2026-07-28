@@ -31,6 +31,10 @@ function buildDoc(trainee: TraineeDetail): CertificateDoc {
         certificateNo: trainee.certificate?.certificate_no ?? '—',
         issuedDate: trainee.certificate?.issued_at,
         template: trainee.certificate?.template,
+        // Frozen at issue/reissue time — not the trainee's current live outcomes.
+        achievedOutcomes: (trainee.certificate?.learning_outcomes_snapshot ?? []).map(
+            (o) => o.title,
+        ),
     };
 }
 

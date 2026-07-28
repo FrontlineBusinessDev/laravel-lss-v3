@@ -17,22 +17,24 @@ class AcademicLearningOutcomesController extends BaseController
 
     protected array $searchable = ['learning_outcomes'];
 
-    protected array $filterable = ['academic_industry_id', 'academic_program_id', 'status', 'learning_outcomes'];
+    protected array $filterable = ['academic_industry_id', 'status', 'learning_outcomes'];
 
     // Id filters must match exactly — a LIKE '%5%' would also match 15/50/…
-    protected array $exactFilters = ['status', 'academic_industry_id', 'academic_program_id'];
+    protected array $exactFilters = ['status', 'academic_industry_id'];
 
     protected array $sortable = ['id'];
 
     // activeColumns override because this table doesn't have a "name" column
-    protected array $activeColumns = ['id', 'academic_program_id', 'academic_industry_id'];
+    protected array $activeColumns = ['id', 'academic_industry_id'];
 
     protected string $sortBy = 'id';
 
     /**
-     * Eager-load the industry/program relations so the list serializes their
-     * names (as `academic_industry` / `academic_program`) instead of the
-     * frontend having to display raw foreign-key ids.
+     * Eager-load the industry relation so the list serializes its name (as
+     * `academic_industry`) instead of the frontend having to display a raw
+     * foreign-key id. Learning outcomes are scoped by industry only — not
+     * program — matching how TraineesViewController resolves a trainee's
+     * achievable outcomes off their batch's industry.
      *
      * @return Builder<Model>
      */
@@ -40,7 +42,6 @@ class AcademicLearningOutcomesController extends BaseController
     {
         return parent::newQuery()->with([
             'academicIndustry:id,name',
-            'academicProgram:id,name',
         ]);
     }
 
@@ -50,7 +51,6 @@ class AcademicLearningOutcomesController extends BaseController
             'status' => ['required', Rule::in(Statuses::all())],
             'learning_outcomes' => ['required', 'string'],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
-            'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
         ];
     }
 
@@ -60,7 +60,6 @@ class AcademicLearningOutcomesController extends BaseController
             'status' => ['required', Rule::in(Statuses::all())],
             'learning_outcomes' => ['required', 'string'],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
-            'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
         ];
     }
 }

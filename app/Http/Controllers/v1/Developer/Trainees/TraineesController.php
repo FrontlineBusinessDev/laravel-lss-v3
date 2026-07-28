@@ -446,4 +446,69 @@ class TraineesController extends BaseController
 
         return $this->sendResponse(['status' => $validated['status']], 'Learning outcome updated successfully.');
     }
+
+    /**
+     * Apply one learning outcome's status to a broader set of trainees than
+     * just $id, per the "Apply to all batches" option on the Learning
+     * Outcomes tab. Every scope is still constrained to trainees whose batch
+     * industry matches the outcome's industry — the same rule
+     * updateLearningOutcomeStatus() enforces for a single trainee — so this
+     * never lets an outcome get checked for a trainee it can't apply to.
+     * Certificates already issued are unaffected: they read from a frozen
+     * `learning_outcomes_snapshot` (see TraineeCertificateController), not
+     * live pivot rows, so this can't retroactively change an issued
+     * certificate — only a reissue re-captures the trainee's current state.
+     */
+    public function bulkUpdateLearningOutcomeStatus(Request $request, int|string $id, int|string $outcomeId): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['active', 'inactive'])],
+            'scope' => ['required', Rule::in(['all', 'industry', 'school', 'trainees'])],
+            'trainee_ids' => ['required_if:scope,trainees', 'array'],
+            'trainee_ids.*' => ['integer', 'exists:app_trainees,id'],
+        ]);
+
+        $outcome = AcademicLearningOutcomes::findOrFail($outcomeId);
+
+        $targets = $this->resolveBulkOutcomeTargets($model, $outcome, $validated);
+        abort_if($targets->isEmpty(), 422, 'No matching trainees found for this scope.');
+
+        DB::transaction(function () use ($targets, $outcome, $validated) {
+            foreach ($targets as $trainee) {
+                $trainee->learningOutcomes()->syncWithoutDetaching([
+                    $outcome->id => ['status' => $validated['status']],
+                ]);
+            }
+        });
+
+        return $this->sendResponse(
+            ['status' => $validated['status'], 'affected' => $targets->count()],
+            "Learning outcome updated for {$targets->count()} trainee(s).",
+        );
+    }
+
+    /**
+     * Resolve the trainee set a bulk outcome update applies to, always
+     * scoped to the outcome's own industry first.
+     *
+     * @return \Illuminate\Support\Collection<int, Trainees>
+     */
+    private function resolveBulkOutcomeTargets(Trainees $source, AcademicLearningOutcomes $outcome, array $validated): \Illuminate\Support\Collection
+    {
+        $query = Trainees::query()->whereHas(
+            'batch',
+            fn(Builder $q) => $q->where('academic_industry_id', $outcome->academic_industry_id),
+        );
+
+        match ($validated['scope']) {
+            'school' => $query->where('school_id', $source->school_id),
+            'trainees' => $query->whereIn('id', $validated['trainee_ids'] ?? []),
+            default => null, // 'all' / 'industry' — no further narrowing beyond the industry match above.
+        };
+
+        return $query->get();
+    }
 }
