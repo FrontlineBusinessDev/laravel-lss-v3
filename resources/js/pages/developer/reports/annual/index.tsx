@@ -7,6 +7,7 @@ import { StatCard } from '@/components/StatCard';
 import { ColumnDef } from '@/components/table';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
+import { loadLookupOptions } from '@/types/reusable/fields';
 import { useQuery } from '@tanstack/react-query';
 import { Layers, Printer, Users2, Wallet } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +22,20 @@ const columns: ColumnDef<ReportBatch>[] = [
         label: 'Date started',
         filterable: true,
         type: 'date-range',
+    },
+    {
+        key: 'academic_program_id',
+        label: 'Program',
+        filterable: true,
+        type: 'async-multi-select',
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
+    },
+    {
+        key: 'academic_program_type_id',
+        label: 'Program Type',
+        filterable: true,
+        type: 'async-multi-select',
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
     },
 ];
 

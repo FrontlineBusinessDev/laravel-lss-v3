@@ -40,9 +40,9 @@ const LOOKUPS = [
     {
         key: 'academic_program_id',
         rel: 'academic_program',
-        label: 'Program type',
+        label: 'Academic program',
         endpoint: '/settings/academic/program',
-        placeholder: 'Select program type',
+        placeholder: 'Select academic program',
     },
     {
         key: 'academic_industry_id',
@@ -107,7 +107,7 @@ export function CreateBatchModal({
     const validate = () => {
         const next: Record<string, string> = {};
         if (!values.academic_program_id) {
-            next.academic_program_id = 'Program type is required.';
+            next.academic_program_id = 'Academic program is required.';
         }
         if (!values.academic_industry_id) {
             next.academic_industry_id = 'Industry is required.';

@@ -44,6 +44,9 @@ class ReportController extends Controller
     {
         $filters = $this->filtersFromRequest($request);
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
+        $this->applyIndustryFilter($query, $filters);
+        $this->applyProgramFilter($query, $filters);
+        $this->applyProgramTypeFilter($query, $filters);
 
         $paginator = $this->paginate($query, $request);
 
@@ -62,7 +65,11 @@ class ReportController extends Controller
     public function annualTotals(Request $request): JsonResponse
     {
         $filters = $this->filtersFromRequest($request);
-        $batches = $this->baseQuery($filters)->get();
+        $query = $this->baseQuery($filters);
+        $this->applyIndustryFilter($query, $filters);
+        $this->applyProgramFilter($query, $filters);
+        $this->applyProgramTypeFilter($query, $filters);
+        $batches = $query->get();
 
         return response()->json([
             'financials' => BatchFinancialsCalculator::forTrainees($this->traineesFor($batches)),
@@ -74,7 +81,11 @@ class ReportController extends Controller
     public function annualExport(Request $request): JsonResponse
     {
         $filters = $this->filtersFromRequest($request);
-        $batches = $this->baseQuery($filters)->orderByDesc('date_started')->get();
+        $query = $this->baseQuery($filters)->orderByDesc('date_started');
+        $this->applyIndustryFilter($query, $filters);
+        $this->applyProgramFilter($query, $filters);
+        $this->applyProgramTypeFilter($query, $filters);
+        $batches = $query->get();
 
         return response()->json([
             'batches' => $batches->map(fn(Batches $batch) => $this->mapBatch($batch)),
@@ -87,6 +98,8 @@ class ReportController extends Controller
         $filters = $this->filtersFromRequest($request);
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
         $this->applyIndustryFilter($query, $filters);
+        $this->applyProgramFilter($query, $filters);
+        $this->applyProgramTypeFilter($query, $filters);
 
         $paginator = $this->paginate($query, $request);
 
@@ -107,6 +120,8 @@ class ReportController extends Controller
         $filters = $this->filtersFromRequest($request);
         $query = $this->baseQuery($filters);
         $this->applyIndustryFilter($query, $filters);
+        $this->applyProgramFilter($query, $filters);
+        $this->applyProgramTypeFilter($query, $filters);
         $batches = $query->get();
 
         return response()->json([
@@ -120,6 +135,8 @@ class ReportController extends Controller
         $filters = $this->filtersFromRequest($request);
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
         $this->applyIndustryFilter($query, $filters);
+        $this->applyProgramFilter($query, $filters);
+        $this->applyProgramTypeFilter($query, $filters);
         $batches = $query->get();
 
         return response()->json([
@@ -127,7 +144,10 @@ class ReportController extends Controller
         ]);
     }
 
-    /** @return array{search:?string,date_from:?string,date_to:?string,academic_industry_id:?int} */
+    /**
+     * @return array{search:?string,date_from:?string,date_to:?string,academic_industry_id:?int,
+     *     academic_program_id:list<int>,academic_program_type_id:list<int>}
+     */
     protected function filtersFromRequest(Request $request): array
     {
         $filters = (array) $request->input('filters', []);
@@ -138,7 +158,17 @@ class ReportController extends Controller
             'date_from' => $filters['date_started_from'] ?? null,
             'date_to' => $filters['date_started_to'] ?? null,
             'academic_industry_id' => $industry !== null && $industry !== '' ? (int) $industry : null,
+            'academic_program_id' => $this->intListFilter($filters['academic_program_id'] ?? null),
+            'academic_program_type_id' => $this->intListFilter($filters['academic_program_type_id'] ?? null),
         ];
+    }
+
+    /** @return list<int> */
+    protected function intListFilter(mixed $value): array
+    {
+        $values = is_array($value) ? $value : ($value !== null && $value !== '' ? [$value] : []);
+
+        return array_values(array_map('intval', array_filter($values, fn($v) => $v !== null && $v !== '')));
     }
 
     protected function paginate(Builder $query, Request $request)
@@ -167,11 +197,32 @@ class ReportController extends Controller
         }
     }
 
+    protected function applyProgramFilter(Builder $query, array $filters): void
+    {
+        if (! empty($filters['academic_program_id'])) {
+            $query->whereIn('academic_program_id', $filters['academic_program_id']);
+        }
+    }
+
+    protected function applyProgramTypeFilter(Builder $query, array $filters): void
+    {
+        if (! empty($filters['academic_program_type_id'])) {
+            $query->whereHas(
+                'academicProgram',
+                fn(Builder $q) => $q->whereIn('academic_program_type_id', $filters['academic_program_type_id']),
+            );
+        }
+    }
+
     /** @param array{search:?string,date_from:?string,date_to:?string} $filters */
     protected function baseQuery(array $filters): Builder
     {
         return Batches::query()
-            ->with(['academicIndustry:id,name', 'academicProgram:id,name'])
+            ->with([
+                'academicIndustry:id,name',
+                'academicProgram:id,name,academic_program_type_id',
+                'academicProgram.academicProgramType:id,name',
+            ])
             ->when($filters['date_from'] ?? null, fn($q, $v) => $q->whereDate('date_started', '>=', $v))
             ->when($filters['date_to'] ?? null, fn($q, $v) => $q->whereDate('date_started', '<=', $v))
             ->when($filters['search'] ?? null, function ($q, $term) {

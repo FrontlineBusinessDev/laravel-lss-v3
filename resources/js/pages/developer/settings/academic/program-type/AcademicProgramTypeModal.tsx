@@ -2,8 +2,10 @@ import { academicProgramTypeService } from '@/api-service-layer/admin/academic';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/components/Toast';
-import { fields } from '@/types/modules/settings/academic/program';
-import { AcademicProgramType } from '@/types/modules/settings/academic/program-type';
+import {
+    AcademicProgramType,
+    fields,
+} from '@/types/modules/settings/academic/program-type';
 
 interface Props {
     open: boolean;

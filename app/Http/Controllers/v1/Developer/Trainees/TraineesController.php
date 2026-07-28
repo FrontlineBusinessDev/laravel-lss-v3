@@ -36,7 +36,8 @@ class TraineesController extends BaseController
         'school_id',
         'academic_industry_id',
         'academic_level_id',
-        'academic_program_id'
+        'academic_program_id',
+        'academic_program_type_id',
     ];
     protected array $sortable = [
         'status',
@@ -45,15 +46,24 @@ class TraineesController extends BaseController
         'date_completed',
         'required_hours'
     ];
-    // batch_id/school_id/academic_*_id are FK ids — must match exactly, not LIKE
-    // (a LIKE '%3%' would also match ids 13, 23, 30-39, etc.).
+    // batch_id/school_id/academic_level_id are FK ids on this table — must
+    // match exactly, not LIKE (a LIKE '%3%' would also match ids 13, 23, 30-39, etc.).
+    // academic_industry_id/academic_program_id/academic_program_type_id live on
+    // the batch (or batch's program), not on trainees — see $relationFilters below.
     protected array $exactFilters = [
         'status',
         'batch_id',
         'school_id',
-        'academic_industry_id',
         'academic_level_id',
-        'academic_program_id',
+    ];
+    // academic_industry_id/academic_program_id are columns on app_batches;
+    // academic_program_type_id lives on the batch's academic program. None of
+    // these exist on app_trainees itself, so they're filtered through the
+    // batch relation via whereHas rather than a flat where().
+    protected array $relationFilters = [
+        'academic_industry_id' => 'batch.academic_industry_id',
+        'academic_program_id' => 'batch.academic_program_id',
+        'academic_program_type_id' => 'batch.academicProgram.academic_program_type_id',
     ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
@@ -76,7 +86,8 @@ class TraineesController extends BaseController
             'academicLevel:id,name',
             'batch:id,batch_code,setup,academic_industry_id,academic_program_id',
             'batch.academicIndustry:id,name',
-            'batch.academicProgram:id,name',
+            'batch.academicProgram:id,name,academic_program_type_id',
+            'batch.academicProgram.academicProgramType:id,name',
         ]);
 
         // Opt-in exclusion for the task-assignment trainee picker: pass

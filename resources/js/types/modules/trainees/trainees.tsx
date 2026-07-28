@@ -76,11 +76,18 @@ export const columns: ColumnDef<AppTrainees>[] = [
         label: 'Program',
         searchable: true,
         filterable: true,
-        type: 'async-select',
+        type: 'async-multi-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/program', q, 'name'),
-        // Changing the industry filter resets the dependent program filter.
-        // filterResets: ['school_id'],
+    },
+    {
+        key: 'academic_program_type_id',
+        label: 'Program Type',
+        searchable: true,
+        filterable: true,
+        type: 'async-multi-select',
+        loadOptions: (q) =>
+            loadLookupOptions('/settings/academic/program-type', q, 'name'),
     },
     {
         key: 'first_name',

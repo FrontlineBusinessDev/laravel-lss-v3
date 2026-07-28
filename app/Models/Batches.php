@@ -39,7 +39,7 @@ class Batches extends Model
 
     public function academicProgram(): BelongsTo
     {
-        return $this->belongsTo(AcademicProgramType::class, 'academic_program_id');
+        return $this->belongsTo(AcademicProgram::class, 'academic_program_id');
     }
 
     public function trainees(): HasMany

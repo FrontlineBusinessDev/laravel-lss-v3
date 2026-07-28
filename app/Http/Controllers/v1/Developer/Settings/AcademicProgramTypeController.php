@@ -20,8 +20,8 @@ class AcademicProgramTypeController extends BaseController
     protected array $activeColumns = ['id', 'name'];
     protected string $sortBy = 'name';
 
-    // Blocks deletion if a batch or learning outcome depends on it
-    protected array $inUseRelations = ['batches', 'learningOutcomes'];
+    // Blocks deletion if an academic program depends on it
+    protected array $inUseRelations = ['programs'];
 
     
     protected function storeRules(): array

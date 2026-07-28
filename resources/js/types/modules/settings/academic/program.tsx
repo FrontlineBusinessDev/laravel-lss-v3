@@ -1,5 +1,5 @@
 import { ColumnDef } from '@/types/reusable/data-table';
-import { FieldDef } from '@/types/reusable/fields';
+import { FieldDef, loadLookupOptions } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 export interface AcademicProgram extends Record<string, unknown> {
@@ -7,6 +7,10 @@ export interface AcademicProgram extends Record<string, unknown> {
     status: string;
     name: string;
     abbreviation?: string;
+    academic_program_type_id?: number | null;
+    // Eager-loaded relation (serialized snake_case by Laravel) — present when
+    // the list query uses `with()`. Used to show the type name instead of raw id.
+    academic_program_type?: { id: number; name: string } | null;
     created_at: string;
     updated_at: string;
 }
@@ -32,6 +36,14 @@ export const columns: ColumnDef<AcademicProgram>[] = [
         label: 'Abbreviation',
         searchable: true,
         filterable: true,
+    },
+    {
+        key: 'academic_program_type_id',
+        label: 'Type',
+        type: 'async-select',
+        searchable: true,
+        filterable: true,
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
     },
     { key: 'created_at', label: 'Created At' },
 ];
@@ -62,5 +74,14 @@ export const fields: FieldDef<AcademicProgram>[] = [
         placeholder: 'IT',
         required: true,
         colSpan: 2,
+    },
+    {
+        key: 'academic_program_type_id',
+        label: 'Type',
+        type: 'async-select',
+        placeholder: 'Select a type...',
+        colSpan: 2,
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
+        initialLabel: (row) => row.academic_program_type?.name,
     },
 ];
