@@ -87,7 +87,7 @@ class BatchesController extends BaseController
             'date_started' => ['required', 'date'],
             'projected_end_date' => ['nullable', 'date', 'after_or_equal:date_started'],
             'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
-            'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program,id'],
+            'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program_type,id'],
             // batch_code + public_registration_url_id are intentionally absent:
             // they are system-generated and must never be user-supplied.
         ];
@@ -101,7 +101,7 @@ class BatchesController extends BaseController
             'date_started' => ['required', 'date'],
             'projected_end_date' => ['nullable', 'date', 'after_or_equal:date_started'],
             'academic_industry_id' => ['required', 'integer', 'exists:app_settings_academic_industry,id'],
-            'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program,id'],
+            'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program_type,id'],
         ];
     }
 

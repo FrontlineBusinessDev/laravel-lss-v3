@@ -29,3 +29,8 @@ export const academicProgramService = createCrudResource<
     AcademicProgram,
     Partial<AcademicProgram>
 >({ baseUrl: '/settings/academic/program' });
+
+export const academicProgramTypeService = createCrudResource<
+    AcademicProgram,
+    Partial<AcademicProgram>
+>({ baseUrl: '/settings/academic/program-type' });

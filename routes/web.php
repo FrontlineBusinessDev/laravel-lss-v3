@@ -15,6 +15,7 @@ use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicProgramTypeController;
 use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
 use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
 use App\Http\Controllers\v1\Developer\Auth\ChangePasswordController;
@@ -137,6 +138,7 @@ Route::prefix('settings')->name('settings.')->group(function () {
         Route::crudModule('/learning-outcomes', AcademicLearningOutcomesController::class, 'learning-outcomes');
         Route::crudModule('/level', AcademicLevelController::class, 'level');
         Route::crudModule('/program', AcademicProgramController::class, 'program');
+        Route::crudModule('/program-type', AcademicProgramTypeController::class, 'program-type');
     });
     // Rates & discount matrices: its own top-level Settings section (sibling
     // to Academic/Users/Partner Schools), with a "Default Rates" landing page

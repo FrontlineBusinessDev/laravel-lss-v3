@@ -50,7 +50,7 @@ class AcademicLearningOutcomesController extends BaseController
             'status' => ['required', Rule::in(Statuses::all())],
             'learning_outcomes' => ['required', 'string'],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
-            'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
+            'academic_program_id' => ['required', 'exists:app_settings_academic_program_type,id'],
         ];
     }
 
@@ -60,7 +60,7 @@ class AcademicLearningOutcomesController extends BaseController
             'status' => ['required', Rule::in(Statuses::all())],
             'learning_outcomes' => ['required', 'string'],
             'academic_industry_id' => ['required', 'exists:app_settings_academic_industry,id'],
-            'academic_program_id' => ['required', 'exists:app_settings_academic_program,id'],
+            'academic_program_id' => ['required', 'exists:app_settings_academic_program_type,id'],
         ];
     }
 }

@@ -15,6 +15,7 @@ class AcademicProgram extends Model
     protected $fillable = [
         'status',
         'name',
+        'abbreviation',
     ];
 
     public function learningOutcomes(): HasMany

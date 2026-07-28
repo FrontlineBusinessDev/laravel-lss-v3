@@ -2,16 +2,15 @@ import { ColumnDef } from '@/types/reusable/data-table';
 import { FieldDef } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
-export interface AcademicProgram extends Record<string, unknown> {
+export interface AcademicProgramType extends Record<string, unknown> {
     id: number;
     status: string;
     name: string;
-    abbreviation?: string;
     created_at: string;
     updated_at: string;
 }
 
-export const columns: ColumnDef<AcademicProgram>[] = [
+export const columns: ColumnDef<AcademicProgramType>[] = [
     {
         key: 'status',
         label: 'Status',
@@ -27,16 +26,10 @@ export const columns: ColumnDef<AcademicProgram>[] = [
         searchable: true,
         filterable: true,
     },
-    {
-        key: 'abbreviation',
-        label: 'Abbreviation',
-        searchable: true,
-        filterable: true,
-    },
     { key: 'created_at', label: 'Created At' },
 ];
 
-export const fields: FieldDef<AcademicProgram>[] = [
+export const fields: FieldDef<AcademicProgramType>[] = [
     {
         key: 'status',
         label: 'Status',
@@ -51,15 +44,7 @@ export const fields: FieldDef<AcademicProgram>[] = [
         key: 'name',
         label: 'Program',
         type: 'text',
-        placeholder: 'Information Technology',
-        required: true,
-        colSpan: 2,
-    },
-    {
-        key: 'abbreviation',
-        label: 'Abbreviation',
-        type: 'text',
-        placeholder: 'IT',
+        placeholder: 'On The Job Training',
         required: true,
         colSpan: 2,
     },
