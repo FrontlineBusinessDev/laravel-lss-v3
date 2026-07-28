@@ -19,6 +19,7 @@ class Seminar extends Model
         'status',
         'seminar_code',
         'type',
+        'is_public_url_enable',
         'registration_link',
     ];
 
