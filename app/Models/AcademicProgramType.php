@@ -14,8 +14,8 @@ class AcademicProgramType extends Model
         'name',
     ];
 
-    public function programs(): HasMany
+    public function trainees(): HasMany
     {
-        return $this->hasMany(AcademicProgram::class, 'academic_program_type_id');
+        return $this->hasMany(Trainees::class, 'academic_program_type_id');
     }
 }

@@ -20,8 +20,8 @@ class AcademicProgramTypeController extends BaseController
     protected array $activeColumns = ['id', 'name'];
     protected string $sortBy = 'name';
 
-    // Blocks deletion if an academic program depends on it
-    protected array $inUseRelations = ['programs'];
+    // Blocks deletion if a trainee depends on it
+    protected array $inUseRelations = ['trainees'];
 
     
     protected function storeRules(): array

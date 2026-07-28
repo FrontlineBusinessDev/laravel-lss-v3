@@ -48,7 +48,7 @@ abstract class BaseController extends Controller implements HasMiddleware
     /**
      * Filter keys that live on a related model rather than this model's own
      * table. Map: filter key => dot-path 'relation.column' (may traverse
-     * nested relations, e.g. 'batch.academicProgram.academic_program_type_id').
+     * nested relations, e.g. 'batch.academic_industry_id').
      * Applied via `whereHas` instead of a flat `where`.
      *
      * @var array<string, string>

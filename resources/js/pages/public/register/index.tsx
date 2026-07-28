@@ -22,7 +22,7 @@ interface School {
     id: number;
     name: string;
 }
-interface AcademicLevelOption {
+interface AcademicProgramTypeOption {
     id: number;
     name: string;
 }
@@ -38,7 +38,7 @@ const EMPTY_FORM: RegisterPayload = {
     emergency_contact_name: '',
     emergency_contact_number: '',
     school_id: '',
-    academic_level_id: '',
+    academic_program_type_id: '',
     required_hours: '',
     resume: null,
     endorsement_letter: null,
@@ -131,13 +131,13 @@ export default function PublicRegisterPage({
     token,
     batch,
     schools,
-    academicLevels,
+    academicProgramTypes,
     metaDescription,
 }: {
     token: string;
     batch: PublicBatch;
     schools: School[];
-    academicLevels: AcademicLevelOption[];
+    academicProgramTypes: AcademicProgramTypeOption[];
     metaDescription: string;
 }) {
     const pageTitle = `Batch Registration · ${batch.batch_code}`;
@@ -482,32 +482,35 @@ export default function PublicRegisterPage({
                         </select>
                     </Field>
                     <Field
-                        label="Academic level"
-                        error={errors.academic_level_id}
-                        data-cy="index-field-academic-level"
+                        label="Academic program type"
+                        error={errors.academic_program_type_id}
+                        data-cy="index-field-academic-program-type"
                     >
                         <select
                             className={inputCls}
-                            value={data.academic_level_id}
+                            value={data.academic_program_type_id}
                             onChange={(e) =>
-                                setField('academic_level_id', e.target.value)
+                                setField(
+                                    'academic_program_type_id',
+                                    e.target.value,
+                                )
                             }
                             data-cy="index-select-set-data-3"
                         >
                             <option
                                 value=""
                                 disabled
-                                data-cy="index-option-select-academic-level"
+                                data-cy="index-option-select-academic-program-type"
                             >
-                                Select academic level…
+                                Select academic program type…
                             </option>
-                            {academicLevels.map((l) => (
+                            {academicProgramTypes.map((t) => (
                                 <option
-                                    key={l.id}
-                                    value={l.id}
-                                    data-cy="index-option-academic-level"
+                                    key={t.id}
+                                    value={t.id}
+                                    data-cy="index-option-academic-program-type"
                                 >
-                                    {l.name}
+                                    {t.name}
                                 </option>
                             ))}
                         </select>

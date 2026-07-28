@@ -126,11 +126,11 @@ function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
                 />
                 <Field
                     label="Academic level"
-                    value={trainee.academic_level?.name ?? ''}
+                    value={trainee.batch?.academic_level?.name ?? ''}
                 />
                 <Field
                     label="Program type"
-                    value={trainee.batch?.setup ?? ''}
+                    value={trainee.academic_program_type?.name ?? ''}
                 />
                 <Field
                     label="Industry"

@@ -27,7 +27,7 @@ const REQUIRED_DOCUMENT_HELP_TEXT =
 
 const STATUS_BADGE: Record<string, StatusKind> = {
     pending: 'pending',
-    approved: 'active',
+    approved: 'approved',
     declined: 'declined',
 };
 

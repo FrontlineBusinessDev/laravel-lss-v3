@@ -30,13 +30,6 @@ const columns: ColumnDef<ReportBatch>[] = [
         type: 'async-multi-select',
         loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
     },
-    {
-        key: 'academic_program_type_id',
-        label: 'Program Type',
-        filterable: true,
-        type: 'async-multi-select',
-        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
-    },
 ];
 
 export default function AnnualReportPage() {

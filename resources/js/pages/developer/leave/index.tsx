@@ -14,7 +14,7 @@ const PERMISSION = 'manage leave';
 
 const STATUS_BADGE: Record<string, StatusKind> = {
     pending: 'pending',
-    approved: 'active',
+    approved: 'approved',
     declined: 'declined',
 };
 

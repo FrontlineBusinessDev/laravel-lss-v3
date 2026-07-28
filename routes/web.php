@@ -238,6 +238,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/trainees/{id}/unlink-account', [TraineesController::class, 'unlinkAccount'])->name('trainees.unlinkAccount');
     Route::post('/trainees/{id}/approve', [TraineesController::class, 'approve'])->name('trainees.approve');
     Route::post('/trainees/{id}/decline', [TraineesController::class, 'decline'])->name('trainees.decline');
+    Route::post('/trainees/{id}/terminate', [TraineesController::class, 'terminate'])->name('trainees.terminate');
+    Route::post('/trainees/{id}/transfer', [TraineesController::class, 'transfer'])->name('trainees.transfer');
     Route::get('/trainees/{id}/ratings', [TraineesViewController::class, 'ratings'])->name('trainees.ratings');
     Route::get('/trainees/{id}/certificate', [TraineesViewController::class, 'certificate'])->name('trainees.certificate');
     Route::get('/trainees/{id}/biometrics', [TraineesViewController::class, 'biometrics'])->name('trainees.biometrics');

@@ -13,7 +13,7 @@ import { columns as baseColumns } from '@/types/modules/leave/leave-requests';
 
 const STATUS_BADGE: Record<string, StatusKind> = {
     pending: 'pending',
-    approved: 'active',
+    approved: 'approved',
     declined: 'declined',
 };
 

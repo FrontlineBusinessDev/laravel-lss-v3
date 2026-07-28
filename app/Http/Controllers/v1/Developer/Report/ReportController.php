@@ -46,7 +46,6 @@ class ReportController extends Controller
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
         $this->applyIndustryFilter($query, $filters);
         $this->applyProgramFilter($query, $filters);
-        $this->applyProgramTypeFilter($query, $filters);
 
         $paginator = $this->paginate($query, $request);
 
@@ -68,7 +67,6 @@ class ReportController extends Controller
         $query = $this->baseQuery($filters);
         $this->applyIndustryFilter($query, $filters);
         $this->applyProgramFilter($query, $filters);
-        $this->applyProgramTypeFilter($query, $filters);
         $batches = $query->get();
 
         return response()->json([
@@ -84,7 +82,6 @@ class ReportController extends Controller
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
         $this->applyIndustryFilter($query, $filters);
         $this->applyProgramFilter($query, $filters);
-        $this->applyProgramTypeFilter($query, $filters);
         $batches = $query->get();
 
         return response()->json([
@@ -99,7 +96,6 @@ class ReportController extends Controller
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
         $this->applyIndustryFilter($query, $filters);
         $this->applyProgramFilter($query, $filters);
-        $this->applyProgramTypeFilter($query, $filters);
 
         $paginator = $this->paginate($query, $request);
 
@@ -121,7 +117,6 @@ class ReportController extends Controller
         $query = $this->baseQuery($filters);
         $this->applyIndustryFilter($query, $filters);
         $this->applyProgramFilter($query, $filters);
-        $this->applyProgramTypeFilter($query, $filters);
         $batches = $query->get();
 
         return response()->json([
@@ -136,7 +131,6 @@ class ReportController extends Controller
         $query = $this->baseQuery($filters)->orderByDesc('date_started');
         $this->applyIndustryFilter($query, $filters);
         $this->applyProgramFilter($query, $filters);
-        $this->applyProgramTypeFilter($query, $filters);
         $batches = $query->get();
 
         return response()->json([
@@ -146,7 +140,7 @@ class ReportController extends Controller
 
     /**
      * @return array{search:?string,date_from:?string,date_to:?string,academic_industry_id:?int,
-     *     academic_program_id:list<int>,academic_program_type_id:list<int>}
+     *     academic_program_id:list<int>}
      */
     protected function filtersFromRequest(Request $request): array
     {
@@ -159,7 +153,6 @@ class ReportController extends Controller
             'date_to' => $filters['date_started_to'] ?? null,
             'academic_industry_id' => $industry !== null && $industry !== '' ? (int) $industry : null,
             'academic_program_id' => $this->intListFilter($filters['academic_program_id'] ?? null),
-            'academic_program_type_id' => $this->intListFilter($filters['academic_program_type_id'] ?? null),
         ];
     }
 
@@ -204,24 +197,13 @@ class ReportController extends Controller
         }
     }
 
-    protected function applyProgramTypeFilter(Builder $query, array $filters): void
-    {
-        if (! empty($filters['academic_program_type_id'])) {
-            $query->whereHas(
-                'academicProgram',
-                fn(Builder $q) => $q->whereIn('academic_program_type_id', $filters['academic_program_type_id']),
-            );
-        }
-    }
-
     /** @param array{search:?string,date_from:?string,date_to:?string} $filters */
     protected function baseQuery(array $filters): Builder
     {
         return Batches::query()
             ->with([
                 'academicIndustry:id,name',
-                'academicProgram:id,name,academic_program_type_id',
-                'academicProgram.academicProgramType:id,name',
+                'academicProgram:id,name',
             ])
             ->when($filters['date_from'] ?? null, fn($q, $v) => $q->whereDate('date_started', '>=', $v))
             ->when($filters['date_to'] ?? null, fn($q, $v) => $q->whereDate('date_started', '<=', $v))

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcademicProgram extends Model
@@ -17,7 +16,6 @@ class AcademicProgram extends Model
         'status',
         'name',
         'abbreviation',
-        'academic_program_type_id',
     ];
 
     public function learningOutcomes(): HasMany
@@ -28,10 +26,5 @@ class AcademicProgram extends Model
     public function batches(): HasMany
     {
         return $this->hasMany(Batches::class, 'academic_program_id');
-    }
-
-    public function academicProgramType(): BelongsTo
-    {
-        return $this->belongsTo(AcademicProgramType::class, 'academic_program_type_id');
     }
 }

@@ -1,5 +1,6 @@
 export type StatusKind =
     | 'active'
+    | 'approved'
     | 'pending'
     | 'completed'
     | 'terminated'

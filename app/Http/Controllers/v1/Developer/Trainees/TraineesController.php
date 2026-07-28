@@ -46,24 +46,24 @@ class TraineesController extends BaseController
         'date_completed',
         'required_hours'
     ];
-    // batch_id/school_id/academic_level_id are FK ids on this table — must
-    // match exactly, not LIKE (a LIKE '%3%' would also match ids 13, 23, 30-39, etc.).
-    // academic_industry_id/academic_program_id/academic_program_type_id live on
-    // the batch (or batch's program), not on trainees — see $relationFilters below.
+    // batch_id/school_id/academic_program_type_id are FK ids on this table —
+    // must match exactly, not LIKE (a LIKE '%3%' would also match ids 13, 23,
+    // 30-39, etc.). academic_industry_id/academic_program_id/academic_level_id
+    // live on the batch, not on trainees — see $relationFilters below.
     protected array $exactFilters = [
         'status',
         'batch_id',
         'school_id',
-        'academic_level_id',
+        'academic_program_type_id',
     ];
-    // academic_industry_id/academic_program_id are columns on app_batches;
-    // academic_program_type_id lives on the batch's academic program. None of
-    // these exist on app_trainees itself, so they're filtered through the
-    // batch relation via whereHas rather than a flat where().
+    // academic_industry_id/academic_program_id/academic_level_id are all
+    // independent columns on app_batches. None of these exist on app_trainees
+    // itself, so they're filtered through the batch relation via whereHas
+    // rather than a flat where().
     protected array $relationFilters = [
         'academic_industry_id' => 'batch.academic_industry_id',
         'academic_program_id' => 'batch.academic_program_id',
-        'academic_program_type_id' => 'batch.academicProgram.academic_program_type_id',
+        'academic_level_id' => 'batch.academic_level_id',
     ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
@@ -83,11 +83,11 @@ class TraineesController extends BaseController
     {
         $query = parent::newQuery()->withCompletedHours()->with([
             'school:id,school_name',
-            'academicLevel:id,name',
-            'batch:id,batch_code,setup,academic_industry_id,academic_program_id',
+            'academicProgramType:id,name',
+            'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
-            'batch.academicProgram:id,name,academic_program_type_id',
-            'batch.academicProgram.academicProgramType:id,name',
+            'batch.academicProgram:id,name',
+            'batch.academicLevel:id,name',
         ]);
 
         // Opt-in exclusion for the task-assignment trainee picker: pass
@@ -238,6 +238,46 @@ class TraineesController extends BaseController
         }
 
         return $this->sendResponse($trainee->fresh(['user', 'batch']), 'Trainee approved successfully.');
+    }
+
+    /**
+     * Mark an active trainee as terminated. Distinct from archive()/restore()
+     * (the generic active/inactive toggle): terminated is a separate,
+     * one-way lifecycle stage that still shows in trainee lists (sorted to
+     * the bottom of the batch view) rather than being hidden like inactive.
+     */
+    public function terminate(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('terminate', $trainee);
+
+        abort_if($trainee->status === Statuses::TERMINATED, 422, 'Trainee is already terminated.');
+
+        $validated = $request->validate([
+            'termination_remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $trainee->update([
+            'status' => Statuses::TERMINATED,
+            'termination_remarks' => $validated['termination_remarks'] ?? $trainee->termination_remarks,
+        ]);
+
+        return $this->sendResponse($trainee->fresh(), 'Trainee terminated successfully.');
+    }
+
+    /** Move a trainee to a different batch (e.g. re-assigning a trainee mid-program). */
+    public function transfer(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('transfer', $trainee);
+
+        $validated = $request->validate([
+            'batch_id' => ['required', 'exists:app_batches,id', Rule::notIn([$trainee->batch_id])],
+        ]);
+
+        $trainee->update(['batch_id' => $validated['batch_id']]);
+
+        return $this->sendResponse($trainee->fresh('batch'), 'Trainee transferred successfully.');
     }
 
     /** Decline a PENDING trainee's application. No account is created. */
