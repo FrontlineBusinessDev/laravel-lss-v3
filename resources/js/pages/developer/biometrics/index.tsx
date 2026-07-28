@@ -351,12 +351,32 @@ export default function BiometricsPage() {
             </div>
 
             {loading && (
-                <div
-                    className="rounded-lg border border-neutral-200 bg-white p-10 text-center text-xs text-neutral-400"
-                    data-cy="index-div-loading"
-                >
-                    Loading biometric records…
-                </div>
+                <>
+                    <div
+                        className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
+                        data-cy="index-div-loading-table"
+                    >
+                        <div className="flex flex-col gap-2 p-3">
+                            {Array.from({ length: 7 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="h-16 animate-pulse rounded-md bg-gray-400/50"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <div
+                        className="no-print flex flex-col gap-2 sm:hidden"
+                        data-cy="index-div-loading-cards"
+                    >
+                        {Array.from({ length: 7 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/40 dark:bg-gray-300/80"
+                            />
+                        ))}
+                    </div>
+                </>
             )}
 
             {!loading && tab === 'Daily records' && (
