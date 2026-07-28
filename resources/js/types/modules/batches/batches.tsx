@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import {
     loadLookupOptions,
@@ -87,9 +88,21 @@ export const columns: ColumnDef<AppBatches>[] = [
         sortable: false,
         loadOptions: staticOptions(STATUS_OPTIONS),
     },
-    { key: 'date_started', label: 'Date Started' },
-    { key: 'projected_end_date', label: 'Projected End' },
-    { key: 'created_at', label: 'Created' },
+    {
+        key: 'date_started',
+        label: 'Date Started',
+        render: (value) => formatDate(value as string),
+    },
+    {
+        key: 'projected_end_date',
+        label: 'Projected End',
+        render: (value) => formatDate(value as string | null),
+    },
+    {
+        key: 'created_at',
+        label: 'Created',
+        render: (value) => formatDateTime(value as string),
+    },
 ];
 
 // Create/edit modal fields. batch_code and public_registration_url_id are

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\v1\GlobalSearchController;
 use App\Http\Controllers\v1\HomeController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicIndustryController;
@@ -172,6 +173,10 @@ Route::prefix('settings')->name('settings.')->group(function () {
  * `auth` is enforced.
  */
 Route::middleware('auth')->group(function () {
+    // Global command-palette search (Ctrl+K/Cmd+K) — one endpoint for every
+    // role; GlobalSearchController branches server-side on auth()->user().
+    Route::get('/search', [GlobalSearchController::class, 'search'])->name('search');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Dashboard widgets self-fetch client-side (see
     // resources/js/api-service-layer/admin/dashboard.ts) rather than via

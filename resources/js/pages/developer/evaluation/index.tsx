@@ -8,6 +8,7 @@ import type { ColumnDef } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { StatCard } from '@/components/StatCard';
 import { useToast } from '@/components/Toast';
+import { formatDate } from '@/lib/date';
 import EvaluationPrimaryLayout from '@/layouts/evaluation/EvaluationPrimaryLayout';
 import type { EvaluationRecordRow } from '@/types/modules/evaluation/evaluation';
 import { EvaluationRemindersPanel } from './EvaluationRemindersPanel';
@@ -89,7 +90,7 @@ const recordColumns: ColumnDef<EvaluationRecordRow>[] = [
         key: 'submitted_at',
         label: 'Submitted',
         sortable: true,
-        render: (v) => (v ? new Date(String(v)).toLocaleDateString() : '—'),
+        render: (v) => formatDate(v as string | null),
     },
     {
         key: 'archived_at',
@@ -176,7 +177,7 @@ function RecordsTable() {
                         {row.score != null ? `${Number(row.score).toFixed(1)} ★` : '—'}
                     </span>
                     <span className="text-xs text-neutral-500">
-                        {new Date(row.submitted_at).toLocaleDateString()}
+                        {formatDate(row.submitted_at)}
                     </span>
                     <div className="flex items-center justify-end gap-1">
                         {row.locked ? (

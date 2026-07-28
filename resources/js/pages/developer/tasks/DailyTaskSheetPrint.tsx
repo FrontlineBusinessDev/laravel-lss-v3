@@ -1,4 +1,5 @@
 import { LogoMark } from '@/components/Logo';
+import { formatDate } from '@/lib/date';
 import type { TaskRecord } from '@/types/modules/tasks/daily-task';
 interface DailyTaskSheetPrintProps {
   rows: TaskRecord[];
@@ -70,7 +71,7 @@ export function DailyTaskSheetPrint({
               </thead>
               <tbody data-cy="daily-task-sheet-print-tbody-30">
                 {tasks.map(t => <tr key={t.id} data-cy="daily-task-sheet-print-tr-31">
-                    <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-32">{t.date}</td>
+                    <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-32">{formatDate(t.date)}</td>
                     <td className="border border-ink px-2 py-1.5 font-medium" data-cy="daily-task-sheet-print-td-33">{t.task}</td>
                     <td className="border border-ink px-2 py-1.5" data-cy="daily-task-sheet-print-td-34">{t.description}</td>
                     <td className="border border-ink px-2 py-1.5 text-right" data-cy="daily-task-sheet-print-td-h">{t.timeGoal}h</td>

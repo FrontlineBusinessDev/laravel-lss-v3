@@ -1,4 +1,5 @@
 import { taskRatingsService } from '@/api-service-layer/admin/task-ratings';
+import { formatDateTime } from '@/lib/date';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { RatingInput } from '@/components/RatingInput';
@@ -744,10 +745,7 @@ export default function TaskRatingPage({
                     taskName={taskName}
                     ratings={ratingsForTask}
                     average={average}
-                    generatedAt={new Date().toLocaleString('en-PH', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                    })}
+                    generatedAt={formatDateTime(new Date())}
                     data-cy="task-rating-page-rating-sheet-print-66"
                 />
             )}

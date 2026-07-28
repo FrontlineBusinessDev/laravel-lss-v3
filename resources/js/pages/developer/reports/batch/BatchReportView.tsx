@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { formatDateTime } from '@/lib/date';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useToast } from '@/components/Toast';
@@ -32,7 +33,7 @@ export default function BatchReportView() {
   const dateTo = typeof activeFilters.filters.date_started_to === 'string' ? activeFilters.filters.date_started_to : '';
   const dateRangeLabel = dateFrom || dateTo ? `${dateFrom || 'Start'} – ${dateTo || 'Present'}` : 'All dates';
   const printGeneratedAt = useMemo(
-    () => new Date().toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }),
+    () => formatDateTime(new Date()),
     [printBatches],
   );
 

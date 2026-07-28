@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/date';
 import { ColumnDef } from '@/types/reusable/data-table';
 import { FieldDef, loadLookupOptions } from '@/types/reusable/fields';
 export interface AppTrainees extends Record<string, unknown> {
@@ -140,7 +141,7 @@ export const columns: ColumnDef<AppTrainees>[] = [
                     className="font-medium text-green-600"
                     data-cy="trainees-span-completed"
                 >
-                    Completed ({value as string})
+                    Completed ({formatDate(value as string)})
                 </span>
             ) : (
                 <span

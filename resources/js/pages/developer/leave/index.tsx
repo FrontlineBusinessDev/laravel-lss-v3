@@ -3,6 +3,7 @@ import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
+import { formatDate } from '@/lib/date';
 import type { StatusKind } from '@/types/reusable/status-kind';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { columns } from '@/types/modules/leave/leave-requests';
@@ -75,7 +76,7 @@ export default function LeaveManagementPage() {
         const busy = busyId === row.id;
 
         return (
-            <div className="group flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+            <div className="group flex items-start justify-between gap-4 border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                         <h3 className="truncate text-base font-semibold">
@@ -90,8 +91,8 @@ export default function LeaveManagementPage() {
                             {row.leave_category?.name ?? '—'}
                         </dd>
                         <dd className="truncate text-sm">
-                            {row.leave_date.slice(0, 10)} –{' '}
-                            {row.return_date.slice(0, 10)}
+                            {formatDate(row.leave_date)} –{' '}
+                            {formatDate(row.return_date)}
                         </dd>
                         <dd className="truncate text-sm">{row.reason}</dd>
                     </dl>

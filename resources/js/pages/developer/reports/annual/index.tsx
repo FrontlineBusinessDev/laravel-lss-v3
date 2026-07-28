@@ -4,6 +4,7 @@ import {
 } from '@/api-service-layer/developer/report';
 import { Button } from '@/components/Button';
 import { StatCard } from '@/components/StatCard';
+import { formatDateTime } from '@/lib/date';
 import { ColumnDef } from '@/components/table';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
@@ -70,11 +71,7 @@ export default function AnnualReportPage() {
             ? `${dateFrom || 'Start'} – ${dateTo || 'Present'}`
             : 'All dates';
     const printGeneratedAt = useMemo(
-        () =>
-            new Date().toLocaleString('en-PH', {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-            }),
+        () => formatDateTime(new Date()),
         [printBatches],
     );
 

@@ -4,6 +4,7 @@ import {
 } from '@/api-service-layer/developer/report';
 import { Button } from '@/components/Button';
 import { ColumnDef } from '@/components/table';
+import { formatDateTime } from '@/lib/date';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
 import { loadLookupOptions } from '@/types/reusable/fields';
@@ -61,11 +62,7 @@ export default function BatchReportPage() {
             ? `${dateFrom || 'Start'} – ${dateTo || 'Present'}`
             : 'All dates';
     const printGeneratedAt = useMemo(
-        () =>
-            new Date().toLocaleString('en-PH', {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-            }),
+        () => formatDateTime(new Date()),
         [printBatches],
     );
 

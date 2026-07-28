@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
+import { formatDate } from '@/lib/date';
 import type {
     EvaluationSeminarQuestion,
     EvaluationTrainerCategories,
@@ -271,7 +272,7 @@ export function EvaluationQuestionnaireSetup({ category }: Props) {
                                             {q.creator
                                                 ? `${q.creator.first_name} ${q.creator.last_name}`
                                                 : 'Unknown'}{' '}
-                                            &middot; {new Date(q.created_at).toLocaleDateString()}
+                                            &middot; {formatDate(q.created_at)}
                                         </p>
                                     </div>
                                     <div className="flex shrink-0 items-center gap-1">

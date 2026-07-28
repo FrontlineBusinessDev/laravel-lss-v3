@@ -4,16 +4,8 @@ import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { Modal } from '@/components/Modal';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
+import { formatDate } from '@/lib/date';
 import type { AdminDashboardAnnouncement } from '@/types/modules/dashboard/admin-dashboard';
-
-function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
 
 /** Bulletin-style feed of the latest active system announcements. */
 export function AnnouncementsWidget() {
