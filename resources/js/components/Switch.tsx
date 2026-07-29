@@ -45,7 +45,6 @@ export function Switch({
                     data-cy="switch-span-3"
                 />
             </span>
-            asdasd
             {label && (
                 <span className="text-neutral-600" data-cy="switch-span-4">
                     {label}
