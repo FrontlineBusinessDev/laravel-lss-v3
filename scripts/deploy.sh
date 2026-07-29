@@ -7,6 +7,10 @@ mkdir -p storage/logs
 ENV="${APP_ENV:-production}"
 echo "Running application in environment: $ENV"
 
+# See scripts/worker.sh for why this is needed: the default log channel only
+# writes to a file Coolify's log viewer never shows.
+export LOG_STACK="single,stderr"
+
 # 1. Migrations & Seeders
 if [ "$ENV" = "production" ] || [ "$ENV" = "staging" ] || [ "$ENV" = "development" ]; then
     echo "Running database migrations..."

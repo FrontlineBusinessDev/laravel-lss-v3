@@ -36,16 +36,13 @@ config/infra issues:
    consumed the `jobs` table, so queued mail piled up silently forever, even
    though `announcements:dispatch-scheduled` ran successfully every minute
    (as confirmed by production logs: `Running ['artisan'
-   announcements:dispatch-scheduled] ... DONE`). Fixed by deploying via
-   **Docker Compose** (`docker-compose.yml` at the repo root) with a dedicated
-   `queue` service (`scripts/worker.sh`, running `php artisan queue:work
+   announcements:dispatch-scheduled] ... DONE`). Fixed by running a dedicated
+   worker process — `scripts/worker.sh`, running `php artisan queue:work
    --tries=3 --backoff=10 --max-time=3600 --memory=128` in the foreground,
    with a SIGTERM/SIGINT trap that calls `queue:restart` for graceful
-   shutdown) as a **separate container** from `web` (`scripts/deploy.sh`,
-   FrankenPHP/Octane + SSR only, no worker). This is a proper Coolify
-   "Docker Compose" resource, not a single "Dockerfile" resource — Coolify
-   must be building/running `docker-compose.yml` itself, or the `queue`
-   service never starts and mail silently stops draining again.
+   shutdown — as a **separate container/service** from `web`
+   (`scripts/deploy.sh`, FrankenPHP/Octane + SSR only, no worker). See §2 for
+   the two supported ways to deploy this split in Coolify.
 
 If production still doesn't send mail after deploying this fix, one or more
 of the following (genuinely outside this repo's reach) is the cause.
@@ -77,31 +74,59 @@ Pick exactly one of these two mechanisms — don't run both:
 
 ## 2. Is a queue worker actually running?
 
-**Fixed in-repo** (see bug #5 above) — `docker-compose.yml` defines a
-dedicated `queue` service, isolated from `web`, that does nothing but run
-`php artisan queue:work`. This isolates worker crashes from the web process
-and lets it scale/restart independently. After deploying:
+Two supported ways to run the worker in production — both use the same
+`scripts/worker.sh` (`php artisan queue:work --tries=3 --backoff=10
+--max-time=3600 --memory=128`, isolated from `web`'s process so worker
+crashes don't affect the web process):
 
-- **Confirm Coolify is running this app as a "Docker Compose" resource, not
-  a "Dockerfile" resource.** A plain "Dockerfile" resource only builds/runs
-  the `Dockerfile` itself and silently ignores `docker-compose.yml` — the
-  `queue` service (and therefore all outgoing mail) would never start, with
-  no error anywhere. Check the Coolify dashboard's resource type for this
-  app directly; this is the single most common way this setup silently
-  breaks again.
-- Confirm **both** containers (`web` and `queue`) show as running/healthy in
-  Coolify — two separate container entries, not one.
-- Check the `queue` container's logs (`docker compose logs queue` locally,
-  or Coolify's log viewer for that container in production) — it should show
-  `Processing:` / `Processed:` lines as jobs run, starting right after
-  deploy.
+- **Docker Compose**: `docker-compose.yml` defines a dedicated `queue`
+  service. Coolify must be running this app as a **"Docker Compose"
+  resource**, not a "Dockerfile" resource — a plain "Dockerfile" resource
+  only builds/runs the `Dockerfile` itself and silently ignores
+  `docker-compose.yml`, so the `queue` service (and therefore all outgoing
+  mail) would never start, with no error anywhere.
+- **Two separate Dockerfile apps** (what's currently deployed): one Coolify
+  application for `web` (default Dockerfile `CMD`, `scripts/deploy.sh`), and
+  a **second, separate** Coolify application pointed at the same repo/image
+  with its **Start Command overridden** to `bash scripts/worker.sh`. Each is
+  its own container with its own environment — nothing is shared between
+  them automatically.
+
+Either way, after deploying:
+
+- Confirm **both** services show as running/healthy in Coolify — two
+  separate entries, not one. For the two-Dockerfile-apps setup specifically,
+  double check the worker app's **Start Command** is actually overridden —
+  if it was left at the default, that "worker" is just running `deploy.sh`
+  (a second web server), and no queue worker exists at all.
+- **Check the worker service's logs in Coolify.** As of this fix,
+  `scripts/worker.sh` echoes the resolved `QUEUE_CONNECTION`, `DB_CONNECTION`,
+  `MAIL_MAILER`, `MAIL_HOST` right at boot (never the password) — confirm
+  these actually show the expected values. Coolify apps do **not** share env
+  vars by default; if the worker app never had `MAIL_*`/`QUEUE_CONNECTION`
+  added to its own environment variables panel, this line will show
+  `<unset>` or the wrong values even though the web app is configured
+  correctly.
+- **Every queued mail attempt now logs its outcome explicitly**, from
+  `app/Providers/AppServiceProvider.php`'s `logMailQueueOutcomes()`: a
+  successful send logs `Queue mail sent: App\Mail\XxxMail to
+  someone@example.com`, a failure logs `Queue mail FAILED: App\Mail\XxxMail
+  to someone@example.com — <the actual exception message>`. Previously these
+  went only to `storage/logs/laravel.log`, a file inside the container that
+  Coolify's log viewer (which only captures stdout/stderr) never showed —
+  `scripts/worker.sh` and `scripts/deploy.sh` now both `export
+  LOG_STACK=single,stderr` so every log line reaches the log viewer, not just
+  the file. **If the worker's logs show nothing at all for a send you know
+  was queued, the job likely never reached the worker's queue in the first
+  place** (wrong `QUEUE_CONNECTION`/DB, or the worker isn't actually running)
+  — check the boot-time diagnostic line above.
 - Run `php artisan queue:failed` — if jobs are accumulating there, the worker
-  IS running but mail is failing for a different reason (see §3/§4).
+  IS running but mail is failing for a different reason (see §3/§4) — the
+  `Queue mail FAILED: ...` log line will already show the exact reason.
 - Run `php artisan queue:monitor database` or check the `jobs` table row
   count directly — it should now drain instead of growing forever. Any
   already-stuck jobs from before this fix will get picked up and processed
-  (or fail into `failed_jobs`, visible via `queue:failed`) as soon as the
-  worker boots.
+  as soon as the worker boots.
 
 ## 3. Are the mail credentials actually valid for the target host?
 
