@@ -32,16 +32,20 @@ config/infra issues:
 5. **No queue worker was ever started — the actual root cause of "scheduler
    runs fine but nothing sends."** `QUEUE_CONNECTION=database`, and every
    mailable in this app is dispatched via `Mail::to(...)->queue(...)`, never
-   `->send()`. Both `nixpacks.toml` (Octane/FrankenPHP) and
-   `nixpacks-traditional.toml` (Nginx+FPM) only ever started the web server (+
-   SSR in the background) — nothing consumed the `jobs` table, so queued mail
-   piled up silently forever, even though `announcements:dispatch-scheduled`
-   ran successfully every minute (as confirmed by production logs: `Running
-   ['artisan' announcements:dispatch-scheduled] ... DONE`). Fixed by adding a
-   self-restarting `php artisan queue:work --tries=3 --backoff=10
-   --max-time=3600` loop, backgrounded alongside SSR in both `[start]` blocks,
-   logging to `storage/logs/queue.log`. This requires no separate Coolify
-   service — it runs inside the same container as the web process.
+   `->send()`. The web process alone (whatever built/started it) never
+   consumed the `jobs` table, so queued mail piled up silently forever, even
+   though `announcements:dispatch-scheduled` ran successfully every minute
+   (as confirmed by production logs: `Running ['artisan'
+   announcements:dispatch-scheduled] ... DONE`). Fixed by deploying via
+   **Docker Compose** (`docker-compose.yml` at the repo root) with a dedicated
+   `queue` service (`scripts/worker.sh`, running `php artisan queue:work
+   --tries=3 --backoff=10 --max-time=3600 --memory=128` in the foreground,
+   with a SIGTERM/SIGINT trap that calls `queue:restart` for graceful
+   shutdown) as a **separate container** from `web` (`scripts/deploy.sh`,
+   FrankenPHP/Octane + SSR only, no worker). This is a proper Coolify
+   "Docker Compose" resource, not a single "Dockerfile" resource — Coolify
+   must be building/running `docker-compose.yml` itself, or the `queue`
+   service never starts and mail silently stops draining again.
 
 If production still doesn't send mail after deploying this fix, one or more
 of the following (genuinely outside this repo's reach) is the cause.
@@ -73,13 +77,24 @@ Pick exactly one of these two mechanisms — don't run both:
 
 ## 2. Is a queue worker actually running?
 
-**Fixed in-repo** (see bug #5 above) — both nixpacks configs now background a
-self-restarting `queue:work` loop alongside the web server. After deploying
-this change:
+**Fixed in-repo** (see bug #5 above) — `docker-compose.yml` defines a
+dedicated `queue` service, isolated from `web`, that does nothing but run
+`php artisan queue:work`. This isolates worker crashes from the web process
+and lets it scale/restart independently. After deploying:
 
-- Confirm the process actually started: check `storage/logs/queue.log`
-  inside the container — it should show `Processing:` / `Processed:` lines as
-  jobs run, starting right after deploy.
+- **Confirm Coolify is running this app as a "Docker Compose" resource, not
+  a "Dockerfile" resource.** A plain "Dockerfile" resource only builds/runs
+  the `Dockerfile` itself and silently ignores `docker-compose.yml` — the
+  `queue` service (and therefore all outgoing mail) would never start, with
+  no error anywhere. Check the Coolify dashboard's resource type for this
+  app directly; this is the single most common way this setup silently
+  breaks again.
+- Confirm **both** containers (`web` and `queue`) show as running/healthy in
+  Coolify — two separate container entries, not one.
+- Check the `queue` container's logs (`docker compose logs queue` locally,
+  or Coolify's log viewer for that container in production) — it should show
+  `Processing:` / `Processed:` lines as jobs run, starting right after
+  deploy.
 - Run `php artisan queue:failed` — if jobs are accumulating there, the worker
   IS running but mail is failing for a different reason (see §3/§4).
 - Run `php artisan queue:monitor database` or check the `jobs` table row
@@ -87,19 +102,17 @@ this change:
   already-stuck jobs from before this fix will get picked up and processed
   (or fail into `failed_jobs`, visible via `queue:failed`) as soon as the
   worker boots.
-- If you'd rather run the worker as a **separate Coolify service** instead of
-  in-process (recommended for production at scale — isolates worker crashes
-  from the web process, and lets you scale/restart it independently), remove
-  the backgrounded loop from `nixpacks.toml`'s `[start].cmd` and instead add a
-  second Coolify application/service pointed at the same repo/image with
-  start command `php artisan queue:work --tries=3 --backoff=10`.
 
 ## 3. Are the mail credentials actually valid for the target host?
 
 - Confirm `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`,
   `MAIL_PASSWORD`, `MAIL_ENCRYPTION` are set in Coolify's environment
   variables for the **production** deployment specifically (not just present
-  in a local `.env` file that isn't what's actually deployed).
+  in a local `.env` file that isn't what's actually deployed). Both
+  `docker-compose.yml` services (`web` and `queue`) load `env_file: .env`, so
+  as long as Coolify injects/mounts the same environment for the whole
+  Compose resource, one set of env vars covers both containers — but confirm
+  this in Coolify's dashboard directly rather than assuming it.
 - `MAIL_MAILER=log` (the repo default) sends nothing — confirm it's been
   overridden to `smtp` (or another real transport) in production.
 - Run `php artisan mail:diagnose you@example.com` (new command added in this
