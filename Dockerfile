@@ -1,31 +1,12 @@
-# ==========================================
-# STAGE 1: Build Frontend Assets with Node
-# ==========================================
-FROM node:22-alpine AS frontend
-
-WORKDIR /app
-
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install --legacy-peer-deps
-
-# Copy application source files and compile assets
-COPY . .
-RUN npm run build
-
-# ==========================================
-# STAGE 2: PHP Application & FrankenPHP
-# ==========================================
 FROM dunglas/frankenphp:1-php8.4
 
-# Set environment variables for production
 ENV PORT=8000 \
     ENTRYPOINT_SYMBOL=frankenphp \
     COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /app
 
-# Install system dependencies & required PHP extensions for Laravel
+# 1. Install system dependencies, PHP extensions, and Node.js
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
@@ -42,27 +23,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         opcache \
         pcntl \
         redis \
+    # Install Node.js (v22) & NPM directly inside the PHP environment
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Composer from official image
+# 2. Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy application code
+# 3. Copy application files
 COPY . .
 
-# Copy built frontend assets from the frontend stage
-COPY --from=frontend /app/public/build ./public/build
-
-# Install PHP dependencies without dev packages
+# 4. Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
 
-# Run Octane install (using local binary integrated into dunglas/frankenphp)
+# 5. Install Node dependencies and build assets (Inertia SSR)
+RUN npm install --legacy-peer-deps && npm run build
+
+# 6. Configure Octane
 RUN php artisan octane:install --server=frankenphp --no-interaction
 
-# Set execution permission on deployment script
+# 7. Set execution permissions
 RUN chmod +x scripts/deploy.sh
 
 EXPOSE 8000
 
-# Start container using your deploy script
 CMD ["bash", "scripts/deploy.sh"]
