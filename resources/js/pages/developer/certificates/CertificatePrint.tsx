@@ -1,5 +1,8 @@
-import { Award } from 'lucide-react';
+import { Award, Download } from 'lucide-react';
+import { useState } from 'react';
 import { LogoMark } from '@/components/Logo';
+import { Button } from '@/components/Button';
+import { exportTemplateAsPdf, exportTemplateAsPng } from './certificateExport';
 import type { CertificateTemplate, TemplateElement } from './types';
 
 export interface CertificateDoc {
@@ -24,7 +27,7 @@ interface CertificateSheetProps {
   breakAfter?: boolean;
 }
 
-function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
+export function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
   if (el.token === 'recipientName') return doc.recipientName;
   if (el.token === 'subtitle') return doc.subtitle;
   if (el.token === 'citationText') return doc.citationText;
@@ -73,15 +76,44 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
  * a certificate is rendered in the system.
  */
 export function CertificateSheet({ doc, variant = 'preview', breakAfter }: CertificateSheetProps) {
+  const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
   const wrapperClass =
     variant === 'print'
       ? `hidden print:flex print-area bg-white text-ink items-center justify-center p-10 ${breakAfter ? 'cert-page-break' : ''}`
       : 'flex items-center justify-center bg-neutral-50 p-4 sm:p-8 rounded-lg border border-dashed border-neutral-300';
 
   if (doc.template) {
+    const template = doc.template;
+    async function handleExport(format: 'png' | 'pdf') {
+      setExporting(format);
+      try {
+        const filename = `certificate-${doc.certificateNo || doc.key}.${format}`;
+        const resolve = (el: TemplateElement) => resolveElementText(el, doc);
+        if (format === 'png') {
+          await exportTemplateAsPng(template.layout, template.orientation, resolve, filename);
+        } else {
+          await exportTemplateAsPdf(template.layout, template.orientation, resolve, filename);
+        }
+      } finally {
+        setExporting(null);
+      }
+    }
+
     return (
-      <div className={wrapperClass} data-cy="certificate-print-div-1">
-        <TemplateRenderedSheet doc={doc} template={doc.template} />
+      <div className="flex flex-col items-center gap-3" data-cy="certificate-print-div-1">
+        <div className={wrapperClass}>
+          <TemplateRenderedSheet doc={doc} template={template} />
+        </div>
+        {variant === 'preview' && (
+          <div className="no-print flex gap-2">
+            <Button variant="secondary" size="sm" icon={Download} disabled={exporting !== null} onClick={() => void handleExport('png')}>
+              {exporting === 'png' ? 'Exporting…' : 'Download PNG'}
+            </Button>
+            <Button variant="secondary" size="sm" icon={Download} disabled={exporting !== null} onClick={() => void handleExport('pdf')}>
+              {exporting === 'pdf' ? 'Exporting…' : 'Download PDF'}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

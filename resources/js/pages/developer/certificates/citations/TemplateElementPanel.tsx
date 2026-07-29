@@ -1,4 +1,4 @@
-import { AlignCenter, AlignLeft, AlignRight, Image, Minus, QrCode, Trash2, Type } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, Image, Minus, QrCode, Trash2, Type } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/FormField';
 import { cn } from '@/lib/utils';
@@ -18,9 +18,10 @@ interface TemplateElementPanelProps {
   onAdd: (type: TemplateElementType) => void;
   onUpdate: (id: string, patch: Partial<TemplateElement>) => void;
   onRemove: (id: string) => void;
+  onReorder: (id: string, to: 'front' | 'back' | 'forward' | 'backward') => void;
 }
 
-export function TemplateElementPanel({ selected, onAdd, onUpdate, onRemove }: TemplateElementPanelProps) {
+export function TemplateElementPanel({ selected, onAdd, onUpdate, onRemove, onReorder }: TemplateElementPanelProps) {
   return (
     <div className="flex w-full flex-col gap-4 sm:w-56" data-cy="template-element-panel-div">
       <div>
@@ -45,6 +46,62 @@ export function TemplateElementPanel({ selected, onAdd, onUpdate, onRemove }: Te
               <Trash2 size={13} />
             </button>
           </div>
+
+          <div className="mb-2.5">
+            <label className="mb-1 block text-[11px] font-medium text-neutral-500">Layer order</label>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => onReorder(selected.id, 'back')}
+                className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 hover:bg-neutral-50"
+                aria-label="Send to back"
+                title="Send to back"
+              >
+                <ChevronsDown size={13} />
+              </button>
+              <button
+                onClick={() => onReorder(selected.id, 'backward')}
+                className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 hover:bg-neutral-50"
+                aria-label="Send backward"
+                title="Send backward"
+              >
+                <ChevronDown size={13} />
+              </button>
+              <button
+                onClick={() => onReorder(selected.id, 'forward')}
+                className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 hover:bg-neutral-50"
+                aria-label="Bring forward"
+                title="Bring forward"
+              >
+                <ChevronUp size={13} />
+              </button>
+              <button
+                onClick={() => onReorder(selected.id, 'front')}
+                className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 hover:bg-neutral-50"
+                aria-label="Bring to front"
+                title="Bring to front"
+              >
+                <ChevronsUp size={13} />
+              </button>
+            </div>
+          </div>
+
+          <TextField
+            label="Rotation (degrees)"
+            type="number"
+            min={-180}
+            max={180}
+            value={selected.rotation ?? 0}
+            onChange={(e) => onUpdate(selected.id, { rotation: Number(e.target.value) })}
+          />
+
+          {selected.type === 'image' && (
+            <TextField
+              label="Image URL"
+              value={selected.src ?? ''}
+              placeholder="https://…"
+              onChange={(e) => onUpdate(selected.id, { src: e.target.value })}
+            />
+          )}
 
           {selected.type === 'text' && (
             <>

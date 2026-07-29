@@ -27,6 +27,10 @@ export interface TemplateElement {
   y: number;
   width: number;
   height?: number;
+  /** Degrees, clockwise. Defaults to 0 when unset. */
+  rotation?: number;
+  /** Image URL for `type: 'image'` elements — pasted, not uploaded (v1). */
+  src?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
   align?: TemplateAlign;

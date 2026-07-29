@@ -12,6 +12,12 @@ interface CertificateTemplateListProps {
     certificateType: CertificateType;
 }
 
+const TYPE_LABEL: Record<CertificateType, string> = {
+    trainee: 'Trainee',
+    seminar: 'Seminar',
+    citation: 'Citation',
+};
+
 const columns: ColumnDef<CertificateTemplate>[] = [
     { key: 'name', label: 'Name', searchable: true },
     { key: 'orientation', label: 'Orientation', sortable: false },
@@ -84,7 +90,7 @@ export function CertificateTemplateList({
             <div className="flex items-center justify-between gap-2">
                 <div>
                     <h2 className="mb-1 text-base font-semibold text-ink">
-                        Citation certificate templates
+                        {TYPE_LABEL[certificateType]} certificate templates
                     </h2>
                     <p className="text-sm text-neutral-500">
                         Design reusable certificate layouts and attach them when

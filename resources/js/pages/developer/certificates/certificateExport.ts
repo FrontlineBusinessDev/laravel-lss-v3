@@ -1,0 +1,136 @@
+import Konva from 'konva';
+import { jsPDF } from 'jspdf';
+import { stageSize } from './citations/templateStage';
+import type { TemplateElement } from './types';
+
+const PIXEL_RATIO = 2;
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+/**
+ * Builds an offscreen Konva stage for the given template + resolved text,
+ * renders it, and returns the stage (caller must call `.destroy()` and
+ * remove the container once done). QR-code elements are skipped — no QR
+ * image generation is wired up yet, so a placeholder box has no place in a
+ * finished, downloadable certificate.
+ */
+async function buildOffscreenStage(
+    elements: TemplateElement[],
+    orientation: 'portrait' | 'landscape',
+    resolveText: (el: TemplateElement) => string,
+): Promise<{ stage: Konva.Stage; container: HTMLDivElement }> {
+    const { width, height } = stageSize(orientation);
+
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '-10000px';
+    container.style.left = '-10000px';
+    document.body.appendChild(container);
+
+    const stage = new Konva.Stage({ container, width, height });
+    const layer = new Konva.Layer();
+    stage.add(layer);
+
+    const images = new Map<string, HTMLImageElement>();
+    await Promise.all(
+        elements
+            .filter((el) => el.type === 'image' && el.src)
+            .map(async (el) => {
+                try {
+                    images.set(el.id, await loadImage(el.src as string));
+                } catch {
+                    // Broken/unreachable image URL — element is simply omitted below.
+                }
+            }),
+    );
+
+    for (const el of elements) {
+        const x = (el.x / 100) * width;
+        const y = (el.y / 100) * height;
+        const w = (el.width / 100) * width;
+        const h = ((el.height ?? 8) / 100) * height;
+        const rotation = el.rotation ?? 0;
+
+        if (el.type === 'line') {
+            layer.add(new Konva.Line({ x, y, rotation, points: [0, 0, w, 0], stroke: el.color || '#1f2937', strokeWidth: 2 }));
+        } else if (el.type === 'image') {
+            const image = images.get(el.id);
+            if (image) layer.add(new Konva.Image({ x, y, rotation, width: w, height: h, image }));
+        } else if (el.type === 'text') {
+            layer.add(
+                new Konva.Text({
+                    x,
+                    y,
+                    rotation,
+                    width: w,
+                    height: h,
+                    text: resolveText(el),
+                    fontSize: el.fontSize ?? 14,
+                    fontStyle: el.fontWeight === 'bold' ? 'bold' : 'normal',
+                    align: el.align ?? 'left',
+                    fill: el.color || '#171717',
+                    wrap: 'word',
+                }),
+            );
+        }
+        // type === 'qr': intentionally skipped, see doc comment above.
+    }
+
+    layer.draw();
+    return { stage, container };
+}
+
+function downloadDataUrl(dataUrl: string, filename: string) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+export async function exportTemplateAsPng(
+    elements: TemplateElement[],
+    orientation: 'portrait' | 'landscape',
+    resolveText: (el: TemplateElement) => string,
+    filename: string,
+): Promise<void> {
+    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText);
+    try {
+        downloadDataUrl(stage.toDataURL({ pixelRatio: PIXEL_RATIO }), filename);
+    } finally {
+        stage.destroy();
+        container.remove();
+    }
+}
+
+export async function exportTemplateAsPdf(
+    elements: TemplateElement[],
+    orientation: 'portrait' | 'landscape',
+    resolveText: (el: TemplateElement) => string,
+    filename: string,
+): Promise<void> {
+    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText);
+    try {
+        const dataUrl = stage.toDataURL({ pixelRatio: PIXEL_RATIO });
+        const { width, height } = stageSize(orientation);
+        const pdf = new jsPDF({
+            orientation,
+            unit: 'px',
+            format: [width * PIXEL_RATIO, height * PIXEL_RATIO],
+        });
+        pdf.addImage(dataUrl, 'PNG', 0, 0, width * PIXEL_RATIO, height * PIXEL_RATIO);
+        pdf.save(filename);
+    } finally {
+        stage.destroy();
+        container.remove();
+    }
+}

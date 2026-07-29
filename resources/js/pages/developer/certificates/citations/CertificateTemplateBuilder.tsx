@@ -5,9 +5,24 @@ import { TextField } from '@/components/FormField';
 import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
+import { exportTemplateAsPdf, exportTemplateAsPng } from '../certificateExport';
 import type { CertificateTemplate, CertificateType, TemplateElement, TemplateElementType } from '../types';
 import { TemplateCanvas } from './TemplateCanvas';
 import { TemplateElementPanel } from './TemplateElementPanel';
+import { reorder } from './templateStage';
+
+const SAMPLE_TEXT: Record<string, string> = {
+  recipientName: 'Juan Dela Cruz',
+  subtitle: 'Sample School',
+  citationText: 'This is to certify that Juan Dela Cruz has completed the program.',
+  certificateNo: 'Certificate No. PREVIEW-0000',
+  issuedDate: 'Issued July 17, 2026',
+};
+
+function resolveSampleText(el: TemplateElement): string {
+  if (el.token) return SAMPLE_TEXT[el.token] ?? el.token;
+  return el.text || 'Text';
+}
 
 interface CertificateTemplateBuilderProps {
   open: boolean;
@@ -37,6 +52,7 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   const [elements, setElements] = useState<TemplateElement[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -67,6 +83,27 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
     if (selectedId === id) setSelectedId(null);
   }
 
+  function reorderElement(id: string, to: 'front' | 'back' | 'forward' | 'backward') {
+    setElements((prev) => reorder(prev, id, to));
+  }
+
+  async function handleExport(format: 'png' | 'pdf') {
+    if (elements.length === 0) return;
+    setExporting(format);
+    try {
+      const filename = `${(name.trim() || 'certificate-template').replace(/\s+/g, '-').toLowerCase()}.${format}`;
+      if (format === 'png') {
+        await exportTemplateAsPng(elements, orientation, resolveSampleText, filename);
+      } else {
+        await exportTemplateAsPdf(elements, orientation, resolveSampleText, filename);
+      }
+    } catch {
+      showToast('Failed to export certificate.', 'error');
+    } finally {
+      setExporting(null);
+    }
+  }
+
   async function handleSave() {
     if (!name.trim() || elements.length === 0) return;
     setSaving(true);
@@ -95,7 +132,7 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={initial ? 'Edit template' : 'New certificate template'} maxWidth={880} data-cy="certificate-template-builder-modal">
+    <Modal open={open} onClose={onClose} title={initial ? 'Edit template' : 'New certificate template'} maxWidth={1120} data-cy="certificate-template-builder-modal">
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr]">
         <TextField label="Template name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Standard Landscape" />
         <div>
@@ -117,14 +154,37 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
 
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="flex-1 overflow-x-auto">
-          <TemplateCanvas elements={elements} selectedId={selectedId} orientation={orientation} onSelect={setSelectedId} onMove={moveElement} />
+          <TemplateCanvas
+            elements={elements}
+            selectedId={selectedId}
+            orientation={orientation}
+            onSelect={setSelectedId}
+            onMove={moveElement}
+            onTransform={updateElement}
+          />
         </div>
-        <TemplateElementPanel selected={selected} onAdd={addElement} onUpdate={updateElement} onRemove={removeElement} />
+        <TemplateElementPanel selected={selected} onAdd={addElement} onUpdate={updateElement} onRemove={removeElement} onReorder={reorderElement} />
       </div>
 
       <div className="mt-5 flex gap-2">
         <Button variant="secondary" className="flex-1" onClick={onClose}>
           Cancel
+        </Button>
+        <Button
+          variant="secondary"
+          className="flex-1"
+          disabled={elements.length === 0 || exporting !== null}
+          onClick={() => void handleExport('png')}
+        >
+          {exporting === 'png' ? 'Exporting…' : 'Download PNG'}
+        </Button>
+        <Button
+          variant="secondary"
+          className="flex-1"
+          disabled={elements.length === 0 || exporting !== null}
+          onClick={() => void handleExport('pdf')}
+        >
+          {exporting === 'pdf' ? 'Exporting…' : 'Download PDF'}
         </Button>
         <Button variant="primary" className="flex-1" disabled={!name.trim() || elements.length === 0 || saving} onClick={handleSave}>
           Save template
