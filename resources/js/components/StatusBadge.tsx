@@ -2,6 +2,7 @@ import type { StatusKind } from '@/types/reusable/status-kind';
 import { cn } from '@/lib/utils';
 const STATUS_STYLES: Record<StatusKind, string> = {
   active: 'bg-success-50 text-success-800',
+  approved: 'bg-success-50 text-success-800',
   pending: 'bg-warning-50 text-warning-800',
   completed: 'bg-brand-50 text-brand-700',
   terminated: 'bg-danger-50 text-danger-800',
@@ -14,6 +15,7 @@ const STATUS_STYLES: Record<StatusKind, string> = {
 };
 const STATUS_LABELS: Record<StatusKind, string> = {
   active: 'Active',
+  approved: 'Approved',
   pending: 'Pending',
   completed: 'Completed',
   terminated: 'Terminated',

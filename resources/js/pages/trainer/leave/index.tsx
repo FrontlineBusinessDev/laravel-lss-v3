@@ -5,6 +5,7 @@ import { Modal } from '@/components/Modal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
+import { formatDate } from '@/lib/date';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import { LeaveDetailsModal } from '@/pages/developer/leave/LeaveDetailsModal';
 import type { StatusKind } from '@/types/reusable/status-kind';
@@ -13,7 +14,7 @@ import { columns as baseColumns } from '@/types/modules/leave/leave-requests';
 
 const STATUS_BADGE: Record<string, StatusKind> = {
     pending: 'pending',
-    approved: 'active',
+    approved: 'approved',
     declined: 'declined',
 };
 
@@ -99,8 +100,8 @@ export default function TrainerLeavePage() {
                             {row.leave_category?.name ?? '—'}
                         </dd>
                         <dd className="truncate text-sm">
-                            {row.leave_date.slice(0, 10)} –{' '}
-                            {row.return_date.slice(0, 10)}
+                            {formatDate(row.leave_date)} –{' '}
+                            {formatDate(row.return_date)}
                         </dd>
                         <dd className="truncate text-sm">{row.reason}</dd>
                     </dl>

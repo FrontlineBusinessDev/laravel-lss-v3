@@ -4,6 +4,7 @@
  * Trainee-portal Trainer Evaluation submission gateway/form.
  */
 
+import { formatDateTime } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 
 export interface TrainerEvaluationPerson {
@@ -64,7 +65,7 @@ export const trainerEvaluationColumns: ColumnDef<TrainerEvaluationRow>[] = [
         label: 'Submitted',
         sortable: true,
         type: 'date-range',
-        render: (value) => (value as string).slice(0, 10),
+        render: (value) => formatDateTime(value as string),
     },
 ];
 

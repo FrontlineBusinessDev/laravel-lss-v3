@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { loadLookupOptions } from '@/types/reusable/fields';
 
@@ -139,11 +140,5 @@ export function subjectType(loggableType: string | null): string {
 
 /** Compact, locale-aware timestamp for the When column. */
 export function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit'
-  });
+  return formatDateTime(iso);
 }

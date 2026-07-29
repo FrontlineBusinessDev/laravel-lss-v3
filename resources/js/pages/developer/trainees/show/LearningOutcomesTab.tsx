@@ -4,12 +4,32 @@ import { useTraineeOutcomeToggle } from '@/hooks/use-trainee-outcome-toggle';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { ApplyLearningOutcomesModal } from './ApplyLearningOutcomesModal';
+import type { AppTraineeLearningOutcome } from '@/types/modules/trainees/trainee-detail';
+import { BulkApplyOutcomeModal } from './BulkApplyOutcomeModal';
+import { router } from '@inertiajs/react';
 
-export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetail }) {
-    const { isAchieved, toggle, toggleAll, savingId } = useTraineeOutcomeToggle(trainee.id);
+export default function LearningOutcomesTab({
+    trainee,
+}: {
+    trainee: TraineeDetail;
+}) {
+    const { isAchieved, toggle, toggleAll, savingId } = useTraineeOutcomeToggle(
+        trainee.id,
+    );
     const outcomes = trainee.outcomes ?? [];
     const achievedCount = outcomes.filter(isAchieved).length;
     const [applyOpen, setApplyOpen] = useState(false);
+    const [applyToAllBatches, setApplyToAllBatches] = useState(true);
+    const [bulkOutcome, setBulkOutcome] =
+        useState<AppTraineeLearningOutcome | null>(null);
+
+    function handleToggle(outcome: AppTraineeLearningOutcome) {
+        if (applyToAllBatches) {
+            setBulkOutcome(outcome);
+            return;
+        }
+        toggle(outcome);
+    }
 
     return (
         <>
@@ -33,8 +53,10 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                                 className="text-xs text-neutral-500"
                                 data-cy="learning-outcomes-tab-p-outcomes-associated-with"
                             >
-                                Outcomes associated with {trainee.batch?.academic_industry?.name ?? 'this industry'}.
-                                Select the ones achieved by the trainee.
+                                Outcomes associated with{' '}
+                                {trainee.batch?.academic_industry?.name ??
+                                    'this industry'}
+                                . Select the ones achieved by the trainee.
                             </p>
                         </div>
                         <div
@@ -50,7 +72,10 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             <button
                                 type="button"
                                 onClick={() => toggleAll(outcomes, 'active')}
-                                disabled={outcomes.length === 0 || achievedCount === outcomes.length}
+                                disabled={
+                                    outcomes.length === 0 ||
+                                    achievedCount === outcomes.length
+                                }
                                 className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
                                 data-cy="learning-outcomes-tab-button-check-all"
                             >
@@ -59,7 +84,9 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             <button
                                 type="button"
                                 onClick={() => toggleAll(outcomes, 'inactive')}
-                                disabled={outcomes.length === 0 || achievedCount === 0}
+                                disabled={
+                                    outcomes.length === 0 || achievedCount === 0
+                                }
                                 className="text-xs font-medium text-neutral-500 hover:text-neutral-700 disabled:opacity-50"
                                 data-cy="learning-outcomes-tab-button-uncheck-all"
                             >
@@ -74,6 +101,21 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             >
                                 Apply to
                             </button>
+                            {/* <label
+                                className="flex items-center gap-1.5 text-xs text-neutral-600"
+                                data-cy="learning-outcomes-tab-label-apply-to-all-batches"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={applyToAllBatches}
+                                    onChange={(e) =>
+                                        setApplyToAllBatches(e.target.checked)
+                                    }
+                                    className="h-3.5 w-3.5 accent-brand-500"
+                                    data-cy="learning-outcomes-tab-input-apply-to-all-batches"
+                                />
+                                Apply to all batches
+                            </label> */}
                         </div>
                     </div>
 
@@ -114,7 +156,7 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                                         <input
                                             type="checkbox"
                                             checked={checked}
-                                            onChange={() => toggle(o)}
+                                            onChange={() => handleToggle(o)}
                                             className="mt-0.5 h-4 w-4 shrink-0 accent-brand-500"
                                             data-cy="learning-outcomes-tab-input-checkbox"
                                         />
@@ -142,6 +184,21 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                 onClose={() => setApplyOpen(false)}
                 traineeId={trainee.id}
                 outcomeIds={outcomes.filter(isAchieved).map((o) => o.id)}
+            />
+            <BulkApplyOutcomeModal
+                open={!!bulkOutcome}
+                traineeId={trainee.id}
+                outcome={bulkOutcome}
+                status={
+                    bulkOutcome && isAchieved(bulkOutcome)
+                        ? 'inactive'
+                        : 'active'
+                }
+                onClose={() => setBulkOutcome(null)}
+                onApplied={() => {
+                    setBulkOutcome(null);
+                    router.reload({ only: ['trainee'] });
+                }}
             />
         </>
     );

@@ -11,6 +11,8 @@ export interface CertificateDoc {
   issuedDate?: string | null;
   /** When set, the certificate renders using this template's positioned layout instead of the plain layout below. */
   template?: CertificateTemplate | null;
+  /** Learning outcomes achieved as of issue/reissue time (frozen snapshot). Only rendered on the plain (non-templated) layout. */
+  achievedOutcomes?: string[];
 }
 
 interface CertificateSheetProps {
@@ -105,6 +107,17 @@ export function CertificateSheet({ doc, variant = 'preview', breakAfter }: Certi
           <div className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-600" data-cy="certificate-print-div-12">{doc.subtitle}</div>
 
           <p className="mx-auto mt-5 max-w-lg text-[13px] leading-relaxed text-neutral-600" data-cy="certificate-print-p-13">{doc.citationText}</p>
+
+          {!!doc.achievedOutcomes?.length && (
+            <div className="mx-auto mt-4 max-w-lg text-left" data-cy="certificate-print-div-outcomes">
+              <div className="text-[9px] font-semibold uppercase tracking-widest text-neutral-400" data-cy="certificate-print-div-outcomes-label">Learning Outcomes Achieved</div>
+              <ul className="mt-1 list-disc pl-4 text-[11px] leading-relaxed text-neutral-600" data-cy="certificate-print-ul-outcomes">
+                {doc.achievedOutcomes.map((title) => (
+                  <li key={title} data-cy="certificate-print-li-outcome">{title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-8 grid w-full grid-cols-2 gap-10 text-[11px]" data-cy="certificate-print-div-14">
             <div className="border-t border-ink pt-1.5 text-neutral-600" data-cy="certificate-print-div-program-director">Program Director</div>

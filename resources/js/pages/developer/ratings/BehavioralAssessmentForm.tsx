@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { formatDateTime } from '@/lib/date';
 import { ClipboardCheck, ClipboardList, Printer } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Modal } from '@/components/Modal';
@@ -478,10 +479,7 @@ export function BehavioralAssessmentForm({
                             ]),
                         ),
                     )}
-                    generatedAt={new Date().toLocaleString('en-PH', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                    })}
+                    generatedAt={formatDateTime(new Date())}
                 />
             )}
         </div>

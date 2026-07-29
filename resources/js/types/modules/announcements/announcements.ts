@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { FieldDef } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
@@ -81,9 +82,9 @@ export const columns: ColumnDef<Announcements>[] = [
         sortable: true,
         render: (_value, row) =>
             row.scheduled_at && new Date(row.scheduled_at) > new Date()
-                ? `Scheduled ${row.scheduled_at.slice(0, 10)}`
+                ? `Scheduled ${formatDateTime(row.scheduled_at)}`
                 : row.notified_at
-                  ? `Published ${row.notified_at.slice(0, 10)}`
+                  ? `Published ${formatDateTime(row.notified_at)}`
                   : 'Not yet published',
     },
     {

@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
@@ -87,7 +88,7 @@ export const columns: ColumnDef<LeaveRequests>[] = [
         label: 'Duration',
         sortable: true,
         render: (_value, row) =>
-            `${row.leave_date.slice(0, 10)} – ${row.return_date.slice(0, 10)}`,
+            `${formatDate(row.leave_date)} – ${formatDate(row.return_date)}`,
     },
     {
         key: 'reason',

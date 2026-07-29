@@ -4,6 +4,7 @@ import { Modal } from '@/components/Modal';
 import { Button } from '@/components/Button';
 import type { LeaveRequests } from '@/types/modules/leave/leave-requests';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/date';
 
 export const LEAVE_STATUS_STYLE: Record<LeaveRequests['status'], string> = {
     pending: 'bg-warning-50 text-warning-800',
@@ -37,15 +38,6 @@ function leaveDayCount(leaveDate: string, returnDate: string): number {
     return Math.max(1, Math.round(diffMs / 86_400_000) + 1);
 }
 
-function formatDate(value: string | null): string {
-    if (!value) return '—';
-
-    return new Date(value).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
 
 interface LeaveDetailsModalProps {
     record: LeaveRequests | null;

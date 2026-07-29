@@ -161,6 +161,7 @@ class TraineeCertificateController extends Controller
                     'template_id' => $validated['template_id'] ?? null,
                     'issued_at' => now()->toDateString(),
                     'issued_by' => auth()->id(),
+                    'learning_outcomes_snapshot' => $this->currentOutcomesSnapshot($traineeModel),
                 ],
             );
         });
@@ -189,6 +190,25 @@ class TraineeCertificateController extends Controller
             ->pluck('trainer_id');
 
         return $assignedTrainerIds->diff($evaluatedTrainerIds)->isNotEmpty();
+    }
+
+    /**
+     * Freezes the trainee's currently-achieved (active) learning outcomes
+     * into the certificate at issue/reissue time. Called on every issue()
+     * call, so reissuing always re-captures the trainee's outcomes as of
+     * that moment — the only way an already-issued certificate's snapshot
+     * changes.
+     *
+     * @return array<int, array{id: int, title: string}>
+     */
+    private function currentOutcomesSnapshot(Trainees $trainee): array
+    {
+        return $trainee->learningOutcomes()
+            ->wherePivot('status', 'active')
+            ->get(['app_settings_academic_learning_outcomes.id', 'learning_outcomes'])
+            ->map(fn($outcome) => ['id' => $outcome->id, 'title' => $outcome->learning_outcomes])
+            ->values()
+            ->all();
     }
 
     private function nextCertificateNo(): string

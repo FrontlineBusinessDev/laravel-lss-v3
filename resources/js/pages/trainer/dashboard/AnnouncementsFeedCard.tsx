@@ -4,16 +4,8 @@ import { trainerDashboardService } from '@/api-service-layer/trainer/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { Modal } from '@/components/Modal';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
+import { formatDate } from '@/lib/date';
 import type { DashboardAnnouncement } from '@/types/modules/dashboard/trainer-dashboard';
-
-function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
 
 /**
  * Bulletin-style announcements feed — own posts plus anything reaching this

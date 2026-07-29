@@ -2,16 +2,8 @@ import { useState } from 'react';
 import { Megaphone } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { traineeAnnouncementsService } from '@/api-service-layer/trainee/announcements';
+import { formatDate } from '@/lib/date';
 import type { DashboardAnnouncement } from '@/types/modules/dashboard/trainee-dashboard';
-
-function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
 
 export function AnnouncementsCard({
     announcements: initial,

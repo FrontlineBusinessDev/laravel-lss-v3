@@ -16,12 +16,21 @@ import { columns } from '@/types/modules/trainees/trainees';
 
 const PERMISSION = 'manage trainees';
 
-const TRAINEE_GRID = 'sm:grid-cols-[1.8fr_2fr_1fr_1.2fr_2.5rem]!';
+const TRAINEE_GRID =
+    'sm:grid-cols-[1.6fr_1fr_1.2fr_1.2fr_1.8fr_0.9fr_1fr_2.5rem]!';
 
 const listHeader = (
     <SettingsListHeader
         grid={TRAINEE_GRID}
-        labels={['Full name', 'Email', 'Required hrs', 'Status']}
+        labels={[
+            'Full name',
+            'Batch',
+            'School',
+            'Academic program',
+            'Email',
+            'Required hrs',
+            'Status',
+        ]}
         data-cy="index-settings-list-header-1"
     />
 );
@@ -103,6 +112,15 @@ export default function TraineesListPage() {
                             {name}
                         </span>
                     </div>
+                    <TextCell muted data-cy="index-text-cell-batch">
+                        {row.batch?.batch_code ?? '—'}
+                    </TextCell>
+                    <TextCell muted data-cy="index-text-cell-school">
+                        {row.school?.school_name ?? '—'}
+                    </TextCell>
+                    <TextCell muted data-cy="index-text-cell-program">
+                        {row.batch?.academic_program?.name ?? '—'}
+                    </TextCell>
                     <TextCell muted data-cy="index-text-cell-email">
                         {row.email}
                     </TextCell>

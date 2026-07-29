@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { formatDateShort } from '@/lib/date';
 
 /**
  * Shared form-field atoms — the single source of truth for label / input / error
@@ -17,12 +18,7 @@ export const textareaCls =
     'w-full rounded-md border border-neutral-200 bg-white px-2.5 py-2 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-50 resize-none';
 
 /** "Mon D, YYYY" — the read-only Created-date display format. */
-export const formatDate = (d: Date) =>
-    d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
+export const formatDate = formatDateShort;
 export function Field({
     label,
     error,

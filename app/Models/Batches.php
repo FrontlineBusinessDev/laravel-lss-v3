@@ -24,6 +24,7 @@ class Batches extends Model
         'setup',
         'academic_industry_id',
         'academic_program_id',
+        'academic_level_id',
     ];
 
     protected $casts = [
@@ -40,6 +41,11 @@ class Batches extends Model
     public function academicProgram(): BelongsTo
     {
         return $this->belongsTo(AcademicProgram::class, 'academic_program_id');
+    }
+
+    public function academicLevel(): BelongsTo
+    {
+        return $this->belongsTo(AcademicLevel::class, 'academic_level_id');
     }
 
     public function trainees(): HasMany

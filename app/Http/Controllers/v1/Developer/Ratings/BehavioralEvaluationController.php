@@ -41,7 +41,7 @@ class BehavioralEvaluationController extends Controller
             ->where('status', 'active')
             ->with('school:id,school_name')
             ->orderBy('first_name')
-            ->get(['id', 'first_name', 'last_name', 'school_id']);
+            ->get(['id', 'first_name', 'last_name', 'school_id', 'avatar_path', 'net_amount_required']);
 
         return response()->json(['data' => $trainees]);
     }
@@ -70,7 +70,7 @@ class BehavioralEvaluationController extends Controller
 
         $evaluation = BehavioralEvaluation::where('batch_id', $validated['batch_id'])
             ->where('trainee_id', $validated['trainee_id'])
-            ->with(['answers', 'evaluator:id,first_name,last_name', 'trainee:id,first_name,last_name'])
+            ->with(['answers', 'evaluator:id,first_name,last_name', 'trainee:id,first_name,last_name,avatar_path,net_amount_required'])
             ->first();
 
         return response()->json(['data' => $evaluation]);
@@ -122,7 +122,7 @@ class BehavioralEvaluationController extends Controller
         });
 
         return response()->json([
-            'data' => $evaluation->load(['answers', 'evaluator:id,first_name,last_name', 'trainee:id,first_name,last_name']),
+            'data' => $evaluation->load(['answers', 'evaluator:id,first_name,last_name', 'trainee:id,first_name,last_name,avatar_path,net_amount_required']),
         ]);
     }
 

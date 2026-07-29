@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-    Plus,
-    Lock,
-    CheckCircle2,
-    FolderOpen,
-    Pencil,
-    Trash2,
-} from 'lucide-react';
+import { Plus, Lock, CheckCircle2, Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { SettingsListHeader, TextCell } from '@/components/settings';
@@ -23,27 +15,17 @@ import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
 import { cn } from '@/lib/utils';
 import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
 import {
-    type ApiTask,
+    type ApiTaskGroup,
+    GROUP_STATUS_LABEL,
+    GROUP_STATUS_STYLE,
     TASK_PRIORITY_OPTIONS,
     TASK_STATUS_FILTER_OPTIONS,
 } from '@/types/task';
-import {
-    AddTaskModal,
-    type TaskSavePayload,
-} from '@/pages/developer/tasks/AddTaskModal';
+import { AddTaskModal, type TaskSavePayload } from '@/pages/developer/tasks/AddTaskModal';
+import { TaskRosterModal } from '@/pages/developer/tasks/TaskRosterModal';
 
 const PERMISSION = 'manage tasks';
 
-const STATUS_STYLE: Record<string, string> = {
-    open: 'bg-warning-50 text-warning-800',
-    completed: 'bg-success-50 text-success-800',
-    locked: 'bg-neutral-100 text-neutral-600',
-};
-const STATUS_LABEL: Record<string, string> = {
-    open: 'Open',
-    completed: 'Completed',
-    locked: 'Locked',
-};
 function personName(
     p: {
         first_name: string;
@@ -79,7 +61,7 @@ async function loadTraineeFilterOptions(query: string): Promise<FieldOption[]> {
     }));
 }
 
-const columns: ColumnDef<ApiTask>[] = [
+const columns: ColumnDef<ApiTaskGroup>[] = [
     { key: 'task', label: 'Task', searchable: true },
     {
         key: 'priority',
@@ -120,7 +102,7 @@ const columns: ColumnDef<ApiTask>[] = [
 ];
 
 const customGRID =
-    'sm:grid-cols-[0.7fr_0.7fr_0.7fr_1fr_1.2fr_0.6fr_0.6fr_0.9fr_0.9fr_0.7fr_2.5rem]!';
+    'sm:grid-cols-[0.7fr_0.7fr_0.7fr_1fr_1.2fr_0.6fr_0.9fr_0.9fr_0.7fr_2.5rem]!';
 const listHeader = (
     <SettingsListHeader
         grid={customGRID}
@@ -131,8 +113,7 @@ const listHeader = (
             'Task',
             'Description',
             'Time goal',
-            'Time spent',
-            'Trainee',
+            'Trainees',
             'Trainer',
             'Date',
         ]}
@@ -144,103 +125,66 @@ export default function TasksPage() {
     const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [addModalOpen, setAddModalOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState<ApiTask | null>(null);
-    const [viewTask, setViewTask] = useState<ApiTask | null>(null);
-    const [viewRemarks, setViewRemarks] = useState('');
+    const [rosterGroup, setRosterGroup] = useState<ApiTaskGroup | null>(null);
 
     const invalidateTasks = () =>
         queryClient.invalidateQueries({ queryKey: [['tasks']] });
 
-    async function handleSave(payload: TaskSavePayload) {
+    async function handleCreate(payload: TaskSavePayload) {
+        if (payload.mode !== 'create') return;
         try {
-            if (payload.mode === 'edit') {
-                const { id, mode: _mode, ...body } = payload;
-                await apiFetchJson(`/tasks/${id}`, {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                });
-                showToast(`"${payload.task}" updated.`, 'success');
-            } else {
-                const { mode: _mode, ...body } = payload;
-                await apiFetchJson('/tasks', {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                });
-                showToast(`Task "${payload.task}" assigned.`, 'success');
-            }
+            const { mode: _mode, ...body } = payload;
+            await apiFetchJson('/tasks', {
+                method: 'POST',
+                body: JSON.stringify(body),
+            });
+            showToast(`Task "${payload.task}" assigned.`, 'success');
             setAddModalOpen(false);
-            setEditingTask(null);
             invalidateTasks();
         } catch {
             showToast('Failed to save task.', 'error');
         }
     }
-    async function runComplete(task: ApiTask) {
+    async function runGroupComplete(row: ApiTaskGroup) {
         try {
-            await apiFetchJson(`/tasks/${task.id}/complete`, {
+            await apiFetchJson(`/tasks/groups/${row.group_id}/complete`, {
                 method: 'PATCH',
             });
-            showToast(`"${task.task}" marked as complete.`, 'success');
+            showToast(`"${row.task}" marked as complete.`, 'success');
             invalidateTasks();
         } catch {
-            showToast('Failed to complete task.', 'error');
+            showToast('Failed to complete task(s).', 'error');
         }
     }
-    async function runLock(task: ApiTask) {
+    async function runGroupLock(row: ApiTaskGroup) {
         try {
-            await apiFetchJson(`/tasks/${task.id}/lock`, { method: 'PATCH' });
-            showToast(`"${task.task}" locked.`, 'success');
-            invalidateTasks();
-        } catch {
-            showToast('Failed to lock task.', 'error');
-        }
-    }
-    async function saveRemarks() {
-        if (!viewTask) return;
-        try {
-            await apiFetchJson(`/tasks/${viewTask.id}/remarks`, {
+            await apiFetchJson(`/tasks/groups/${row.group_id}/lock`, {
                 method: 'PATCH',
-                body: JSON.stringify({ remarks: viewRemarks }),
             });
-            showToast(
-                `Remarks saved for ${personName(viewTask.trainee)}'s "${viewTask.task}".`,
-                'success',
-            );
-            setViewTask(null);
+            showToast(`"${row.task}" locked.`, 'success');
             invalidateTasks();
         } catch {
-            showToast(
-                'This task is locked and remarks can no longer be edited.',
-                'error',
-            );
+            showToast('Failed to lock task(s).', 'error');
         }
     }
 
-    const renderRow = (row: ApiTask, actions: CardActions) => {
+    const renderRow = (row: ApiTaskGroup, actions: CardActions) => {
         const menu: RowMenuAction[] = [
             {
-                label: 'Open',
-                icon: FolderOpen,
-                onClick: () => {
-                    setViewTask(row);
-                    setViewRemarks(row.remarks ?? '');
-                },
+                label: 'View roster',
+                icon: Users,
+                onClick: () => setRosterGroup(row),
             },
             {
-                label: 'Edit',
-                icon: Pencil,
-                onClick: actions.onEdit,
-            },
-            {
-                label: 'Complete',
+                label: 'Complete all',
                 icon: CheckCircle2,
-                onClick: () => runComplete(row),
+                onClick: () => runGroupComplete(row),
                 disabled: row.status === 'completed' || row.status === 'locked',
             },
             {
-                label: 'Lock',
+                label: 'Lock all',
                 icon: Lock,
-                onClick: () => runLock(row),
+                onClick: () => runGroupLock(row),
                 disabled: row.status === 'locked',
             },
             {
@@ -264,11 +208,11 @@ export default function TasksPage() {
                     <span
                         className={cn(
                             'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
-                            STATUS_STYLE[row.status],
+                            GROUP_STATUS_STYLE[row.status],
                         )}
                         data-cy="index-span-status"
                     >
-                        {STATUS_LABEL[row.status]}
+                        {GROUP_STATUS_LABEL[row.status]}
                     </span>
                 </div>
                 <div data-cy="index-div-priority">
@@ -289,15 +233,14 @@ export default function TasksPage() {
                 <TextCell muted data-cy="index-text-cell-time-goal">
                     {Number(row.time_goal)}h
                 </TextCell>
-                <TextCell muted data-cy="index-text-cell-time-spent">
-                    {Number(row.time_spent ?? 0)}h
-                    {row.is_running && (
-                        <span className="ml-1 text-warning-600">●</span>
-                    )}
-                </TextCell>
-                <TextCell muted data-cy="index-text-cell-trainee">
-                    {personName(row.trainee)}
-                </TextCell>
+                <button
+                    type="button"
+                    className="text-left text-sm text-brand-600 underline-offset-2 hover:underline"
+                    onClick={() => setRosterGroup(row)}
+                    data-cy="index-button-trainee-count"
+                >
+                    {row.completed_count}/{row.trainee_count} completed
+                </button>
                 <TextCell muted data-cy="index-text-cell-trainer">
                     {personName(row.trainer)}
                 </TextCell>
@@ -321,10 +264,7 @@ export default function TasksPage() {
                 <Button
                     variant="primary"
                     icon={Plus}
-                    onClick={() => {
-                        setEditingTask(null);
-                        setAddModalOpen(true);
-                    }}
+                    onClick={() => setAddModalOpen(true)}
                     data-cy="index-button-set-add-modal-open"
                 >
                     Add task
@@ -339,7 +279,7 @@ export default function TasksPage() {
                     <div data-cy="index-div-heading"></div>
                 </div>
 
-                <DataTableCardField<ApiTask>
+                <DataTableCardField<ApiTaskGroup>
                     apiUrl="/tasks"
                     apiQueryKey="tasks"
                     columns={columns}
@@ -347,207 +287,29 @@ export default function TasksPage() {
                     renderCard={renderRow}
                     enableStatusFilter
                     statusFilterOptions={TASK_STATUS_FILTER_OPTIONS}
-                    editPermission={PERMISSION}
                     deletePermission={PERMISSION}
-                    onEditRow={(row) => {
-                        setEditingTask(row);
-                        setAddModalOpen(true);
-                    }}
+                    deleteUrl={(row) => `/tasks/groups/${row.group_id}`}
                     data-cy="index-data-table-card-field-1"
                 />
 
-                {/* Add / edit task modal */}
+                {/* Add task modal — creates a new batch-assignment (fan-out). */}
                 <AddTaskModal
                     open={addModalOpen}
-                    editingTask={
-                        editingTask
-                            ? {
-                                  id: editingTask.id,
-                                  date: editingTask.date,
-                                  task: editingTask.task,
-                                  description: editingTask.description,
-                                  time_goal: editingTask.time_goal,
-                                  priority: editingTask.priority,
-                                  batch: editingTask.batch,
-                                  trainee: editingTask.trainee,
-                                  trainer: editingTask.trainer,
-                              }
-                            : null
-                    }
-                    onClose={() => {
-                        setAddModalOpen(false);
-                        setEditingTask(null);
-                    }}
-                    onSave={handleSave}
+                    editingTask={null}
+                    onClose={() => setAddModalOpen(false)}
+                    onSave={handleCreate}
                     data-cy="index-add-task-modal-set-add-modal-open"
                 />
 
-                {/* View task modal ("Open" action) */}
-                <Modal
-                    open={!!viewTask}
-                    onClose={() => setViewTask(null)}
-                    title={viewTask?.task ?? ''}
-                    maxWidth={440}
-                    data-cy="index-modal-set-view-task"
-                >
-                    {viewTask && (
-                        <div
-                            className="flex flex-col gap-3 text-sm"
-                            data-cy="index-div-119"
-                        >
-                            <div
-                                className="flex items-center gap-2"
-                                data-cy="index-div-120"
-                            >
-                                <span
-                                    className={cn(
-                                        'inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium',
-                                        STATUS_STYLE[viewTask.status],
-                                    )}
-                                    data-cy="index-span-121"
-                                >
-                                    {STATUS_LABEL[viewTask.status]}
-                                </span>
-                                <span
-                                    className="font-mono text-xs text-neutral-500"
-                                    data-cy="index-span-122"
-                                >
-                                    {viewTask.batch?.batch_code}
-                                </span>
-                            </div>
-                            <p
-                                className="text-neutral-600"
-                                data-cy="index-p-123"
-                            >
-                                {viewTask.description}
-                            </p>
-                            <div
-                                className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md bg-neutral-50 p-3 text-xs"
-                                data-cy="index-div-124"
-                            >
-                                <div data-cy="index-div-125">
-                                    <span
-                                        className="text-neutral-500"
-                                        data-cy="index-span-trainee"
-                                    >
-                                        Trainee
-                                    </span>
-                                    <div
-                                        className="font-medium text-ink"
-                                        data-cy="index-div-127"
-                                    >
-                                        {personName(viewTask.trainee)}
-                                    </div>
-                                </div>
-                                <div data-cy="index-div-128">
-                                    <span
-                                        className="text-neutral-500"
-                                        data-cy="index-span-trainer"
-                                    >
-                                        Trainer
-                                    </span>
-                                    <div
-                                        className="font-medium text-ink"
-                                        data-cy="index-div-130"
-                                    >
-                                        {personName(viewTask.trainer)}
-                                    </div>
-                                </div>
-                                <div data-cy="index-div-131">
-                                    <span
-                                        className="text-neutral-500"
-                                        data-cy="index-span-date"
-                                    >
-                                        Date
-                                    </span>
-                                    <div
-                                        className="font-mono font-medium text-ink"
-                                        data-cy="index-div-133"
-                                    >
-                                        {viewTask.date?.slice(0, 10)}
-                                    </div>
-                                </div>
-                                <div data-cy="index-div-134">
-                                    <span
-                                        className="text-neutral-500"
-                                        data-cy="index-span-time-goal"
-                                    >
-                                        Time goal
-                                    </span>
-                                    <div
-                                        className="font-mono font-medium text-ink"
-                                        data-cy="index-div-h"
-                                    >
-                                        {Number(viewTask.time_goal)}h
-                                    </div>
-                                </div>
-                                <div data-cy="index-div-137">
-                                    <span
-                                        className="text-neutral-500"
-                                        data-cy="index-span-time-spent"
-                                    >
-                                        Time spent
-                                    </span>
-                                    <div
-                                        className="font-mono font-medium text-ink"
-                                        data-cy="index-div-139"
-                                    >
-                                        {Number(viewTask.time_spent)}h
-                                    </div>
-                                </div>
-                            </div>
-                            <div data-cy="index-div-140">
-                                <label
-                                    className="mb-1.5 block text-xs font-medium text-neutral-600"
-                                    data-cy="index-label-remarks"
-                                >
-                                    Remarks
-                                </label>
-                                <textarea
-                                    key={viewTask.id}
-                                    value={viewRemarks}
-                                    onChange={(e) =>
-                                        setViewRemarks(e.target.value)
-                                    }
-                                    disabled={viewTask.status === 'locked'}
-                                    placeholder="Add remarks..."
-                                    rows={3}
-                                    className="w-full resize-none rounded-md border border-neutral-200 bg-white px-2.5 py-2 text-sm text-ink transition-colors placeholder:text-neutral-400 hover:border-neutral-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400"
-                                    data-cy="index-textarea-add-remarks"
-                                />
-                                {viewTask.status === 'locked' && (
-                                    <p
-                                        className="mt-1 text-xs text-neutral-400"
-                                        data-cy="index-p-locked-remarks"
-                                    >
-                                        Remarks are locked while this task's
-                                        status is Locked.
-                                    </p>
-                                )}
-                            </div>
-                            <div
-                                className="mt-1 flex justify-end gap-2"
-                                data-cy="index-div-144"
-                            >
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setViewTask(null)}
-                                    data-cy="index-button-set-view-task-2"
-                                >
-                                    Close
-                                </Button>
-                                <Button
-                                    variant="primary"
-                                    onClick={saveRemarks}
-                                    disabled={viewTask.status === 'locked'}
-                                    data-cy="index-button-commit-remarks"
-                                >
-                                    Save remarks
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </Modal>
+                {/* Per-trainee roster behind the group row ("View roster" action). */}
+                <TaskRosterModal
+                    open={!!rosterGroup}
+                    groupId={rosterGroup?.group_id ?? null}
+                    groupTask={rosterGroup?.task ?? ''}
+                    onClose={() => setRosterGroup(null)}
+                    onChanged={invalidateTasks}
+                    data-cy="index-task-roster-modal-1"
+                />
             </div>
         </TasksPrimaryLayout>
     );

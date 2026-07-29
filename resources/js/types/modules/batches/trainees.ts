@@ -1,6 +1,4 @@
 import type { ColumnDef } from '@/types/reusable/data-table';
-import { staticOptions } from '@/types/reusable/fields';
-import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 /**
  * Row shape returned by the batch-scoped trainee listing
@@ -16,8 +14,21 @@ export interface TraineeRow extends Record<string, unknown> {
     avatar_url?: string | null;
     initials?: string;
     required_hours: string | number | null;
+    termination_remarks?: string | null;
     school?: { id: number; school_name: string } | null;
 }
+
+// This list's default view already hides archived (inactive) trainees
+// server-side (BatchTraineesController::newQuery()) — "All Status" here means
+// "active + terminated", with an explicit option to bring archived back into
+// view. Distinct from the shared STATUS_FILTER_PAIRS (active/inactive only),
+// which doesn't know about the terminated lifecycle stage.
+const BATCH_TRAINEE_STATUS_FILTER_PAIRS = [
+    { value: '', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'terminated', label: 'Terminated' },
+    { value: 'inactive', label: 'Archived' },
+];
 
 /**
  * Columns for the trainee DataTableField. Only backend-sortable keys are marked
@@ -31,7 +42,7 @@ export const columns: ColumnDef<TraineeRow>[] = [
         sortable: true,
         filterable: true,
         type: 'select',
-        typeData: STATUS_FILTER_PAIRS,
+        typeData: BATCH_TRAINEE_STATUS_FILTER_PAIRS,
     },
     {
         key: 'first_name',

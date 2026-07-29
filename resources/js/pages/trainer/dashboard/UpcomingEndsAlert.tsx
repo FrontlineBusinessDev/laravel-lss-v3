@@ -2,15 +2,7 @@ import { AlertTriangle } from 'lucide-react';
 import { trainerDashboardService } from '@/api-service-layer/trainer/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
-
-function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
+import { formatDate } from '@/lib/date';
 
 /** Batches (and trainee counts) whose projected end date falls within the next 14 days. */
 export function UpcomingEndsAlert() {

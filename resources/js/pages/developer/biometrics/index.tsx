@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { formatDate, formatDateTime } from '@/lib/date';
 import {
     Upload,
     Printer,
@@ -219,7 +220,7 @@ export default function BiometricsPage() {
             await biometricsService.deleteRecord(deleteTarget.id);
             await loadRecords();
             showToast(
-                `Record for ${deleteTarget.trainee_name} on ${deleteTarget.date} was deleted.`,
+                `Record for ${deleteTarget.trainee_name} on ${formatDate(deleteTarget.date)} was deleted.`,
                 'error',
             );
         } catch {
@@ -239,10 +240,7 @@ export default function BiometricsPage() {
         (sum, r) => sum + r.total_hours,
         0,
     );
-    const printGeneratedAt = new Date().toLocaleString('en-PH', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    });
+    const printGeneratedAt = formatDateTime(new Date());
     return (
         <div data-cy="index-div-1">
             <div
@@ -353,12 +351,32 @@ export default function BiometricsPage() {
             </div>
 
             {loading && (
-                <div
-                    className="rounded-lg border border-neutral-200 bg-white p-10 text-center text-xs text-neutral-400"
-                    data-cy="index-div-loading"
-                >
-                    Loading biometric records…
-                </div>
+                <>
+                    <div
+                        className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
+                        data-cy="index-div-loading-table"
+                    >
+                        <div className="flex flex-col gap-2 p-3">
+                            {Array.from({ length: 7 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="h-16 animate-pulse rounded-md bg-gray-400/50"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    <div
+                        className="no-print flex flex-col gap-2 sm:hidden"
+                        data-cy="index-div-loading-cards"
+                    >
+                        {Array.from({ length: 7 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/40 dark:bg-gray-300/80"
+                            />
+                        ))}
+                    </div>
+                </>
             )}
 
             {!loading && tab === 'Daily records' && (
@@ -465,7 +483,7 @@ export default function BiometricsPage() {
                                                 className="px-4 py-2.5 font-mono text-xs text-neutral-600"
                                                 data-cy="index-td-36"
                                             >
-                                                {record.date}
+                                                {formatDate(record.date)}
                                             </td>
                                             <td
                                                 className="px-4 py-2.5 text-neutral-600"
@@ -615,7 +633,7 @@ export default function BiometricsPage() {
                                             className="truncate text-xs text-neutral-500"
                                             data-cy="index-p-59"
                                         >
-                                            {record.batch_code} · {record.date}
+                                            {record.batch_code} · {formatDate(record.date)}
                                         </p>
                                     </div>
                                     <span
@@ -912,7 +930,7 @@ export default function BiometricsPage() {
                 confirmLabel="Delete"
                 description={
                     deleteTarget
-                        ? `Delete the ${deleteTarget.date} attendance record for ${deleteTarget.trainee_name}? This cannot be undone.`
+                        ? `Delete the ${formatDate(deleteTarget.date)} attendance record for ${deleteTarget.trainee_name}? This cannot be undone.`
                         : ''
                 }
                 data-cy="index-confirm-dialog-delete-attendance-record"
