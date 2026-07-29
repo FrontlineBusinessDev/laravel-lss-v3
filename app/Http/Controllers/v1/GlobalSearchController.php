@@ -235,12 +235,16 @@ class GlobalSearchController extends Controller
         // query like "Juan Dela Cruz" can match a row whose name is split
         // across first_name/last_name instead of requiring the whole
         // string to appear in a single column.
+        // LOWER() on both sides makes this case-insensitive across every
+        // driver this app runs on (sqlite locally, Postgres in production —
+        // Postgres's LIKE is case-sensitive by default, unlike MySQL/sqlite).
         $terms = preg_split('/\s+/', trim($q), -1, PREG_SPLIT_NO_EMPTY);
         $query->where(function (Builder $outer) use ($columns, $terms) {
             foreach ($terms as $term) {
-                $outer->where(function (Builder $inner) use ($columns, $term) {
+                $needle = '%' . mb_strtolower($term) . '%';
+                $outer->where(function (Builder $inner) use ($columns, $needle) {
                     foreach ($columns as $column) {
-                        $inner->orWhere($column, 'like', "%{$term}%");
+                        $inner->orWhereRaw("LOWER({$column}) LIKE ?", [$needle]);
                     }
                 });
             }
