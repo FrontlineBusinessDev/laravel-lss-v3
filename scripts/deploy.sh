@@ -21,8 +21,8 @@ fi
 php artisan inertia:start-ssr > storage/logs/ssr.log 2>&1 &
 
 (while true; do
-    php artisan queue:work --tries=3 --backoff=10 --max-time=3600 >> storage/logs/queue.log 2>&1
+    php artisan queue:work --tries=3 --backoff=10 --max-time=3600 --memory=128 >> storage/logs/queue.log 2>&1
     sleep 2
 done) &
 
-exec php artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${PORT:-8080}"
+exec php artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${PORT:-8080}" --workers=2 --max-requests=250
