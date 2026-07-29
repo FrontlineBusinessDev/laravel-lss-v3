@@ -71,16 +71,18 @@ const listHeader = (
 );
 
 function buildDoc(row: TraineeCertificateRow): CertificateDoc {
+  const citationBody = row.certificate?.citation?.body_text;
   return {
     key: row.id,
     recipientName: traineeCertName(row),
     subtitle: row.school?.school_name ?? '',
-    citationText: row.certificate?.citation
-      ? `This is to certify that ${traineeCertName(row)} has completed ${row.required_hours} hours of training.`
+    citationText: citationBody
+      ? renderCitation(citationBody, tokensForTrainee(row))
       : renderCitation('This is to certify that {{name}} has completed {{hours}} hours of training.', tokensForTrainee(row)),
     certificateNo: row.certificate?.certificate_no ?? '—',
     issuedDate: row.certificate?.issued_at,
     template: row.certificate?.template,
+    achievedOutcomes: row.certificate?.learning_outcomes_snapshot?.map((o) => o.title) ?? [],
   };
 }
 

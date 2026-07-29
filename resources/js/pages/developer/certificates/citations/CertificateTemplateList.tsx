@@ -7,29 +7,35 @@ import type { ColumnDef } from '@/types/reusable/data-table';
 import { cn } from '@/lib/utils';
 import type { CertificateTemplate, CertificateType } from '../types';
 import { CertificateTemplateBuilder } from './CertificateTemplateBuilder';
-
-interface CertificateTemplateListProps {
-    certificateType: CertificateType;
-}
+import { NewTemplateTypeModal } from './NewTemplateTypeModal';
 
 const TYPE_LABEL: Record<CertificateType, string> = {
     trainee: 'Trainee',
     seminar: 'Seminar',
-    citation: 'Citation',
 };
 
 const columns: ColumnDef<CertificateTemplate>[] = [
     { key: 'name', label: 'Name', searchable: true },
+    {
+        key: 'certificate_type',
+        label: 'Type',
+        filterable: true,
+        type: 'select',
+        exactFilters: true,
+        typeData: [
+            { value: '', label: 'All types' },
+            { value: 'trainee', label: 'Trainee' },
+            { value: 'seminar', label: 'Seminar' },
+        ],
+    },
     { key: 'orientation', label: 'Orientation', sortable: false },
     { key: 'status', label: 'Status', sortable: false },
 ];
 
-export function CertificateTemplateList({
-    certificateType,
-}: CertificateTemplateListProps) {
-    const [editing, setEditing] = useState<CertificateTemplate | null | 'new'>(
-        null,
-    );
+export function CertificateTemplateList() {
+    const [editing, setEditing] = useState<CertificateTemplate | null>(null);
+    const [creatingType, setCreatingType] = useState<CertificateType | null>(null);
+    const [choosingType, setChoosingType] = useState(false);
     const [refreshTable, setRefreshTable] = useState<() => void>(
         () => () => {},
     );
@@ -60,6 +66,9 @@ export function CertificateTemplateList({
                 <div className="min-w-0 flex-1 font-medium text-ink">
                     {row.name}
                 </div>
+                <span className="w-16 shrink-0 rounded-pill bg-brand-50 px-2 py-0.5 text-center text-xs font-medium text-brand-700">
+                    {TYPE_LABEL[row.certificate_type]}
+                </span>
                 <span className="w-24 shrink-0 text-xs text-neutral-500 capitalize">
                     {row.orientation}
                 </span>
@@ -90,7 +99,7 @@ export function CertificateTemplateList({
             <div className="flex items-center justify-between gap-2">
                 <div>
                     <h2 className="mb-1 text-base font-semibold text-ink">
-                        {TYPE_LABEL[certificateType]} certificate templates
+                        Certificate templates
                     </h2>
                     <p className="text-sm text-neutral-500">
                         Design reusable certificate layouts and attach them when
@@ -102,7 +111,7 @@ export function CertificateTemplateList({
                         variant="secondary"
                         size="sm"
                         icon={Plus}
-                        onClick={() => setEditing('new')}
+                        onClick={() => setChoosingType(true)}
                     >
                         New template
                     </Button>
@@ -110,10 +119,9 @@ export function CertificateTemplateList({
             </div>
             <DataTableCardField<CertificateTemplate>
                 apiUrl="/certificates/templates"
-                apiQueryKey={['certificates-templates', certificateType]}
+                apiQueryKey="certificates-templates"
                 columns={columns}
                 defaultSortBy="name"
-                extraFilters={{ certificate_type: certificateType }}
                 archiveUrl={(row) =>
                     `/certificates/templates/${row.id}/archive`
                 }
@@ -124,11 +132,23 @@ export function CertificateTemplateList({
                 onRefreshRef={(fn) => setRefreshTable(() => fn)}
             />
 
+            <NewTemplateTypeModal
+                open={choosingType}
+                onClose={() => setChoosingType(false)}
+                onChoose={(type) => {
+                    setChoosingType(false);
+                    setCreatingType(type);
+                }}
+            />
+
             <CertificateTemplateBuilder
-                open={!!editing}
-                certificateType={certificateType}
-                initial={editing === 'new' ? null : editing}
-                onClose={() => setEditing(null)}
+                open={!!editing || !!creatingType}
+                certificateType={editing?.certificate_type ?? creatingType ?? 'trainee'}
+                initial={editing}
+                onClose={() => {
+                    setEditing(null);
+                    setCreatingType(null);
+                }}
                 onSaved={() => refreshTable()}
             />
         </div>

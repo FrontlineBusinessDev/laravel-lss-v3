@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva';
+import {
+    Group,
+    Image as KonvaImage,
+    Layer,
+    Line,
+    Rect,
+    Stage,
+    Text,
+    Transformer,
+} from 'react-konva';
 import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import type { TemplateElement } from '../types';
@@ -8,6 +17,7 @@ import {
     elementRect,
     pctToPx,
     pxToPct,
+    splitIntoColumns,
     stageSize,
     type Guide,
 } from './templateStage';
@@ -17,6 +27,9 @@ interface TemplateCanvasProps {
     elements: TemplateElement[];
     selectedId: string | null;
     orientation: 'portrait' | 'landscape';
+    zoom?: number;
+    backgroundColor?: string;
+    borderColor?: string;
     onSelect: (id: string | null) => void;
     onMove: (id: string, x: number, y: number) => void;
     onTransform: (id: string, patch: Partial<TemplateElement>) => void;
@@ -25,10 +38,20 @@ interface TemplateCanvasProps {
 const SAMPLE_TEXT: Record<string, string> = {
     recipientName: 'Juan Dela Cruz',
     subtitle: 'Sample School',
-    citationText: 'This is to certify that Juan Dela Cruz has completed the program.',
+    citationText:
+        'This is to certify that Juan Dela Cruz has completed the program.',
     certificateNo: 'Certificate No. PREVIEW-0000',
     issuedDate: 'Issued July 17, 2026',
 };
+
+const SAMPLE_OUTCOMES = [
+    'Design Website Mockup and UI using Figma',
+    'Develop Responsive Web Design',
+    'Apply basic scripting language using JavaScript',
+    'Understand Laravel architecture and manage projects',
+    'Design and implement databases using migrations',
+    'Create and manage models, controllers, and routes',
+];
 
 function elementText(el: TemplateElement): string {
     if (el.type !== 'text') return '';
@@ -86,7 +109,14 @@ function ElementNode({
 
     if (el.type === 'image') {
         if (image) {
-            return <KonvaImage {...common} image={image} width={rect.width} height={rect.height} />;
+            return (
+                <KonvaImage
+                    {...common}
+                    image={image}
+                    width={rect.width}
+                    height={rect.height}
+                />
+            );
         }
         return (
             <Rect
@@ -113,6 +143,35 @@ function ElementNode({
         );
     }
 
+    if (el.type === 'outcomes') {
+        const columns = el.columns ?? 2;
+        const colWidth = rect.width / columns;
+        const colGroups = splitIntoColumns(SAMPLE_OUTCOMES, columns);
+        return (
+            <Group {...common} width={rect.width} height={rect.height}>
+                <Rect
+                    width={rect.width}
+                    height={rect.height}
+                    fill="transparent"
+                />
+                {colGroups.map((group, i) => (
+                    <Text
+                        key={i}
+                        x={i * colWidth}
+                        y={0}
+                        width={colWidth}
+                        text={group.map((t) => `•  ${t}`).join('\n')}
+                        fontSize={el.fontSize ?? 11}
+                        fill={el.color || '#171717'}
+                        lineHeight={1.4}
+                        wrap="word"
+                        listening={false}
+                    />
+                ))}
+            </Group>
+        );
+    }
+
     return (
         <Text
             {...common}
@@ -133,6 +192,9 @@ export function TemplateCanvas({
     elements,
     selectedId,
     orientation,
+    zoom = 1,
+    backgroundColor = '#ffffff',
+    borderColor = '#0b3d66',
     onSelect,
     onMove,
     onTransform,
@@ -145,7 +207,7 @@ export function TemplateCanvas({
     const [guides, setGuides] = useState<Guide[]>([]);
 
     const { width: stageWidth, height: stageHeight } = stageSize(orientation);
-    const scale = containerWidth / stageWidth;
+    const scale = (containerWidth / stageWidth) * zoom;
 
     useEffect(() => {
         const el = containerRef.current;
@@ -176,7 +238,13 @@ export function TemplateCanvas({
         const node = e.target;
         const el = elements.find((x) => x.id === id);
         if (!el) return;
-        const rect = { id, x: node.x(), y: node.y(), width: pctToPx(el.width, stageWidth), height: pctToPx(el.height ?? 8, stageHeight) };
+        const rect = {
+            id,
+            x: node.x(),
+            y: node.y(),
+            width: pctToPx(el.width, stageWidth),
+            height: pctToPx(el.height ?? 8, stageHeight),
+        };
         const snap = computeSnap(rect, otherRects(id), stageWidth, stageHeight);
         node.position({ x: snap.x, y: snap.y });
         setGuides(snap.guides);
@@ -185,7 +253,11 @@ export function TemplateCanvas({
     function handleDragEnd(id: string, e: KonvaEventObject<DragEvent>) {
         setGuides([]);
         const node = e.target;
-        onMove(id, pxToPct(node.x(), stageWidth), pxToPct(node.y(), stageHeight));
+        onMove(
+            id,
+            pxToPct(node.x(), stageWidth),
+            pxToPct(node.y(), stageHeight),
+        );
     }
 
     function handleTransformEnd(id: string, e: KonvaEventObject<Event>) {
@@ -206,19 +278,32 @@ export function TemplateCanvas({
     }
 
     return (
-        <div ref={containerRef} className="w-full max-w-2xl" data-cy="template-canvas-div">
+        <div
+            ref={containerRef}
+            className="overflow-auto"
+            data-cy="template-canvas-div"
+        >
             <Stage
                 ref={stageRef}
-                width={stageWidth * scale}
+                width={stageWidth * scale - 10}
                 height={stageHeight * scale}
                 scaleX={scale}
                 scaleY={scale}
-                className="border-[3px] border-brand-700 bg-white shadow-card"
+                className="shadow-card"
+                style={{ border: `3px solid ${borderColor}` }}
                 onMouseDown={(e) => {
                     if (e.target === e.target.getStage()) onSelect(null);
                 }}
             >
                 <Layer>
+                    <Rect
+                        x={0}
+                        y={0}
+                        width={stageWidth}
+                        height={stageHeight}
+                        fill={backgroundColor}
+                        listening={false}
+                    />
                     {elements.map((el) => (
                         <ElementNode
                             key={el.id}
@@ -237,9 +322,24 @@ export function TemplateCanvas({
                         />
                     ))}
                     {guides.map((g, i) => (
-                        <Line key={i} points={g.points} stroke="#3b82f6" strokeWidth={1} dash={[4, 4]} listening={false} />
+                        <Line
+                            key={i}
+                            points={g.points}
+                            stroke="#3b82f6"
+                            strokeWidth={1}
+                            dash={[4, 4]}
+                            listening={false}
+                        />
                     ))}
-                    <Transformer ref={transformerRef} rotateEnabled boundBoxFunc={(oldBox, newBox) => (newBox.width < 10 || newBox.height < 10 ? oldBox : newBox)} />
+                    <Transformer
+                        ref={transformerRef}
+                        rotateEnabled
+                        boundBoxFunc={(oldBox, newBox) =>
+                            newBox.width < 10 || newBox.height < 10
+                                ? oldBox
+                                : newBox
+                        }
+                    />
                 </Layer>
             </Stage>
         </div>

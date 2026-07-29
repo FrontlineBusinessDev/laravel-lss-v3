@@ -100,6 +100,17 @@ export function computeSnap(
     return { x: snapX, y: snapY, guides };
 }
 
+/** Splits `items` into `columns` even-ish chunks, filling column-by-column (used by outcomes-list rendering). */
+export function splitIntoColumns<T>(items: T[], columns: number): T[][] {
+    const count = Math.max(1, columns);
+    const perColumn = Math.ceil(items.length / count);
+    const result: T[][] = [];
+    for (let i = 0; i < count; i++) {
+        result.push(items.slice(i * perColumn, (i + 1) * perColumn));
+    }
+    return result;
+}
+
 /** Reorders `elements` by moving the item at `id` — used by layering controls. */
 export function reorder(
     elements: TemplateElement[],

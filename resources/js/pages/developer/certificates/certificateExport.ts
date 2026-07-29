@@ -1,9 +1,15 @@
 import Konva from 'konva';
 import { jsPDF } from 'jspdf';
-import { stageSize } from './citations/templateStage';
+import { splitIntoColumns, stageSize } from './citations/templateStage';
 import type { TemplateElement } from './types';
 
 const PIXEL_RATIO = 2;
+
+export interface ExportOptions {
+    achievedOutcomes?: string[];
+    backgroundColor?: string;
+    borderColor?: string;
+}
 
 function loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
@@ -26,8 +32,10 @@ async function buildOffscreenStage(
     elements: TemplateElement[],
     orientation: 'portrait' | 'landscape',
     resolveText: (el: TemplateElement) => string,
+    options: ExportOptions = {},
 ): Promise<{ stage: Konva.Stage; container: HTMLDivElement }> {
     const { width, height } = stageSize(orientation);
+    const { achievedOutcomes = [], backgroundColor = '#ffffff', borderColor = '#0b3d66' } = options;
 
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -38,6 +46,10 @@ async function buildOffscreenStage(
     const stage = new Konva.Stage({ container, width, height });
     const layer = new Konva.Layer();
     stage.add(layer);
+
+    const borderWidth = 6;
+    layer.add(new Konva.Rect({ x: 0, y: 0, width, height, fill: backgroundColor }));
+    layer.add(new Konva.Rect({ x: borderWidth / 2, y: borderWidth / 2, width: width - borderWidth, height: height - borderWidth, stroke: borderColor, strokeWidth: borderWidth }));
 
     const images = new Map<string, HTMLImageElement>();
     await Promise.all(
@@ -80,6 +92,24 @@ async function buildOffscreenStage(
                     wrap: 'word',
                 }),
             );
+        } else if (el.type === 'outcomes') {
+            const columns = el.columns ?? 2;
+            const colWidth = w / columns;
+            splitIntoColumns(achievedOutcomes, columns).forEach((group, i) => {
+                layer.add(
+                    new Konva.Text({
+                        x: x + i * colWidth,
+                        y,
+                        rotation,
+                        width: colWidth,
+                        text: group.map((t) => `•  ${t}`).join('\n'),
+                        fontSize: el.fontSize ?? 11,
+                        fill: el.color || '#171717',
+                        lineHeight: 1.4,
+                        wrap: 'word',
+                    }),
+                );
+            });
         }
         // type === 'qr': intentionally skipped, see doc comment above.
     }
@@ -102,8 +132,9 @@ export async function exportTemplateAsPng(
     orientation: 'portrait' | 'landscape',
     resolveText: (el: TemplateElement) => string,
     filename: string,
+    options: ExportOptions = {},
 ): Promise<void> {
-    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText);
+    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText, options);
     try {
         downloadDataUrl(stage.toDataURL({ pixelRatio: PIXEL_RATIO }), filename);
     } finally {
@@ -117,8 +148,9 @@ export async function exportTemplateAsPdf(
     orientation: 'portrait' | 'landscape',
     resolveText: (el: TemplateElement) => string,
     filename: string,
+    options: ExportOptions = {},
 ): Promise<void> {
-    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText);
+    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText, options);
     try {
         const dataUrl = stage.toDataURL({ pixelRatio: PIXEL_RATIO });
         const { width, height } = stageSize(orientation);

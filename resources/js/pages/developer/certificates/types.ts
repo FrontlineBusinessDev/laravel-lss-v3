@@ -1,6 +1,6 @@
 export type CertificateAppliesTo = 'trainee' | 'seminar' | 'both';
 export type CertificateStatus = 'active' | 'inactive';
-export type CertificateType = 'trainee' | 'seminar' | 'citation';
+export type CertificateType = 'trainee' | 'seminar';
 
 export interface CertificateCitation {
   id: number;
@@ -15,7 +15,7 @@ export interface CertificateCitation {
   [key: string]: unknown;
 }
 
-export type TemplateElementType = 'text' | 'image' | 'qr' | 'line';
+export type TemplateElementType = 'text' | 'image' | 'qr' | 'line' | 'outcomes';
 export type TemplateAlign = 'left' | 'center' | 'right';
 
 export interface TemplateElement {
@@ -35,6 +35,8 @@ export interface TemplateElement {
   fontWeight?: 'normal' | 'bold';
   align?: TemplateAlign;
   color?: string;
+  /** Column count for `type: 'outcomes'` elements — defaults to 2. */
+  columns?: number;
 }
 
 export interface CertificateTemplate {
@@ -45,6 +47,8 @@ export interface CertificateTemplate {
   page_size: 'a4' | 'letter';
   orientation: 'portrait' | 'landscape';
   is_default: boolean;
+  background_color?: string | null;
+  border_color?: string | null;
   status: CertificateStatus;
   created_at: string;
   updated_at: string;
@@ -55,8 +59,9 @@ interface IssuedCertificate {
   id: number;
   certificate_no: string;
   issued_at: string | null;
-  citation?: { id: number; title: string } | null;
+  citation?: { id: number; title: string; body_text?: string } | null;
   template?: CertificateTemplate | null;
+  learning_outcomes_snapshot?: { id: number; title: string }[] | null;
 }
 
 export interface TraineeCertificateRow {

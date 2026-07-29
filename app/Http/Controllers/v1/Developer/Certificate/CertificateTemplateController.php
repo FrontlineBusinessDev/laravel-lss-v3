@@ -25,11 +25,11 @@ class CertificateTemplateController extends BaseController
     protected function storeRules(): array
     {
         return [
-            'certificate_type' => ['required', Rule::in(['trainee', 'seminar', 'citation'])],
+            'certificate_type' => ['required', Rule::in(['trainee', 'seminar'])],
             'name' => ['required', 'string', 'max:255'],
             'layout' => ['required', 'array'],
             'layout.*.id' => ['required', 'string'],
-            'layout.*.type' => ['required', Rule::in(['text', 'image', 'qr', 'line'])],
+            'layout.*.type' => ['required', Rule::in(['text', 'image', 'qr', 'line', 'outcomes'])],
             'layout.*.x' => ['required', 'numeric'],
             'layout.*.y' => ['required', 'numeric'],
             'layout.*.width' => ['required', 'numeric'],
@@ -42,9 +42,12 @@ class CertificateTemplateController extends BaseController
             'layout.*.fontWeight' => ['nullable', Rule::in(['normal', 'bold'])],
             'layout.*.align' => ['nullable', Rule::in(['left', 'center', 'right'])],
             'layout.*.color' => ['nullable', 'string', 'max:32'],
+            'layout.*.columns' => ['nullable', 'integer', 'min:1', 'max:3'],
             'page_size' => ['nullable', Rule::in(['a4', 'letter'])],
             'orientation' => ['nullable', Rule::in(['portrait', 'landscape'])],
             'is_default' => ['nullable', 'boolean'],
+            'background_color' => ['nullable', 'string', 'max:9'],
+            'border_color' => ['nullable', 'string', 'max:9'],
             'status' => ['required', Rule::in(Statuses::all())],
         ];
     }
@@ -71,7 +74,7 @@ class CertificateTemplateController extends BaseController
     public function lookup(Request $request): JsonResponse
     {
         $type = $request->string('certificate_type')->toString();
-        if (! in_array($type, ['trainee', 'seminar', 'citation'], true)) {
+        if (! in_array($type, ['trainee', 'seminar'], true)) {
             return parent::lookup($request);
         }
 

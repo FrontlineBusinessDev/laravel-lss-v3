@@ -206,7 +206,7 @@ export default function CitationsPage() {
             />
 
             {/* <div className="mt-8" data-cy="citations-index-templates-section">
-                <CertificateTemplateList certificateType="citation" />
+                <CertificateTemplateList />
             </div> */}
 
             <AddEditCitationModal

@@ -36,7 +36,7 @@ class TraineeCertificateController extends Controller
             ->with([
                 'batch:id,batch_code',
                 'school:id,school_name',
-                'certificate.citation:id,title',
+                'certificate.citation:id,title,body_text',
                 'certificate.template',
             ]);
 

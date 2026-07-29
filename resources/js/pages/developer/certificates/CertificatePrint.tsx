@@ -36,10 +36,20 @@ export function resolveElementText(el: TemplateElement, doc: CertificateDoc): st
   return el.text ?? '';
 }
 
+const OUTCOMES_COLUMN_CLASS: Record<number, string> = {
+  1: 'columns-1',
+  2: 'columns-2',
+  3: 'columns-3',
+};
+
 function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; template: CertificateTemplate }) {
   const aspect = template.orientation === 'portrait' ? '1 / 1.4142' : '1.4142 / 1';
   return (
-    <div className="relative w-full max-w-2xl border-[3px] border-brand-700 bg-white shadow-card" style={{ aspectRatio: aspect }} data-cy="certificate-print-template-div-1">
+    <div
+      className="relative w-full max-w-2xl shadow-card"
+      style={{ aspectRatio: aspect, backgroundColor: template.background_color || '#ffffff', border: `3px solid ${template.border_color || '#0b3d66'}` }}
+      data-cy="certificate-print-template-div-1"
+    >
       {template.layout.map((el) => (
         <div
           key={el.id}
@@ -61,6 +71,13 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
             <div className="flex h-full w-full items-center justify-center border border-dashed border-neutral-300 text-[9px] text-neutral-400">
               QR
             </div>
+          )}
+          {el.type === 'outcomes' && !!doc.achievedOutcomes?.length && (
+            <ul className={`${OUTCOMES_COLUMN_CLASS[el.columns ?? 2]} list-disc gap-x-4 pl-3 leading-snug`}>
+              {doc.achievedOutcomes.map((title) => (
+                <li key={title}>{title}</li>
+              ))}
+            </ul>
           )}
           {(el.type === 'text' || el.type === 'image') && <span>{resolveElementText(el, doc)}</span>}
         </div>
@@ -89,10 +106,15 @@ export function CertificateSheet({ doc, variant = 'preview', breakAfter }: Certi
       try {
         const filename = `certificate-${doc.certificateNo || doc.key}.${format}`;
         const resolve = (el: TemplateElement) => resolveElementText(el, doc);
+        const options = {
+          achievedOutcomes: doc.achievedOutcomes ?? [],
+          backgroundColor: template.background_color || undefined,
+          borderColor: template.border_color || undefined,
+        };
         if (format === 'png') {
-          await exportTemplateAsPng(template.layout, template.orientation, resolve, filename);
+          await exportTemplateAsPng(template.layout, template.orientation, resolve, filename, options);
         } else {
-          await exportTemplateAsPdf(template.layout, template.orientation, resolve, filename);
+          await exportTemplateAsPdf(template.layout, template.orientation, resolve, filename, options);
         }
       } finally {
         setExporting(null);
