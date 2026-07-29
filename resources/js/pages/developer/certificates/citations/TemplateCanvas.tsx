@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+    Ellipse,
     Group,
     Image as KonvaImage,
     Layer,
@@ -101,8 +102,39 @@ function ElementNode({
                 {...common}
                 points={[0, 0, rect.width, 0]}
                 stroke={el.color || '#1f2937'}
-                strokeWidth={2}
+                strokeWidth={el.strokeWidth ?? 2}
                 hitStrokeWidth={16}
+            />
+        );
+    }
+
+    if (el.type === 'shape') {
+        const strokeWidth = el.strokeWidth ?? 2;
+        const fill = el.fill || 'transparent';
+        const stroke = el.color || '#0b3d66';
+        if (el.shape === 'circle') {
+            return (
+                <Group {...common} width={rect.width} height={rect.height}>
+                    <Ellipse
+                        x={rect.width / 2}
+                        y={rect.height / 2}
+                        radiusX={Math.max(0, rect.width / 2 - strokeWidth / 2)}
+                        radiusY={Math.max(0, rect.height / 2 - strokeWidth / 2)}
+                        fill={fill}
+                        stroke={stroke}
+                        strokeWidth={strokeWidth}
+                    />
+                </Group>
+            );
+        }
+        return (
+            <Rect
+                {...common}
+                width={rect.width}
+                height={rect.height}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
             />
         );
     }
@@ -179,6 +211,7 @@ function ElementNode({
             height={rect.height}
             text={elementText(el)}
             fontSize={el.fontSize ?? 14}
+            fontFamily={el.fontFamily || undefined}
             fontStyle={el.fontWeight === 'bold' ? 'bold' : 'normal'}
             align={el.align ?? 'left'}
             fill={el.color || '#171717'}
@@ -227,6 +260,20 @@ export function TemplateCanvas({
         transformer.nodes(node ? [node] : []);
         transformer.getLayer()?.batchDraw();
     }, [selectedId, elements]);
+
+    // A <link> tag alone doesn't guarantee a Google Font is loaded before
+    // Konva paints — force-load every custom family in use, then redraw.
+    useEffect(() => {
+        const families = new Set(
+            elements
+                .filter((el) => el.type === 'text' && el.fontFamily)
+                .map((el) => (el.fontFamily as string).split(',')[0].replace(/['"]/g, '').trim()),
+        );
+        if (families.size === 0) return;
+        Promise.all([...families].map((family) => document.fonts.load(`16px "${family}"`).catch(() => undefined))).then(() => {
+            stageRef.current?.getLayers()[0]?.batchDraw();
+        });
+    }, [elements]);
 
     function otherRects(excludeId: string) {
         return elements
@@ -278,70 +325,68 @@ export function TemplateCanvas({
     }
 
     return (
-        <div
-            ref={containerRef}
-            className="overflow-auto"
-            data-cy="template-canvas-div"
-        >
-            <Stage
-                ref={stageRef}
-                width={stageWidth * scale - 10}
-                height={stageHeight * scale}
-                scaleX={scale}
-                scaleY={scale}
-                className="shadow-card"
-                style={{ border: `3px solid ${borderColor}` }}
-                onMouseDown={(e) => {
-                    if (e.target === e.target.getStage()) onSelect(null);
-                }}
-            >
-                <Layer>
-                    <Rect
-                        x={0}
-                        y={0}
-                        width={stageWidth}
-                        height={stageHeight}
-                        fill={backgroundColor}
-                        listening={false}
-                    />
-                    {elements.map((el) => (
-                        <ElementNode
-                            key={el.id}
-                            el={el}
-                            stageWidth={stageWidth}
-                            stageHeight={stageHeight}
-                            isSelected={selectedId === el.id}
-                            shapeRef={(node) => {
-                                if (node) shapeRefs.current.set(el.id, node);
-                                else shapeRefs.current.delete(el.id);
-                            }}
-                            onSelect={() => onSelect(el.id)}
-                            onDragMove={(e) => handleDragMove(el.id, e)}
-                            onDragEnd={(e) => handleDragEnd(el.id, e)}
-                            onTransformEnd={(e) => handleTransformEnd(el.id, e)}
-                        />
-                    ))}
-                    {guides.map((g, i) => (
-                        <Line
-                            key={i}
-                            points={g.points}
-                            stroke="#3b82f6"
-                            strokeWidth={1}
-                            dash={[4, 4]}
+        <div ref={containerRef} data-cy="template-canvas-div">
+            <div className="overflow-auto">
+                <Stage
+                    ref={stageRef}
+                    width={stageWidth * scale}
+                    height={stageHeight * scale}
+                    scaleX={scale}
+                    scaleY={scale}
+                    className="shadow-card"
+                    style={{ border: `3px solid ${borderColor}` }}
+                    onMouseDown={(e) => {
+                        if (e.target === e.target.getStage()) onSelect(null);
+                    }}
+                >
+                    <Layer>
+                        <Rect
+                            x={0}
+                            y={0}
+                            width={stageWidth}
+                            height={stageHeight}
+                            fill={backgroundColor}
                             listening={false}
                         />
-                    ))}
-                    <Transformer
-                        ref={transformerRef}
-                        rotateEnabled
-                        boundBoxFunc={(oldBox, newBox) =>
-                            newBox.width < 10 || newBox.height < 10
-                                ? oldBox
-                                : newBox
-                        }
-                    />
-                </Layer>
-            </Stage>
+                        {elements.map((el) => (
+                            <ElementNode
+                                key={el.id}
+                                el={el}
+                                stageWidth={stageWidth}
+                                stageHeight={stageHeight}
+                                isSelected={selectedId === el.id}
+                                shapeRef={(node) => {
+                                    if (node) shapeRefs.current.set(el.id, node);
+                                    else shapeRefs.current.delete(el.id);
+                                }}
+                                onSelect={() => onSelect(el.id)}
+                                onDragMove={(e) => handleDragMove(el.id, e)}
+                                onDragEnd={(e) => handleDragEnd(el.id, e)}
+                                onTransformEnd={(e) => handleTransformEnd(el.id, e)}
+                            />
+                        ))}
+                        {guides.map((g, i) => (
+                            <Line
+                                key={i}
+                                points={g.points}
+                                stroke="#3b82f6"
+                                strokeWidth={1}
+                                dash={[4, 4]}
+                                listening={false}
+                            />
+                        ))}
+                        <Transformer
+                            ref={transformerRef}
+                            rotateEnabled
+                            boundBoxFunc={(oldBox, newBox) =>
+                                newBox.width < 10 || newBox.height < 10
+                                    ? oldBox
+                                    : newBox
+                            }
+                        />
+                    </Layer>
+                </Stage>
+            </div>
         </div>
     );
 }

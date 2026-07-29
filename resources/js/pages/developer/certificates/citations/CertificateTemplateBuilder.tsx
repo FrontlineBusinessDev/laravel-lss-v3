@@ -10,7 +10,9 @@ import type { CertificateTemplate, CertificateType, TemplateElement, TemplateEle
 import { TemplateAddRail } from './TemplateAddRail';
 import { TemplateCanvas } from './TemplateCanvas';
 import { TemplateElementPanel } from './TemplateElementPanel';
+import { TemplateImageCropModal } from './TemplateImageCropModal';
 import { TemplateLayersPanel } from './TemplateLayersPanel';
+import { stageSize } from './templateStage';
 
 const SAMPLE_TEXT: Record<string, string> = {
   recipientName: 'Juan Dela Cruz',
@@ -53,10 +55,13 @@ function newElement(type: TemplateElementType): TemplateElement {
     x: 30,
     y: 40,
     width: type === 'line' ? 40 : 40,
-    height: type === 'image' || type === 'qr' ? 15 : type === 'outcomes' ? 25 : undefined,
+    height: type === 'image' || type === 'qr' ? 15 : type === 'outcomes' ? 25 : type === 'shape' ? 20 : undefined,
     fontSize: type === 'text' ? 14 : type === 'outcomes' ? 11 : undefined,
     columns: type === 'outcomes' ? 2 : undefined,
     align: 'left',
+    shape: type === 'shape' ? 'rectangle' : undefined,
+    fill: type === 'shape' ? 'transparent' : undefined,
+    strokeWidth: type === 'shape' ? 2 : undefined,
   };
 }
 
@@ -75,6 +80,7 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   const [zoom, setZoom] = useState(1);
   const [backgroundColor, setBackgroundColor] = useState(DEFAULT_BACKGROUND);
   const [borderColor, setBorderColor] = useState(DEFAULT_BORDER);
+  const [croppingId, setCroppingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -88,6 +94,14 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   }, [open, initial, certificateType]);
 
   const selected = elements.find((e) => e.id === selectedId) ?? null;
+  const cropping = elements.find((e) => e.id === croppingId) ?? null;
+  const cropAspect = (() => {
+    if (!cropping) return 1;
+    const { width: sw, height: sh } = stageSize(orientation);
+    const pxW = (cropping.width / 100) * sw;
+    const pxH = ((cropping.height ?? 8) / 100) * sh;
+    return pxH > 0 ? pxW / pxH : 1;
+  })();
 
   function addElement(type: TemplateElementType) {
     const el = newElement(type);
@@ -200,7 +214,7 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
                 {Math.round(z * 100)}%
               </button>
             ))}
-          </div>
+          </div> 
           <TemplateCanvas
             elements={elements}
             selectedId={selectedId}
@@ -211,12 +225,12 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
             onSelect={setSelectedId}
             onMove={moveElement}
             onTransform={updateElement}
-          />
+          /> 
         </div>
 
         <div className="flex w-full flex-col gap-3 sm:w-64">
           <TemplateLayersPanel elements={elements} selectedId={selectedId} onSelect={setSelectedId} onReorder={setElements} />
-          <TemplateElementPanel selected={selected} onUpdate={updateElement} onRemove={removeElement} />
+          <TemplateElementPanel selected={selected} onUpdate={updateElement} onRemove={removeElement} onCropImage={setCroppingId} />
         </div>
       </div>
 
@@ -244,6 +258,13 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
           Save template
         </Button>
       </div>
+
+      <TemplateImageCropModal
+        imageSrc={cropping?.src ?? null}
+        aspect={cropAspect}
+        onClose={() => setCroppingId(null)}
+        onSave={(dataUrl) => cropping && updateElement(cropping.id, { src: dataUrl })}
+      />
     </Modal>
   );
 }

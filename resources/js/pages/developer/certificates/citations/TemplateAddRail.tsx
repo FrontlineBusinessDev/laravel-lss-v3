@@ -1,4 +1,4 @@
-import { Image, ListChecks, Minus, QrCode, Type } from 'lucide-react';
+import { Image, ListChecks, Minus, QrCode, Square, Type } from 'lucide-react';
 import type { TemplateElementType } from '../types';
 
 interface TemplateAddRailProps {
@@ -8,6 +8,7 @@ interface TemplateAddRailProps {
 const RAIL_ITEMS: { type: TemplateElementType; icon: typeof Type; label: string }[] = [
   { type: 'text', icon: Type, label: 'Text' },
   { type: 'image', icon: Image, label: 'Image' },
+  { type: 'shape', icon: Square, label: 'Shape' },
   { type: 'qr', icon: QrCode, label: 'QR' },
   { type: 'line', icon: Minus, label: 'Line' },
   { type: 'outcomes', icon: ListChecks, label: 'Outcomes' },

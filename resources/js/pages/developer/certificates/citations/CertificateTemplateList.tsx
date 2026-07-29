@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { Archive, ArchiveRestore, Pencil, Plus } from 'lucide-react';
-import { Button } from '@/components/Button';
+import { useEffect, useState } from 'react';
+import { Archive, ArchiveRestore, Lock, Pencil } from 'lucide-react';
 import { RowMenu, type RowMenuAction } from '@/components/RowMenu';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import type { ColumnDef } from '@/types/reusable/data-table';
@@ -32,7 +31,14 @@ const columns: ColumnDef<CertificateTemplate>[] = [
     { key: 'status', label: 'Status', sortable: false },
 ];
 
-export function CertificateTemplateList() {
+interface CertificateTemplateListProps {
+    /** Registers an imperative "open the New Template flow" trigger with the parent page, which renders the actual button in CertificatesPrimaryLayout's actionNode slot. */
+    onRegisterOpenNew?: (fn: () => void) => void;
+}
+
+export function CertificateTemplateList({
+    onRegisterOpenNew,
+}: CertificateTemplateListProps) {
     const [editing, setEditing] = useState<CertificateTemplate | null>(null);
     const [creatingType, setCreatingType] = useState<CertificateType | null>(
         null,
@@ -41,6 +47,10 @@ export function CertificateTemplateList() {
     const [refreshTable, setRefreshTable] = useState<() => void>(
         () => () => {},
     );
+
+    useEffect(() => {
+        onRegisterOpenNew?.(() => setChoosingType(true));
+    }, [onRegisterOpenNew]);
 
     function renderRow(
         row: CertificateTemplate,
@@ -53,11 +63,18 @@ export function CertificateTemplateList() {
                       icon: ArchiveRestore,
                       onClick: actions.onRestore,
                   }
-                : {
-                      label: 'Archive',
-                      icon: Archive,
-                      onClick: actions.onArchive,
-                  },
+                : row.is_default
+                  ? {
+                        label: 'Default template (protected)',
+                        icon: Lock,
+                        disabled: true,
+                        onClick: () => {},
+                    }
+                  : {
+                        label: 'Archive',
+                        icon: Archive,
+                        onClick: actions.onArchive,
+                    },
         ];
 
         return (
@@ -98,19 +115,6 @@ export function CertificateTemplateList() {
 
     return (
         <div data-cy="certificate-template-list-div">
-            <div className="flex items-center justify-between gap-2">
-                <div></div>
-                <div className="mb-2 flex justify-end">
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        icon={Plus}
-                        onClick={() => setChoosingType(true)}
-                    >
-                        New template
-                    </Button>
-                </div>
-            </div>
             <DataTableCardField<CertificateTemplate>
                 apiUrl="/certificates/templates"
                 apiQueryKey="certificates-templates"

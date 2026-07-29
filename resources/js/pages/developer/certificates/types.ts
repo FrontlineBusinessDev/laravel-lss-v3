@@ -15,8 +15,9 @@ export interface CertificateCitation {
   [key: string]: unknown;
 }
 
-export type TemplateElementType = 'text' | 'image' | 'qr' | 'line' | 'outcomes';
+export type TemplateElementType = 'text' | 'image' | 'qr' | 'line' | 'outcomes' | 'shape';
 export type TemplateAlign = 'left' | 'center' | 'right';
+export type TemplateShapeKind = 'rectangle' | 'circle';
 
 export interface TemplateElement {
   id: string;
@@ -29,14 +30,22 @@ export interface TemplateElement {
   height?: number;
   /** Degrees, clockwise. Defaults to 0 when unset. */
   rotation?: number;
-  /** Image URL for `type: 'image'` elements — pasted, not uploaded (v1). */
+  /** Image URL for `type: 'image'` elements — pasted, not uploaded (v1). May be a data URL after cropping. */
   src?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
+  /** Font family for `type: 'text'` elements — a curated Google/web-safe list. Unset = default sans-serif. */
+  fontFamily?: string;
   align?: TemplateAlign;
   color?: string;
   /** Column count for `type: 'outcomes'` elements — defaults to 2. */
   columns?: number;
+  /** Rectangle or circle for `type: 'shape'` elements. */
+  shape?: TemplateShapeKind;
+  /** Fill color for `type: 'shape'` elements. */
+  fill?: string;
+  /** Stroke width for `type: 'shape'`/`type: 'line'` elements. */
+  strokeWidth?: number;
 }
 
 export interface CertificateTemplate {

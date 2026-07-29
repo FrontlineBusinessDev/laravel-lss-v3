@@ -61,12 +61,23 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
             height: el.height ? `${el.height}%` : undefined,
             fontSize: el.fontSize ? `${el.fontSize}px` : undefined,
             fontWeight: el.fontWeight,
+            fontFamily: el.fontFamily || undefined,
             textAlign: el.align ?? 'left',
             color: el.color,
           }}
           data-cy="certificate-print-template-element"
         >
-          {el.type === 'line' && <div className="h-px w-full bg-ink" />}
+          {el.type === 'line' && <div className="h-px w-full" style={{ backgroundColor: el.color || '#1f2937', height: el.strokeWidth ?? 2 }} />}
+          {el.type === 'shape' && (
+            <div
+              className="h-full w-full"
+              style={{
+                backgroundColor: el.fill && el.fill !== 'transparent' ? el.fill : 'transparent',
+                border: `${el.strokeWidth ?? 2}px solid ${el.color || '#0b3d66'}`,
+                borderRadius: el.shape === 'circle' ? '9999px' : undefined,
+              }}
+            />
+          )}
           {el.type === 'qr' && (
             <div className="flex h-full w-full items-center justify-center border border-dashed border-neutral-300 text-[9px] text-neutral-400">
               QR

@@ -21,6 +21,16 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     });
 }
 
+/** Ensures every custom font family used by text elements is actually loaded before Konva paints — a <link> tag alone doesn't guarantee readiness. */
+async function ensureFontsLoaded(elements: TemplateElement[]): Promise<void> {
+    const families = new Set(
+        elements
+            .filter((el) => el.type === 'text' && el.fontFamily)
+            .map((el) => (el.fontFamily as string).split(',')[0].replace(/['"]/g, '').trim()),
+    );
+    await Promise.all([...families].map((family) => document.fonts.load(`16px "${family}"`).catch(() => undefined)));
+}
+
 /**
  * Builds an offscreen Konva stage for the given template + resolved text,
  * renders it, and returns the stage (caller must call `.destroy()` and
@@ -52,8 +62,9 @@ async function buildOffscreenStage(
     layer.add(new Konva.Rect({ x: borderWidth / 2, y: borderWidth / 2, width: width - borderWidth, height: height - borderWidth, stroke: borderColor, strokeWidth: borderWidth }));
 
     const images = new Map<string, HTMLImageElement>();
-    await Promise.all(
-        elements
+    await Promise.all([
+        ensureFontsLoaded(elements),
+        ...elements
             .filter((el) => el.type === 'image' && el.src)
             .map(async (el) => {
                 try {
@@ -62,7 +73,7 @@ async function buildOffscreenStage(
                     // Broken/unreachable image URL — element is simply omitted below.
                 }
             }),
-    );
+    ]);
 
     for (const el of elements) {
         const x = (el.x / 100) * width;
@@ -72,7 +83,25 @@ async function buildOffscreenStage(
         const rotation = el.rotation ?? 0;
 
         if (el.type === 'line') {
-            layer.add(new Konva.Line({ x, y, rotation, points: [0, 0, w, 0], stroke: el.color || '#1f2937', strokeWidth: 2 }));
+            layer.add(new Konva.Line({ x, y, rotation, points: [0, 0, w, 0], stroke: el.color || '#1f2937', strokeWidth: el.strokeWidth ?? 2 }));
+        } else if (el.type === 'shape') {
+            const strokeWidth = el.strokeWidth ?? 2;
+            const fill = el.fill || 'transparent';
+            const stroke = el.color || '#0b3d66';
+            if (el.shape === 'circle') {
+                layer.add(new Konva.Ellipse({
+                    x: x + w / 2,
+                    y: y + h / 2,
+                    rotation,
+                    radiusX: Math.max(0, w / 2 - strokeWidth / 2),
+                    radiusY: Math.max(0, h / 2 - strokeWidth / 2),
+                    fill,
+                    stroke,
+                    strokeWidth,
+                }));
+            } else {
+                layer.add(new Konva.Rect({ x, y, rotation, width: w, height: h, fill, stroke, strokeWidth }));
+            }
         } else if (el.type === 'image') {
             const image = images.get(el.id);
             if (image) layer.add(new Konva.Image({ x, y, rotation, width: w, height: h, image }));
@@ -86,6 +115,7 @@ async function buildOffscreenStage(
                     height: h,
                     text: resolveText(el),
                     fontSize: el.fontSize ?? 14,
+                    fontFamily: el.fontFamily || undefined,
                     fontStyle: el.fontWeight === 'bold' ? 'bold' : 'normal',
                     align: el.align ?? 'left',
                     fill: el.color || '#171717',
