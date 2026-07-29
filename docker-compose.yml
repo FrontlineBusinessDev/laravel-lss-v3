@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Web Application (FrankenPHP / Octane)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # Dedicated Queue Worker
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["bash", "scripts/worker.sh"]
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      - web

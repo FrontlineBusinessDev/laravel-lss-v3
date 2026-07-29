@@ -47,7 +47,7 @@ RUN npm install --legacy-peer-deps && npm run build
 RUN php artisan octane:install --server=frankenphp --no-interaction
 
 # 7. Set execution permissions
-RUN chmod +x scripts/deploy.sh
+RUN chmod +x scripts/deploy.sh scripts/worker.sh
 
 EXPOSE 8000
 
