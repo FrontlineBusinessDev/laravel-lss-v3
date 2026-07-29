@@ -45,7 +45,6 @@ class TraineesController extends BaseController
         $query = parent::newQuery()
             ->with([
                 'school:id,school_name',
-                'academicLevel:id,name',
                 'batch:id,batch_code,academic_industry_id,academic_program_id',
                 'batch.academicIndustry:id,name',
                 'batch.academicProgram:id,name',

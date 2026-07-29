@@ -35,7 +35,6 @@ class MyInfoController
 
         $trainee->load([
             'school:id,school_name',
-            'academicLevel:id,name',
             'batch:id,batch_code,date_started,setup,academic_industry_id,academic_program_id',
             'batch.academicIndustry:id,name',
             'batch.academicProgram:id,name',
