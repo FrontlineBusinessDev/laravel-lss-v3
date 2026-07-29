@@ -22,6 +22,7 @@ import { renderCitation } from '../certificateUtils';
 import { AddEditCitationModal } from '../AddEditCitationModal';
 import type { CertificateCitation } from '../types';
 import { CertificateTemplateList } from './CertificateTemplateList';
+import { AddRecordButton } from '@/components/settings';
 
 const APPLIES_TO_LABEL: Record<string, string> = {
     trainee: 'Trainee',
