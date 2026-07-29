@@ -327,14 +327,16 @@ export function TemplateCanvas({
     return (
         <div ref={containerRef} data-cy="template-canvas-div">
             <div className="overflow-auto">
+                <div
+                    className="shadow-card"
+                    style={{ display: 'inline-block', lineHeight: 0, border: `3px solid ${borderColor}` }}
+                >
                 <Stage
                     ref={stageRef}
                     width={stageWidth * scale}
                     height={stageHeight * scale}
                     scaleX={scale}
                     scaleY={scale}
-                    className="shadow-card"
-                    style={{ border: `3px solid ${borderColor}` }}
                     onMouseDown={(e) => {
                         if (e.target === e.target.getStage()) onSelect(null);
                     }}
@@ -386,6 +388,7 @@ export function TemplateCanvas({
                         />
                     </Layer>
                 </Stage>
+                </div>
             </div>
         </div>
     );

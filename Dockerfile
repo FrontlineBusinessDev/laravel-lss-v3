@@ -6,24 +6,27 @@ ENV PORT=8000 \
 
 WORKDIR /app
 
-# 1. Install system dependencies, PHP extensions, and Node.js
+# 1. Install system dependencies, PHP extensions (including PostgreSQL drivers), and Node.js
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libpq-dev \
     zip \
     curl \
     && install-php-extensions \
         pdo_mysql \
+        pdo_pgsql \
+        pgsql \
         gd \
         intl \
         zip \
         opcache \
         pcntl \
         redis \
-    # Install Node.js (v22) & NPM directly inside the PHP environment
+    # Install Node.js (v22) & NPM
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -37,7 +40,7 @@ COPY . .
 # 4. Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
 
-# 5. Install Node dependencies and build assets (Inertia SSR)
+# 5. Install Node dependencies and build assets
 RUN npm install --legacy-peer-deps && npm run build
 
 # 6. Configure Octane
