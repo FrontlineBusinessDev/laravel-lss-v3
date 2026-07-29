@@ -61,24 +61,78 @@ class GlobalSearchController extends Controller
     protected function searchAsAdmin(string $q): array
     {
         return [
-            $this->group('trainees', 'Trainees', Trainees::query(), ['first_name', 'last_name', 'email', 'mobile_number'], $q,
-                fn(Trainees $t) => $this->result($t->id, trim("{$t->first_name} {$t->last_name}"), $t->email, "/trainees/{$t->id}")),
-            $this->group('batches', 'Batches', Batches::query(), ['batch_code'], $q,
-                fn(Batches $b) => $this->result($b->id, $b->batch_code, ucfirst($b->status), "/batches/{$b->id}")),
-            $this->group('tasks', 'Tasks', Task::query(), ['task'], $q,
-                fn(Task $t) => $this->result($t->id, $t->task, 'Task', '/tasks')),
-            $this->group('leave_requests', 'Leave requests', LeaveRequest::query(), ['reason'], $q,
-                fn(LeaveRequest $l) => $this->result($l->id, $l->reason, ucfirst($l->status), '/leave')),
-            $this->group('payments', 'Payments', TraineesPayments::query(), ['reference_no', 'official_receipt_number'], $q,
-                fn(TraineesPayments $p) => $this->result($p->id, $p->official_receipt_number ?? $p->reference_no ?? "Payment #{$p->id}", 'Payment', "/payments/{$p->trainee_id}")),
-            $this->group('trainee_certificates', 'Certificates', TraineeCertificate::query()->whereNotNull('certificate_no'), ['certificate_no'], $q,
-                fn(TraineeCertificate $c) => $this->result($c->id, $c->certificate_no, 'Trainee certificate', "/trainees/{$c->trainee_id}/certificate")),
-            $this->group('seminars', 'Seminars', Seminar::query(), ['topic', 'venue'], $q,
-                fn(Seminar $s) => $this->result($s->id, $s->topic, $s->venue, '/seminars/list-of-seminars')),
-            $this->group('users', 'Staff', User::role(['admin', 'developer', 'trainer']), ['first_name', 'last_name', 'email'], $q,
-                fn(User $u) => $this->result($u->id, $u->name, $u->email, '/settings/users')),
-            $this->group('announcements', 'Announcements', Announcement::query(), ['subject', 'description'], $q,
-                fn(Announcement $a) => $this->result($a->id, $a->subject, ucfirst($a->status), '/announcements')),
+            $this->group(
+                'trainees',
+                'Trainees',
+                Trainees::query(),
+                ['first_name', 'last_name', 'email', 'mobile_number'],
+                $q,
+                fn(Trainees $t) => $this->result($t->id, trim("{$t->first_name} {$t->last_name}"), $t->email, "/trainees/{$t->id}")
+            ),
+            $this->group(
+                'batches',
+                'Batches',
+                Batches::query(),
+                ['batch_code'],
+                $q,
+                fn(Batches $b) => $this->result($b->id, $b->batch_code, ucfirst($b->status), "/batches/{$b->id}")
+            ),
+            $this->group(
+                'tasks',
+                'Tasks',
+                Task::query(),
+                ['task'],
+                $q,
+                fn(Task $t) => $this->result($t->id, $t->task, 'Task', '/tasks')
+            ),
+            $this->group(
+                'leave_requests',
+                'Leave requests',
+                LeaveRequest::query(),
+                ['reason'],
+                $q,
+                fn(LeaveRequest $l) => $this->result($l->id, $l->reason, ucfirst($l->status), '/leave')
+            ),
+            $this->group(
+                'payments',
+                'Payments',
+                TraineesPayments::query(),
+                ['reference_no', 'official_receipt_number'],
+                $q,
+                fn(TraineesPayments $p) => $this->result($p->id, $p->official_receipt_number ?? $p->reference_no ?? "Payment #{$p->id}", 'Payment', "/payments/{$p->trainee_id}")
+            ),
+            $this->group(
+                'trainee_certificates',
+                'Certificates',
+                TraineeCertificate::query()->whereNotNull('certificate_no'),
+                ['certificate_no'],
+                $q,
+                fn(TraineeCertificate $c) => $this->result($c->id, $c->certificate_no, 'Trainee certificate', "/trainees/{$c->trainee_id}/certificate")
+            ),
+            $this->group(
+                'seminars',
+                'Seminars',
+                Seminar::query(),
+                ['topic', 'venue'],
+                $q,
+                fn(Seminar $s) => $this->result($s->id, $s->topic, $s->venue, '/seminars/list-of-seminars')
+            ),
+            $this->group(
+                'users',
+                'Staff',
+                User::role(['admin', 'developer', 'trainer']),
+                ['first_name', 'last_name', 'email'],
+                $q,
+                fn(User $u) => $this->result($u->id, $u->name, $u->email, '/settings/users')
+            ),
+            $this->group(
+                'announcements',
+                'Announcements',
+                Announcement::query(),
+                ['subject', 'description'],
+                $q,
+                fn(Announcement $a) => $this->result($a->id, $a->subject, ucfirst($a->status), '/announcements')
+            ),
         ];
     }
 
@@ -88,14 +142,38 @@ class GlobalSearchController extends Controller
         $batchIds = $this->assignedBatchIds();
 
         return [
-            $this->group('batches', 'Batches', Batches::query()->whereIn('id', $batchIds), ['batch_code'], $q,
-                fn(Batches $b) => $this->result($b->id, $b->batch_code, ucfirst($b->status), "/trainer/batches/{$b->id}")),
-            $this->group('trainees', 'Trainees', Trainees::query()->whereIn('batch_id', $batchIds), ['first_name', 'last_name', 'email'], $q,
-                fn(Trainees $t) => $this->result($t->id, trim("{$t->first_name} {$t->last_name}"), $t->email, "/trainer/trainees/{$t->id}")),
-            $this->group('tasks', 'Tasks', Task::query()->whereIn('batch_id', $batchIds), ['task'], $q,
-                fn(Task $t) => $this->result($t->id, $t->task, 'Task', '/trainer/tasks')),
-            $this->group('leave_requests', 'Leave requests', LeaveRequest::query()->whereIn('batch_id', $batchIds), ['reason'], $q,
-                fn(LeaveRequest $l) => $this->result($l->id, $l->reason, ucfirst($l->status), '/trainer/leave')),
+            $this->group(
+                'batches',
+                'Batches',
+                Batches::query()->whereIn('id', $batchIds),
+                ['batch_code'],
+                $q,
+                fn(Batches $b) => $this->result($b->id, $b->batch_code, ucfirst($b->status), "/trainer/batches/{$b->id}")
+            ),
+            $this->group(
+                'trainees',
+                'Trainees',
+                Trainees::query()->whereIn('batch_id', $batchIds),
+                ['first_name', 'last_name', 'email'],
+                $q,
+                fn(Trainees $t) => $this->result($t->id, trim("{$t->first_name} {$t->last_name}"), $t->email, "/trainer/trainees/{$t->id}")
+            ),
+            $this->group(
+                'tasks',
+                'Tasks',
+                Task::query()->whereIn('batch_id', $batchIds),
+                ['task'],
+                $q,
+                fn(Task $t) => $this->result($t->id, $t->task, 'Task', '/trainer/tasks')
+            ),
+            $this->group(
+                'leave_requests',
+                'Leave requests',
+                LeaveRequest::query()->whereIn('batch_id', $batchIds),
+                ['reason'],
+                $q,
+                fn(LeaveRequest $l) => $this->result($l->id, $l->reason, ucfirst($l->status), '/trainer/leave')
+            ),
         ];
     }
 
@@ -105,14 +183,38 @@ class GlobalSearchController extends Controller
         $trainee = Trainees::where('user_id', $user->id)->firstOrFail();
 
         return [
-            $this->group('tasks', 'Tasks', Task::query()->where('trainee_id', $trainee->id), ['task'], $q,
-                fn(Task $t) => $this->result($t->id, $t->task, 'Task', '/trainee/tasks')),
-            $this->group('leave_requests', 'Leave requests', LeaveRequest::query()->where('trainee_id', $trainee->id), ['reason'], $q,
-                fn(LeaveRequest $l) => $this->result($l->id, $l->reason, ucfirst($l->status), '/trainee/leave')),
-            $this->group('payments', 'Payments', TraineesPayments::query()->where('trainee_id', $trainee->id), ['reference_no', 'official_receipt_number'], $q,
-                fn(TraineesPayments $p) => $this->result($p->id, $p->official_receipt_number ?? $p->reference_no ?? "Payment #{$p->id}", 'Payment', '/trainee/payments')),
-            $this->group('announcements', 'Announcements', Announcement::query()->where('status', 'active'), ['subject', 'description'], $q,
-                fn(Announcement $a) => $this->result($a->id, $a->subject, 'Announcement', '/trainee/announcements')),
+            $this->group(
+                'tasks',
+                'Tasks',
+                Task::query()->where('trainee_id', $trainee->id),
+                ['task'],
+                $q,
+                fn(Task $t) => $this->result($t->id, $t->task, 'Task', '/trainee/tasks')
+            ),
+            $this->group(
+                'leave_requests',
+                'Leave requests',
+                LeaveRequest::query()->where('trainee_id', $trainee->id),
+                ['reason'],
+                $q,
+                fn(LeaveRequest $l) => $this->result($l->id, $l->reason, ucfirst($l->status), '/trainee/leave')
+            ),
+            $this->group(
+                'payments',
+                'Payments',
+                TraineesPayments::query()->where('trainee_id', $trainee->id),
+                ['reference_no', 'official_receipt_number'],
+                $q,
+                fn(TraineesPayments $p) => $this->result($p->id, $p->official_receipt_number ?? $p->reference_no ?? "Payment #{$p->id}", 'Payment', '/trainee/payments')
+            ),
+            $this->group(
+                'announcements',
+                'Announcements',
+                Announcement::query()->where('status', 'active'),
+                ['subject', 'description'],
+                $q,
+                fn(Announcement $a) => $this->result($a->id, $a->subject, 'Announcement', '/trainee/announcements')
+            ),
         ];
     }
 
@@ -128,11 +230,19 @@ class GlobalSearchController extends Controller
      */
     protected function group(string $key, string $label, Builder $query, array $columns, string $q, callable $map): ?array
     {
-        $query->where(function (Builder $sub) use ($columns, $q) {
-            foreach ($columns as $index => $column) {
-                $index === 0
-                    ? $sub->where($column, 'like', "%{$q}%")
-                    : $sub->orWhere($column, 'like', "%{$q}%");
+        // Each whitespace-separated term must match at least one column
+        // (AND across terms, OR across columns per term), so a full-name
+        // query like "Juan Dela Cruz" can match a row whose name is split
+        // across first_name/last_name instead of requiring the whole
+        // string to appear in a single column.
+        $terms = preg_split('/\s+/', trim($q), -1, PREG_SPLIT_NO_EMPTY);
+        $query->where(function (Builder $outer) use ($columns, $terms) {
+            foreach ($terms as $term) {
+                $outer->where(function (Builder $inner) use ($columns, $term) {
+                    foreach ($columns as $column) {
+                        $inner->orWhere($column, 'like', "%{$term}%");
+                    }
+                });
             }
         });
 

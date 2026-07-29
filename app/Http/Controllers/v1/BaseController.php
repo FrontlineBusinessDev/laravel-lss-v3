@@ -115,11 +115,7 @@ abstract class BaseController extends Controller implements HasMiddleware
         $query = $this->newQuery($request);
         $search = $request->string('search')->toString();
         if ($search !== '' && $this->searchable) {
-            $query->where(function (Builder $q) use ($search) {
-                foreach ($this->searchable as $col) {
-                    $q->orWhere($col, 'like', "%{$search}%");
-                }
-            });
+            $this->applySearchTerms($query, $this->searchable, $search);
         }
         foreach ((array) $request->input('filters', []) as $col => $value) {
             if (is_array($value)) {
@@ -442,9 +438,31 @@ abstract class BaseController extends Controller implements HasMiddleware
     }
     protected function applySearch(Builder $query, string $term): Builder
     {
-        return $query->where(function (Builder $q) use ($term) {
-            foreach ($this->searchable as $column) {
-                $q->orWhere($column, 'like', "%{$term}%");
+        $this->applySearchTerms($query, $this->searchable, $term);
+
+        return $query;
+    }
+
+    /**
+     * Splits $search into whitespace-separated terms and requires each term
+     * to match at least one of $columns (AND across terms, OR across
+     * columns per term) — so a multi-word query like "Juan Dela Cruz" can
+     * match a row whose name is split across first_name/last_name, instead
+     * of requiring the whole string to appear in a single column.
+     *
+     * @param list<string> $columns
+     */
+    protected function applySearchTerms(Builder $query, array $columns, string $search): void
+    {
+        $terms = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
+
+        $query->where(function (Builder $outer) use ($columns, $terms) {
+            foreach ($terms as $term) {
+                $outer->where(function (Builder $inner) use ($columns, $term) {
+                    foreach ($columns as $column) {
+                        $inner->orWhere($column, 'like', "%{$term}%");
+                    }
+                });
             }
         });
     }
