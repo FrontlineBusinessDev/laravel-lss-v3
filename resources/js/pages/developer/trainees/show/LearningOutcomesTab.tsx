@@ -10,9 +10,8 @@ export default function LearningOutcomesTab({
 }: {
     trainee: TraineeDetail;
 }) {
-    const { isAchieved, toggle, toggleAll, savingId } = useTraineeOutcomeToggle(
-        trainee.id,
-    );
+    const { isAchieved, toggle, toggleAll, savingId, hasChanges, resetChanges } =
+        useTraineeOutcomeToggle(trainee.id);
     const outcomes = trainee.outcomes ?? [];
     const achievedCount = outcomes.filter(isAchieved).length;
     const [applyOpen, setApplyOpen] = useState(false);
@@ -81,7 +80,7 @@ export default function LearningOutcomesTab({
                             <button
                                 type="button"
                                 onClick={() => setApplyOpen(true)}
-                                disabled={achievedCount === 0}
+                                disabled={achievedCount === 0 || !hasChanges}
                                 className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
                                 data-cy="learning-outcomes-tab-button-apply-to"
                             >
@@ -153,6 +152,7 @@ export default function LearningOutcomesTab({
             <ApplyLearningOutcomesModal
                 open={applyOpen}
                 onClose={() => setApplyOpen(false)}
+                onApplied={resetChanges}
                 traineeId={trainee.id}
                 outcomeIds={outcomes.filter(isAchieved).map((o) => o.id)}
             />

@@ -34,6 +34,7 @@ async function loadTraineeOptions(query: string): Promise<FieldOption[]> {
 interface Props {
     open: boolean;
     onClose: () => void;
+    onApplied?: () => void;
     traineeId: number;
     outcomeIds: number[];
 }
@@ -41,6 +42,7 @@ interface Props {
 export function ApplyLearningOutcomesModal({
     open,
     onClose,
+    onApplied,
     traineeId,
     outcomeIds,
 }: Props) {
@@ -77,6 +79,7 @@ export function ApplyLearningOutcomesModal({
             );
             reset();
             onClose();
+            onApplied?.();
         } catch (err) {
             showToast(
                 err instanceof Error ? err.message : 'Failed to apply outcomes.',
