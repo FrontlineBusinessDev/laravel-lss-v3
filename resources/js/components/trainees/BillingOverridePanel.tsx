@@ -1,8 +1,10 @@
 import { traineeBillingOverrideService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
+import { Switch } from '@/components/Switch';
 import { useToast } from '@/components/Toast';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { router } from '@inertiajs/react';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -139,25 +141,20 @@ export function BillingOverridePanel({ trainee }: Props) {
                                 <span className="text-xs font-medium text-neutral-600">
                                     {label}
                                 </span>
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={isOn}
-                                    onClick={() => toggle(key, !isOn)}
-                                    disabled={isSaving}
-                                    className={`relative h-5 w-9 rounded-full transition-colors disabled:opacity-50 ${
-                                        isOn ? 'bg-brand-500' : 'bg-neutral-200'
-                                    }`}
-                                    data-cy="billing-override-panel-toggle"
-                                >
-                                    <span
-                                        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                                            isOn
-                                                ? 'translate-x-4.5'
-                                                : 'translate-x-0.5'
-                                        }`}
+                                <div className="flex items-center gap-1.5">
+                                    {isSaving && (
+                                        <Loader2
+                                            className="size-3.5 animate-spin text-neutral-400"
+                                            data-cy="billing-override-panel-saving-spinner"
+                                        />
+                                    )}
+                                    <Switch
+                                        checked={isOn}
+                                        onClick={() => toggle(key, !isOn)}
+                                        disabled={isSaving}
+                                        ariaLabel={label}
                                     />
-                                </button>
+                                </div>
                             </div>
                             {isOn ? (
                                 <div className="flex items-center gap-1.5">

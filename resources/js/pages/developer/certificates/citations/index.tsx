@@ -22,6 +22,7 @@ import { renderCitation } from '../certificateUtils';
 import { AddEditCitationModal } from '../AddEditCitationModal';
 import type { CertificateCitation } from '../types';
 import { CertificateTemplateList } from './CertificateTemplateList';
+import { AddRecordButton } from '@/components/settings';
 
 const APPLIES_TO_LABEL: Record<string, string> = {
     trainee: 'Trainee',
@@ -206,7 +207,7 @@ export default function CitationsPage() {
             />
 
             {/* <div className="mt-8" data-cy="citations-index-templates-section">
-                <CertificateTemplateList certificateType="citation" />
+                <CertificateTemplateList />
             </div> */}
 
             <AddEditCitationModal

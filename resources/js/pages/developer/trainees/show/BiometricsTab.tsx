@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDate, formatDateTime } from '@/lib/date';
 import { Printer, AlertTriangle, X } from 'lucide-react';
 import { biometricsService } from '@/api-service-layer/admin/biometrics';
 import { Button } from '@/components/Button';
@@ -26,10 +27,7 @@ export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
     );
     const records = data?.records ?? [];
     const totalHours = data?.summary.total_hours ?? 0;
-    const printGeneratedAt = new Date().toLocaleString('en-PH', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    });
+    const printGeneratedAt = formatDateTime(new Date());
 
     return (
         <>
@@ -212,7 +210,7 @@ export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
                                                 className="px-3 py-2.5 font-mono text-xs text-neutral-600"
                                                 data-cy="biometrics-tab-td-26"
                                             >
-                                                {r.date}
+                                                {formatDate(r.date)}
                                             </td>
                                             <td
                                                 className="px-3 py-2.5 text-neutral-600"

@@ -25,18 +25,36 @@ class CertificateTemplateController extends BaseController
     protected function storeRules(): array
     {
         return [
-            'certificate_type' => ['required', Rule::in(['trainee', 'seminar', 'citation'])],
+            'certificate_type' => ['required', Rule::in(['trainee', 'seminar'])],
             'name' => ['required', 'string', 'max:255'],
             'layout' => ['required', 'array'],
             'layout.*.id' => ['required', 'string'],
-            'layout.*.type' => ['required', Rule::in(['text', 'image', 'qr', 'line'])],
+            'layout.*.type' => ['required', Rule::in(['text', 'image', 'qr', 'line', 'outcomes', 'shape'])],
             'layout.*.x' => ['required', 'numeric'],
             'layout.*.y' => ['required', 'numeric'],
             'layout.*.width' => ['required', 'numeric'],
             'layout.*.height' => ['nullable', 'numeric'],
+            'layout.*.rotation' => ['nullable', 'numeric'],
+            'layout.*.token' => ['nullable', 'string', 'max:255'],
+            'layout.*.text' => ['nullable', 'string', 'max:1000'],
+            // Unbounded: pasted image URLs are normally short, but a cropped
+            // image is saved as a data URL straight into this JSON column —
+            // the column itself is unbounded, so this must be too.
+            'layout.*.src' => ['nullable', 'string'],
+            'layout.*.fontSize' => ['nullable', 'numeric'],
+            'layout.*.fontWeight' => ['nullable', Rule::in(['normal', 'bold'])],
+            'layout.*.fontFamily' => ['nullable', 'string', 'max:100'],
+            'layout.*.align' => ['nullable', Rule::in(['left', 'center', 'right'])],
+            'layout.*.color' => ['nullable', 'string', 'max:32'],
+            'layout.*.columns' => ['nullable', 'integer', 'min:1', 'max:3'],
+            'layout.*.shape' => ['nullable', Rule::in(['rectangle', 'circle'])],
+            'layout.*.fill' => ['nullable', 'string', 'max:32'],
+            'layout.*.strokeWidth' => ['nullable', 'numeric', 'min:0', 'max:40'],
             'page_size' => ['nullable', Rule::in(['a4', 'letter'])],
             'orientation' => ['nullable', Rule::in(['portrait', 'landscape'])],
             'is_default' => ['nullable', 'boolean'],
+            'background_color' => ['nullable', 'string', 'max:9'],
+            'border_color' => ['nullable', 'string', 'max:9'],
             'status' => ['required', Rule::in(Statuses::all())],
         ];
     }
@@ -55,6 +73,35 @@ class CertificateTemplateController extends BaseController
         return $validated;
     }
 
+    /** Default (is_default) templates are protected from archiving — they're the fallback every issue flow relies on. */
+    public function archive(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        abort_if($model->is_default, 422, 'Default templates cannot be archived.');
+
+        return parent::archive($id);
+    }
+
+    /**
+     * Adds is_default as a permanent blocker on top of the normal relation-
+     * count guard — a default template can never be hard-deleted, even once
+     * archived and unreferenced, mirroring BehavioralQuestionController's
+     * is_critical pattern.
+     *
+     * @return array<int, array{label: string, count: int}>
+     */
+    protected function inUseBlockers(Model $model): array
+    {
+        $blockers = parent::inUseBlockers($model);
+
+        /** @var CertificateTemplate $model */
+        if ($model->is_default) {
+            array_unshift($blockers, ['label' => 'Default template', 'count' => 1]);
+        }
+
+        return $blockers;
+    }
+
     /**
      * Extends the base lookup() with a required certificate_type scope, so
      * each certificate type's template picker only ever sees its own set —
@@ -63,7 +110,7 @@ class CertificateTemplateController extends BaseController
     public function lookup(Request $request): JsonResponse
     {
         $type = $request->string('certificate_type')->toString();
-        if (! in_array($type, ['trainee', 'seminar', 'citation'], true)) {
+        if (! in_array($type, ['trainee', 'seminar'], true)) {
             return parent::lookup($request);
         }
 

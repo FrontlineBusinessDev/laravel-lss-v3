@@ -1,8 +1,9 @@
 import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
+import { useGlobalSearchTrigger } from '@/contexts/GlobalSearchContext';
 import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from '@/lib/router-compat';
 import { router } from '@inertiajs/react';
-import { KeyRound, LogOut, Menu } from 'lucide-react';
+import { KeyRound, LogOut, Menu, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { LogoMark } from './Logo';
 import { NotificationBell } from './NotificationBell';
@@ -10,6 +11,7 @@ import { NotificationBell } from './NotificationBell';
 export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
     const navigate = useNavigate();
     const { displayName, initials, role } = useAuth();
+    const { open: openSearch } = useGlobalSearchTrigger();
     const [open, setOpen] = useState(false);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -47,6 +49,14 @@ export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
                     LS {role}
                 </span>
             </div>
+            <button
+                onClick={openSearch}
+                aria-label="Open search"
+                className="rounded-md p-1.5 text-neutral-600 transition-colors hover:bg-neutral-100 active:scale-95"
+                data-cy="top-bar-button-open-search"
+            >
+                <Search size={17} />
+            </button>
             <NotificationBell data-cy="top-bar-notification-bell-7" />
             <div ref={ref} className="relative" data-cy="top-bar-div-8">
                 <button

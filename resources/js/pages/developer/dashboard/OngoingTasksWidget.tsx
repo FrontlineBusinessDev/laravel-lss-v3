@@ -4,14 +4,8 @@ import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
+import { formatDate } from '@/lib/date';
 import type { TaskPriority } from '@/types/task';
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-    });
-}
 
 /** Active (not-yet-completed) tasks across every batch. */
 export function OngoingTasksWidget() {

@@ -66,6 +66,11 @@ class TraineesPolicy
         return $user->can(Permissions::MANAGE_TRAINEES);
     }
 
+    public function transfer(User $user): bool
+    {
+        return $user->can(Permissions::MANAGE_TRAINEES);
+    }
+
     public function delete(User $user): bool
     {
         return $user->can(Permissions::MANAGE_TRAINEES);

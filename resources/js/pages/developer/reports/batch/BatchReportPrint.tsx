@@ -1,5 +1,6 @@
 import { LogoMark } from '@/components/Logo';
 import type { ReportBatch } from '@/api-service-layer/developer/report';
+import { formatDate } from '@/lib/date';
 import { formatCurrency } from '../reportsUtils';
 
 interface BatchReportPrintProps {
@@ -65,7 +66,7 @@ export function BatchReportPrint({
                     <td className="border border-ink px-2 py-1.5" data-cy="batch-report-print-td-44">{a.trainer}</td>
                     <td className="border border-ink px-2 py-1.5 text-right" data-cy="batch-report-print-td-h">{a.timeGoal}h</td>
                     <td className="border border-ink px-2 py-1.5 text-right" data-cy="batch-report-print-td-h-2">{a.timeSpent}h</td>
-                    <td className="border border-ink px-2 py-1.5" data-cy="batch-report-print-td-47">{a.date}</td>
+                    <td className="border border-ink px-2 py-1.5" data-cy="batch-report-print-td-47">{formatDate(a.date)}</td>
                   </tr>)}
                 {activities.length === 0 && <tr data-cy="batch-report-print-tr-48">
                     <td className="border border-ink px-2 py-2 text-center text-neutral-400" colSpan={6} data-cy="batch-report-print-td-no-completed-activities-recorded">No completed activities recorded.</td>

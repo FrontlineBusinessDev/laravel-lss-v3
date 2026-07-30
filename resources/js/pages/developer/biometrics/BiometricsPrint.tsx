@@ -1,4 +1,5 @@
 import { LogoMark } from '@/components/Logo';
+import { formatDate } from '@/lib/date';
 import { summarizeAttendance } from '@/pages/developer/biometrics/biometricsUtils';
 interface PrintRow {
   id: number | string;
@@ -73,7 +74,7 @@ export function BiometricsPrint({
         </thead>
         <tbody data-cy="biometrics-print-tbody-30">
           {sorted.map(r => <tr key={r.id} data-cy="biometrics-print-tr-31">
-              <td className="border border-ink px-2 py-1.5" data-cy="biometrics-print-td-32">{r.date}</td>
+              <td className="border border-ink px-2 py-1.5" data-cy="biometrics-print-td-32">{formatDate(r.date)}</td>
               <td className="border border-ink px-2 py-1.5" data-cy="biometrics-print-td-33">{r.morning_time_in ?? '—'}</td>
               <td className="border border-ink px-2 py-1.5" data-cy="biometrics-print-td-lunch">{r.lunch_time_out ?? '—'}</td>
               <td className="border border-ink px-2 py-1.5" data-cy="biometrics-print-td-afternoon">{r.afternoon_time_in ?? '—'}</td>

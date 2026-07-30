@@ -2,6 +2,7 @@ import { AttachmentViewerModal, type ViewableAttachment } from '@/components/mod
 import { useToast } from '@/components/Toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import { apiFetchJson, ApiError } from '@/lib/apiFetch';
+import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import {
@@ -67,7 +68,7 @@ function toDocState(doc: TraineeDetail['documents'][number]): DocState {
         id: doc.id,
         link: doc.url_link ?? undefined,
         savedLink: doc.url_link ?? undefined,
-        submittedAt: doc.created_at?.slice(0, 10),
+        submittedAt: doc.created_at,
         fileName: doc.original_name ?? doc.file_name ?? undefined,
         fileSize: doc.file_size ?? undefined,
         mimeType: doc.mime_type ?? undefined,
@@ -299,7 +300,7 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                                 className="text-xs text-neutral-500"
                                                 data-cy="documents-tab-span-submitted"
                                             >
-                                                Submitted {state.submittedAt}
+                                                Submitted {formatDate(state.submittedAt)}
                                             </span>
                                         )}
                                     </div>

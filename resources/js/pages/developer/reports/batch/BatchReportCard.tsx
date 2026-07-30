@@ -2,6 +2,7 @@ import { ChevronDown, ChevronRight, ClipboardList, Wallet } from 'lucide-react';
 import { StatusBadge } from '@/components/StatusBadge';
 import { cn } from '@/lib/utils';
 import type { ReportBatch } from '@/api-service-layer/developer/report';
+import { formatDate } from '@/lib/date';
 import { formatCurrency } from '../reportsUtils';
 
 interface BatchReportCardProps {
@@ -301,7 +302,7 @@ export function BatchReportCard({
                                             className="px-3 py-2 font-mono text-xs text-neutral-600"
                                             data-cy="batch-report-card-td-6"
                                         >
-                                            {a.date}
+                                            {formatDate(a.date)}
                                         </td>
                                     </tr>
                                 ))}

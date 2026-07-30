@@ -131,7 +131,7 @@ class DashboardController
             ->approvedCovering(now()->toDateString())
             ->where('batch_id', $trainee->batch_id)
             ->where('trainee_id', '!=', $trainee->id)
-            ->with('trainee:id,first_name,last_name')
+            ->with('trainee:id,first_name,last_name,avatar_path,net_amount_required')
             ->get(['id', 'trainee_id', 'leave_date', 'return_date']);
     }
 

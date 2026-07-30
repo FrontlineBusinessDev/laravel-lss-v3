@@ -65,7 +65,7 @@ export const registerSchema = Yup.object({
         .required('Emergency contact number is required.')
         .max(50),
     school_id: Yup.string().required('Select a partner school.'),
-    academic_level_id: Yup.string().required('Select an academic level.'),
+    academic_program_type_id: Yup.string().required('Select an academic program type.'),
     required_hours: Yup.number()
         .transform((value, original) => (original === '' ? undefined : value))
         .typeError('Enter a number.')

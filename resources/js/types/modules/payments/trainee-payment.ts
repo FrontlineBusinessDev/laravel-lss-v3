@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
 
 export type { PaymentMethod } from '@/types/modules/settings/payment-methods';
@@ -37,6 +38,7 @@ export const columns: ColumnDef<TraineePaymentRow>[] = [
         sortable: true,
         filterable: true,
         type: 'date-range',
+        render: (value) => formatDate(value as string),
     },
     {
         key: 'official_receipt_number',

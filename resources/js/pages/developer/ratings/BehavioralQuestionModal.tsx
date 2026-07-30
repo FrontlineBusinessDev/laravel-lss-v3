@@ -5,15 +5,18 @@ import type { FieldDef } from '@/components/table';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/components/Toast';
 import type { BehavioralQuestion } from '@/types/modules/ratings/behavioral';
-import { SECTIONS, TYPE_LABEL } from './BehavioralAssessmentSetup';
+import { TYPE_LABEL } from './behavioralConstants';
 
 interface Props {
+    /** The currently-selected section pill — every new question is created under it. */
+    sectionValue: string | null;
     open: boolean;
     onClose: () => void;
     row: BehavioralQuestion | null;
 }
 
 export default function BehavioralQuestionModal({
+    sectionValue,
     open,
     onClose,
     row,
@@ -22,13 +25,6 @@ export default function BehavioralQuestionModal({
     const isEdit = row !== null;
 
     const fields: FieldDef<BehavioralQuestion>[] = [
-        {
-            key: 'section',
-            label: 'Section',
-            type: 'select',
-            required: true,
-            options: SECTIONS.map((s) => ({ value: s, label: s })),
-        },
         {
             key: 'type',
             label: 'Response type',
@@ -81,16 +77,20 @@ export default function BehavioralQuestionModal({
             row={row ?? undefined}
             fields={fields}
             submitLabel={isEdit ? 'Save changes' : 'Create'}
-            mutationFn={(payload) =>
-                (isEdit && row
-                    ? behavioralQuestionsService.update(
-                          row.id,
-                          payload as BehavioralQuestionInput,
-                      )
-                    : behavioralQuestionsService.create(
-                          payload as BehavioralQuestionInput,
-                      )) as Promise<BehavioralQuestion>
-            }
+            mutationFn={(payload) => {
+                const withSection: BehavioralQuestionInput = {
+                    ...(payload as BehavioralQuestionInput),
+                    section: row?.section ?? String(sectionValue ?? ''),
+                };
+                return (
+                    isEdit && row
+                        ? behavioralQuestionsService.update(
+                              row.id,
+                              withSection,
+                          )
+                        : behavioralQuestionsService.create(withSection)
+                ) as Promise<BehavioralQuestion>;
+            }}
             invalidateKeys={tableListInvalidateKeys('behavioral-questions')}
             onSuccess={() =>
                 showToast(

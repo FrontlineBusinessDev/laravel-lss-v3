@@ -36,7 +36,8 @@ class TraineesController extends BaseController
         'school_id',
         'academic_industry_id',
         'academic_level_id',
-        'academic_program_id'
+        'academic_program_id',
+        'academic_program_type_id',
     ];
     protected array $sortable = [
         'status',
@@ -45,15 +46,24 @@ class TraineesController extends BaseController
         'date_completed',
         'required_hours'
     ];
-    // batch_id/school_id/academic_*_id are FK ids — must match exactly, not LIKE
-    // (a LIKE '%3%' would also match ids 13, 23, 30-39, etc.).
+    // batch_id/school_id/academic_program_type_id are FK ids on this table —
+    // must match exactly, not LIKE (a LIKE '%3%' would also match ids 13, 23,
+    // 30-39, etc.). academic_industry_id/academic_program_id/academic_level_id
+    // live on the batch, not on trainees — see $relationFilters below.
     protected array $exactFilters = [
         'status',
         'batch_id',
         'school_id',
-        'academic_industry_id',
-        'academic_level_id',
-        'academic_program_id',
+        'academic_program_type_id',
+    ];
+    // academic_industry_id/academic_program_id/academic_level_id are all
+    // independent columns on app_batches. None of these exist on app_trainees
+    // itself, so they're filtered through the batch relation via whereHas
+    // rather than a flat where().
+    protected array $relationFilters = [
+        'academic_industry_id' => 'batch.academic_industry_id',
+        'academic_program_id' => 'batch.academic_program_id',
+        'academic_level_id' => 'batch.academic_level_id',
     ];
     protected array $activeColumns = ['id', 'first_name', 'last_name', 'email'];
     protected string $sortBy = 'last_name';
@@ -73,10 +83,11 @@ class TraineesController extends BaseController
     {
         $query = parent::newQuery()->withCompletedHours()->with([
             'school:id,school_name',
-            'academicLevel:id,name',
-            'batch:id,batch_code,setup,academic_industry_id,academic_program_id',
+            'academicProgramType:id,name',
+            'batch:id,batch_code,setup,academic_industry_id,academic_program_id,academic_level_id',
             'batch.academicIndustry:id,name',
             'batch.academicProgram:id,name',
+            'batch.academicLevel:id,name',
         ]);
 
         // Opt-in exclusion for the task-assignment trainee picker: pass
@@ -227,6 +238,46 @@ class TraineesController extends BaseController
         }
 
         return $this->sendResponse($trainee->fresh(['user', 'batch']), 'Trainee approved successfully.');
+    }
+
+    /**
+     * Mark an active trainee as terminated. Distinct from archive()/restore()
+     * (the generic active/inactive toggle): terminated is a separate,
+     * one-way lifecycle stage that still shows in trainee lists (sorted to
+     * the bottom of the batch view) rather than being hidden like inactive.
+     */
+    public function terminate(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('terminate', $trainee);
+
+        abort_if($trainee->status === Statuses::TERMINATED, 422, 'Trainee is already terminated.');
+
+        $validated = $request->validate([
+            'termination_remarks' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $trainee->update([
+            'status' => Statuses::TERMINATED,
+            'termination_remarks' => $validated['termination_remarks'] ?? $trainee->termination_remarks,
+        ]);
+
+        return $this->sendResponse($trainee->fresh(), 'Trainee terminated successfully.');
+    }
+
+    /** Move a trainee to a different batch (e.g. re-assigning a trainee mid-program). */
+    public function transfer(Request $request, int|string $id): JsonResponse
+    {
+        $trainee = $this->resolveModel($id);
+        $this->authorize('transfer', $trainee);
+
+        $validated = $request->validate([
+            'batch_id' => ['required', 'exists:app_batches,id', Rule::notIn([$trainee->batch_id])],
+        ]);
+
+        $trainee->update(['batch_id' => $validated['batch_id']]);
+
+        return $this->sendResponse($trainee->fresh('batch'), 'Trainee transferred successfully.');
     }
 
     /** Decline a PENDING trainee's application. No account is created. */
@@ -394,5 +445,68 @@ class TraineesController extends BaseController
         ]);
 
         return $this->sendResponse(['status' => $validated['status']], 'Learning outcome updated successfully.');
+    }
+
+    /**
+     * Apply a set of already-achieved learning outcomes (from the source
+     * trainee) to a target group of other trainees. Each target trainee only
+     * receives outcomes that belong to their own batch's industry — the same
+     * scoping rule updateLearningOutcomeStatus() enforces per-trainee.
+     */
+    public function applyLearningOutcomesTo(Request $request, int|string $id): JsonResponse
+    {
+        $source = $this->resolveModel($id);
+        $this->authorize('update', $source);
+
+        $validated = $request->validate([
+            'outcome_ids' => ['required', 'array', 'min:1'],
+            'outcome_ids.*' => ['integer', 'exists:app_settings_academic_learning_outcomes,id'],
+            'target_type' => ['required', Rule::in(['batch', 'school', 'industry', 'specific'])],
+            'trainee_ids' => ['required_if:target_type,specific', 'array'],
+            'trainee_ids.*' => ['integer', 'exists:app_trainees,id'],
+        ]);
+
+        $targets = match ($validated['target_type']) {
+            'batch' => Trainees::query()->where('batch_id', $source->batch_id),
+            'school' => Trainees::query()->where('school_id', $source->school_id),
+            'industry' => Trainees::query()->whereHas(
+                'batch',
+                fn(Builder $q) => $q->where('academic_industry_id', $source->batch?->academic_industry_id),
+            ),
+            'specific' => Trainees::query()->whereIn('id', $validated['trainee_ids'] ?? []),
+        };
+
+        $outcomes = AcademicLearningOutcomes::query()
+            ->whereIn('id', $validated['outcome_ids'])
+            ->get()
+            ->keyBy('id');
+
+        [$applied, $skipped] = DB::transaction(function () use ($targets, $outcomes, $source) {
+            $applied = 0;
+            $skipped = 0;
+
+            $targets->where('id', '!=', $source->id)->with('batch:id,academic_industry_id')
+                ->chunkById(100, function ($trainees) use ($outcomes, &$applied, &$skipped) {
+                    foreach ($trainees as $trainee) {
+                        $eligible = $outcomes->filter(
+                            fn(AcademicLearningOutcomes $o) => $o->academic_industry_id === $trainee->batch?->academic_industry_id,
+                        );
+
+                        if ($eligible->isEmpty()) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        $trainee->learningOutcomes()->syncWithoutDetaching(
+                            $eligible->mapWithKeys(fn(AcademicLearningOutcomes $o) => [$o->id => ['status' => 'active']])->all(),
+                        );
+                        $applied++;
+                    }
+                });
+
+            return [$applied, $skipped];
+        });
+
+        return $this->sendResponse(['applied' => $applied, 'skipped' => $skipped], 'Learning outcomes applied successfully.');
     }
 }

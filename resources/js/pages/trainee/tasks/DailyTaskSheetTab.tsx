@@ -13,6 +13,7 @@ import type { FieldOption } from '@/types/reusable/fields';
 import { loadLookupOptions } from '@/types/reusable/fields';
 import type { ApiTask } from '@/types/task';
 import { cn } from '@/lib/utils';
+import { formatDate } from '@/lib/date';
 
 const GRID = 'sm:grid-cols-[0.7fr_1.4fr_0.8fr_0.8fr_0.9fr_0.9fr_2.5rem]!';
 
@@ -54,10 +55,6 @@ const columns: ColumnDef<ApiTask>[] = [
         sortable: true,
     },
 ];
-
-function formatDate(value: string | null): string {
-    return value ? value.slice(0, 10) : '—';
-}
 
 export default function DailyTaskSheetTab() {
     const [viewTask, setViewTask] = useState<ApiTask | null>(null);

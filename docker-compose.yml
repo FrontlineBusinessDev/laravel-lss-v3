@@ -1,0 +1,38 @@
+services:
+  # Web Application (FrankenPHP / Octane)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    env_file:
+      - .env
+    volumes:
+      - ./database:/app/database
+    restart: unless-stopped
+
+  # Dedicated Queue Worker
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["bash", "scripts/worker.sh"]
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+    env_file:
+      - .env
+    volumes:
+      - ./database:/app/database
+    restart: unless-stopped
+    depends_on:
+      - web
+
+# Note: the ./database bind mount above only matters when DB_CONNECTION=sqlite/pgsql.
+# The DB is then a file, not a network service, so without a shared mount each
+# container gets its own independent copy baked in at build time and
+# `web`/`queue` silently stop seeing each other's writes (this is what broke
+# queued mail). Harmless no-op if DB_CONNECTION points at a real network
+# database instead.

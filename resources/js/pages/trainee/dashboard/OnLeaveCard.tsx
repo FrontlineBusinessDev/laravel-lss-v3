@@ -1,12 +1,6 @@
 import { CalendarOff } from 'lucide-react';
+import { formatDate } from '@/lib/date';
 import type { DashboardOnLeave } from '@/types/modules/dashboard/trainee-dashboard';
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-    });
-}
 
 export function OnLeaveCard({ onLeave }: { onLeave: DashboardOnLeave[] }) {
     return (

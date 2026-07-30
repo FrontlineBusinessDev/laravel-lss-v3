@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -38,7 +39,13 @@ class TasksController extends BaseController
     {
         $query = parent::newQuery()->with([
             'batch:id,batch_code',
-            'trainee:id,first_name,last_name',
+            // Trainees::$appends (avatar_url/total_paid/outstanding_balance/
+            // payment_status) reads avatar_path/net_amount_required off the
+            // model on serialization — a narrower select throws
+            // MissingAttributeException the moment this relation is returned
+            // as JSON (e.g. roster()), so both must ride along even though
+            // only first/last name are displayed here.
+            'trainee:id,first_name,last_name,avatar_path,net_amount_required',
             'trainer:id,first_name,last_name',
         ]);
 
@@ -65,7 +72,10 @@ class TasksController extends BaseController
      * Overrides BaseController::paginationSearch() — Task's filter panel needs
      * multi-value (whereIn) filters on batch/trainee/trainer, a date_from/
      * date_to range on `date`, and a 5-column default sort across joined
-     * tables, none of which the generic implementation supports.
+     * tables, none of which the generic implementation supports. On top of
+     * that, rows are aggregated by task_group_id so a batch-wide assignment
+     * (one Task row per trainee, same group id) renders as a single row here
+     * — see roster() for the per-trainee detail view.
      */
     public function paginationSearch(Request $request): JsonResponse
     {
@@ -75,19 +85,17 @@ class TasksController extends BaseController
         $sortDir = $request->string('sort_dir', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
 
         $query = Task::query()
-            ->select('app_tasks.*')
             ->leftJoin('app_batches', 'app_batches.id', '=', 'app_tasks.batch_id')
             ->leftJoin('app_trainees', 'app_trainees.id', '=', 'app_tasks.trainee_id')
-            ->leftJoin('users as trainer_users', 'trainer_users.id', '=', 'app_tasks.trainer_id')
-            ->with([
-                'batch:id,batch_code',
-                'trainee:id,first_name,last_name',
-                'trainer:id,first_name,last_name',
-            ]);
+            ->leftJoin('users as trainer_users', 'trainer_users.id', '=', 'app_tasks.trainer_id');
         $query = $this->scopeTrainerBatches($query, 'app_tasks.batch_id');
 
         if ($search !== '') {
-            $query->where('app_tasks.task', 'like', "%{$search}%");
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('app_tasks.task', 'like', "%{$search}%")
+                    ->orWhere('app_trainees.first_name', 'like', "%{$search}%")
+                    ->orWhere('app_trainees.last_name', 'like', "%{$search}%");
+            });
         }
 
         $status = $filters['status'] ?? null;
@@ -117,22 +125,66 @@ class TasksController extends BaseController
             $query->whereDate('app_tasks.date', '<=', $filters['date_to']);
         }
 
+        // Aggregate the (possibly search/filter-matched) row set into one row
+        // per task_group_id. Fields that are identical across every row in a
+        // group (task/date/batch/trainer/priority/time_goal — all set once at
+        // creation) are passed through via MIN(); status/count fields are
+        // genuinely aggregated so the frontend can render "3/5 completed".
+        $grouped = (clone $query)
+            ->select([
+                'app_tasks.task_group_id as group_id',
+                DB::raw('MIN(app_tasks.id) as id'),
+                DB::raw('MIN(app_tasks.task) as task'),
+                DB::raw('MIN(app_tasks.description) as description'),
+                DB::raw('MIN(app_tasks.date) as date'),
+                DB::raw('MIN(app_tasks.priority) as priority'),
+                DB::raw('MIN(app_tasks.time_goal) as time_goal'),
+                DB::raw('MIN(app_tasks.batch_id) as batch_id'),
+                DB::raw('MIN(app_tasks.trainer_id) as trainer_id'),
+                DB::raw('MIN(app_batches.batch_code) as batch_code'),
+                DB::raw("MIN(trainer_users.first_name) as trainer_first_name"),
+                DB::raw("MIN(trainer_users.last_name) as trainer_last_name"),
+                DB::raw('COUNT(*) as trainee_count'),
+                DB::raw("SUM(CASE WHEN app_tasks.status = 'completed' THEN 1 ELSE 0 END) as completed_count"),
+                DB::raw("SUM(CASE WHEN app_tasks.status = 'locked' THEN 1 ELSE 0 END) as locked_count"),
+                DB::raw('MAX(app_tasks.created_at) as created_at'),
+            ])
+            ->groupBy('app_tasks.task_group_id');
+
         if ($sortByParam !== '' && in_array($sortByParam, $this->sortable, true)) {
-            $query->orderBy("app_tasks.{$sortByParam}", $sortDir);
+            $grouped->orderBy($sortByParam, $sortDir);
         } else {
-            // Default order: date_created desc, batch_code asc, task asc, trainee name asc, trainer name asc.
-            $query->orderBy('app_tasks.created_at', 'desc')
-                ->orderBy('app_batches.batch_code', 'asc')
-                ->orderBy('app_tasks.task', 'asc')
-                ->orderByRaw("CONCAT(app_trainees.first_name, ' ', app_trainees.last_name) asc")
-                ->orderByRaw("CONCAT(trainer_users.first_name, ' ', trainer_users.last_name) asc");
+            $grouped->orderBy('created_at', 'desc')
+                ->orderBy('batch_code', 'asc')
+                ->orderBy('task', 'asc');
         }
 
         $perPage = (int) $request->input('per_page', 10);
-        $paginator = $query->paginate(max(1, min($perPage, 100)));
+        $paginator = $grouped->paginate(max(1, min($perPage, 100)));
+
+        $rows = collect($paginator->items())->map(fn($row) => [
+            'group_id' => $row->group_id,
+            'id' => $row->id,
+            'task' => $row->task,
+            'description' => $row->description,
+            'date' => $row->date,
+            'priority' => $row->priority,
+            'time_goal' => $row->time_goal,
+            'trainee_count' => (int) $row->trainee_count,
+            'completed_count' => (int) $row->completed_count,
+            'locked_count' => (int) $row->locked_count,
+            'status' => $this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count),
+            'batch' => $row->batch_id ? ['id' => (int) $row->batch_id, 'batch_code' => $row->batch_code] : null,
+            'trainer' => $row->trainer_id ? [
+                'id' => (int) $row->trainer_id,
+                'first_name' => $row->trainer_first_name,
+                'last_name' => $row->trainer_last_name,
+            ] : null,
+            'created_at' => $row->created_at,
+        ])->values();
 
         $paginatedData = [
-            'data' => collect($paginator->items())->values(),
+            'data' => $rows,
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
@@ -154,6 +206,90 @@ class TasksController extends BaseController
         ];
 
         return $this->sendResponse($paginatedData);
+    }
+
+    /** Rolls a group's per-trainee statuses up into one label for the list row. */
+    protected function groupStatus(int $traineeCount, int $completedCount, int $lockedCount): string
+    {
+        if ($traineeCount > 0 && $lockedCount === $traineeCount) {
+            return 'locked';
+        }
+        if ($traineeCount > 0 && $completedCount === $traineeCount) {
+            return 'completed';
+        }
+        if ($completedCount > 0 || $lockedCount > 0) {
+            return 'mixed';
+        }
+
+        return 'open';
+    }
+
+    /**
+     * The roster behind one Task Management row: every per-trainee Task in
+     * the group, for the "Open" detail view. Individual complete/lock/
+     * remarks/time-spent actions still operate per row (existing endpoints
+     * below) — this just lists them together.
+     */
+    public function roster(string $groupId): JsonResponse
+    {
+        $rows = $this->newQuery()->where('task_group_id', $groupId)->orderBy('id')->get();
+        abort_if($rows->isEmpty(), 404);
+
+        $this->authorize('view', $rows->first());
+
+        return $this->sendResponse($rows);
+    }
+
+    /** Marks every not-yet-locked task in the group complete. */
+    public function completeGroupAction(string $groupId): JsonResponse
+    {
+        $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
+        abort_if($rows->isEmpty(), 404);
+        $this->authorize('update', $rows->first());
+
+        DB::transaction(function () use ($rows) {
+            foreach ($rows->whereNotIn('status', ['locked', 'completed']) as $row) {
+                $row->update(['status' => 'completed', 'completed_at' => now()]);
+                $trainee = Trainees::whereKey($row->trainee_id)->first();
+                if ($trainee) {
+                    HourThresholdDispatcher::maybeDispatch($trainee);
+                }
+            }
+        });
+
+        return $this->sendResponse(null, 'Task(s) marked as complete.');
+    }
+
+    /** Locks every task in the group. */
+    public function lockGroupAction(string $groupId): JsonResponse
+    {
+        $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
+        abort_if($rows->isEmpty(), 404);
+        $this->authorize('update', $rows->first());
+
+        DB::transaction(function () use ($rows) {
+            foreach ($rows->where('status', '!=', 'locked') as $row) {
+                $row->update(['status' => 'locked', 'locked_at' => now()]);
+            }
+        });
+
+        return $this->sendResponse(null, 'Task(s) locked.');
+    }
+
+    /** Hard-deletes every task in the group. */
+    public function destroyGroup(string $groupId): JsonResponse
+    {
+        return DB::transaction(function () use ($groupId) {
+            $rows = $this->newQuery()->where('task_group_id', $groupId)->lockForUpdate()->get();
+            abort_if($rows->isEmpty(), 404);
+            $this->authorize('delete', $rows->first());
+
+            foreach ($rows as $row) {
+                $row->delete();
+            }
+
+            return response()->json(null, 204);
+        });
     }
 
     /** Create accepts trainee_ids (plural) — one Task row is fanned out per selected trainee. */
@@ -228,8 +364,9 @@ class TasksController extends BaseController
             $validated['trainer_id'] = $user->id;
         }
 
-        $ids = DB::transaction(function () use ($validated) {
-            return collect($validated['trainee_ids'])->map(function ($traineeId) use ($validated) {
+        $groupId = (string) Str::uuid();
+        $ids = DB::transaction(function () use ($validated, $groupId) {
+            return collect($validated['trainee_ids'])->map(function ($traineeId) use ($validated, $groupId) {
                 return Task::create([
                     'date' => $validated['date'],
                     'batch_id' => $validated['batch_id'],
@@ -241,6 +378,7 @@ class TasksController extends BaseController
                     'priority' => $validated['priority'] ?? null,
                     'status' => 'open',
                     'time_spent' => 0,
+                    'task_group_id' => $groupId,
                 ])->id;
             });
         });
@@ -250,12 +388,16 @@ class TasksController extends BaseController
         return $this->sendResponse($records, 'Task(s) created successfully.', 201);
     }
 
-    /** Mark a task complete — locks in the trainee's time spent for reporting. */
+    /**
+     * Mark a task complete — locks in the trainee's time spent for reporting.
+     * Allowed even while Locked (authorized users can still close out a
+     * locked task); only the general remarks/time-spent edits stay blocked
+     * by assertTimeEntryEditable() while Locked.
+     */
     public function completeAction(int|string $id): JsonResponse
     {
         $model = $this->resolveModel($id);
         $this->authorize('update', $model);
-        abort_if($model->status === 'locked', 422, 'Locked tasks can no longer be edited or completed.');
 
         $model->update(['status' => 'completed', 'completed_at' => now()]);
 
@@ -276,6 +418,17 @@ class TasksController extends BaseController
         $model->update(['status' => 'locked', 'locked_at' => now()]);
 
         return $this->sendResponse($model, 'Task locked.');
+    }
+
+    /** Reopen a completed or locked task back to Open — clears the completed/locked timestamps. */
+    public function reopenAction(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        $model->update(['status' => 'open', 'completed_at' => null, 'locked_at' => null]);
+
+        return $this->sendResponse($model, 'Task reopened.');
     }
 
     /** Trainer/admin remarks on the task — blocked while Locked or while the trainee is on approved leave for that date. */

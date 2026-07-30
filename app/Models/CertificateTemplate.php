@@ -16,6 +16,8 @@ class CertificateTemplate extends Model
         'page_size',
         'orientation',
         'is_default',
+        'background_color',
+        'border_color',
         'status',
         'created_by',
     ];

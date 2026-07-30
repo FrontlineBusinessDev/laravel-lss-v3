@@ -25,6 +25,12 @@ const NAV_LINKS = [
         permission: 'manage settings academic',
     },
     {
+        id: 'Academic Program Type',
+        label: 'Program Type',
+        href: '/settings/academic/program-type',
+        permission: 'manage settings academic',
+    },
+    {
         id: 'Academic Learning Outcomes',
         label: 'Learning Outcomes',
         href: '/settings/academic/learning-outcomes',
@@ -50,7 +56,8 @@ export default function SettingsAcademicLayout({ children }: LayoutProps) {
                 {showNavigation &&
                     NAV_LINKS.map((link) => {
                         // Strict check to match current URL path exactly or partially
-                        const isActive = url.startsWith(link.href);
+                        // const isActive = url.includes(link.href);
+                        const isActive = url === link.href;
                         return (
                             <Link
                                 key={link.id}

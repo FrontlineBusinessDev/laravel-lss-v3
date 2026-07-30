@@ -6,6 +6,7 @@ export interface AcademicProgram extends Record<string, unknown> {
     id: number;
     status: string;
     name: string;
+    abbreviation?: string;
     created_at: string;
     updated_at: string;
 }
@@ -22,7 +23,13 @@ export const columns: ColumnDef<AcademicProgram>[] = [
     },
     {
         key: 'name',
-        label: 'Program Abbreviation',
+        label: 'Program',
+        searchable: true,
+        filterable: true,
+    },
+    {
+        key: 'abbreviation',
+        label: 'Abbreviation',
         searchable: true,
         filterable: true,
     },
@@ -42,9 +49,17 @@ export const fields: FieldDef<AcademicProgram>[] = [
     },
     {
         key: 'name',
-        label: 'Program Code / Abbreviation',
+        label: 'Program',
         type: 'text',
-        placeholder: 'BSCS',
+        placeholder: 'Information Technology',
+        required: true,
+        colSpan: 2,
+    },
+    {
+        key: 'abbreviation',
+        label: 'Abbreviation',
+        type: 'text',
+        placeholder: 'IT',
         required: true,
         colSpan: 2,
     },

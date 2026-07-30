@@ -8,6 +8,7 @@ import TraineeLayout from '@/layouts/trainee/TraineeLayout';
 import { ApiError } from '@/api-service-layer/client';
 import { myInfoService } from '@/api-service-layer/trainee/my-info';
 import { getHoursProgress } from '@/lib/ratings';
+import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Link } from '@inertiajs/react';
@@ -126,11 +127,11 @@ function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
                 />
                 <Field
                     label="Academic level"
-                    value={trainee.academic_level?.name ?? ''}
+                    value={trainee.batch?.academic_level?.name ?? ''}
                 />
                 <Field
                     label="Program type"
-                    value={trainee.batch?.setup ?? ''}
+                    value={trainee.academic_program_type?.name ?? ''}
                 />
                 <Field
                     label="Industry"
@@ -227,7 +228,7 @@ function toDocState(doc: TraineeDetail['documents'][number]): DocState {
         id: doc.id,
         link: doc.url_link ?? undefined,
         savedLink: doc.url_link ?? undefined,
-        submittedAt: doc.created_at?.slice(0, 10),
+        submittedAt: doc.created_at,
         fileName: doc.original_name ?? doc.file_name ?? undefined,
         fileSize: doc.file_size ?? undefined,
         viewUrl: doc.view_url ?? undefined,
@@ -415,7 +416,7 @@ function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
                                 </div>
                                 {state.submittedAt && (
                                     <span className="text-xs text-neutral-500">
-                                        Submitted {state.submittedAt}
+                                        Submitted {formatDate(state.submittedAt)}
                                     </span>
                                 )}
                             </div>

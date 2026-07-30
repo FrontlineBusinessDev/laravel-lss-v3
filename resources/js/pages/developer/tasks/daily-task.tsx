@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { formatDateTime } from '@/lib/date';
 import { Printer, Info } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
@@ -258,10 +259,7 @@ export default function DailyTaskSheetPage() {
         activeFilters.filters.date_from || activeFilters.filters.date_to
             ? `${activeFilters.filters.date_from || 'Start'} – ${activeFilters.filters.date_to || 'Present'}`
             : 'All dates';
-    const printGeneratedAt = new Date().toLocaleString('en-PH', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    });
+    const printGeneratedAt = formatDateTime(new Date());
 
     return (
         <TasksPrimaryLayout data-cy="daily-task-tasks-primary-layout-1">

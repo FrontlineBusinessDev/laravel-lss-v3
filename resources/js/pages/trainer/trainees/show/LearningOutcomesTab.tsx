@@ -34,7 +34,7 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             <button
                                 type="button"
                                 onClick={() => toggleAll(outcomes, 'active')}
-                                disabled={outcomes.length === 0}
+                                disabled={outcomes.length === 0 || achievedCount === outcomes.length}
                                 className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
                             >
                                 Check all
@@ -42,7 +42,7 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             <button
                                 type="button"
                                 onClick={() => toggleAll(outcomes, 'inactive')}
-                                disabled={outcomes.length === 0}
+                                disabled={outcomes.length === 0 || achievedCount === 0}
                                 className="text-xs font-medium text-neutral-500 hover:text-neutral-700 disabled:opacity-50"
                             >
                                 Uncheck all

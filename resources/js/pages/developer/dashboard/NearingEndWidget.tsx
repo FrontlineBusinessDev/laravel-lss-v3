@@ -4,15 +4,7 @@ import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { cn } from '@/lib/utils';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
-
-function formatDate(value: string | null): string {
-    if (!value) return '—';
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
-}
+import { formatDate } from '@/lib/date';
 
 function daysUntil(dateStr: string): number {
     const MS_PER_DAY = 1000 * 60 * 60 * 24;
