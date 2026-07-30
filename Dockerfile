@@ -2,7 +2,8 @@ FROM dunglas/frankenphp:1-php8.4
 
 ENV PORT=8000 \
     ENTRYPOINT_SYMBOL=frankenphp \
-    COMPOSER_ALLOW_SUPERUSER=1
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    LOG_STACK=single,stderr
 
 WORKDIR /app
 
