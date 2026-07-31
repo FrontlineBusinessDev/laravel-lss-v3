@@ -1,3 +1,4 @@
+import { formatDateShort } from '@/lib/date'
 import type { Seminar, SeminarParticipant, SeminarParticipantStatus } from '@/types'
 
 export const SEMINAR_STATUS_STYLE: Record<Seminar['status'], string> = {
@@ -48,7 +49,7 @@ export function progressPercent(p: SeminarParticipant): number {
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return formatDateShort(iso + 'T00:00:00')
 }
 
 export function seminarYears(seminars: Seminar[]): string[] {

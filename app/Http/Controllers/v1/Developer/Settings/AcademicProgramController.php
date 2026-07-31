@@ -12,21 +12,22 @@ class AcademicProgramController extends BaseController
 {
     protected string $model = AcademicProgram::class;
     protected string $view = 'developer/settings/academic/program/index';
-    protected array $searchable = ['name'];
-    protected array $filterable = ['status', 'name'];
-    protected array $sortable = ['id', 'name'];
+    protected array $searchable = ['name', 'abbreviation'];
+    protected array $filterable = ['status', 'name', 'abbreviation'];
+    protected array $sortable = ['id', 'name', 'abbreviation'];
 
-    protected array $activeColumns = ['id', 'name'];
+    protected array $activeColumns = ['id', 'name', 'abbreviation'];
     protected string $sortBy = 'name';
 
-    // Blocks deletion if a batch or learning outcome depends on it
-    protected array $inUseRelations = ['batches', 'learningOutcomes'];
+    // Blocks deletion if a batch depends on it
+    protected array $inUseRelations = ['batches'];
 
     protected function storeRules(): array
     {
         return [
             'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
+            'abbreviation' => ['nullable', 'string', 'max:50'],
         ];
     }
 
@@ -35,6 +36,7 @@ class AcademicProgramController extends BaseController
         return [
             'status' => ['required', Rule::in(Statuses::all())],
             'name' => ['required', 'string', 'max:150'],
+            'abbreviation' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

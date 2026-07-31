@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { formatDateTime } from '@/lib/date';
 import { X, Printer } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { apiFetchJson } from '@/lib/apiFetch';
@@ -52,7 +53,7 @@ export function PaymentDetailModal({
   }, [traineeId]);
 
   if (traineeId == null || !detail) return null;
-  const generatedAt = new Date().toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+  const generatedAt = formatDateTime(new Date());
 
   return createPortal(
     <>

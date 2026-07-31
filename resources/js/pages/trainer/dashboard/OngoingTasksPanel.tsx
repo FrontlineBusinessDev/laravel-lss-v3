@@ -3,14 +3,8 @@ import { trainerDashboardService } from '@/api-service-layer/trainer/dashboard';
 import { DashboardWidgetCard } from '@/components/dashboard/DashboardWidgetCard';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
+import { formatDate } from '@/lib/date';
 import type { TaskPriority } from '@/types/task';
-
-function formatDate(value: string): string {
-    return new Date(value).toLocaleDateString('en-PH', {
-        month: 'short',
-        day: 'numeric',
-    });
-}
 
 /** Active (not-yet-completed) tasks across this trainer's assigned batches. */
 export function OngoingTasksPanel() {

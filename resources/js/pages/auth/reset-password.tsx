@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
 const RULES = [
     {
         key: 'length',
-        label: 'At least 8 characters',
-        test: (v: string) => v.length >= 8,
+        label: 'At least 12 characters',
+        test: (v: string) => v.length >= 12,
     },
     {
         key: 'upper',
@@ -16,9 +16,19 @@ const RULES = [
         test: (v: string) => /[A-Z]/.test(v),
     },
     {
+        key: 'lower',
+        label: 'One lowercase letter',
+        test: (v: string) => /[a-z]/.test(v),
+    },
+    {
         key: 'number',
         label: 'One number',
         test: (v: string) => /[0-9]/.test(v),
+    },
+    {
+        key: 'symbol',
+        label: 'One symbol',
+        test: (v: string) => /[^A-Za-z0-9]/.test(v),
     },
 ];
 interface ResetPasswordProps {
@@ -182,7 +192,7 @@ export default function ResetPasswordPage({
                     disabled={!allValid || !matches || processing}
                     data-cy="reset-password-button-submit"
                 >
-                    {processing ? 'Setting password…' : 'Reset password'}
+                    {processing ? 'Creating password…' : 'Create password'}
                 </Button>
             </form>
         </AuthLayout>

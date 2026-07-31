@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { formatDateTime } from '@/lib/date';
 import { Eye, Pencil, Plus, Printer, X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { RowMenu } from '@/components/RowMenu';
@@ -184,7 +185,7 @@ function PaymentPrintOverlay({ traineeId, onClose }: { traineeId: number; onClos
   }, [traineeId]);
 
   if (!detail) return null;
-  const generatedAt = new Date().toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+  const generatedAt = formatDateTime(new Date());
 
   return createPortal(
     <>

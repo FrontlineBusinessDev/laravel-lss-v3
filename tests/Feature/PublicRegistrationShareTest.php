@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 function makeShareBatch(array $overrides = []): Batches
 {
     $industryId = DB::table('app_settings_academic_industry')->insertGetId(['name' => 'Information Technology']);
-    $programId = DB::table('app_settings_academic_program')->insertGetId(['name' => 'BS Computer Science']);
+    $programId = DB::table('app_settings_academic_program_type')->insertGetId(['name' => 'BS Computer Science']);
 
     return Batches::create(array_merge([
         'status' => 'active',

@@ -1,5 +1,8 @@
-import { Award } from 'lucide-react';
+import { Award, Download } from 'lucide-react';
+import { useState } from 'react';
 import { LogoMark } from '@/components/Logo';
+import { Button } from '@/components/Button';
+import { exportTemplateAsPdf, exportTemplateAsPng } from './certificateExport';
 import type { CertificateTemplate, TemplateElement } from './types';
 
 export interface CertificateDoc {
@@ -11,6 +14,8 @@ export interface CertificateDoc {
   issuedDate?: string | null;
   /** When set, the certificate renders using this template's positioned layout instead of the plain layout below. */
   template?: CertificateTemplate | null;
+  /** Learning outcomes achieved as of issue/reissue time (frozen snapshot). Only rendered on the plain (non-templated) layout. */
+  achievedOutcomes?: string[];
 }
 
 interface CertificateSheetProps {
@@ -22,7 +27,7 @@ interface CertificateSheetProps {
   breakAfter?: boolean;
 }
 
-function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
+export function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
   if (el.token === 'recipientName') return doc.recipientName;
   if (el.token === 'subtitle') return doc.subtitle;
   if (el.token === 'citationText') return doc.citationText;
@@ -31,10 +36,20 @@ function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
   return el.text ?? '';
 }
 
+const OUTCOMES_COLUMN_CLASS: Record<number, string> = {
+  1: 'columns-1',
+  2: 'columns-2',
+  3: 'columns-3',
+};
+
 function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; template: CertificateTemplate }) {
   const aspect = template.orientation === 'portrait' ? '1 / 1.4142' : '1.4142 / 1';
   return (
-    <div className="relative w-full max-w-2xl border-[3px] border-brand-700 bg-white shadow-card" style={{ aspectRatio: aspect }} data-cy="certificate-print-template-div-1">
+    <div
+      className="relative w-full max-w-2xl shadow-card"
+      style={{ aspectRatio: aspect, backgroundColor: template.background_color || '#ffffff', border: `3px solid ${template.border_color || '#0b3d66'}` }}
+      data-cy="certificate-print-template-div-1"
+    >
       {template.layout.map((el) => (
         <div
           key={el.id}
@@ -46,16 +61,34 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
             height: el.height ? `${el.height}%` : undefined,
             fontSize: el.fontSize ? `${el.fontSize}px` : undefined,
             fontWeight: el.fontWeight,
+            fontFamily: el.fontFamily || undefined,
             textAlign: el.align ?? 'left',
             color: el.color,
           }}
           data-cy="certificate-print-template-element"
         >
-          {el.type === 'line' && <div className="h-px w-full bg-ink" />}
+          {el.type === 'line' && <div className="h-px w-full" style={{ backgroundColor: el.color || '#1f2937', height: el.strokeWidth ?? 2 }} />}
+          {el.type === 'shape' && (
+            <div
+              className="h-full w-full"
+              style={{
+                backgroundColor: el.fill && el.fill !== 'transparent' ? el.fill : 'transparent',
+                border: `${el.strokeWidth ?? 2}px solid ${el.color || '#0b3d66'}`,
+                borderRadius: el.shape === 'circle' ? '9999px' : undefined,
+              }}
+            />
+          )}
           {el.type === 'qr' && (
             <div className="flex h-full w-full items-center justify-center border border-dashed border-neutral-300 text-[9px] text-neutral-400">
               QR
             </div>
+          )}
+          {el.type === 'outcomes' && !!doc.achievedOutcomes?.length && (
+            <ul className={`${OUTCOMES_COLUMN_CLASS[el.columns ?? 2]} list-disc gap-x-4 pl-3 leading-snug`}>
+              {doc.achievedOutcomes.map((title) => (
+                <li key={title}>{title}</li>
+              ))}
+            </ul>
           )}
           {(el.type === 'text' || el.type === 'image') && <span>{resolveElementText(el, doc)}</span>}
         </div>
@@ -71,15 +104,49 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
  * a certificate is rendered in the system.
  */
 export function CertificateSheet({ doc, variant = 'preview', breakAfter }: CertificateSheetProps) {
+  const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
   const wrapperClass =
     variant === 'print'
       ? `hidden print:flex print-area bg-white text-ink items-center justify-center p-10 ${breakAfter ? 'cert-page-break' : ''}`
       : 'flex items-center justify-center bg-neutral-50 p-4 sm:p-8 rounded-lg border border-dashed border-neutral-300';
 
   if (doc.template) {
+    const template = doc.template;
+    async function handleExport(format: 'png' | 'pdf') {
+      setExporting(format);
+      try {
+        const filename = `certificate-${doc.certificateNo || doc.key}.${format}`;
+        const resolve = (el: TemplateElement) => resolveElementText(el, doc);
+        const options = {
+          achievedOutcomes: doc.achievedOutcomes ?? [],
+          backgroundColor: template.background_color || undefined,
+          borderColor: template.border_color || undefined,
+        };
+        if (format === 'png') {
+          await exportTemplateAsPng(template.layout, template.orientation, resolve, filename, options);
+        } else {
+          await exportTemplateAsPdf(template.layout, template.orientation, resolve, filename, options);
+        }
+      } finally {
+        setExporting(null);
+      }
+    }
+
     return (
-      <div className={wrapperClass} data-cy="certificate-print-div-1">
-        <TemplateRenderedSheet doc={doc} template={doc.template} />
+      <div className="flex flex-col items-center gap-3" data-cy="certificate-print-div-1">
+        <div className={wrapperClass}>
+          <TemplateRenderedSheet doc={doc} template={template} />
+        </div>
+        {variant === 'preview' && (
+          <div className="no-print flex gap-2">
+            <Button variant="secondary" size="sm" icon={Download} disabled={exporting !== null} onClick={() => void handleExport('png')}>
+              {exporting === 'png' ? 'Exporting…' : 'Download PNG'}
+            </Button>
+            <Button variant="secondary" size="sm" icon={Download} disabled={exporting !== null} onClick={() => void handleExport('pdf')}>
+              {exporting === 'pdf' ? 'Exporting…' : 'Download PDF'}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -105,6 +172,17 @@ export function CertificateSheet({ doc, variant = 'preview', breakAfter }: Certi
           <div className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-600" data-cy="certificate-print-div-12">{doc.subtitle}</div>
 
           <p className="mx-auto mt-5 max-w-lg text-[13px] leading-relaxed text-neutral-600" data-cy="certificate-print-p-13">{doc.citationText}</p>
+
+          {!!doc.achievedOutcomes?.length && (
+            <div className="mx-auto mt-4 max-w-lg text-left" data-cy="certificate-print-div-outcomes">
+              <div className="text-[9px] font-semibold uppercase tracking-widest text-neutral-400" data-cy="certificate-print-div-outcomes-label">Learning Outcomes Achieved</div>
+              <ul className="mt-1 list-disc pl-4 text-[11px] leading-relaxed text-neutral-600" data-cy="certificate-print-ul-outcomes">
+                {doc.achievedOutcomes.map((title) => (
+                  <li key={title} data-cy="certificate-print-li-outcome">{title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-8 grid w-full grid-cols-2 gap-10 text-[11px]" data-cy="certificate-print-div-14">
             <div className="border-t border-ink pt-1.5 text-neutral-600" data-cy="certificate-print-div-program-director">Program Director</div>

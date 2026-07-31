@@ -46,6 +46,15 @@ abstract class BaseController extends Controller implements HasMiddleware
     /** Check if associated to other modules. */
     protected array $inUseRelations = [];
     /**
+     * Filter keys that live on a related model rather than this model's own
+     * table. Map: filter key => dot-path 'relation.column' (may traverse
+     * nested relations, e.g. 'batch.academic_industry_id').
+     * Applied via `whereHas` instead of a flat `where`.
+     *
+     * @var array<string, string>
+     */
+    protected array $relationFilters = [];
+    /**
      * Map of field name => storage subfolder.
      * Override in child controllers.
      * e.g. ['image' => 'partner-schools', 'attachment' => 'documents']
@@ -106,22 +115,38 @@ abstract class BaseController extends Controller implements HasMiddleware
         $query = $this->newQuery($request);
         $search = $request->string('search')->toString();
         if ($search !== '' && $this->searchable) {
-            $query->where(function (Builder $q) use ($search) {
-                foreach ($this->searchable as $col) {
-                    $q->orWhere($col, 'like', "%{$search}%");
-                }
-            });
+            $this->applySearchTerms($query, $this->searchable, $search);
         }
         foreach ((array) $request->input('filters', []) as $col => $value) {
-            $cleanedValue = is_string($value) ? trim($value) : $value;
-            if ($cleanedValue !== '' && in_array($col, $this->filterable, true)) {
+            if (is_array($value)) {
+                $cleanedValue = array_values(array_filter(
+                    $value,
+                    fn($v) => $v !== null && $v !== '',
+                ));
+                $isEmpty = count($cleanedValue) === 0;
+            } else {
+                $cleanedValue = is_string($value) ? trim($value) : $value;
+                $isEmpty = $cleanedValue === '';
+            }
+            if ($isEmpty || ! in_array($col, $this->filterable, true)) {
+                continue;
+            }
+            // Filter keys that live on a related model (declared in
+            // $relationFilters) are applied via whereHas instead of a flat
+            // where — the column doesn't exist on this model's own table.
+            if (array_key_exists($col, $this->relationFilters)) {
+                $this->applyRelationFilter($query, $this->relationFilters[$col], $cleanedValue);
+                continue;
+            }
+            if (is_array($cleanedValue)) {
+                // Multi-select filter — match any of the given values.
+                $query->whereIn($col, $cleanedValue);
+            } elseif (in_array($col, $this->exactFilters, true)) {
                 // Exact match for columns like `status` (so 'active' doesn't
                 // also match 'inactive'); LIKE for everything else.
-                if (in_array($col, $this->exactFilters, true)) {
-                    $query->where($col, $cleanedValue);
-                } else {
-                    $query->where($col, 'like', "%{$value}%");
-                }
+                $query->where($col, $cleanedValue);
+            } else {
+                $query->where($col, 'like', "%{$cleanedValue}%");
             }
         }
         $sortBy = $request->string('sort_by', 'id')->toString();
@@ -156,6 +181,32 @@ abstract class BaseController extends Controller implements HasMiddleware
         ];
         return $this->sendResponse($paginatedData);
     }
+
+    /**
+     * Applies a filter declared in $relationFilters via whereHas, traversing
+     * a dot-path of relation names down to the final column.
+     */
+    protected function applyRelationFilter(Builder $query, string $path, mixed $value): void
+    {
+        $segments = explode('.', $path);
+        $column = array_pop($segments);
+        $this->nestedWhereHas($query, $segments, $column, $value);
+    }
+
+    /** @param list<string> $relations */
+    protected function nestedWhereHas(Builder $query, array $relations, string $column, mixed $value): void
+    {
+        $relation = array_shift($relations);
+        $query->whereHas($relation, function (Builder $q) use ($relations, $column, $value) {
+            if (empty($relations)) {
+                is_array($value) ? $q->whereIn($column, $value) : $q->where($column, $value);
+
+                return;
+            }
+            $this->nestedWhereHas($q, $relations, $column, $value);
+        });
+    }
+
     public function searchActive(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -387,9 +438,31 @@ abstract class BaseController extends Controller implements HasMiddleware
     }
     protected function applySearch(Builder $query, string $term): Builder
     {
-        return $query->where(function (Builder $q) use ($term) {
-            foreach ($this->searchable as $column) {
-                $q->orWhere($column, 'like', "%{$term}%");
+        $this->applySearchTerms($query, $this->searchable, $term);
+
+        return $query;
+    }
+
+    /**
+     * Splits $search into whitespace-separated terms and requires each term
+     * to match at least one of $columns (AND across terms, OR across
+     * columns per term) — so a multi-word query like "Juan Dela Cruz" can
+     * match a row whose name is split across first_name/last_name, instead
+     * of requiring the whole string to appear in a single column.
+     *
+     * @param list<string> $columns
+     */
+    protected function applySearchTerms(Builder $query, array $columns, string $search): void
+    {
+        $terms = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
+
+        $query->where(function (Builder $outer) use ($columns, $terms) {
+            foreach ($terms as $term) {
+                $outer->where(function (Builder $inner) use ($columns, $term) {
+                    foreach ($columns as $column) {
+                        $inner->orWhere($column, 'like', "%{$term}%");
+                    }
+                });
             }
         });
     }

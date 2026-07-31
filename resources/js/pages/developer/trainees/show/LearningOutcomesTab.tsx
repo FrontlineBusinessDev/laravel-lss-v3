@@ -1,12 +1,20 @@
+import { useState } from 'react';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import { useTraineeOutcomeToggle } from '@/hooks/use-trainee-outcome-toggle';
 import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import { ApplyLearningOutcomesModal } from './ApplyLearningOutcomesModal';
 
-export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetail }) {
-    const { isAchieved, toggle, toggleAll, savingId } = useTraineeOutcomeToggle(trainee.id);
+export default function LearningOutcomesTab({
+    trainee,
+}: {
+    trainee: TraineeDetail;
+}) {
+    const { isAchieved, toggle, toggleAll, savingId, hasChanges, resetChanges } =
+        useTraineeOutcomeToggle(trainee.id);
     const outcomes = trainee.outcomes ?? [];
     const achievedCount = outcomes.filter(isAchieved).length;
+    const [applyOpen, setApplyOpen] = useState(false);
 
     return (
         <>
@@ -30,8 +38,10 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                                 className="text-xs text-neutral-500"
                                 data-cy="learning-outcomes-tab-p-outcomes-associated-with"
                             >
-                                Outcomes associated with {trainee.batch?.academic_industry?.name ?? 'this industry'}.
-                                Select the ones achieved by the trainee.
+                                Outcomes associated with{' '}
+                                {trainee.batch?.academic_industry?.name ??
+                                    'this industry'}
+                                . Select the ones achieved by the trainee.
                             </p>
                         </div>
                         <div
@@ -47,7 +57,10 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             <button
                                 type="button"
                                 onClick={() => toggleAll(outcomes, 'active')}
-                                disabled={outcomes.length === 0}
+                                disabled={
+                                    outcomes.length === 0 ||
+                                    achievedCount === outcomes.length
+                                }
                                 className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
                                 data-cy="learning-outcomes-tab-button-check-all"
                             >
@@ -56,11 +69,22 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                             <button
                                 type="button"
                                 onClick={() => toggleAll(outcomes, 'inactive')}
-                                disabled={outcomes.length === 0}
+                                disabled={
+                                    outcomes.length === 0 || achievedCount === 0
+                                }
                                 className="text-xs font-medium text-neutral-500 hover:text-neutral-700 disabled:opacity-50"
                                 data-cy="learning-outcomes-tab-button-uncheck-all"
                             >
                                 Uncheck all
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setApplyOpen(true)}
+                                disabled={achievedCount === 0 || !hasChanges}
+                                className="text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+                                data-cy="learning-outcomes-tab-button-apply-to"
+                            >
+                                Apply to
                             </button>
                         </div>
                     </div>
@@ -124,6 +148,14 @@ export default function LearningOutcomesTab({ trainee }: { trainee: TraineeDetai
                     </div>
                 </div>
             </TraineesDetailLayout>
+
+            <ApplyLearningOutcomesModal
+                open={applyOpen}
+                onClose={() => setApplyOpen(false)}
+                onApplied={resetChanges}
+                traineeId={trainee.id}
+                outcomeIds={outcomes.filter(isAchieved).map((o) => o.id)}
+            />
         </>
     );
 }

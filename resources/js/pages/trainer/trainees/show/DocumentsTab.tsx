@@ -8,6 +8,7 @@ import {
     UploadCloud,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { formatDate } from '@/lib/date';
 import { AttachmentViewerModal, type ViewableAttachment } from '@/components/modal/AttachmentViewerModal';
 import { useToast } from '@/components/Toast';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
@@ -50,7 +51,7 @@ function toDocState(doc: TraineeDetail['documents'][number]): DocState {
         id: doc.id,
         link: doc.url_link ?? undefined,
         savedLink: doc.url_link ?? undefined,
-        submittedAt: doc.created_at?.slice(0, 10),
+        submittedAt: doc.created_at,
         fileName: doc.original_name ?? doc.file_name ?? undefined,
         fileSize: doc.file_size ?? undefined,
         mimeType: doc.mime_type ?? undefined,
@@ -247,7 +248,7 @@ export default function DocumentsTab({ trainee }: { trainee: TraineeDetail }) {
                                         </div>
                                         {state.submittedAt && (
                                             <span className="text-xs text-neutral-500">
-                                                Submitted {state.submittedAt}
+                                                Submitted {formatDate(state.submittedAt)}
                                             </span>
                                         )}
                                     </div>

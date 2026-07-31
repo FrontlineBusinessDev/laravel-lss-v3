@@ -1,6 +1,6 @@
 export type CertificateAppliesTo = 'trainee' | 'seminar' | 'both';
 export type CertificateStatus = 'active' | 'inactive';
-export type CertificateType = 'trainee' | 'seminar' | 'citation';
+export type CertificateType = 'trainee' | 'seminar';
 
 export interface CertificateCitation {
   id: number;
@@ -15,8 +15,9 @@ export interface CertificateCitation {
   [key: string]: unknown;
 }
 
-export type TemplateElementType = 'text' | 'image' | 'qr' | 'line';
+export type TemplateElementType = 'text' | 'image' | 'qr' | 'line' | 'outcomes' | 'shape';
 export type TemplateAlign = 'left' | 'center' | 'right';
+export type TemplateShapeKind = 'rectangle' | 'circle';
 
 export interface TemplateElement {
   id: string;
@@ -27,10 +28,24 @@ export interface TemplateElement {
   y: number;
   width: number;
   height?: number;
+  /** Degrees, clockwise. Defaults to 0 when unset. */
+  rotation?: number;
+  /** Image URL for `type: 'image'` elements — pasted, not uploaded (v1). May be a data URL after cropping. */
+  src?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
+  /** Font family for `type: 'text'` elements — a curated Google/web-safe list. Unset = default sans-serif. */
+  fontFamily?: string;
   align?: TemplateAlign;
   color?: string;
+  /** Column count for `type: 'outcomes'` elements — defaults to 2. */
+  columns?: number;
+  /** Rectangle or circle for `type: 'shape'` elements. */
+  shape?: TemplateShapeKind;
+  /** Fill color for `type: 'shape'` elements. */
+  fill?: string;
+  /** Stroke width for `type: 'shape'`/`type: 'line'` elements. */
+  strokeWidth?: number;
 }
 
 export interface CertificateTemplate {
@@ -41,6 +56,8 @@ export interface CertificateTemplate {
   page_size: 'a4' | 'letter';
   orientation: 'portrait' | 'landscape';
   is_default: boolean;
+  background_color?: string | null;
+  border_color?: string | null;
   status: CertificateStatus;
   created_at: string;
   updated_at: string;
@@ -51,8 +68,9 @@ interface IssuedCertificate {
   id: number;
   certificate_no: string;
   issued_at: string | null;
-  citation?: { id: number; title: string } | null;
+  citation?: { id: number; title: string; body_text?: string } | null;
   template?: CertificateTemplate | null;
+  learning_outcomes_snapshot?: { id: number; title: string }[] | null;
 }
 
 export interface TraineeCertificateRow {

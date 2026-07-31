@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schedule;
 
@@ -86,4 +87,26 @@ return Application::configure(basePath: dirname(__DIR__))
         // do NOT also schedule CronController here, or a schedule:run triggered
         // via that route would recursively re-invoke schedule:run on every tick.
         Schedule::command('announcements:dispatch-scheduled')->everyMinute();
+
+        // Guaranteed queue drain: rides the same confirmed-working per-minute
+        // schedule:run tick, independent of whether a separate long-running
+        // queue:work worker service/container is correctly deployed. Bounded
+        // to exit once the jobs table is empty (or after --max-time) so it
+        // never blocks this synchronous per-minute tick indefinitely.
+        //
+        // Deliberately Schedule::call() + Artisan::call() rather than
+        // Schedule::command() — the latter shells out to a subprocess with
+        // its output redirected to /dev/null, which would silently swallow
+        // the mail-outcome logging in AppServiceProvider::logMailQueueOutcomes()
+        // before it ever reached wherever schedule:run's own output is
+        // captured (Coolify's Scheduled Task log viewer). Running in-process
+        // shares schedule:run's own stdio instead.
+        Schedule::call(function () {
+            Artisan::call('queue:work', [
+                '--stop-when-empty' => true,
+                '--max-time' => 50,
+                '--tries' => 3,
+                '--backoff' => 10,
+            ]);
+        })->name('scheduled-queue-drain')->everyMinute()->withoutOverlapping(2);
     })->create();

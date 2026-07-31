@@ -18,8 +18,8 @@ class AcademicLevel extends Model
         'description',
     ];
 
-    public function trainees(): HasMany
+    public function batches(): HasMany
     {
-        return $this->hasMany(Trainees::class, 'academic_level_id');
+        return $this->hasMany(Batches::class, 'academic_level_id');
     }
 }

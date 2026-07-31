@@ -49,5 +49,8 @@ export function useTraineeOutcomeToggle(
         status: 'active' | 'inactive',
     ) => Promise.all(outcomes.map((outcome) => setStatus(outcome, status)));
 
-    return { isAchieved, toggle, toggleAll, savingId };
+    const hasChanges = Object.keys(override).length > 0;
+    const resetChanges = () => setOverride({});
+
+    return { isAchieved, toggle, toggleAll, savingId, hasChanges, resetChanges };
 }

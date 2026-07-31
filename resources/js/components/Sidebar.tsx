@@ -1,4 +1,5 @@
 import { ChangePasswordModal } from '@/components/modal/ChangePasswordModal';
+import { useGlobalSearchTrigger } from '@/contexts/GlobalSearchContext';
 import { useAuth } from '@/hooks/use-auth';
 import { usePermission } from '@/hooks/use-permissions';
 import { NavLink, useNavigate } from '@/lib/router-compat';
@@ -22,6 +23,7 @@ import {
     LogOut,
     Megaphone,
     ScrollText,
+    Search,
     Settings,
     Star,
     User,
@@ -152,6 +154,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
     const { role } = useAuth();
     const { hasRole } = usePermission();
+    const { open: openSearch } = useGlobalSearchTrigger();
     const navItems = hasRole('trainer')
         ? TRAINER_ITEMS
         : hasRole('trainee')
@@ -210,6 +213,17 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                         </button>
                     </div>
                 </div>
+                <button
+                    onClick={openSearch}
+                    className="mb-2 flex items-center gap-2 rounded-md border border-neutral-200 px-2.5 py-2 text-left text-xs text-neutral-400 transition-colors hover:bg-neutral-50"
+                    data-cy="sidebar-button-open-search"
+                >
+                    <Search size={14} className="shrink-0" />
+                    <span className="flex-1">Search…</span>
+                    <span className="rounded-sm border border-neutral-200 bg-neutral-50 px-1 py-0.5 font-mono text-[10px]">
+                        Ctrl K
+                    </span>
+                </button>
                 <nav
                     className="lss-scrollbar flex flex-1 flex-col gap-0.5 overflow-y-auto"
                     data-cy="sidebar-nav-11"

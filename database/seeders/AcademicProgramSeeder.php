@@ -32,7 +32,7 @@ class AcademicProgramSeeder extends Seeder
         ];
 
         foreach ($programs as $program) {
-            DB::table('app_settings_academic_program')->updateOrInsert(
+            DB::table('app_settings_academic_program_type')->updateOrInsert(
                 ['name' => $program['name']], // Unique identifier to prevent duplicates if run twice
                 [
                     'status' => strtolower($program['status']),

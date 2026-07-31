@@ -1,10 +1,6 @@
 import AppLayout from './AppLayout';
-import SettingsAcademicLayout from './settings/SettingsAcademicLayout';
-import SettingsRatesLayout from './settings/SettingsRatesLayout';
-import SettingsPrimaryLayout from './settings/SettingsPrimaryLayout';
 
 export const ResolvedLayout = (name: string) => {
-    console.log('name', name);
     // PUBLIC
     if (
         name === 'welcome' ||

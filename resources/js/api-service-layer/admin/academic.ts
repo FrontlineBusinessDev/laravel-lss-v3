@@ -8,6 +8,7 @@ import type { AcademicIndustry } from '@/types/modules/settings/academic/industr
 import type { AcademicLearningOutcomes } from '@/types/modules/settings/academic/learning-outcomes';
 import type { AcademicLevel } from '@/types/modules/settings/academic/level';
 import type { AcademicProgram } from '@/types/modules/settings/academic/program';
+import type { AcademicProgramType } from '@/types/modules/settings/academic/program-type';
 import { createCrudResource } from '../http';
 
 export const academicIndustryService = createCrudResource<
@@ -29,3 +30,8 @@ export const academicProgramService = createCrudResource<
     AcademicProgram,
     Partial<AcademicProgram>
 >({ baseUrl: '/settings/academic/program' });
+
+export const academicProgramTypeService = createCrudResource<
+    AcademicProgramType,
+    Partial<AcademicProgramType>
+>({ baseUrl: '/settings/academic/program-type' });
