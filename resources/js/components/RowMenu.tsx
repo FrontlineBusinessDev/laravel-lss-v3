@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { MoreHorizontal } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 export interface RowMenuActionConfig {
   label: string;
@@ -23,21 +23,43 @@ export function RowMenu({
   });
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
+  useLayoutEffect(() => {
+    if (!open) {
+return;
+}
+
     const place = () => {
       const r = btnRef.current?.getBoundingClientRect();
-      if (!r) return;
+
+      if (!r) {
+return;
+}
+
       const menuWidth = 190;
-      const left = Math.min(r.right - menuWidth, window.innerWidth - menuWidth - 8);
+      const margin = 8;
+      const left = Math.min(r.right - menuWidth, window.innerWidth - menuWidth - margin);
+      // Measure the already-mounted (but possibly mispositioned) menu to
+      // decide whether it fits below the trigger — flip above it otherwise.
+      // Runs in a layout effect so the corrected position is applied before
+      // the browser paints, avoiding a visible jump.
+      const menuHeight = menuRef.current?.offsetHeight ?? 0;
+      const spaceBelow = window.innerHeight - r.bottom;
+      const spaceAbove = r.top;
+      const opensUpward = spaceBelow < menuHeight + margin && spaceAbove > spaceBelow;
+      const top = opensUpward
+        ? Math.max(margin, r.top - menuHeight - 6)
+        : Math.min(r.bottom + 6, window.innerHeight - menuHeight - margin);
       setCoords({
-        top: r.bottom + 6,
-        left: Math.max(8, left)
+        top,
+        left: Math.max(margin, left)
       });
     };
     place();
     const onDown = (e: MouseEvent) => {
-      if (menuRef.current?.contains(e.target as Node) || btnRef.current?.contains(e.target as Node)) return;
+      if (menuRef.current?.contains(e.target as Node) || btnRef.current?.contains(e.target as Node)) {
+return;
+}
+
       setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
@@ -45,6 +67,7 @@ export function RowMenu({
     window.addEventListener('resize', place);
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
+
     return () => {
       window.removeEventListener('scroll', place, true);
       window.removeEventListener('resize', place);
@@ -52,6 +75,7 @@ export function RowMenu({
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
   return <>
             <button ref={btnRef} type="button" onClick={e => {
       e.stopPropagation();
@@ -66,7 +90,10 @@ export function RowMenu({
       width: 190
     }} className="z-60 animate-scaleIn overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-popover" data-cy="row-menu-div-3">
                         {actions.map((a, idx) => {
-        if (!a) return;
+        if (!a) {
+return;
+}
+
         return <button key={idx} role="menuitem" disabled={a.disabled} onClick={e => {
           e.stopPropagation();
           setOpen(false);

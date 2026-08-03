@@ -13,7 +13,7 @@ class BillingService
      */
     public function calculateBilling(Trainees $trainee)
     {
-        $batch = $trainee->batch ?? Batches::find($trainee->batch_id);
+        $batch = $trainee->relationLoaded('batch') ? $trainee->getRelation('batch') : Batches::find($trainee->batch_id);
 
         // 1. RATE PER HOUR (Default rate base sa setup)
         if ($trainee->override_rate_per_hour !== null) {

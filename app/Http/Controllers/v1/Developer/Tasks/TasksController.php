@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -98,9 +99,16 @@ class TasksController extends BaseController
             });
         }
 
-        $status = $filters['status'] ?? null;
-        if ($status !== null && $status !== '') {
-            $query->where('app_tasks.status', $status);
+        // `status` describes a *group's* rolled-up state (see groupStatus()),
+        // not an individual row, so it's deliberately NOT applied as a
+        // row-level WHERE here — doing so before aggregating would make a
+        // partially-completed group's trainee_count/completed_count reflect
+        // only the matching rows, which corrupts the "Complete all"/"Lock
+        // all" enablement (and the true target state those actions act on).
+        // It's applied after aggregation instead — see below.
+        $statusFilter = $filters['status'] ?? null;
+        if ($statusFilter === '') {
+            $statusFilter = null;
         }
 
         foreach (['priority', 'batch_id', 'trainee_id', 'trainer_id'] as $col) {
@@ -159,8 +167,28 @@ class TasksController extends BaseController
                 ->orderBy('task', 'asc');
         }
 
-        $perPage = (int) $request->input('per_page', 10);
-        $paginator = $grouped->paginate(max(1, min($perPage, 100)));
+        $perPage = max(1, min((int) $request->input('per_page', 10), 100));
+
+        if ($statusFilter !== null) {
+            // The filter targets each group's rolled-up status, which only
+            // exists after aggregation, so it can't be pushed down as SQL
+            // pagination — fetch every matching group, roll each up, then
+            // filter/paginate in PHP.
+            $page = max(1, (int) $request->input('page', 1));
+            $filteredGroups = $grouped->get()->filter(
+                fn($row) => $this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count) === $statusFilter
+            )->values();
+
+            $paginator = new LengthAwarePaginator(
+                $filteredGroups->forPage($page, $perPage)->values(),
+                $filteredGroups->count(),
+                $perPage,
+                $page,
+                ['path' => $request->url(), 'query' => $request->query()],
+            );
+        } else {
+            $paginator = $grouped->paginate($perPage);
+        }
 
         $rows = collect($paginator->items())->map(fn($row) => [
             'group_id' => $row->group_id,
@@ -274,6 +302,38 @@ class TasksController extends BaseController
         });
 
         return $this->sendResponse(null, 'Task(s) locked.');
+    }
+
+    /** Reverts every completed task in the group back to open — the undo for completeGroupAction(). */
+    public function uncompleteGroupAction(string $groupId): JsonResponse
+    {
+        $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
+        abort_if($rows->isEmpty(), 404);
+        $this->authorize('update', $rows->first());
+
+        DB::transaction(function () use ($rows) {
+            foreach ($rows->where('status', 'completed') as $row) {
+                $row->update(['status' => 'open', 'completed_at' => null]);
+            }
+        });
+
+        return $this->sendResponse(null, 'Task(s) marked as open.');
+    }
+
+    /** Reverts every locked task in the group back to open — the undo for lockGroupAction(). */
+    public function unlockGroupAction(string $groupId): JsonResponse
+    {
+        $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
+        abort_if($rows->isEmpty(), 404);
+        $this->authorize('update', $rows->first());
+
+        DB::transaction(function () use ($rows) {
+            foreach ($rows->where('status', 'locked') as $row) {
+                $row->update(['status' => 'open', 'locked_at' => null]);
+            }
+        });
+
+        return $this->sendResponse(null, 'Task(s) unlocked.');
     }
 
     /** Hard-deletes every task in the group. */

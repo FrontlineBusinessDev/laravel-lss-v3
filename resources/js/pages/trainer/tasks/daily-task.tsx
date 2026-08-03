@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { formatDateTime } from '@/lib/date';
-import { Info, Printer } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { formatDateTime } from '@/lib/date';
+import { formatToTwoDecimals } from '@/lib/number';
 import { cn } from '@/lib/utils';
 import { DailyTaskSheetPrint } from '@/pages/developer/tasks/DailyTaskSheetPrint';
+import type { TaskRecord } from '@/types/modules/tasks/daily-task';
 import type { ColumnDef } from '@/types/reusable/data-table';
 import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
-import type { TaskRecord } from '@/types/modules/tasks/daily-task';
+import { Info, Printer } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface ApiDailyTaskRow {
     id: number;
@@ -81,14 +82,21 @@ const columns: ColumnDef<ApiDailyTaskRow>[] = [
     { key: 'remarks', label: 'Remarks', sortable: false },
     { key: 'trainee', label: 'Trainee', sortable: false },
     { key: 'trainer', label: 'Trainer', sortable: false },
-    { key: 'date', label: 'Date', filterable: true, sortable: true, type: 'date-range' },
+    {
+        key: 'date',
+        label: 'Date',
+        filterable: true,
+        sortable: true,
+        type: 'date-range',
+    },
     {
         key: 'batch_id',
         label: 'Batch',
         filterable: true,
         sortable: false,
         type: 'async-select',
-        loadOptions: (q) => loadLookupOptions('/trainer/batches/lookup', q, 'batch_code'),
+        loadOptions: (q) =>
+            loadLookupOptions('/trainer/batches/lookup', q, 'batch_code'),
     },
     {
         key: 'trainee_id',
@@ -109,7 +117,12 @@ const columns: ColumnDef<ApiDailyTaskRow>[] = [
 ];
 
 const listHeader = (
-    <div className={cn('hidden bg-neutral-50 px-4 py-2.5 text-left text-xs font-medium text-neutral-500', GRID)}>
+    <div
+        className={cn(
+            'hidden bg-neutral-50 px-4 py-2.5 text-left text-xs font-medium text-neutral-500',
+            GRID,
+        )}
+    >
         <span>Batch</span>
         <span>Task</span>
         <span>Description</span>
@@ -131,7 +144,9 @@ const listHeader = (
 export default function DailyTaskSheetTab() {
     const { showToast } = useToast();
     const [reportRows, setReportRows] = useState<TaskRecord[]>([]);
-    const [refreshTable, setRefreshTable] = useState<() => void>(() => () => {});
+    const [refreshTable, setRefreshTable] = useState<() => void>(
+        () => () => {},
+    );
     const [activeFilters, setActiveFilters] = useState<{
         filters: Record<string, string | string[]>;
         search: string;
@@ -143,16 +158,21 @@ export default function DailyTaskSheetTab() {
                 const params = new URLSearchParams();
                 const dateFrom = filters.date_from;
                 const dateTo = filters.date_to;
-                if (typeof dateFrom === 'string' && dateFrom) params.set('date_from', dateFrom);
-                if (typeof dateTo === 'string' && dateTo) params.set('date_to', dateTo);
+                if (typeof dateFrom === 'string' && dateFrom)
+                    params.set('date_from', dateFrom);
+                if (typeof dateTo === 'string' && dateTo)
+                    params.set('date_to', dateTo);
                 const batchId = filters.batch_id;
-                if (typeof batchId === 'string' && batchId) params.set('batch_id', batchId);
-                (Array.isArray(filters.trainee_id) ? filters.trainee_id : []).forEach((id) =>
-                    params.append('trainee_ids[]', id),
-                );
-                (Array.isArray(filters.trainer_id) ? filters.trainer_id : []).forEach((id) =>
-                    params.append('trainer_ids[]', id),
-                );
+                if (typeof batchId === 'string' && batchId)
+                    params.set('batch_id', batchId);
+                (Array.isArray(filters.trainee_id)
+                    ? filters.trainee_id
+                    : []
+                ).forEach((id) => params.append('trainee_ids[]', id));
+                (Array.isArray(filters.trainer_id)
+                    ? filters.trainer_id
+                    : []
+                ).forEach((id) => params.append('trainer_ids[]', id));
 
                 const res = await apiFetchJson<ApiDailyTaskRow[]>(
                     `/tasks/daily-task/list?${params.toString()}`,
@@ -199,21 +219,32 @@ export default function DailyTaskSheetTab() {
     function renderRow(row: ApiDailyTaskRow) {
         return (
             <div className={cn('px-4 py-3 text-sm', GRID)}>
-                <span className="font-mono text-xs text-neutral-600">{row.batch_code}</span>
+                <span className="font-mono text-xs text-neutral-600">
+                    {row.batch_code}
+                </span>
                 <span className="font-medium text-ink">{row.task}</span>
-                <span className="max-w-[200px] truncate text-xs text-neutral-500" title={row.description ?? ''}>
+                <span
+                    className="max-w-[200px] truncate text-xs text-neutral-500"
+                    title={row.description ?? ''}
+                >
                     {row.description}
                 </span>
-                <span className="font-mono text-xs text-neutral-600">{row.time_goal}h</span>
+                <span className="font-mono text-xs text-neutral-600">
+                    {row.time_goal}h
+                </span>
                 <span>
                     {row.on_leave ? (
-                        <span className="font-mono text-xs text-neutral-400">0h</span>
+                        <span className="font-mono text-xs text-neutral-400">
+                            0h
+                        </span>
                     ) : (
                         <input
                             type="number"
                             min={0}
                             defaultValue={row.time_spent}
-                            onBlur={(e) => updateTimeSpent(row.id, Number(e.target.value))}
+                            onBlur={(e) =>
+                                updateTimeSpent(row.id, Number(e.target.value))
+                            }
                             className="h-8 w-16 rounded-md border border-neutral-200 px-2 font-mono text-xs focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                         />
                     )}
@@ -232,7 +263,10 @@ export default function DailyTaskSheetTab() {
                             defaultValue={row.remarks ?? ''}
                             placeholder="Add remarks..."
                             onBlur={(e) => {
-                                if (e.target.value.trim() !== (row.remarks ?? '').trim()) {
+                                if (
+                                    e.target.value.trim() !==
+                                    (row.remarks ?? '').trim()
+                                ) {
                                     updateRemarks(row.id, e.target.value);
                                 }
                             }}
@@ -242,7 +276,9 @@ export default function DailyTaskSheetTab() {
                 </span>
                 <span className="text-neutral-600">{row.trainee}</span>
                 <span className="text-neutral-600">{row.trainer}</span>
-                <span className="font-mono text-xs text-neutral-600">{row.date?.slice(0, 10)}</span>
+                <span className="font-mono text-xs text-neutral-600">
+                    {row.date?.slice(0, 10)}
+                </span>
             </div>
         );
     }
@@ -258,7 +294,9 @@ export default function DailyTaskSheetTab() {
         <div>
             <div className="no-print mb-3 flex items-start gap-1.5 rounded-lg border border-neutral-200 bg-white p-3 text-[11px] text-neutral-400">
                 <Info size={12} className="mt-0.5 shrink-0" />
-                {'Showing completed tasks only. Open or locked tasks aren’t part of the Daily Task Sheet report.'}
+                {
+                    'Showing completed tasks only. Open or locked tasks aren’t part of the Daily Task Sheet report.'
+                }
             </div>
 
             <div className="no-print mb-3 flex items-center justify-between">
@@ -285,13 +323,17 @@ export default function DailyTaskSheetTab() {
                     listHeader={listHeader}
                     renderCard={(row) => renderRow(row)}
                     onRefreshRef={(fn) => setRefreshTable(() => fn)}
-                    onFiltersChange={(filters, search) => setActiveFilters({ filters, search })}
+                    onFiltersChange={(filters, search) =>
+                        setActiveFilters({ filters, search })
+                    }
                 />
             </div>
 
             <div className="no-print mt-3 flex justify-end text-xs text-neutral-500">
                 Total time spent (filtered):{' '}
-                <span className="ml-1 font-mono font-semibold text-ink">{totalTimeSpent}h</span>
+                <span className="ml-1 font-mono font-semibold text-ink">
+                    {formatToTwoDecimals(totalTimeSpent)}h
+                </span>
             </div>
 
             <DailyTaskSheetPrint
