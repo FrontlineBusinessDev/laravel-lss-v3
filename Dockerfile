@@ -1,3 +1,12 @@
+# ---- Stage 1: frontend assets ----
+FROM node:22-slim AS frontend
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps
+COPY . .
+RUN npm run build
+
+# ---- Stage 2: runtime image ----
 FROM dunglas/frankenphp:1-php8.4
 
 ENV PORT=8000 \
@@ -7,7 +16,7 @@ ENV PORT=8000 \
 
 WORKDIR /app
 
-# 1. Install system dependencies, PHP extensions (including PostgreSQL drivers), and Node.js
+# 1. Install system dependencies & PHP extensions (including PostgreSQL drivers)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
@@ -27,29 +36,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         opcache \
         pcntl \
         redis \
-    # Install Node.js (v22) & NPM
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2. Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 3. Copy application files
+# 3. Install PHP dependencies first, cached independently of app source so a
+#    code-only change doesn't force a full re-download of vendor/.
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts --no-autoloader
+
+# 4. Copy application source
 COPY . .
 
-# 4. Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+# 5. Bring in the frontend build output from the node stage
+COPY --from=frontend /app/public/build ./public/build
 
-# 5. Install Node dependencies and build assets
-RUN npm install --legacy-peer-deps && npm run build
+# 6. Finish PHP dependency setup now that artisan is available (runs
+#    post-autoload-dump / package:discover)
+RUN composer dump-autoload --optimize --no-dev
 
-# 6. Configure Octane
+# 7. Configure Octane
 RUN php artisan octane:install --server=frankenphp --no-interaction
 
-# 7. Set execution permissions
+# 8. Set execution permissions
 RUN chmod +x scripts/deploy.sh scripts/worker.sh
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -fsS "http://127.0.0.1:${PORT:-8000}/up" || exit 1
 
 CMD ["bash", "scripts/deploy.sh"]
