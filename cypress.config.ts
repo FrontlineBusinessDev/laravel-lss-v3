@@ -2,6 +2,11 @@ import { defineConfig } from 'cypress';
 
 export default defineConfig({
     allowCypressEnv: true,
+    screenshotsFolder: 'cypress/screenshots',
+    screenshotOnRunFailure: true, // default is true
+
+    screenshotsFolder: 'cypress/screenshots',
+    screenshotOnRunFailure: true,
 
     e2e: {
         baseUrl: 'http://localhost:8000',

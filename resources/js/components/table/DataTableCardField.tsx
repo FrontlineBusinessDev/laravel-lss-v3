@@ -176,6 +176,7 @@ export function DataTableCardField<T extends Record<string, unknown>>(
                     <button
                         onClick={c.clearAllFilters}
                         className="text-xs font-medium underline-offset-2 hover:underline"
+                        data-cy="clear-all"
                     >
                         Clear all
                     </button>
