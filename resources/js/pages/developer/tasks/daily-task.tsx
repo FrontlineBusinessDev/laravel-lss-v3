@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import { formatDateTime } from '@/lib/date';
-import { Printer, Info } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { useToast } from '@/components/Toast';
-import { apiFetchJson } from '@/lib/apiFetch';
-import { cn } from '@/lib/utils';
 import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
+import { apiFetchJson } from '@/lib/apiFetch';
+import { formatDateTime } from '@/lib/date';
+import { formatToTwoDecimals } from '@/lib/number';
+import { cn } from '@/lib/utils';
 import { DailyTaskSheetPrint } from '@/pages/developer/tasks/DailyTaskSheetPrint';
+import type { TaskRecord } from '@/types/modules/tasks/daily-task';
+import type { ColumnDef } from '@/types/reusable/data-table';
 import type { FieldOption } from '@/types/reusable/fields';
 import { loadLookupOptions } from '@/types/reusable/fields';
-import type { ColumnDef } from '@/types/reusable/data-table';
-import type { TaskRecord } from '@/types/modules/tasks/daily-task';
+import { Info, Printer } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface ApiDailyTaskRow {
     id: number;
@@ -118,7 +119,10 @@ const columns: ColumnDef<ApiDailyTaskRow>[] = [
 
 const listHeader = (
     <div
-        className={cn('hidden bg-neutral-50 px-4 py-2.5 text-left text-xs font-medium text-neutral-500', GRID)}
+        className={cn(
+            'hidden bg-neutral-50 px-4 py-2.5 text-left text-xs font-medium text-neutral-500',
+            GRID,
+        )}
         data-cy="daily-task-list-header"
     >
         <span>Batch</span>
@@ -136,7 +140,9 @@ const listHeader = (
 export default function DailyTaskSheetPage() {
     const { showToast } = useToast();
     const [reportRows, setReportRows] = useState<TaskRecord[]>([]);
-    const [refreshTable, setRefreshTable] = useState<() => void>(() => () => {});
+    const [refreshTable, setRefreshTable] = useState<() => void>(
+        () => () => {},
+    );
     const [activeFilters, setActiveFilters] = useState<{
         filters: Record<string, string | string[]>;
         search: string;
@@ -148,16 +154,21 @@ export default function DailyTaskSheetPage() {
                 const params = new URLSearchParams();
                 const dateFrom = filters.date_from;
                 const dateTo = filters.date_to;
-                if (typeof dateFrom === 'string' && dateFrom) params.set('date_from', dateFrom);
-                if (typeof dateTo === 'string' && dateTo) params.set('date_to', dateTo);
+                if (typeof dateFrom === 'string' && dateFrom)
+                    params.set('date_from', dateFrom);
+                if (typeof dateTo === 'string' && dateTo)
+                    params.set('date_to', dateTo);
                 const batchId = filters.batch_id;
-                if (typeof batchId === 'string' && batchId) params.set('batch_id', batchId);
-                (Array.isArray(filters.trainee_id) ? filters.trainee_id : []).forEach((id) =>
-                    params.append('trainee_ids[]', id),
-                );
-                (Array.isArray(filters.trainer_id) ? filters.trainer_id : []).forEach((id) =>
-                    params.append('trainer_ids[]', id),
-                );
+                if (typeof batchId === 'string' && batchId)
+                    params.set('batch_id', batchId);
+                (Array.isArray(filters.trainee_id)
+                    ? filters.trainee_id
+                    : []
+                ).forEach((id) => params.append('trainee_ids[]', id));
+                (Array.isArray(filters.trainer_id)
+                    ? filters.trainer_id
+                    : []
+                ).forEach((id) => params.append('trainer_ids[]', id));
 
                 const res = await apiFetchJson<ApiDailyTaskRow[]>(
                     `/tasks/daily-task/list?${params.toString()}`,
@@ -203,22 +214,36 @@ export default function DailyTaskSheetPage() {
 
     function renderRow(row: ApiDailyTaskRow) {
         return (
-            <div className={cn('px-4 py-3 text-sm', GRID)} data-cy="daily-task-row">
-                <span className="font-mono text-xs text-neutral-600">{row.batch_code}</span>
+            <div
+                className={cn('px-4 py-3 text-sm', GRID)}
+                data-cy="daily-task-row"
+            >
+                <span className="font-mono text-xs text-neutral-600">
+                    {row.batch_code}
+                </span>
                 <span className="font-medium text-ink">{row.task}</span>
-                <span className="max-w-[200px] truncate text-xs text-neutral-500" title={row.description ?? ''}>
+                <span
+                    className="max-w-[200px] truncate text-xs text-neutral-500"
+                    title={row.description ?? ''}
+                >
                     {row.description}
                 </span>
-                <span className="font-mono text-xs text-neutral-600">{row.time_goal}h</span>
+                <span className="font-mono text-xs text-neutral-600">
+                    {row.time_goal}h
+                </span>
                 <span>
                     {row.on_leave ? (
-                        <span className="font-mono text-xs text-neutral-400">0h</span>
+                        <span className="font-mono text-xs text-neutral-400">
+                            0h
+                        </span>
                     ) : (
                         <input
                             type="number"
                             min={0}
                             defaultValue={row.time_spent}
-                            onBlur={(e) => updateTimeSpent(row.id, Number(e.target.value))}
+                            onBlur={(e) =>
+                                updateTimeSpent(row.id, Number(e.target.value))
+                            }
                             className="h-8 w-16 rounded-md border border-neutral-200 px-2 font-mono text-xs focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                             data-cy="daily-task-input-time-spent"
                         />
@@ -238,7 +263,10 @@ export default function DailyTaskSheetPage() {
                             defaultValue={row.remarks ?? ''}
                             placeholder="Add remarks..."
                             onBlur={(e) => {
-                                if (e.target.value.trim() !== (row.remarks ?? '').trim()) {
+                                if (
+                                    e.target.value.trim() !==
+                                    (row.remarks ?? '').trim()
+                                ) {
                                     updateRemarks(row.id, e.target.value);
                                 }
                             }}
@@ -249,7 +277,9 @@ export default function DailyTaskSheetPage() {
                 </span>
                 <span className="text-neutral-600">{row.trainee}</span>
                 <span className="text-neutral-600">{row.trainer}</span>
-                <span className="font-mono text-xs text-neutral-600">{row.date?.slice(0, 10)}</span>
+                <span className="font-mono text-xs text-neutral-600">
+                    {row.date?.slice(0, 10)}
+                </span>
             </div>
         );
     }
@@ -269,11 +299,19 @@ export default function DailyTaskSheetPage() {
                     data-cy="daily-task-div-showing-completed-tasks-only-open-or"
                 >
                     <Info size={12} className="mt-0.5 shrink-0" />
-                    {'Showing completed tasks only. Open or locked tasks aren’t part of the Daily Task Sheet report.'}
+                    {
+                        'Showing completed tasks only. Open or locked tasks aren’t part of the Daily Task Sheet report.'
+                    }
                 </div>
 
-                <div className="no-print mb-3 flex items-center justify-between" data-cy="daily-task-div-80">
-                    <span className="text-xs text-neutral-500" data-cy="daily-task-span-record">
+                <div
+                    className="no-print mb-3 flex items-center justify-between"
+                    data-cy="daily-task-div-80"
+                >
+                    <span
+                        className="text-xs text-neutral-500"
+                        data-cy="daily-task-span-record"
+                    >
                         {`${reportRows.length} record${reportRows.length === 1 ? '' : 's'}`}
                     </span>
                     <Button
@@ -297,13 +335,20 @@ export default function DailyTaskSheetPage() {
                         listHeader={listHeader}
                         renderCard={(row) => renderRow(row)}
                         onRefreshRef={(fn) => setRefreshTable(() => fn)}
-                        onFiltersChange={(filters, search) => setActiveFilters({ filters, search })}
+                        onFiltersChange={(filters, search) =>
+                            setActiveFilters({ filters, search })
+                        }
                     />
                 </div>
 
-                <div className="no-print mt-3 flex justify-end text-xs text-neutral-500" data-cy="daily-task-div-total-time-spent-filtered">
+                <div
+                    className="no-print mt-3 flex justify-end text-xs text-neutral-500"
+                    data-cy="daily-task-div-total-time-spent-filtered"
+                >
                     Total time spent (filtered):{' '}
-                    <span className="ml-1 font-mono font-semibold text-ink">{totalTimeSpent}h</span>
+                    <span className="ml-1 font-mono font-semibold text-ink">
+                        {formatToTwoDecimals(totalTimeSpent)}h
+                    </span>
                 </div>
 
                 <DailyTaskSheetPrint

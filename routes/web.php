@@ -290,6 +290,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/groups/{groupId}/roster', [TasksController::class, 'roster'])->name('groups.roster');
             Route::patch('/groups/{groupId}/complete', [TasksController::class, 'completeGroupAction'])->name('groups.complete');
             Route::patch('/groups/{groupId}/lock', [TasksController::class, 'lockGroupAction'])->name('groups.lock');
+            Route::patch('/groups/{groupId}/uncomplete', [TasksController::class, 'uncompleteGroupAction'])->name('groups.uncomplete');
+            Route::patch('/groups/{groupId}/unlock', [TasksController::class, 'unlockGroupAction'])->name('groups.unlock');
             Route::delete('/groups/{groupId}', [TasksController::class, 'destroyGroup'])->name('groups.destroy');
             Route::prefix('daily-task')->name('daily-task.')->group(function () {
                 Route::get('/', [DailyTaskController::class, 'index'])->name('index');

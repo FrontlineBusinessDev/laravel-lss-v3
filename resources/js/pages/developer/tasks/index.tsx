@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Lock, CheckCircle2, Users, Trash2 } from 'lucide-react';
+import {
+    Plus,
+    Lock,
+    LockOpen,
+    CheckCircle2,
+    RotateCcw,
+    Users,
+    Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/Button';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
@@ -21,7 +29,10 @@ import {
     TASK_PRIORITY_OPTIONS,
     TASK_STATUS_FILTER_OPTIONS,
 } from '@/types/task';
-import { AddTaskModal, type TaskSavePayload } from '@/pages/developer/tasks/AddTaskModal';
+import {
+    AddTaskModal,
+    type TaskSavePayload,
+} from '@/pages/developer/tasks/AddTaskModal';
 import { TaskRosterModal } from '@/pages/developer/tasks/TaskRosterModal';
 
 const PERMISSION = 'manage tasks';
@@ -167,6 +178,28 @@ export default function TasksPage() {
             showToast('Failed to lock task(s).', 'error');
         }
     }
+    async function runGroupUncomplete(row: ApiTaskGroup) {
+        try {
+            await apiFetchJson(`/tasks/groups/${row.group_id}/uncomplete`, {
+                method: 'PATCH',
+            });
+            showToast(`"${row.task}" marked as open.`, 'success');
+            invalidateTasks();
+        } catch {
+            showToast('Failed to reopen task(s).', 'error');
+        }
+    }
+    async function runGroupUnlock(row: ApiTaskGroup) {
+        try {
+            await apiFetchJson(`/tasks/groups/${row.group_id}/unlock`, {
+                method: 'PATCH',
+            });
+            showToast(`"${row.task}" unlocked.`, 'success');
+            invalidateTasks();
+        } catch {
+            showToast('Failed to unlock task(s).', 'error');
+        }
+    }
 
     const renderRow = (row: ApiTaskGroup, actions: CardActions) => {
         const menu: RowMenuAction[] = [
@@ -186,6 +219,18 @@ export default function TasksPage() {
                 icon: Lock,
                 onClick: () => runGroupLock(row),
                 disabled: row.status === 'locked',
+            },
+            {
+                label: 'Uncomplete all',
+                icon: RotateCcw,
+                onClick: () => runGroupUncomplete(row),
+                disabled: row.completed_count === 0,
+            },
+            {
+                label: 'Unlock all',
+                icon: LockOpen,
+                onClick: () => runGroupUnlock(row),
+                disabled: row.locked_count === 0,
             },
             {
                 label: 'Delete',
@@ -267,18 +312,11 @@ export default function TasksPage() {
                     onClick={() => setAddModalOpen(true)}
                     data-cy="index-button-set-add-modal-open"
                 >
-                    Add task
+                    Add tasks
                 </Button>
             }
         >
             <div data-cy="index-div-1">
-                <div
-                    className="mb-4 flex items-center justify-between"
-                    data-cy="index-div-2"
-                >
-                    <div data-cy="index-div-heading"></div>
-                </div>
-
                 <DataTableCardField<ApiTaskGroup>
                     apiUrl="/tasks"
                     apiQueryKey="tasks"
@@ -291,7 +329,6 @@ export default function TasksPage() {
                     deleteUrl={(row) => `/tasks/groups/${row.group_id}`}
                     data-cy="index-data-table-card-field-1"
                 />
-
                 {/* Add task modal — creates a new batch-assignment (fan-out). */}
                 <AddTaskModal
                     open={addModalOpen}
@@ -300,7 +337,6 @@ export default function TasksPage() {
                     onSave={handleCreate}
                     data-cy="index-add-task-modal-set-add-modal-open"
                 />
-
                 {/* Per-trainee roster behind the group row ("View roster" action). */}
                 <TaskRosterModal
                     open={!!rosterGroup}
