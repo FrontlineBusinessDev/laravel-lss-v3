@@ -5,8 +5,8 @@ export default defineConfig({
     screenshotsFolder: 'cypress/screenshots',
     screenshotOnRunFailure: true, // default is true
 
-    screenshotsFolder: 'cypress/screenshots',
-    screenshotOnRunFailure: true,
+    // screenshotsFolder: 'cypress/screenshots',
+    // screenshotOnRunFailure: true,
 
     e2e: {
         baseUrl: 'http://localhost:8000',
