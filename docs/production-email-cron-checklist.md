@@ -49,32 +49,50 @@ of the following (genuinely outside this repo's reach) is the cause.
 
 ## 1. Is anything actually calling the scheduler?
 
-Pick exactly one of these two mechanisms — don't run both:
+Pick exactly one of these mechanisms — don't run more than one:
 
-- **Real crontab** (if Coolify/Hostinger gives you shell/cron access):
+- **Coolify's built-in Scheduled Task feature** (what's actually configured
+  for this app): a Scheduled Task runs `php artisan schedule:run` directly
+  against the `web` service/container on a cron interval, set in Coolify's
+  UI (Application → Scheduled Tasks). Confirm:
+  - The task's command is exactly `php artisan schedule:run` (no path
+    prefix needed — Coolify execs into the container, which already has
+    `WORKDIR /app`).
+  - The interval is `* * * * *` (every minute) — a longer interval directly
+    adds to queued-mail/notification latency.
+  - It's targeting the `web` service specifically (the only container that
+    exists now that the dedicated `queue` container has been removed — see
+    §2), and that the `web` container is actually up when the task fires.
+  - Check the task's run history/logs in Coolify's UI to confirm it's
+    firing and exiting successfully, not just that it's configured.
+- **Real crontab** (if you have raw shell/cron access to the host instead):
   ```
   * * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
   ```
   Confirm this line exists in the container's actual crontab (`crontab -l`),
   not just documented somewhere — a documented-but-never-applied cron entry
   behaves identically to no scheduler at all.
-- **External HTTP cron** (for hosts with no real cron access, e.g. shared
-  Hostinger plans): a free service like cron-job.org hits
-  `GET https://yourdomain/cron/{CRON_SECRET}` once a minute. Requires:
-  - `CRON_SECRET` set in the production `.env` (generate with
-    `php artisan tinker --execute="echo \Illuminate\Support\Str::random(48);"`).
-  - The external service configured with that exact URL/token and a
-    1-minute interval.
-  - Confirm it's actually firing: check the external service's own run
-    history/logs, and check `storage/logs/laravel.log` for
-    `Custom background tasks executed safely` — wait, that log line was
-    removed as part of this fix (dead code); after the fix, a successful hit
-    just returns `200 OK` with body `OK`. Verify with
-    `curl -i https://yourdomain/cron/YOUR_SECRET` and check for `200`.
+- **External HTTP cron** (`GET /cron/{CRON_SECRET}` via `routes/cron.php` /
+  `CronController` — a free service like cron-job.org hits it once a
+  minute): kept in the codebase as a fallback entry point for hosts with no
+  shell/cron access, but **not the mechanism currently used in
+  production** — this app uses Coolify's Scheduled Task feature instead.
 
 ## 2. Is a queue worker actually running?
 
-Two supported ways to run the worker in production — both use the same
+> **Update:** the dedicated `queue` container described below has since been
+> removed from `docker-compose.yml`. Job processing now relies solely on the
+> scheduled drain in `bootstrap/app.php`'s `withSchedule()`
+> (`queue:work --stop-when-empty --max-time=50`, riding the same per-minute
+> `schedule:run` tick as §1's Coolify Scheduled Task) — confirmed acceptable
+> given the ~1-2 min latency and that Scheduled Task's reliability. If mail
+> piles up silently again, check **§1 first** (is the Scheduled Task actually
+> firing, and against the right service?) before assuming a missing worker
+> container, since there isn't one anymore.
+
+Two supported ways to run the worker in production (historical — no longer
+used by default, kept here for reference if resource constraints ease and a
+persistent worker is reintroduced) — both use the same
 `scripts/worker.sh` (`php artisan queue:work --tries=3 --backoff=10
 --max-time=3600 --memory=128`, isolated from `web`'s process so worker
 crashes don't affect the web process):

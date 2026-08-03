@@ -30,34 +30,16 @@ services:
     memswap_limit: 2048m
     cpus: "1.5"
 
-  # Dedicated Queue Worker
-  queue:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["bash", "scripts/worker.sh"]
-    environment:
-      - APP_ENV=${APP_ENV:-production}
-      - PORT=${PORT:-8000}
-    env_file:
-      - .env
-    volumes:
-      - ./database:/app/database
-    restart: unless-stopped
-    depends_on:
-      web:
-        condition: service_healthy
-    # queue:work already caps per-job memory at 128M (scripts/worker.sh); this
-    # bounds the whole container (PHP process + Laravel bootstrap overhead)
-    # with a bit more room than the bare minimum.
-    mem_limit: 384m
-    mem_reservation: 192m
-    memswap_limit: 512m
-    cpus: "0.5"
-
+# No dedicated queue worker container: bootstrap/app.php's withSchedule()
+# already registers a scheduled `queue:work --stop-when-empty --max-time=50`
+# drain that rides the per-minute schedule:run tick (itself triggered by the
+# external cron pinger hitting GET /cron/{token}, see routes/cron.php). See
+# docs/production-email-cron-checklist.md for the history/tradeoffs of this
+# vs. a persistent worker. scripts/worker.sh is kept for ad-hoc manual backlog
+# draining (`docker compose run --rm web bash scripts/worker.sh`) but nothing
+# starts it automatically.
+#
 # Note: the ./database bind mount above only matters when DB_CONNECTION=sqlite/pgsql.
-# The DB is then a file, not a network service, so without a shared mount each
-# container gets its own independent copy baked in at build time and
-# `web`/`queue` silently stop seeing each other's writes (this is what broke
-# queued mail). Harmless no-op if DB_CONNECTION points at a real network
-# database instead.
+# The DB is then a file, not a network service, so a container without this
+# mount would get its own independent copy baked in at build time instead of
+# sharing writes with the host/other processes.
