@@ -41,7 +41,7 @@ export default function TrainerBatchesPage() {
                 className={`grid ${customGRID} cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-neutral-50/70`}
             >
                 <TextCell>{row.batch_code}</TextCell>
-                <TextCell muted>{row.academic_program?.name ?? '—'}</TextCell>
+                <TextCell muted>{row.academic_program_type?.name ?? '—'}</TextCell>
                 <TextCell muted>
                     {row.academic_industry?.name ?? '—'}
                 </TextCell>

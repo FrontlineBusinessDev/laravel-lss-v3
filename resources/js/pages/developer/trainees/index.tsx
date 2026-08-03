@@ -119,7 +119,7 @@ export default function TraineesListPage() {
                         {row.school?.school_name ?? '—'}
                     </TextCell>
                     <TextCell muted data-cy="index-text-cell-program">
-                        {row.batch?.academic_program?.name ?? '—'}
+                        {row.academic_program?.name ?? '—'}
                     </TextCell>
                     <TextCell muted data-cy="index-text-cell-email">
                         {row.email}

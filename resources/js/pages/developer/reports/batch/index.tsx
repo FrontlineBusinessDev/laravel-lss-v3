@@ -29,11 +29,11 @@ const columns: ColumnDef<ReportBatch>[] = [
         loadOptions: (q) => loadLookupOptions('/settings/academic/industry', q),
     },
     {
-        key: 'academic_program_id',
-        label: 'Program',
+        key: 'academic_program_type_id',
+        label: 'Program type',
         filterable: true,
         type: 'async-multi-select',
-        loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
     },
 ];
 

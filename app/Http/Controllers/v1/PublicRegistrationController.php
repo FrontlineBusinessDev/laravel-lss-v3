@@ -6,7 +6,8 @@ use App\Http\Responses\InertiaPageResponse;
 use App\Rules\UniqueEmailAcrossIdentities;
 use App\Mail\ApplicationSubmittedMail;
 use App\Mail\NewApplicationAdminMail;
-use App\Models\AcademicProgramType;
+use App\Models\AcademicLevel;
+use App\Models\AcademicProgram;
 use App\Models\Batches;
 use App\Models\Notification;
 use App\Models\PartnerSchools;
@@ -75,7 +76,7 @@ class PublicRegistrationController extends Controller
                 'is_public_url_enable' => (bool) $batch->is_public_url_enable,
                 'date_started' => $batch->date_started?->toDateString(),
                 'industry' => $batch->academicIndustry?->name,
-                'program' => $batch->academicProgram?->name,
+                'program' => $batch->academicProgramType?->name,
             ],
             'metaDescription' => $metaDescription,
             'registerUrl' => $registerUrl,
@@ -87,14 +88,20 @@ class PublicRegistrationController extends Controller
                 ->orderBy('school_name')
                 ->get(['id', 'school_name'])
                 ->map(fn(PartnerSchools $s) => ['id' => $s->id, 'name' => $s->school_name]),
-            // Academic Program Type is chosen per-trainee at registration time
-            // (Academic Level now lives on the batch instead), so it's passed
-            // as a guest-reachable prop list the same way `schools` is.
-            'academicProgramTypes' => AcademicProgramType::query()
+            // Academic Program and Academic Level are chosen per-trainee at
+            // registration time (Academic Program Type now lives on the batch
+            // instead), so they're passed as guest-reachable prop lists the
+            // same way `schools` is.
+            'academicPrograms' => AcademicProgram::query()
                 ->where('status', Statuses::ACTIVE)
                 ->orderBy('name')
                 ->get(['id', 'name'])
-                ->map(fn(AcademicProgramType $t) => ['id' => $t->id, 'name' => $t->name]),
+                ->map(fn(AcademicProgram $p) => ['id' => $p->id, 'name' => $p->name]),
+            'academicLevels' => AcademicLevel::query()
+                ->where('status', Statuses::ACTIVE)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn(AcademicLevel $l) => ['id' => $l->id, 'name' => $l->name]),
         ])->withViewData([
             // Server-rendered into the Blade <head> so Facebook's non-JS crawler
             // sees the og tags (the Inertia <Head> versions only exist after
@@ -151,7 +158,7 @@ class PublicRegistrationController extends Controller
     /** Human-readable share/description line built from the batch's attributes. */
     protected function metaDescription(Batches $batch): string
     {
-        $program = $batch->academicProgram?->name ?? 'training program';
+        $program = $batch->academicProgramType?->name ?? 'training program';
         $setup = $batch->setup === 'f2f' ? 'Face to Face' : 'Online';
 
         return "Register for {$program} ({$setup}) — batch {$batch->batch_code}. "
@@ -161,7 +168,7 @@ class PublicRegistrationController extends Controller
     /** Compact one-line batch specifics rendered onto the share card. */
     protected function metaDetails(Batches $batch): string
     {
-        $program = $batch->academicProgram?->name ?? 'Training Program';
+        $program = $batch->academicProgramType?->name ?? 'Training Program';
         $setup = $batch->setup === 'f2f' ? 'Face to Face' : 'Online';
 
         return "{$program}  ·  {$setup}  ·  Batch {$batch->batch_code}";
@@ -206,7 +213,8 @@ class PublicRegistrationController extends Controller
                 // provisions the account. See that controller for the
                 // status=>active transition.
                 'status' => Statuses::PENDING,
-                'academic_program_type_id' => $validated['academic_program_type_id'],
+                'academic_program_id' => $validated['academic_program_id'],
+                'academic_level_id' => $validated['academic_level_id'],
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => $validated['email'],
@@ -257,7 +265,7 @@ class PublicRegistrationController extends Controller
     {
         return Batches::query()
             ->where('public_registration_url_id', $token)
-            ->with(['academicIndustry:id,name', 'academicProgram:id,name'])
+            ->with(['academicIndustry:id,name', 'academicProgramType:id,name'])
             ->firstOrFail();
     }
 
@@ -281,7 +289,8 @@ class PublicRegistrationController extends Controller
             'required_hours' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'address' => ['required', 'string', 'max:1000'],
             'school_id' => ['required', 'integer', 'exists:app_settings_partner_schools,id'],
-            'academic_program_type_id' => ['required', 'integer', 'exists:app_settings_academic_program_type,id'],
+            'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program,id'],
+            'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
             'resume' => ['required', ...$file],
             'endorsement_letter' => ['nullable', ...$file],
             'moa' => ['nullable', ...$file],

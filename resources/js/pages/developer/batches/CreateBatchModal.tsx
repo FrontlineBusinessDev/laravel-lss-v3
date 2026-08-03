@@ -26,33 +26,25 @@ import {
  */
 type Values = {
     setup: 'f2f' | 'online';
-    academic_program_id: string | number;
-    academic_level_id: string | number;
+    academic_program_type_id: string | number;
     academic_industry_id: string | number;
     date_started: string;
     projected_end_date: string;
     is_public_url_enable: boolean;
 };
 
-// The four async-select lookups are structurally identical — drive them from
-// one config instead of four near-duplicate JSX blocks. `rel` is the
-// eager-loaded relation the trigger label is seeded from in edit mode.
-// Academic Program Type is collected at trainee self-registration instead
-// (see resources/js/pages/public/register) — Academic Level lives here.
+// The async-select lookups are structurally identical — drive them from one
+// config instead of near-duplicate JSX blocks. `rel` is the eager-loaded
+// relation the trigger label is seeded from in edit mode. Academic Program
+// and Academic Level are collected at trainee self-registration instead (see
+// resources/js/pages/public/register) — Academic Program Type lives here.
 const LOOKUPS = [
     {
-        key: 'academic_program_id',
-        rel: 'academic_program',
-        label: 'Academic program',
-        endpoint: '/settings/academic/program',
-        placeholder: 'Select academic program',
-    },
-    {
-        key: 'academic_level_id',
-        rel: 'academic_level',
-        label: 'Academic level',
-        endpoint: '/settings/academic/level',
-        placeholder: 'Select academic level',
+        key: 'academic_program_type_id',
+        rel: 'academic_program_type',
+        label: 'Academic program type',
+        endpoint: '/settings/academic/program-type',
+        placeholder: 'Select academic program type',
     },
     {
         key: 'academic_industry_id',
@@ -88,8 +80,7 @@ export function CreateBatchModal({
     const isEdit = (modeProp ?? (batch ? 'edit' : 'create')) === 'edit';
     const [values, setValues] = useState<Values>(() => ({
         setup: batch?.setup ?? 'f2f',
-        academic_program_id: batch?.academic_program_id ?? '',
-        academic_level_id: batch?.academic_level_id ?? '',
+        academic_program_type_id: batch?.academic_program_type_id ?? '',
         academic_industry_id: batch?.academic_industry_id ?? '',
         date_started: batch?.date_started
             ? String(batch.date_started).slice(0, 10)
@@ -117,11 +108,8 @@ export function CreateBatchModal({
     };
     const validate = () => {
         const next: Record<string, string> = {};
-        if (!values.academic_program_id) {
-            next.academic_program_id = 'Academic program is required.';
-        }
-        if (!values.academic_level_id) {
-            next.academic_level_id = 'Academic level is required.';
+        if (!values.academic_program_type_id) {
+            next.academic_program_type_id = 'Academic program type is required.';
         }
         if (!values.academic_industry_id) {
             next.academic_industry_id = 'Industry is required.';

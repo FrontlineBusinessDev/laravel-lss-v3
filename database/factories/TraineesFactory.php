@@ -2,7 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\AcademicProgramType;
+use App\Models\AcademicLevel;
+use App\Models\AcademicProgram;
 use App\Models\PartnerSchools;
 use App\Models\Trainees;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,7 +21,8 @@ class TraineesFactory extends Factory
         return [
             'status' => 'active',
             'school_id' => PartnerSchools::query()->inRandomOrder()->value('id'),
-            'academic_program_type_id' => AcademicProgramType::query()->inRandomOrder()->value('id'),
+            'academic_program_id' => AcademicProgram::query()->inRandomOrder()->value('id'),
+            'academic_level_id' => AcademicLevel::query()->inRandomOrder()->value('id'),
             'public_url_id' => Str::ulid()->toBase32(),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),

@@ -21,7 +21,7 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                     <Field label="School" value={trainee.school?.school_name} />
                     <Field
                         label="Program"
-                        value={trainee.batch?.academic_program?.name}
+                        value={trainee.academic_program?.name}
                     />
                     <Field
                         label="Industry"
@@ -29,11 +29,11 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                     />
                     <Field
                         label="Level"
-                        value={trainee.batch?.academic_level?.name}
+                        value={trainee.academic_level?.name}
                     />
                     <Field
                         label="Program type"
-                        value={trainee.academic_program_type?.name}
+                        value={trainee.batch?.academic_program_type?.name}
                     />
                     <Field
                         label="Setup"

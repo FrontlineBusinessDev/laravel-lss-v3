@@ -27,14 +27,14 @@ class BatchesController extends BaseController
         'status',
         'setup',
         'academic_industry_id',
-        'academic_program_id',
+        'academic_program_type_id',
     ];
 
     protected array $exactFilters = [
         'status',
         'setup',
         'academic_industry_id',
-        'academic_program_id',
+        'academic_program_type_id',
     ];
 
     protected array $sortable = ['id', 'batch_code', 'date_started', 'created_at'];
@@ -49,7 +49,7 @@ class BatchesController extends BaseController
         return parent::newQuery()
             ->with([
                 'academicIndustry:id,name',
-                'academicProgram:id,name',
+                'academicProgramType:id,name',
             ])
             ->withCount('trainees')
             ->whereIn('id', $this->assignedBatchIds());

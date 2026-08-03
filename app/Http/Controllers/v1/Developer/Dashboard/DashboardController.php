@@ -241,13 +241,13 @@ class DashboardController extends Controller
     {
         $rows = Batches::latest()
             ->take(4)
-            ->with('academicProgram:id,name')
-            ->get(['id', 'batch_code', 'status', 'academic_program_id'])
+            ->with('academicProgramType:id,name')
+            ->get(['id', 'batch_code', 'status', 'academic_program_type_id'])
             ->map(fn(Batches $batch) => [
                 'id' => $batch->id,
                 'batch_code' => $batch->batch_code,
                 'status' => $batch->status,
-                'program_type' => $batch->academicProgram?->name,
+                'program_type' => $batch->academicProgramType?->name,
             ]);
 
         return $this->respond($rows);
