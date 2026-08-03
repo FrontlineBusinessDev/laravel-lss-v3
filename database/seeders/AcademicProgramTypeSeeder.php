@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class AcademicProgramSeeder extends Seeder
+class AcademicProgramTypeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -14,37 +14,27 @@ class AcademicProgramSeeder extends Seeder
     {
         $programs = [
             [
-                'name' => 'Bachelor of Science in Information Technology',
-                'abbreviation' => 'BSIT',
+                'name' => 'College On-the-Job Training',
                 'status' => 'active',
             ],
             [
-                'name' => 'Bachelor of Science in Computer Science',
-                'abbreviation' => 'BSCS',
+                'name' => 'Continuing Studies',
                 'status' => 'active',
             ],
             [
-                'name' => 'Bachelor of Science in Accountancy',
-                'abbreviation' => 'BSA',
+                'name' => 'Senior High School Work Immersion',
                 'status' => 'active',
             ],
             [
-                'name' => 'Bachelor of Science in Business Administration',
-                'abbreviation' => 'BSBA',
-                'status' => 'active',
-            ],
-            [
-                'name' => 'Bachelor of Science in Hospitality Management',
-                'abbreviation' => 'BSHM',
+                'name' => 'Upskill Training',
                 'status' => 'active',
             ],
         ];
 
         foreach ($programs as $program) {
-            DB::table('app_settings_academic_program')->updateOrInsert(
+            DB::table('app_settings_academic_program_type')->updateOrInsert(
                 ['name' => $program['name']], // Unique identifier to prevent duplicates if run twice
                 [
-                    'abbreviation' => $program['abbreviation'],
                     'status' => strtolower($program['status']),
                     'created_at' => now(),
                     'updated_at' => now(),
