@@ -49,6 +49,14 @@ abstract class BaseController extends Controller implements HasMiddleware
     /** Optional relation => display-label overrides for inUse()/inUseBlockers(), e.g. ['assignedBatches' => 'Batches (as trainer)']. Falls back to ucfirst($relation). */
     protected array $inUseLabels = [];
     /**
+     * Filter keys that live on a JSON array column (e.g. `audience_user_ids`),
+     * declared as filter key => column. A multi-select value matches if the
+     * column's JSON array contains ANY of the given values — whereIn() can't
+     * express that against a JSON column, so these get whereJsonContains()
+     * OR'd across the selected values instead.
+     */
+    protected array $jsonContainsFilters = [];
+    /**
      * Filter keys that live on a related model rather than this model's own
      * table. Map: filter key => dot-path 'relation.column' (may traverse
      * nested relations, e.g. 'batch.academic_industry_id').
@@ -139,6 +147,18 @@ abstract class BaseController extends Controller implements HasMiddleware
             // where — the column doesn't exist on this model's own table.
             if (array_key_exists($col, $this->relationFilters)) {
                 $this->applyRelationFilter($query, $this->relationFilters[$col], $cleanedValue);
+                continue;
+            }
+            if (array_key_exists($col, $this->jsonContainsFilters)) {
+                $jsonColumn = $this->jsonContainsFilters[$col];
+                $values = is_array($cleanedValue) ? $cleanedValue : [$cleanedValue];
+                $query->where(function (Builder $q) use ($jsonColumn, $values) {
+                    foreach ($values as $value) {
+                        // Stored JSON array elements are typically ints (IDs);
+                        // coerce so a string id from the request still matches.
+                        $q->orWhereJsonContains($jsonColumn, is_numeric($value) ? (int) $value : $value);
+                    }
+                });
                 continue;
             }
             if (is_array($cleanedValue)) {

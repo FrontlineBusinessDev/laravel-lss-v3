@@ -31,6 +31,15 @@ export interface ColumnDef<T = object> {
      * (e.g. changing Industry clears the dependent Program filter).
      */
     filterResets?: string[];
+    /**
+     * Controls whether this filter is shown in the filter panel, based on the
+     * current values of every column filter. Omit to always show it.
+     * Lets one column's filter conditionally reveal another's (e.g. an
+     * "audience_batch_id" filter that only appears once "audience_type" is
+     * set to "batch") without hard-coding that relationship into the table
+     * components — any module can reuse this the same way.
+     */
+    showWhen?: (filters: Record<string, string | string[]>) => boolean;
 }
 
 /** A single segment of the status filter segmented control. */
@@ -83,8 +92,7 @@ export interface DataTableProps<T> {
     renderCard?: (row: T, actions: CardActions) => ReactNode;
     renderModal?: (props: RenderModalProps<T>) => ReactNode;
     createUrl?:
-        | string
-        | ((payload: Partial<Record<string, unknown>>) => string);
+        string | ((payload: Partial<Record<string, unknown>>) => string);
     updateUrl?: (row: T) => string;
     updateMethod?: 'POST' | 'PUT' | 'PATCH';
     enableCreate?: boolean;
