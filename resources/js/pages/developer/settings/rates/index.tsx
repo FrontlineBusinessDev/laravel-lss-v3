@@ -43,10 +43,16 @@ export default function DefaultRatesPage({ rates }: Props) {
                         className="max-w-md rounded-2xl border border-[#ecedf1] bg-white p-5 shadow-sm"
                         data-cy="rates-index-div-form"
                     >
-                        <h2 className="mb-1 text-sm font-semibold text-ink">
+                        <h2
+                            className="mb-1 text-sm font-semibold text-ink"
+                            data-cy="rates-title"
+                        >
                             Default hourly rates
                         </h2>
-                        <p className="mb-4 text-xs text-neutral-500">
+                        <p
+                            className="mb-4 text-xs text-neutral-500"
+                            data-cy="rates-description"
+                        >
                             Base rate per training hour, inherited by trainees
                             from their batch's setup (Face-to-Face or Online).
                         </p>
