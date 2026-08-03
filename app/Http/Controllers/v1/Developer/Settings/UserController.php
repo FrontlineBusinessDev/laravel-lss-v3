@@ -39,6 +39,11 @@ class UserController extends BaseController
 
     protected ?string $resource = UserResource::class;
 
+    /** Blocks deleting a trainer still assigned to a batch (see BaseController::destroy()). */
+    protected array $inUseRelations = ['assignedBatches'];
+
+    protected array $inUseLabels = ['assignedBatches' => 'Batches (as trainer)'];
+
     /** Role captured during validation so afterCreate/afterUpdate can sync it. */
     private ?string $pendingRole = null;
 
@@ -56,6 +61,12 @@ class UserController extends BaseController
     protected function newQuery(): Builder
     {
         $query = User::query()->with('roles');
+
+        /** @disregard P1013 */
+        if (! auth()->user()?->hasRole('developer')) {
+            $query->whereDoesntHave('roles', fn(Builder $q) => $q->where('name', 'developer'));
+        }
+
         $role = request()->input('filters.roles');
 
         if (is_string($role) && $role !== '') {

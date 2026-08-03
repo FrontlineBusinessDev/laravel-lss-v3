@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 abstract class BaseController extends Controller implements HasMiddleware
 {
@@ -45,6 +46,8 @@ abstract class BaseController extends Controller implements HasMiddleware
     protected string $sortBy = 'name';
     /** Check if associated to other modules. */
     protected array $inUseRelations = [];
+    /** Optional relation => display-label overrides for inUse()/inUseBlockers(), e.g. ['assignedBatches' => 'Batches (as trainer)']. Falls back to ucfirst($relation). */
+    protected array $inUseLabels = [];
     /**
      * Filter keys that live on a related model rather than this model's own
      * table. Map: filter key => dot-path 'relation.column' (may traverse
@@ -342,9 +345,11 @@ abstract class BaseController extends Controller implements HasMiddleware
 
         $usages = [];
         foreach ($this->inUseRelations as $relation) {
-            $countKey = $relation . '_count';
+            // withCount()/loadCount() always snake_case the count attribute,
+            // regardless of the (often camelCase) relation method name.
+            $countKey = Str::snake($relation) . '_count';
             $usages[] = [
-                'label' => ucfirst($relation),
+                'label' => $this->inUseLabels[$relation] ?? ucfirst($relation),
                 'count' => $model->{$countKey} ?? 0,
             ];
         }
@@ -396,10 +401,10 @@ abstract class BaseController extends Controller implements HasMiddleware
         }
         $model->loadCount($this->inUseRelations);
         return collect($this->inUseRelations)
-            ->filter(fn($relation) => $model->{"{$relation}_count"} > 0)
+            ->filter(fn($relation) => $model->{Str::snake($relation) . '_count'} > 0)
             ->map(fn($relation) => [
-                'label' => ucfirst($relation),
-                'count' => $model->{"{$relation}_count"},
+                'label' => $this->inUseLabels[$relation] ?? ucfirst($relation),
+                'count' => $model->{Str::snake($relation) . '_count'},
             ])
             ->values()
             ->all();
