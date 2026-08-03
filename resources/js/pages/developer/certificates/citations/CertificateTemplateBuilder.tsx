@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Modal } from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/FormField';
+import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
+import { useUndoRedo } from '@/hooks/use-undo-redo';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
 import { exportTemplateAsPdf, exportTemplateAsPng } from '../certificateExport';
 import type { CertificateTemplate, CertificateType, TemplateElement, TemplateElementType } from '../types';
 import { TemplateAddRail } from './TemplateAddRail';
 import { TemplateCanvas } from './TemplateCanvas';
+import { TemplateCanvasToolbar } from './TemplateCanvasToolbar';
 import { TemplateElementPanel } from './TemplateElementPanel';
 import { TemplateImageCropModal } from './TemplateImageCropModal';
 import { TemplateLayersPanel } from './TemplateLayersPanel';
@@ -31,12 +33,14 @@ const SAMPLE_OUTCOMES = [
   'Create and manage models, controllers, and routes',
 ];
 
-const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5];
 const DEFAULT_BACKGROUND = '#ffffff';
 const DEFAULT_BORDER = '#0b3d66';
 
 function resolveSampleText(el: TemplateElement): string {
-  if (el.token) return SAMPLE_TEXT[el.token] ?? el.token;
+  if (el.token) {
+return SAMPLE_TEXT[el.token] ?? el.token;
+}
+
   return el.text || 'Text';
 }
 
@@ -73,7 +77,15 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   const { showToast } = useToast();
   const [name, setName] = useState('');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(defaultOrientation(certificateType));
-  const [elements, setElements] = useState<TemplateElement[]>([]);
+  const {
+    state: elements,
+    set: setElements,
+    reset: resetElements,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo<TemplateElement[]>([], { shortcuts: true, enabled: open });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
@@ -83,23 +95,30 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   const [croppingId, setCroppingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+return;
+}
+
     setName(initial?.name ?? '');
     setOrientation(initial?.orientation ?? defaultOrientation(certificateType));
-    setElements(initial?.layout ?? []);
+    resetElements(initial?.layout ?? []);
     setSelectedId(null);
     setZoom(1);
     setBackgroundColor(initial?.background_color || DEFAULT_BACKGROUND);
     setBorderColor(initial?.border_color || DEFAULT_BORDER);
-  }, [open, initial, certificateType]);
+  }, [open, initial, certificateType, resetElements]);
 
   const selected = elements.find((e) => e.id === selectedId) ?? null;
   const cropping = elements.find((e) => e.id === croppingId) ?? null;
   const cropAspect = (() => {
-    if (!cropping) return 1;
+    if (!cropping) {
+return 1;
+}
+
     const { width: sw, height: sh } = stageSize(orientation);
     const pxW = (cropping.width / 100) * sw;
     const pxH = ((cropping.height ?? 8) / 100) * sh;
+
     return pxH > 0 ? pxW / pxH : 1;
   })();
 
@@ -119,15 +138,23 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
 
   function removeElement(id: string) {
     setElements((prev) => prev.filter((e) => e.id !== id));
-    if (selectedId === id) setSelectedId(null);
+
+    if (selectedId === id) {
+setSelectedId(null);
+}
   }
 
   async function handleExport(format: 'png' | 'pdf') {
-    if (elements.length === 0) return;
+    if (elements.length === 0) {
+return;
+}
+
     setExporting(format);
+
     try {
       const filename = `${(name.trim() || 'certificate-template').replace(/\s+/g, '-').toLowerCase()}.${format}`;
       const options = { achievedOutcomes: SAMPLE_OUTCOMES, backgroundColor, borderColor };
+
       if (format === 'png') {
         await exportTemplateAsPng(elements, orientation, resolveSampleText, filename, options);
       } else {
@@ -141,8 +168,12 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
   }
 
   async function handleSave() {
-    if (!name.trim() || elements.length === 0) return;
+    if (!name.trim() || elements.length === 0) {
+return;
+}
+
     setSaving(true);
+
     try {
       const payload = {
         certificate_type: certificateType,
@@ -154,11 +185,13 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
         border_color: borderColor,
         status: initial?.status ?? 'active',
       };
+
       if (initial) {
         await apiFetchJson(`/certificates/templates/${initial.id}`, { method: 'POST', body: JSON.stringify(payload) });
       } else {
         await apiFetchJson('/certificates/templates', { method: 'POST', body: JSON.stringify(payload) });
       }
+
       showToast(`Template "${payload.name}" saved.`, 'success');
       onSaved();
       onClose();
@@ -202,19 +235,7 @@ export function CertificateTemplateBuilder({ open, certificateType, initial, onC
         <TemplateAddRail onAdd={addElement} />
 
         <div className="flex-1 overflow-x-auto">
-          <div className="mb-2 flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-neutral-500">Zoom</span>
-            {ZOOM_LEVELS.map((z) => (
-              <button
-                key={z}
-                type="button"
-                onClick={() => setZoom(z)}
-                className={cn('rounded-md border px-2 py-1 text-[11px] font-medium', zoom === z ? 'border-brand-500 bg-brand-50 text-brand-600' : 'border-neutral-200 text-neutral-500')}
-              >
-                {Math.round(z * 100)}%
-              </button>
-            ))}
-          </div> 
+          <TemplateCanvasToolbar zoom={zoom} onZoomChange={setZoom} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
           <TemplateCanvas
             elements={elements}
             selectedId={selectedId}

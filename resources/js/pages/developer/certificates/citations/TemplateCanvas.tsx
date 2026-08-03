@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import type Konva from 'konva';
+import type { KonvaEventObject } from 'konva/lib/Node';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
     Ellipse,
     Group,
@@ -10,8 +12,6 @@ import {
     Text,
     Transformer,
 } from 'react-konva';
-import type Konva from 'konva';
-import type { KonvaEventObject } from 'konva/lib/Node';
 import type { TemplateElement } from '../types';
 import {
     computeSnap,
@@ -19,9 +19,10 @@ import {
     pctToPx,
     pxToPct,
     splitIntoColumns,
-    stageSize,
-    type Guide,
+    stageSize
+    
 } from './templateStage';
+import type {Guide} from './templateStage';
 import { useHtmlImage } from './useHtmlImage';
 
 interface TemplateCanvasProps {
@@ -35,6 +36,9 @@ interface TemplateCanvasProps {
     onMove: (id: string, x: number, y: number) => void;
     onTransform: (id: string, patch: Partial<TemplateElement>) => void;
 }
+
+/** Must match the border width applied to the stage wrapper below. */
+const BORDER_WIDTH = 3;
 
 const SAMPLE_TEXT: Record<string, string> = {
     recipientName: 'Juan Dela Cruz',
@@ -55,7 +59,10 @@ const SAMPLE_OUTCOMES = [
 ];
 
 function elementText(el: TemplateElement): string {
-    if (el.type !== 'text') return '';
+    if (el.type !== 'text') {
+return '';
+}
+
     return el.token ? (SAMPLE_TEXT[el.token] ?? el.token) : el.text || 'Text';
 }
 
@@ -112,6 +119,7 @@ function ElementNode({
         const strokeWidth = el.strokeWidth ?? 2;
         const fill = el.fill || 'transparent';
         const stroke = el.color || '#0b3d66';
+
         if (el.shape === 'circle') {
             return (
                 <Group {...common} width={rect.width} height={rect.height}>
@@ -127,6 +135,7 @@ function ElementNode({
                 </Group>
             );
         }
+
         return (
             <Rect
                 {...common}
@@ -150,6 +159,7 @@ function ElementNode({
                 />
             );
         }
+
         return (
             <Rect
                 {...common}
@@ -179,6 +189,7 @@ function ElementNode({
         const columns = el.columns ?? 2;
         const colWidth = rect.width / columns;
         const colGroups = splitIntoColumns(SAMPLE_OUTCOMES, columns);
+
         return (
             <Group {...common} width={rect.width} height={rect.height}>
                 <Rect
@@ -236,26 +247,48 @@ export function TemplateCanvas({
     const stageRef = useRef<Konva.Stage>(null);
     const transformerRef = useRef<Konva.Transformer>(null);
     const shapeRefs = useRef<Map<string, Konva.Node>>(new Map());
-    const [containerWidth, setContainerWidth] = useState(672);
+    const [containerWidth, setContainerWidth] = useState(0);
     const [guides, setGuides] = useState<Guide[]>([]);
 
     const { width: stageWidth, height: stageHeight } = stageSize(orientation);
-    const scale = (containerWidth / stageWidth) * zoom;
+    // The stage wrapper below adds a BORDER_WIDTH-px border outside its
+    // content box, so fitting the *content* to containerWidth as-is would
+    // push the bordered box BORDER_WIDTH*2 past the container and force a
+    // horizontal scrollbar at 100% zoom. Fit to the width remaining after
+    // the border instead.
+    const scale = (Math.max(0, containerWidth - BORDER_WIDTH * 2) / stageWidth) * zoom;
 
-    useEffect(() => {
+    // Measure synchronously before paint so the canvas is sized to the
+    // modal's actual width from the first frame — a hardcoded fallback here
+    // would flash (or stay stuck at) the wrong scale until ResizeObserver's
+    // first, sometimes-delayed callback fires.
+    useLayoutEffect(() => {
         const el = containerRef.current;
-        if (!el) return;
+
+        if (!el) {
+return;
+}
+
+        setContainerWidth(el.getBoundingClientRect().width);
         const observer = new ResizeObserver((entries) => {
             const width = entries[0]?.contentRect.width;
-            if (width) setContainerWidth(width);
+
+            if (width) {
+setContainerWidth(width);
+}
         });
         observer.observe(el);
+
         return () => observer.disconnect();
     }, []);
 
     useEffect(() => {
         const transformer = transformerRef.current;
-        if (!transformer) return;
+
+        if (!transformer) {
+return;
+}
+
         const node = selectedId ? shapeRefs.current.get(selectedId) : null;
         transformer.nodes(node ? [node] : []);
         transformer.getLayer()?.batchDraw();
@@ -269,7 +302,11 @@ export function TemplateCanvas({
                 .filter((el) => el.type === 'text' && el.fontFamily)
                 .map((el) => (el.fontFamily as string).split(',')[0].replace(/['"]/g, '').trim()),
         );
-        if (families.size === 0) return;
+
+        if (families.size === 0) {
+return;
+}
+
         Promise.all([...families].map((family) => document.fonts.load(`16px "${family}"`).catch(() => undefined))).then(() => {
             stageRef.current?.getLayers()[0]?.batchDraw();
         });
@@ -284,7 +321,11 @@ export function TemplateCanvas({
     function handleDragMove(id: string, e: KonvaEventObject<DragEvent>) {
         const node = e.target;
         const el = elements.find((x) => x.id === id);
-        if (!el) return;
+
+        if (!el) {
+return;
+}
+
         const rect = {
             id,
             x: node.x(),
@@ -329,7 +370,7 @@ export function TemplateCanvas({
             <div className="overflow-auto">
                 <div
                     className="shadow-card"
-                    style={{ display: 'inline-block', lineHeight: 0, border: `3px solid ${borderColor}` }}
+                    style={{ display: 'inline-block', lineHeight: 0, border: `${BORDER_WIDTH}px solid ${borderColor}` }}
                 >
                 <Stage
                     ref={stageRef}
@@ -338,7 +379,9 @@ export function TemplateCanvas({
                     scaleX={scale}
                     scaleY={scale}
                     onMouseDown={(e) => {
-                        if (e.target === e.target.getStage()) onSelect(null);
+                        if (e.target === e.target.getStage()) {
+onSelect(null);
+}
                     }}
                 >
                     <Layer>
@@ -358,8 +401,11 @@ export function TemplateCanvas({
                                 stageHeight={stageHeight}
                                 isSelected={selectedId === el.id}
                                 shapeRef={(node) => {
-                                    if (node) shapeRefs.current.set(el.id, node);
-                                    else shapeRefs.current.delete(el.id);
+                                    if (node) {
+shapeRefs.current.set(el.id, node);
+} else {
+shapeRefs.current.delete(el.id);
+}
                                 }}
                                 onSelect={() => onSelect(el.id)}
                                 onDragMove={(e) => handleDragMove(el.id, e)}
