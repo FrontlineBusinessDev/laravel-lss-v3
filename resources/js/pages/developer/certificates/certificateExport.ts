@@ -1,5 +1,4 @@
 import Konva from 'konva';
-import { jsPDF } from 'jspdf';
 import { splitIntoColumns, stageSize } from './citations/templateStage';
 import type { TemplateElement } from './types';
 
@@ -26,9 +25,18 @@ async function ensureFontsLoaded(elements: TemplateElement[]): Promise<void> {
     const families = new Set(
         elements
             .filter((el) => el.type === 'text' && el.fontFamily)
-            .map((el) => (el.fontFamily as string).split(',')[0].replace(/['"]/g, '').trim()),
+            .map((el) =>
+                (el.fontFamily as string)
+                    .split(',')[0]
+                    .replace(/['"]/g, '')
+                    .trim(),
+            ),
     );
-    await Promise.all([...families].map((family) => document.fonts.load(`16px "${family}"`).catch(() => undefined)));
+    await Promise.all(
+        [...families].map((family) =>
+            document.fonts.load(`16px "${family}"`).catch(() => undefined),
+        ),
+    );
 }
 
 /**
@@ -45,7 +53,11 @@ async function buildOffscreenStage(
     options: ExportOptions = {},
 ): Promise<{ stage: Konva.Stage; container: HTMLDivElement }> {
     const { width, height } = stageSize(orientation);
-    const { achievedOutcomes = [], backgroundColor = '#ffffff', borderColor = '#0b3d66' } = options;
+    const {
+        achievedOutcomes = [],
+        backgroundColor = '#ffffff',
+        borderColor = '#0b3d66',
+    } = options;
 
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -58,8 +70,19 @@ async function buildOffscreenStage(
     stage.add(layer);
 
     const borderWidth = 6;
-    layer.add(new Konva.Rect({ x: 0, y: 0, width, height, fill: backgroundColor }));
-    layer.add(new Konva.Rect({ x: borderWidth / 2, y: borderWidth / 2, width: width - borderWidth, height: height - borderWidth, stroke: borderColor, strokeWidth: borderWidth }));
+    layer.add(
+        new Konva.Rect({ x: 0, y: 0, width, height, fill: backgroundColor }),
+    );
+    layer.add(
+        new Konva.Rect({
+            x: borderWidth / 2,
+            y: borderWidth / 2,
+            width: width - borderWidth,
+            height: height - borderWidth,
+            stroke: borderColor,
+            strokeWidth: borderWidth,
+        }),
+    );
 
     const images = new Map<string, HTMLImageElement>();
     await Promise.all([
@@ -83,28 +106,60 @@ async function buildOffscreenStage(
         const rotation = el.rotation ?? 0;
 
         if (el.type === 'line') {
-            layer.add(new Konva.Line({ x, y, rotation, points: [0, 0, w, 0], stroke: el.color || '#1f2937', strokeWidth: el.strokeWidth ?? 2 }));
+            layer.add(
+                new Konva.Line({
+                    x,
+                    y,
+                    rotation,
+                    points: [0, 0, w, 0],
+                    stroke: el.color || '#1f2937',
+                    strokeWidth: el.strokeWidth ?? 2,
+                }),
+            );
         } else if (el.type === 'shape') {
             const strokeWidth = el.strokeWidth ?? 2;
             const fill = el.fill || 'transparent';
             const stroke = el.color || '#0b3d66';
             if (el.shape === 'circle') {
-                layer.add(new Konva.Ellipse({
-                    x: x + w / 2,
-                    y: y + h / 2,
-                    rotation,
-                    radiusX: Math.max(0, w / 2 - strokeWidth / 2),
-                    radiusY: Math.max(0, h / 2 - strokeWidth / 2),
-                    fill,
-                    stroke,
-                    strokeWidth,
-                }));
+                layer.add(
+                    new Konva.Ellipse({
+                        x: x + w / 2,
+                        y: y + h / 2,
+                        rotation,
+                        radiusX: Math.max(0, w / 2 - strokeWidth / 2),
+                        radiusY: Math.max(0, h / 2 - strokeWidth / 2),
+                        fill,
+                        stroke,
+                        strokeWidth,
+                    }),
+                );
             } else {
-                layer.add(new Konva.Rect({ x, y, rotation, width: w, height: h, fill, stroke, strokeWidth }));
+                layer.add(
+                    new Konva.Rect({
+                        x,
+                        y,
+                        rotation,
+                        width: w,
+                        height: h,
+                        fill,
+                        stroke,
+                        strokeWidth,
+                    }),
+                );
             }
         } else if (el.type === 'image') {
             const image = images.get(el.id);
-            if (image) layer.add(new Konva.Image({ x, y, rotation, width: w, height: h, image }));
+            if (image)
+                layer.add(
+                    new Konva.Image({
+                        x,
+                        y,
+                        rotation,
+                        width: w,
+                        height: h,
+                        image,
+                    }),
+                );
         } else if (el.type === 'text') {
             layer.add(
                 new Konva.Text({
@@ -164,7 +219,12 @@ export async function exportTemplateAsPng(
     filename: string,
     options: ExportOptions = {},
 ): Promise<void> {
-    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText, options);
+    const { stage, container } = await buildOffscreenStage(
+        elements,
+        orientation,
+        resolveText,
+        options,
+    );
     try {
         downloadDataUrl(stage.toDataURL({ pixelRatio: PIXEL_RATIO }), filename);
     } finally {
@@ -180,7 +240,12 @@ export async function exportTemplateAsPdf(
     filename: string,
     options: ExportOptions = {},
 ): Promise<void> {
-    const { stage, container } = await buildOffscreenStage(elements, orientation, resolveText, options);
+    const { stage, container } = await buildOffscreenStage(
+        elements,
+        orientation,
+        resolveText,
+        options,
+    );
     try {
         const dataUrl = stage.toDataURL({ pixelRatio: PIXEL_RATIO });
         const { width, height } = stageSize(orientation);
@@ -189,7 +254,14 @@ export async function exportTemplateAsPdf(
             unit: 'px',
             format: [width * PIXEL_RATIO, height * PIXEL_RATIO],
         });
-        pdf.addImage(dataUrl, 'PNG', 0, 0, width * PIXEL_RATIO, height * PIXEL_RATIO);
+        pdf.addImage(
+            dataUrl,
+            'PNG',
+            0,
+            0,
+            width * PIXEL_RATIO,
+            height * PIXEL_RATIO,
+        );
         pdf.save(filename);
     } finally {
         stage.destroy();
