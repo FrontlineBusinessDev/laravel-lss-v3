@@ -1,6 +1,6 @@
 import { UserPlus } from 'lucide-react';
 import { Link } from '@inertiajs/react';
-import { useNotifications } from '@/context/NotificationsContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 
 /**
  * FYI-only admin widget for new public trainee registrations. "Pending" =
@@ -45,9 +45,7 @@ export function PendingRegistrationsWidget() {
                                 <div className="font-medium text-ink">
                                     {n.title}
                                 </div>
-                                <div className="text-neutral-500">
-                                    {n.body}
-                                </div>
+                                <div className="text-neutral-500">{n.body}</div>
                             </Link>
                         </li>
                     ))}

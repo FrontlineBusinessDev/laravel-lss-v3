@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { GlobalModalProvider } from './components/global-modal';
 import { SystemToastProvider } from './components/Toast';
-import { NotificationsProvider } from './context/NotificationsContext';
+import { NotificationsProvider } from './contexts/NotificationsContext';
 
 /**
  * Builds a QueryClient with the same options on the server and the client.

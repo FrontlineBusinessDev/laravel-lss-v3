@@ -1,5 +1,5 @@
 import { useToast } from '@/components/Toast';
-import { useNotifications } from '@/context/NotificationsContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 import {
     seminarAdminAlerts as initialAlerts,
     seminarParticipants as initialParticipants,
