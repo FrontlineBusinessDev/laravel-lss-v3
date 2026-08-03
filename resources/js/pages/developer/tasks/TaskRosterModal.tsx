@@ -1,14 +1,16 @@
-import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2, Lock, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { CheckCircle2, Lock, LockOpen, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Modal } from '@/components/Modal';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { useToast } from '@/components/Toast';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
-import { TASK_STATUS_LABEL, TASK_STATUS_STYLE, type ApiTask } from '@/types/task';
-import { AddTaskModal, type TaskSavePayload } from '@/pages/developer/tasks/AddTaskModal';
+import { AddTaskModal  } from '@/pages/developer/tasks/AddTaskModal';
+import type {TaskSavePayload} from '@/pages/developer/tasks/AddTaskModal';
+import { TASK_STATUS_LABEL, TASK_STATUS_STYLE  } from '@/types/task';
+import type {ApiTask} from '@/types/task';
 
 function personName(
     p: { first_name: string; last_name: string } | null,
@@ -74,7 +76,10 @@ export function TaskRosterModal({
     }
 
     async function handleEditSave(payload: TaskSavePayload) {
-        if (payload.mode !== 'edit') return;
+        if (payload.mode !== 'edit') {
+return;
+}
+
         try {
             const { id, mode: _mode, ...body } = payload;
             await apiFetchJson(`/tasks/${id}`, {
@@ -130,10 +135,16 @@ export function TaskRosterModal({
                                 disabled: row.status === 'locked',
                             },
                             {
-                                label: 'Reopen',
+                                label: 'Uncomplete',
                                 icon: RotateCcw,
                                 onClick: () => runAction(row, 'reopen'),
-                                disabled: row.status === 'open',
+                                disabled: row.status !== 'completed',
+                            },
+                            {
+                                label: 'Unlock',
+                                icon: LockOpen,
+                                onClick: () => runAction(row, 'reopen'),
+                                disabled: row.status !== 'locked',
                             },
                             {
                                 label: 'Delete',

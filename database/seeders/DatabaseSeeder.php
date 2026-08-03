@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             AcademicIndustrySeeder::class,
             AcademicLevelSeeder::class,
             AcademicProgramSeeder::class,
+            AcademicProgramTypeSeeder::class,
             AcademicLearningOutcomesSeeder::class,
             RateSeeder::class,
             HoursDiscountSeeder::class,
