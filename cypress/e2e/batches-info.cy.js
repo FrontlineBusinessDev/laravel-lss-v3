@@ -33,11 +33,11 @@ describe('Batches Module', () => {
 
     //     cy.get('[data-cy="toolbar-input-text"]').click();
 
-    //     cy.get('[data-cy="toolbar-input-text"]').type('FBS-6541');
+    //     cy.get('[data-cy="toolbar-input-text"]').type('FBS-8323');
 
     //     cy.wait('@searchBatch');
 
-    //     cy.contains('FBS-6541', { timeout: 5000 }).should('be.visible');
+    //     cy.contains('FBS-8323', { timeout: 5000 }).should('be.visible');
 
     //     cy.get('[data-cy="settings-row-div-4"]').click();
 
@@ -46,7 +46,7 @@ describe('Batches Module', () => {
 
     //     cy.get('[data-cy="batch-detail-layout-span-7"]')
     //         .should('be.visible')
-    //         .and('have.text', 'FBS-6541');
+    //         .and('have.text', 'FBS-8323');
 
     //     cy.get('[data-cy="status-badge-span-1"]')
     //         .should('be.visible')
@@ -56,7 +56,7 @@ describe('Batches Module', () => {
     //         .should('be.visible')
     //         .and(
     //             'have.text',
-    //             'Continuing Studies · Information Technology · Face-to-face · Created Aug 4, 2026',
+    //             'Continuing Studies · Information Technology · Online · Created Aug 4, 2026',
     //         );
 
     //     cy.get('[data-cy="button-button-1"]')
@@ -77,7 +77,7 @@ describe('Batches Module', () => {
     //     cy.get('[data-cy="batch-detail-layout-div-39"]')
     //         .eq(0)
     //         .should('contain.text', 'Batch number')
-    //         .and('contain.text', 'FBS-6541');
+    //         .and('contain.text', 'FBS-8323');
 
     //     cy.get('[data-cy="batch-detail-layout-div-39"]')
     //         .eq(1)
@@ -122,9 +122,9 @@ describe('Batches Module', () => {
     //         .should('contain.text', 'Trainers');
     // });
 
-    //edit button
+    // //edit button
     // it('should check if edit button is working', () => {
-    //     cy.visit('/batches/6');
+    //     cy.visit('/batches/8');
 
     //     //edit button
     //     cy.get('[data-cy="button-button-1"]').eq(0).click();
@@ -162,7 +162,7 @@ describe('Batches Module', () => {
 
     // //archive
     // it('should check if archive button is working', () => {
-    //     cy.visit('/batches/6');
+    //     cy.visit('/batches/8');
 
     //     cy.get('[data-cy="button-button-1"]').eq(1).click();
 
@@ -174,7 +174,7 @@ describe('Batches Module', () => {
 
     // //restore
     // it('should check if the restore button is working', () => {
-    //     cy.visit('/batches/6');
+    //     cy.visit('/batches/8');
 
     //     cy.get('[data-cy="button-button-1"]').eq(1).click();
 
@@ -186,7 +186,7 @@ describe('Batches Module', () => {
 
     // //terminate
     // it('should check if the terminate button is working', () => {
-    //     cy.visit('/batches/6');
+    //     cy.visit('/batches/8');
 
     //     cy.get('[data-cy="button-button-1"]').eq(2).click();
 
@@ -215,7 +215,7 @@ describe('Batches Module', () => {
 
     // // copy link
     // it('should check if the copy link button is working', () => {
-    //     cy.visit('/batches/6');
+    //     cy.visit('/batches/8');
 
     //     cy.get('[data-cy="button-button-1"]').eq(3).click();
 
@@ -227,7 +227,7 @@ describe('Batches Module', () => {
 
     //trainees tab
     it('should check the display and function of trainees tab', () => {
-        cy.visit('/batches/6');
+        cy.visit('/batches/8');
 
         cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
         cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
@@ -237,6 +237,16 @@ describe('Batches Module', () => {
         cy.get('[data-cy="toolbar-select-rows-per-page"]').should('be.visible');
 
         //search
-        cy.get('[data-cy="toolbar-input-text"]').click().type('Casandra');
+        cy.get('[data-cy="toolbar-input-text"]').click().type('Ludwig');
+
+        //verify search
+        cy.get('[data-cy="trainees-div-2"]')
+            .should('contain.text', 'Ludwig')
+            .and('be.visible');
+
+        //clear search
+        cy.get('[data-cy="toolbar-input-text"]').clear();
+
+        //
     });
 });
