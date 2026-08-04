@@ -8,6 +8,10 @@ import { TextField, TextAreaField } from '@/components/FormField';
 import { RequiredHoursCompletedPill } from '@/components/RatingsBadges';
 import { useToast } from '@/components/Toast';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { Field as FormField } from '@/components/form/Field';
+import { AsyncSelectField } from '@/hooks/use-async-select-field';
+import { loadLookupOptions } from '@/types/reusable/fields';
+import { formatDate } from '@/lib/date';
 import { getHoursProgress } from '@/lib/ratings';
 import { router } from '@inertiajs/react';
 
@@ -48,8 +52,49 @@ function Field({
 
 type FormState = Pick<
     TraineeDetail,
-    'required_hours' | 'date_completed' | 'termination_remarks'
+    | 'required_hours'
+    | 'date_completed'
+    | 'termination_remarks'
+    | 'school_id'
+    | 'academic_program_id'
+    | 'academic_level_id'
 >;
+
+// The async-select lookups are structurally identical — drive them from one
+// config instead of near-duplicate JSX blocks (mirrors CreateBatchModal's
+// LOOKUPS pattern). `rel` is the eager-loaded relation the trigger label is
+// seeded from in edit mode.
+const LOOKUPS: ReadonlyArray<{
+    key: keyof FormState;
+    rel: 'school' | 'academic_program' | 'academic_level';
+    label: string;
+    endpoint: string;
+    columnNameShow?: string;
+    placeholder: string;
+}> = [
+    {
+        key: 'school_id',
+        rel: 'school',
+        label: 'School',
+        endpoint: '/settings/partner-schools',
+        columnNameShow: 'school_name',
+        placeholder: 'Select school',
+    },
+    {
+        key: 'academic_program_id',
+        rel: 'academic_program',
+        label: 'Academic program',
+        endpoint: '/settings/academic/program',
+        placeholder: 'Select academic program',
+    },
+    {
+        key: 'academic_level_id',
+        rel: 'academic_level',
+        label: 'Academic level',
+        endpoint: '/settings/academic/level',
+        placeholder: 'Select academic level',
+    },
+];
 
 export default function AcademicInfoTab({
     trainee,
@@ -59,23 +104,31 @@ export default function AcademicInfoTab({
     const { showToast } = useToast();
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [saved, setSaved] = useState<FormState>({
         required_hours: trainee.required_hours,
         date_completed: trainee.date_completed,
         termination_remarks: trainee.termination_remarks ?? '',
+        school_id: trainee.school_id,
+        academic_program_id: trainee.academic_program_id,
+        academic_level_id: trainee.academic_level_id,
     });
     const [draft, setDraft] = useState<FormState>(saved);
-    const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
         setDraft((d) => ({
             ...d,
             [key]: value,
         }));
+        setErrors((e) => ({ ...e, [key]: '' }));
+    };
     const startEdit = () => {
         setDraft(saved);
+        setErrors({});
         setEditing(true);
     };
     const cancel = () => {
         setDraft(saved);
+        setErrors({});
         setEditing(false);
     };
     const save = async () => {
@@ -86,12 +139,24 @@ export default function AcademicInfoTab({
                 required_hours: draft.required_hours,
                 date_completed: draft.date_completed,
                 termination_remarks: draft.termination_remarks,
+                school_id: draft.school_id,
+                academic_program_id: draft.academic_program_id,
+                academic_level_id: draft.academic_level_id,
             });
             setSaved(draft);
             setEditing(false);
             showToast('Academic information updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
+            const apiErrors = (error as Error & { errors?: Record<string, string[]> })
+                .errors;
+            if (apiErrors) {
+                const mapped: Record<string, string> = {};
+                Object.entries(apiErrors).forEach(([key, msgs]) => {
+                    mapped[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+                });
+                setErrors((prev) => ({ ...prev, ...mapped }));
+            }
             showToast(
                 error instanceof ApiError
                     ? error.message
@@ -166,21 +231,66 @@ export default function AcademicInfoTab({
                         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                         data-cy="academic-info-tab-div-12"
                     >
-                        <Field
-                            label="School"
-                            value={trainee.school?.school_name ?? ''}
-                            data-cy="academic-info-tab-field-school"
-                        />
-                        <Field
-                            label="Academic program"
-                            value={trainee.academic_program?.name ?? ''}
-                            data-cy="academic-info-tab-field-academic-program"
-                        />
-                        <Field
-                            label="Academic level"
-                            value={trainee.academic_level?.name ?? ''}
-                            data-cy="academic-info-tab-field-academic-level"
-                        />
+                        {editing
+                            ? LOOKUPS.map((lookup) => (
+                                  <FormField
+                                      key={lookup.key}
+                                      label={lookup.label}
+                                      error={errors[lookup.key]}
+                                      data-cy={`academic-info-tab-field-${lookup.key}`}
+                                  >
+                                      <AsyncSelectField
+                                          value={draft[lookup.key]}
+                                          onChange={(v) =>
+                                              set(
+                                                  lookup.key,
+                                                  v as FormState[typeof lookup.key],
+                                              )
+                                          }
+                                          loadOptions={(q) =>
+                                              loadLookupOptions(
+                                                  lookup.endpoint,
+                                                  q,
+                                                  lookup.columnNameShow,
+                                              )
+                                          }
+                                          initialLabel={
+                                              (
+                                                  trainee[lookup.rel] as {
+                                                      name?: string;
+                                                      school_name?: string;
+                                                  } | null
+                                              )?.name ??
+                                              (
+                                                  trainee[lookup.rel] as {
+                                                      school_name?: string;
+                                                  } | null
+                                              )?.school_name
+                                          }
+                                          placeholder={lookup.placeholder}
+                                          error={errors[lookup.key]}
+                                      />
+                                  </FormField>
+                              ))
+                            : (
+                                  <>
+                                      <Field
+                                          label="School"
+                                          value={trainee.school?.school_name ?? ''}
+                                          data-cy="academic-info-tab-field-school"
+                                      />
+                                      <Field
+                                          label="Academic program"
+                                          value={trainee.academic_program?.name ?? ''}
+                                          data-cy="academic-info-tab-field-academic-program"
+                                      />
+                                      <Field
+                                          label="Academic level"
+                                          value={trainee.academic_level?.name ?? ''}
+                                          data-cy="academic-info-tab-field-academic-level"
+                                      />
+                                  </>
+                              )}
                         <Field
                             label="Program type"
                             value={trainee.batch?.academic_program_type?.name ?? ''}
@@ -193,7 +303,7 @@ export default function AcademicInfoTab({
                         />
                         <Field
                             label="Date started"
-                            value={trainee.batch?.date_started ?? ''}
+                            value={formatDate(trainee.batch?.date_started)}
                             hint="from batch"
                             data-cy="academic-info-tab-field-date-started"
                         />
@@ -211,7 +321,7 @@ export default function AcademicInfoTab({
                             />
                             <Field
                                 label="Date completed"
-                                value={saved.date_completed ?? ''}
+                                value={formatDate(saved.date_completed)}
                                 hint="auto-computed, editable"
                                 data-cy="academic-info-tab-field-date-completed"
                             />

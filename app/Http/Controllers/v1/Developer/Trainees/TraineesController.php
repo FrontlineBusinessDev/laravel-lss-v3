@@ -134,6 +134,8 @@ class TraineesController extends BaseController
         return [
             'batch_id' => ['required', 'exists:app_batches,id'],
             'school_id' => ['required', 'exists:app_settings_partner_schools,id'],
+            'academic_program_id' => ['required', 'integer', 'exists:app_settings_academic_program,id'],
+            'academic_level_id' => ['required', 'integer', 'exists:app_settings_academic_level,id'],
             'public_url_id' => ['required', 'string', Rule::unique('app_trainees')->ignore($model->id)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],

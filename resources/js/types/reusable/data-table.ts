@@ -21,6 +21,13 @@ export interface ColumnDef<T = object> {
     width?: string;
     type?: string;
     typeData?: string[] | Record<string, unknown>[];
+    /**
+     * Drives automatic value formatting in `formatCell` (see
+     * components/table/utils) instead of a bespoke `render` callback:
+     * 'date' → formatDate, 'datetime' → formatDateTime, 'date-short' →
+     * formatDateShort (all from '@/lib/date'). Ignored when `render` is set.
+     */
+    formatType?: 'date' | 'datetime' | 'date-short';
     exactFilters?: boolean;
     // | { label: string; value: unknown }[];
     render?: (value: unknown, row: T) => ReactNode;

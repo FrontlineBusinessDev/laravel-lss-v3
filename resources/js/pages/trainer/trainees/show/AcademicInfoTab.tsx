@@ -1,5 +1,6 @@
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import TrainerTraineeDetailLayout from '@/layouts/trainees/TrainerTraineeDetailLayout';
+import { formatDate } from '@/lib/date';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
@@ -47,7 +48,7 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                         label="Completed hours"
                         value={trainee.completed_hours ? `${trainee.completed_hours} hrs` : null}
                     />
-                    <Field label="Date completed" value={trainee.date_completed} />
+                    <Field label="Date completed" value={formatDate(trainee.date_completed)} />
                 </div>
             </TrainerTraineeDetailLayout>
         </TrainerLayout>
