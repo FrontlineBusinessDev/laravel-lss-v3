@@ -1,7 +1,11 @@
 import { formatDateTime } from '@/lib/date';
 import { apiFetchJson } from '@/lib/apiFetch';
 import type { ColumnDef } from '@/types/reusable/data-table';
-import { FieldDef, FieldOption, loadLookupOptions } from '@/types/reusable/fields';
+import {
+    FieldDef,
+    FieldOption,
+    loadLookupOptions,
+} from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 /**
@@ -25,6 +29,7 @@ export interface Announcements extends Record<string, unknown> {
 }
 
 export const AUDIENCE_TYPE_OPTIONS = [
+    { value: '', label: 'All Audiences' },
     { value: 'all', label: 'All trainees' },
     { value: 'batch', label: 'Specific batch' },
     { value: 'role', label: 'Specific role' },
@@ -41,7 +46,9 @@ export const AUDIENCE_ROLE_OPTIONS = [
  * the create/edit modal's trainee multi-select and the list filter panel's
  * dependent "Trainees" filter, so the two stay in sync automatically.
  */
-export async function loadTraineeOptions(query: string): Promise<FieldOption[]> {
+export async function loadTraineeOptions(
+    query: string,
+): Promise<FieldOption[]> {
     const res = await apiFetchJson<{
         data: { id: number; first_name: string; last_name: string }[];
     }>(

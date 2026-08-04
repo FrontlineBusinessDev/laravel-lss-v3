@@ -14,7 +14,7 @@ class LeaveRequestFactory extends Factory
 
     public function definition(): array
     {
-        $leaveDate = fake()->dateTimeBetween('2020-01-01', 'now');
+        $leaveDate = fake()->dateTimeBetween('2020-01-01', \Database\Seeders\DatabaseSeeder::SEED_NOW);
         $returnDate = (clone $leaveDate)->modify('+' . fake()->numberBetween(1, 5) . ' days');
 
         return [

@@ -31,7 +31,7 @@ class BehavioralEvaluationSeeder extends Seeder
 
         Trainees::query()
             ->whereNotNull('batch_id')
-            ->inRandomOrder()
+            ->orderBy('id')
             ->limit(150)
             ->get(['id', 'batch_id'])
             ->each(function (Trainees $trainee) use ($questionIds, $evaluatorIds) {
@@ -40,7 +40,10 @@ class BehavioralEvaluationSeeder extends Seeder
                 $evaluation = BehavioralEvaluation::factory()->create([
                     'batch_id' => $trainee->batch_id,
                     'trainee_id' => $trainee->id,
-                    'evaluator_id' => $evaluatorIds->random(),
+                    // fake()->randomElement() (not Collection::random(), which uses
+                    // PHP's CSPRNG Randomizer and ignores DatabaseSeeder's mt_srand)
+                    // so this pick stays reproducible across seed runs.
+                    'evaluator_id' => fake()->randomElement($evaluatorIds->all()),
                     'total_score' => round($scores->avg(), 1),
                 ]);
 

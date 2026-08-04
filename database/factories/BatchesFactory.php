@@ -17,7 +17,7 @@ class BatchesFactory extends Factory
 
     public function definition(): array
     {
-        $dateStarted = fake()->dateTimeBetween('2020-01-01', 'now');
+        $dateStarted = fake()->dateTimeBetween('2020-01-01', \Database\Seeders\DatabaseSeeder::SEED_NOW);
 
         return [
             'status' => 'active',
@@ -27,8 +27,11 @@ class BatchesFactory extends Factory
             'date_started' => $dateStarted,
             'projected_end_date' => (clone $dateStarted)->modify('+' . fake()->numberBetween(4, 12) . ' weeks'),
             'setup' => fake()->randomElement(['f2f', 'online']),
-            'academic_industry_id' => AcademicIndustry::query()->inRandomOrder()->value('id'),
-            'academic_program_type_id' => AcademicProgramType::query()->inRandomOrder()->value('id'),
+            // fake()->randomElement() draws from the seeded PHP RNG (DatabaseSeeder
+            // seeds it via mt_srand) — unlike inRandomOrder(), which is a DB-level
+            // ORDER BY RANDOM() that a PHP seed can't make reproducible.
+            'academic_industry_id' => fake()->randomElement(AcademicIndustry::query()->pluck('id')->all()),
+            'academic_program_type_id' => fake()->randomElement(AcademicProgramType::query()->pluck('id')->all()),
         ];
     }
 

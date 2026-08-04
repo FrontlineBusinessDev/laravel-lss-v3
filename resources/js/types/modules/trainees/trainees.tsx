@@ -39,7 +39,15 @@ export interface AppTrainees extends Record<string, unknown> {
     created_at: string;
     updated_at: string;
 }
-export const studentsStatus = ['pending', 'active', 'inactive', 'ongoing', 'completed'];
+
+export const STATUS_FILTER_PAIRS = [
+    { value: '', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'ongoing', label: 'Ongoing' },
+    { value: 'completed', label: 'Completed' },
+];
 
 export const columns: ColumnDef<AppTrainees>[] = [
     {
@@ -47,8 +55,9 @@ export const columns: ColumnDef<AppTrainees>[] = [
         label: 'status',
         searchable: true,
         filterable: true,
+        exactFilters: true,
         type: 'select',
-        typeData: studentsStatus,
+        typeData: STATUS_FILTER_PAIRS,
     },
     {
         key: 'batch_id',

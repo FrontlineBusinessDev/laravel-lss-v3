@@ -19,7 +19,10 @@ class AnnouncementSeeder extends Seeder
             ->count(15)
             ->create()
             ->each(function (Announcement $announcement) use ($authorIds) {
-                $announcement->created_by_id = $authorIds->random();
+                // fake()->randomElement() (not Collection::random(), which uses
+                // PHP's CSPRNG Randomizer and ignores DatabaseSeeder's mt_srand)
+                // so this pick stays reproducible across seed runs.
+                $announcement->created_by_id = fake()->randomElement($authorIds->all());
                 $announcement->save();
             });
     }

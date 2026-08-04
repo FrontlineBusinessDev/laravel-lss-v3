@@ -42,6 +42,7 @@ class LeaveRequestController extends BaseController
     protected array $searchable = ['reason'];
     protected array $filterable = ['status', 'leave_category_id', 'trainee_id', 'batch_id'];
     protected array $sortable = ['leave_date', 'return_date', 'status', 'created_at'];
+    protected array $dateFilters = ['leave_date_from' => 'leave_date', 'leave_date_to' => 'leave_date'];
     protected string $sortBy = 'leave_date';
 
     public function paginationSearch(Request $request): JsonResponse

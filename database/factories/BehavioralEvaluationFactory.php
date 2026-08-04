@@ -16,7 +16,7 @@ class BehavioralEvaluationFactory extends Factory
     {
         return [
             'remarks' => fake()->boolean(30) ? fake()->sentence() : null,
-            'created_at' => fake()->dateTimeBetween('2020-01-01', 'now'),
+            'created_at' => fake()->dateTimeBetween('2020-01-01', \Database\Seeders\DatabaseSeeder::SEED_NOW),
         ];
     }
 }

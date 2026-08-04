@@ -17,7 +17,7 @@ class LeaveRequestSeeder extends Seeder
         }
 
         Trainees::query()
-            ->inRandomOrder()
+            ->orderBy('id')
             ->limit(80)
             ->get()
             ->each(function (Trainees $trainee) use ($categoryIds) {
@@ -28,7 +28,10 @@ class LeaveRequestSeeder extends Seeder
                         ->for($trainee, 'trainee')
                         ->create([
                             'batch_id' => $trainee->batch_id,
-                            'leave_category_id' => $categoryIds->random(),
+                            // fake()->randomElement() (not Collection::random(), which
+                            // uses PHP's CSPRNG Randomizer and ignores DatabaseSeeder's
+                            // mt_srand) so this pick stays reproducible across seed runs.
+                            'leave_category_id' => fake()->randomElement($categoryIds->all()),
                         ]);
                 }
             });
