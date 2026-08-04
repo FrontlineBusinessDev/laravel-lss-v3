@@ -17,10 +17,12 @@ return new class extends Migration
             $table->dropConstrainedForeignId('academic_program_type_id');
 
             $table->foreignId('academic_program_id')
+                  ->nullable()
                   ->after('school_id')
                   ->constrained('app_settings_academic_program')
                   ->restrictOnDelete();
             $table->foreignId('academic_level_id')
+                  ->nullable()
                   ->after('academic_program_id')
                   ->constrained('app_settings_academic_level')
                   ->restrictOnDelete();

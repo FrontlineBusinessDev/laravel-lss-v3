@@ -20,6 +20,7 @@ return new class extends Migration
             $table->dropColumn('academic_level_id');
 
             $table->foreignId('academic_program_type_id')
+                  ->nullable()
                   ->after('academic_industry_id')
                   ->constrained('app_settings_academic_program_type')
                   ->restrictOnDelete();
