@@ -20,9 +20,12 @@ class TraineesFactory extends Factory
     {
         return [
             'status' => 'active',
-            'school_id' => PartnerSchools::query()->inRandomOrder()->value('id'),
-            'academic_program_id' => AcademicProgram::query()->inRandomOrder()->value('id'),
-            'academic_level_id' => AcademicLevel::query()->inRandomOrder()->value('id'),
+            // fake()->randomElement() draws from the seeded PHP RNG (DatabaseSeeder
+            // seeds it via mt_srand) — unlike inRandomOrder(), which is a DB-level
+            // ORDER BY RANDOM() that a PHP seed can't make reproducible.
+            'school_id' => fake()->randomElement(PartnerSchools::query()->pluck('id')->all()),
+            'academic_program_id' => fake()->randomElement(AcademicProgram::query()->pluck('id')->all()),
+            'academic_level_id' => fake()->randomElement(AcademicLevel::query()->pluck('id')->all()),
             'public_url_id' => Str::ulid()->toBase32(),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
@@ -42,7 +45,7 @@ class TraineesFactory extends Factory
     {
         return $this->state(fn() => [
             'status' => 'completed',
-            'date_completed' => fake()->dateTimeBetween('2020-06-01', 'now'),
+            'date_completed' => fake()->dateTimeBetween('2020-06-01', \Database\Seeders\DatabaseSeeder::SEED_NOW),
         ]);
     }
 

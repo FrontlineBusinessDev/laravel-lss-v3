@@ -21,33 +21,24 @@ abstract class BaseController extends Controller implements HasMiddleware
     use AuthorizesRequests, HandlesFileUploads;
     public const STATUS_ACTIVE = Statuses::ACTIVE;
     public const STATUS_INACTIVE = Statuses::INACTIVE;
-    /** Fully qualified model class for this module. Set by child when using the CRUD helpers below. */
-    protected string $model;
-    /** Inertia page component path for the CSR shell. Set by child. */
-    protected string $view;
-    /** Columns allowed for the global "search" param */
-    protected array $searchable = [];
-    /** Columns allowed for per-column filters[col]=value */
-    protected array $filterable = [];
-    /**
+    protected string $model; /** Fully qualified model class for this module. Set by child when using the CRUD helpers below. */
+    protected string $view; /** Inertia page component path for the CSR shell. Set by child. */
+    protected array $searchable = []; /** Columns allowed for the global "search" param */
+    protected array $filterable = []; /** Columns allowed for per-column filters[col]=value */
+    protected array $dateFilters = []; /**  e.g., ['date_from' => 'date', 'date_to' => 'date'] */
+    protected array $sortable = ['id'];  /** Columns allowed for sort_by */
+    protected ?string $resource = null; /** Optional resource class to transform output, e.g. UserResource::class */
+    protected array $activeColumns = ['id', 'name']; /** Columns returned by the lightweight searchActive() lookup. */
+    protected string $sortBy = 'name'; /** Default sort column. */
+    protected array $inUseRelations = []; /** Check if associated to other modules. */
+    protected array $inUseLabels = []; /** Optional relation => display-label overrides for inUse()/inUseBlockers(), e.g. ['assignedBatches' => 'Batches (as trainer)']. Falls back to ucfirst($relation). */
+    protected int $fileUrlExpiry = 60;  /** Duration in minutes for presigned URLs. Override in child controllers. */
+     /**
      * Filterable columns matched with `=` instead of `LIKE`.
      * `status` MUST be exact: a LIKE '%active%' would also match 'inactive'.
-     *
      * @var list<string>
      */
     protected array $exactFilters = ['status'];
-    /** Columns allowed for sort_by */
-    protected array $sortable = ['id'];
-    /** Optional resource class to transform output, e.g. UserResource::class */
-    protected ?string $resource = null;
-    /** Columns returned by the lightweight searchActive() lookup. */
-    protected array $activeColumns = ['id', 'name'];
-    /** Default sort column. */
-    protected string $sortBy = 'name';
-    /** Check if associated to other modules. */
-    protected array $inUseRelations = [];
-    /** Optional relation => display-label overrides for inUse()/inUseBlockers(), e.g. ['assignedBatches' => 'Batches (as trainer)']. Falls back to ucfirst($relation). */
-    protected array $inUseLabels = [];
     /**
      * Filter keys that live on a JSON array column (e.g. `audience_user_ids`),
      * declared as filter key => column. A multi-select value matches if the
@@ -77,14 +68,13 @@ abstract class BaseController extends Controller implements HasMiddleware
      * e.g. ['image', 'attachment']
      */
     protected array $fileFields = [];
-    /** Duration in minutes for presigned URLs. Override in child controllers. */
-    protected int $fileUrlExpiry = 60;
-
+    /** 
+     * THIS IS FOR AUTHENTICATED USERS ONLY AND RATE LIMIT OF PER USER
+     */
     public static function middleware(): array
     {
         return [new Middleware(['auth', 'throttle:120,1'])];
     }
-
     public function index(Request $request): mixed
     {
         /** @disregard P1013 */ // this disregard the error below but it works
@@ -128,7 +118,13 @@ abstract class BaseController extends Controller implements HasMiddleware
         if ($search !== '' && $this->searchable) {
             $this->applySearchTerms($query, $this->searchable, $search);
         }
+        $filters = (array) $request->input('filters', []);
         foreach ((array) $request->input('filters', []) as $col => $value) {
+            // Check for custom date range filters declared in child controller
+            if (array_key_exists($col, $this->dateFilters)) {
+                $this->applyDateFilter($query, $col, $value);
+                continue;
+            }
             if (is_array($value)) {
                 $cleanedValue = array_values(array_filter(
                     $value,
@@ -172,6 +168,10 @@ abstract class BaseController extends Controller implements HasMiddleware
                 $query->where($col, 'like', "%{$cleanedValue}%");
             }
         }
+        // Optional Hook for child controllers needing highly complex logic
+        $this->applyCustomFilters($query, $filters, $request);
+
+        // --- Sorting & Pagination (rest of your existing logic) ---
         $sortBy = $request->string('sort_by', 'id')->toString();
         $sortDir = $request->string('sort_dir', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
         if (in_array($sortBy, $this->sortable, true)) {
@@ -518,11 +518,6 @@ abstract class BaseController extends Controller implements HasMiddleware
     {
         return [];
     }
-    // Add no-op defaults so child classes override only what they need
-    protected function afterCreate(Model $model): void {}
-    protected function afterUpdate(Model $model): void {}
-    protected function beforeCreate(Model $model): void {}
-    protected function beforeUpdate(Model $model): void {}
     protected function beforeSave(array $validated, ?Model $model = null): array
     {
         return $validated;
@@ -534,4 +529,31 @@ abstract class BaseController extends Controller implements HasMiddleware
     {
         return $this->newQuery()->where('public_id', $publicId)->firstOrFail();
     }
+    /**
+     * Handles automatic dynamic date filters declared in $dateFilters.
+     */
+    protected function applyDateFilter(Builder $query, string $filterKey, mixed $value): void
+    {
+        if (empty($value)) return;
+        $column = $this->dateFilters[$filterKey];
+        if (str_ends_with($filterKey, '_from') || str_ends_with($filterKey, '_start')) {
+            $query->whereDate($column, '>=', $value);
+        } elseif (str_ends_with($filterKey, '_to') || str_ends_with($filterKey, '_end')) {
+            $query->whereDate($column, '<=', $value);
+        } else {
+            $query->whereDate($column, '=', $value);
+        }
+    }
+    /**
+     * Extension point for child controllers to implement custom logic.
+     */
+    protected function applyCustomFilters(Builder $query, array $filters, Request $request): void
+    {
+        // Default implementation does nothing
+    }
+    // Add no-op defaults so child classes override only what they need
+    protected function afterCreate(Model $model): void {}
+    protected function afterUpdate(Model $model): void {}
+    protected function beforeCreate(Model $model): void {}
+    protected function beforeUpdate(Model $model): void {}
 }

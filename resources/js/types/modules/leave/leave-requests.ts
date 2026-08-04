@@ -87,6 +87,8 @@ export const columns: ColumnDef<LeaveRequests>[] = [
         key: 'leave_date',
         label: 'Duration',
         sortable: true,
+        type: 'date-range',
+        filterable: true,
         render: (_value, row) =>
             `${formatDate(row.leave_date)} – ${formatDate(row.return_date)}`,
     },

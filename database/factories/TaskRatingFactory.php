@@ -18,7 +18,7 @@ class TaskRatingFactory extends Factory
             'rating' => fake()->numberBetween(1, 5),
             'hours_spent' => fake()->randomFloat(2, 1, 8),
             'comments' => fake()->boolean(40) ? fake()->sentence() : null,
-            'rated_at' => fake()->dateTimeBetween('2020-01-01', 'now'),
+            'rated_at' => fake()->dateTimeBetween('2020-01-01', \Database\Seeders\DatabaseSeeder::SEED_NOW),
         ];
     }
 }

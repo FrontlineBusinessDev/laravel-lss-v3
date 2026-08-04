@@ -23,7 +23,10 @@ class TaskSeeder extends Seeder
                 ->count($count)
                 ->for($trainee, 'trainee')
                 ->for($trainee->batch, 'batch')
-                ->create(['trainer_id' => fn() => $trainerIds->random()]);
+                // fake()->randomElement() (not Collection::random(), which uses
+                // PHP's CSPRNG Randomizer and ignores DatabaseSeeder's mt_srand)
+                // so this pick stays reproducible across seed runs.
+                ->create(['trainer_id' => fn() => fake()->randomElement($trainerIds->all())]);
         });
     }
 }

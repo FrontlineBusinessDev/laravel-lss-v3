@@ -20,6 +20,7 @@ export interface PaymentMethod extends Record<string, unknown> {
 }
 
 const TYPE_OPTIONS = [
+    { value: '', label: 'All Options' },
     { value: 'QR_CODE', label: 'QR Code' },
     { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
     { value: 'DIRECT_LINK', label: 'Direct Link' },
@@ -122,7 +123,7 @@ export const fields: FieldDef<PaymentMethod>[] = [
         key: 'type',
         label: 'Type',
         type: 'select',
-        options: TYPE_OPTIONS,
+        options: TYPE_OPTIONS.filter((opt) => opt.value),
         required: true,
         colSpan: 2,
     },

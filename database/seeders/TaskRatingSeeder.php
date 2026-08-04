@@ -24,7 +24,7 @@ class TaskRatingSeeder extends Seeder
         Task::query()
             ->whereNotNull('trainee_id')
             ->whereNotNull('batch_id')
-            ->inRandomOrder()
+            ->orderBy('id')
             ->limit(400)
             ->get(['batch_id', 'trainee_id', 'task'])
             ->unique(fn(Task $task) => "{$task->batch_id}-{$task->trainee_id}-{$task->task}")
@@ -33,7 +33,10 @@ class TaskRatingSeeder extends Seeder
                     'batch_id' => $task->batch_id,
                     'trainee_id' => $task->trainee_id,
                     'task_name' => $task->task,
-                    'evaluator_id' => $evaluatorIds->random(),
+                    // fake()->randomElement() (not Collection::random(), which uses
+                    // PHP's CSPRNG Randomizer and ignores DatabaseSeeder's mt_srand)
+                    // so this pick stays reproducible across seed runs.
+                    'evaluator_id' => fake()->randomElement($evaluatorIds->all()),
                 ]);
             });
     }

@@ -14,7 +14,7 @@ class AnnouncementFactory extends Factory
 
     public function definition(): array
     {
-        $postedAt = fake()->dateTimeBetween('2020-01-01', 'now');
+        $postedAt = fake()->dateTimeBetween('2020-01-01', \Database\Seeders\DatabaseSeeder::SEED_NOW);
 
         return [
             'status' => 'active',

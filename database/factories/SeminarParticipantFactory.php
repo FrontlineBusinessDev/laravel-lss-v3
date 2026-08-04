@@ -29,7 +29,7 @@ class SeminarParticipantFactory extends Factory
                 'Completed',
                 'Completed',
             ]),
-            'registered_at' => fake()->dateTimeBetween('2020-01-01', 'now'),
+            'registered_at' => fake()->dateTimeBetween('2020-01-01', \Database\Seeders\DatabaseSeeder::SEED_NOW),
         ];
     }
 }
