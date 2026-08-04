@@ -8,6 +8,7 @@ interface AnnualReportPrintProps {
     generatedAt: string;
     dateRangeLabel: string;
 }
+
 export function AnnualReportPrint({
     batches,
     generatedAt,

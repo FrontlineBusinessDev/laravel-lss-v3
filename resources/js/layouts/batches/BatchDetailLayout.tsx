@@ -83,14 +83,14 @@ export default function BatchDetailLayout({
             label: 'Trainees',
             href: `/batches/${batch.id}`,
         },
-        {
-            label: 'Activity log',
-            href: `/batches/${batch.id}/activity-log`,
-        },
-        {
-            label: 'Financials',
-            href: `/batches/${batch.id}/financial`,
-        },
+        // {
+        //     label: 'Activity log',
+        //     href: `/batches/${batch.id}/activity-log`,
+        // },
+        // {
+        //     label: 'Financials',
+        //     href: `/batches/${batch.id}/financial`,
+        // },
         {
             label: 'Trainers',
             href: `/batches/${batch.id}/trainers`,
