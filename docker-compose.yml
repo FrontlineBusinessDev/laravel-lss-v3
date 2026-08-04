@@ -5,34 +5,41 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:${PORT:-8000}"
     environment:
       - APP_ENV=${APP_ENV:-production}
+      - PORT=${PORT:-8000}
     env_file:
       - .env
     volumes:
       - ./database:/app/database
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${PORT:-8000}/up"]
+      interval: 10s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+    # Balanced sizing for an 8GB host shared with another app: covers
+    # FrankenPHP + 2 Octane workers (scripts/deploy.sh) with headroom, while
+    # leaving ~6GB free for the other app. Raise if requests start getting
+    # OOM-killed (`docker inspect` reason 137) or queue up under CPU
+    # throttling; lower toward 768m/1.0 cpus if the other app needs more room.
+    mem_limit: 1536m
+    mem_reservation: 768m
+    memswap_limit: 2048m
+    cpus: "1.5"
 
-  # Dedicated Queue Worker
-  queue:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["bash", "scripts/worker.sh"]
-    environment:
-      - APP_ENV=${APP_ENV:-production}
-    env_file:
-      - .env
-    volumes:
-      - ./database:/app/database
-    restart: unless-stopped
-    depends_on:
-      - web
-
+# No dedicated queue worker container: bootstrap/app.php's withSchedule()
+# already registers a scheduled `queue:work --stop-when-empty --max-time=50`
+# drain that rides the per-minute schedule:run tick (itself triggered by the
+# external cron pinger hitting GET /cron/{token}, see routes/cron.php). See
+# docs/production-email-cron-checklist.md for the history/tradeoffs of this
+# vs. a persistent worker. scripts/worker.sh is kept for ad-hoc manual backlog
+# draining (`docker compose run --rm web bash scripts/worker.sh`) but nothing
+# starts it automatically.
+#
 # Note: the ./database bind mount above only matters when DB_CONNECTION=sqlite/pgsql.
-# The DB is then a file, not a network service, so without a shared mount each
-# container gets its own independent copy baked in at build time and
-# `web`/`queue` silently stop seeing each other's writes (this is what broke
-# queued mail). Harmless no-op if DB_CONNECTION points at a real network
-# database instead.
+# The DB is then a file, not a network service, so a container without this
+# mount would get its own independent copy baked in at build time instead of
+# sharing writes with the host/other processes.

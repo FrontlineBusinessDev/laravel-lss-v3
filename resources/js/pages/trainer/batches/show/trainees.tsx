@@ -110,7 +110,7 @@ export default function TrainerBatchTraineesPage({ record }: Props) {
                     <StatusBadge status={badge} />
                 </div>
                 <p className="text-xs text-neutral-500">
-                    {record.academic_program?.name ?? '—'} ·{' '}
+                    {record.academic_program_type?.name ?? '—'} ·{' '}
                     {record.academic_industry?.name ?? '—'} · {setupLabel}
                 </p>
             </div>
@@ -133,7 +133,7 @@ export default function TrainerBatchTraineesPage({ record }: Props) {
                 </SummaryCard>
                 <SummaryCard icon={GraduationCap} label="Program type">
                     <span className="text-sm font-medium text-ink">
-                        {record.academic_program?.name ?? '—'}
+                        {record.academic_program_type?.name ?? '—'}
                     </span>
                 </SummaryCard>
             </div>

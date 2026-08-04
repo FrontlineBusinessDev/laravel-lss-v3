@@ -26,32 +26,40 @@ import {
     UserCheck,
     UserRoundX,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import type { UserRow } from './UserModal';
 import UserModal from './UserModal';
 
 const PERMISSION = 'manage users';
 
-const columns: ColumnDef<UserRow>[] = [
-    {
-        key: 'status',
-        label: 'Status',
-        sortable: true,
-        filterable: true,
-        type: 'select',
-        typeData: STATUS_FILTER_PAIRS,
-        exactFilters: true,
-    },
-    {
-        key: 'roles',
-        label: 'Role',
-        sortable: false,
-        filterable: true,
-        type: 'select',
-        typeData: ROLE_FILTER_PAIRS,
-    },
-    { key: 'first_name', label: 'Name', sortable: true, filterable: true },
-    { key: 'email', label: 'Email', sortable: true, filterable: true },
-];
+const ADMIN_LIKE_ROLES = ['admin', 'developer'];
+
+function buildColumns(actorRole: string): ColumnDef<UserRow>[] {
+    return [
+        {
+            key: 'status',
+            label: 'Status',
+            sortable: true,
+            filterable: true,
+            type: 'select',
+            typeData: STATUS_FILTER_PAIRS,
+            exactFilters: true,
+        },
+        {
+            key: 'roles',
+            label: 'Role',
+            sortable: false,
+            filterable: true,
+            type: 'select',
+            typeData:
+                actorRole === 'developer'
+                    ? ROLE_FILTER_PAIRS
+                    : ROLE_FILTER_PAIRS.filter((pair) => pair.value !== 'developer'),
+        },
+        { key: 'first_name', label: 'Name', sortable: true, filterable: true },
+        { key: 'email', label: 'Email', sortable: true, filterable: true },
+    ];
+}
 
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
@@ -67,6 +75,7 @@ export default function index() {
     const { showToast } = useToast();
     const currentUserId = usePage().props.auth?.user?.id;
     const modal = useGlobalModal<UserRow | null>('settingsUser', null);
+    const columns = useMemo(() => buildColumns(role), [role]);
 
     // Admin action: queue the reset/setup email for a user. Archived accounts
     // are blocked server-side, so the menu item is disabled for them below.
@@ -200,6 +209,11 @@ export default function index() {
                         editPermission={PERMISSION}
                         archivePermission={PERMISSION}
                         deletePermission={PERMISSION}
+                        deleteConfirmText={(row) =>
+                            ADMIN_LIKE_ROLES.includes(row.role ?? '')
+                                ? row.email
+                                : undefined
+                        }
                         listHeader={listHeader}
                         renderCard={renderRow}
                         onEditRow={(row) => {

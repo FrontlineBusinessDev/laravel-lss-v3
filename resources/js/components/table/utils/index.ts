@@ -4,6 +4,7 @@
  * Nothing here imports React or touches the DOM — safe to unit-test in Node.
  */
 
+import { formatDate, formatDateShort, formatDateTime } from '@/lib/date';
 import type { ColumnDef, FieldDef, FieldType, ModalMode } from '../types';
 
 // ─── Formatting ───────────────────────────────────────────────────────────────
@@ -11,11 +12,25 @@ import type { ColumnDef, FieldDef, FieldType, ModalMode } from '../types';
 /**
  * Converts any cell value to a display string.
  * Returns an em-dash for empty / null / undefined values so cards
- * always render something legible.
+ * always render something legible. Pass a column's `formatType` to run the
+ * value through the matching '@/lib/date' formatter instead of `String()`.
  */
-export function formatCell(value: unknown): string {
+export function formatCell(
+    value: unknown,
+    formatType?: ColumnDef['formatType'],
+): string {
     if (value === null || value === undefined) {
         return '—';
+    }
+
+    if (formatType === 'date') {
+        return formatDate(value as string);
+    }
+    if (formatType === 'datetime') {
+        return formatDateTime(value as string);
+    }
+    if (formatType === 'date-short') {
+        return formatDateShort(value as string);
     }
 
     if (typeof value === 'boolean') {

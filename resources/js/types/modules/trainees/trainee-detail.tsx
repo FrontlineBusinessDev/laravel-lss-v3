@@ -38,11 +38,9 @@ export interface AppTraineeBatch {
     date_started: string | null;
     setup: 'F2F' | 'Online';
     academic_industry_id: number;
-    academic_program_id: number;
-    academic_level_id: number | null;
+    academic_program_type_id: number;
     academic_industry?: AppTraineeAcademicIndustry;
-    academic_program?: AppTraineeAcademicProgram;
-    academic_level?: AppTraineeAcademicLevel;
+    academic_program_type?: AppTraineeAcademicProgramType;
 }
 
 export interface AppTraineeDocument {
@@ -146,8 +144,10 @@ export interface TraineeDetail {
     user: AppTraineeUser | null;
     batch_id: number;
     school_id: number;
-    academic_program_type_id: number | null;
-    academic_program_type?: AppTraineeAcademicProgramType;
+    academic_program_id: number | null;
+    academic_level_id: number | null;
+    academic_program?: AppTraineeAcademicProgram;
+    academic_level?: AppTraineeAcademicLevel;
     avatar_path: string | null;
     avatar_url: string | null;
     public_url_id: string;

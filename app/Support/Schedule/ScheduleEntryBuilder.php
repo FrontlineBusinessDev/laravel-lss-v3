@@ -9,9 +9,9 @@ use Illuminate\Support\Collection;
 
 /**
  * Turns a collection of Batches (eager-loaded with academicIndustry,
- * academicProgram, and trainees.school + trainees' completed_hours) into the
- * schedule-entry payload consumed by the Schedule module's Timeline/Calendar
- * views, summary panel, and detail modal.
+ * academicProgramType, and trainees.school/academicProgram + trainees'
+ * completed_hours) into the schedule-entry payload consumed by the Schedule
+ * module's Timeline/Calendar views, summary panel, and detail modal.
  */
 class ScheduleEntryBuilder
 {
@@ -51,20 +51,20 @@ class ScheduleEntryBuilder
                 'date_started' => $batch->date_started?->toDateString(),
                 'projected_end_date' => $batch->projected_end_date?->toDateString(),
                 'industry' => $batch->academicIndustry?->name,
-                'program_type' => $batch->academicProgram?->name,
+                'program_type' => $batch->academicProgramType?->name,
             ],
             'trainees' => $batch->trainees->map(fn(Trainees $trainee) => [
                 'id' => $trainee->id,
                 'name' => trim($trainee->first_name . ' ' . $trainee->last_name),
                 'school' => $trainee->school?->school_name ?? 'Unassigned',
-                'academic_program' => $batch->academicProgram?->name,
+                'academic_program' => $trainee->academicProgram?->name,
                 'status' => $trainee->status,
             ])->values(),
             'start' => $start?->toDateString(),
             'end' => $end ? Carbon::createFromTimestamp($end)->toDateString() : $batch->projected_end_date?->toDateString(),
             'school_counts' => $schoolCounts,
             'primary_school' => $schoolCounts->first()['school'] ?? 'Unassigned',
-            'programs' => array_values(array_filter([$batch->academicProgram?->name])),
+            'programs' => $batch->trainees->pluck('academicProgram.name')->filter()->unique()->values()->all(),
         ];
     }
 }

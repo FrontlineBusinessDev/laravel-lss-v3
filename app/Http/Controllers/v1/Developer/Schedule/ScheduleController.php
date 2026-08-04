@@ -20,8 +20,8 @@ class ScheduleController extends Controller
     {
         $batches = Batches::with([
             'academicIndustry',
-            'academicProgram',
-            'trainees' => fn($query) => $query->withCompletedHours()->with('school'),
+            'academicProgramType',
+            'trainees' => fn($query) => $query->withCompletedHours()->with(['school', 'academicProgram']),
         ])->get();
 
         return Inertia::render('developer/schedule/index', [

@@ -79,6 +79,17 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Batches::class, 'app_batch_trainer', 'trainer_id', 'batch_id');
     }
+
+    protected static function booted(): void
+    {
+        // app_announcement.created_by_id has no DB-level FK (see that
+        // migration's comment re: SQLite table-rebuild issues), so it can't
+        // rely on ON DELETE SET NULL — null it out here instead, mirroring
+        // what every other FK to users.id does on delete.
+        static::deleting(function (User $user) {
+            Announcement::where('created_by_id', $user->id)->update(['created_by_id' => null]);
+        });
+    }
     /**
      * Prepare the user data payload for Inertia.
      */

@@ -44,13 +44,13 @@ export function DefaultRecordCard<T extends Record<string, unknown>>({
         <div className="group flex items-start justify-between gap-4 border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
             <div className="min-w-0 flex-1">
                 <h3 className="truncate text-base font-semibold">
-                    {formatCell(row[titleCol?.key])}
+                    {formatCell(row[titleCol?.key], titleCol?.formatType)}
                 </h3>
                 <dl className="mt-1 space-y-0.5">
                     {rest.map((col) => {
                         const value = col.render
                             ? col.render(row[col.key], row)
-                            : formatCell(row[col.key]);
+                            : formatCell(row[col.key], col.formatType);
 
                         if (value === '—' || value === '' || value == null) {
                             return null;

@@ -35,21 +35,36 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 2. Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 3. Copy application files
+# 3. Install PHP dependencies first, cached independently of app source so a
+#    code-only change doesn't force a full re-download of vendor/.
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts --no-autoloader
+
+# 4. Install Node dependencies, cached independently of app source too.
+COPY package.json package-lock.json ./
+RUN npm ci --legacy-peer-deps
+
+# 5. Copy application source
 COPY . .
 
-# 4. Install PHP dependencies
-RUN composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+# 6. Finish PHP dependency setup now that artisan is available (runs
+#    post-autoload-dump / package:discover)
+RUN composer dump-autoload --optimize --no-dev
 
-# 5. Install Node dependencies and build assets
-RUN npm install --legacy-peer-deps && npm run build
+# 7. Build frontend assets. Needs vendor/ and artisan in place already: the
+# Laravel Wayfinder Vite plugin shells out to `php artisan wayfinder:generate`
+# during the build (see vite.config.ts), so this can't run in a PHP-less stage.
+RUN npm run build
 
-# 6. Configure Octane
+# 8. Configure Octane
 RUN php artisan octane:install --server=frankenphp --no-interaction
 
-# 7. Set execution permissions
+# 9. Set execution permissions
 RUN chmod +x scripts/deploy.sh scripts/worker.sh
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -fsS "http://127.0.0.1:${PORT:-8000}/up" || exit 1
 
 CMD ["bash", "scripts/deploy.sh"]

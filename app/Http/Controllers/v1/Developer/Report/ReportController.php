@@ -140,7 +140,7 @@ class ReportController extends Controller
 
     /**
      * @return array{search:?string,date_from:?string,date_to:?string,academic_industry_id:?int,
-     *     academic_program_id:list<int>}
+     *     academic_program_type_id:list<int>}
      */
     protected function filtersFromRequest(Request $request): array
     {
@@ -152,7 +152,7 @@ class ReportController extends Controller
             'date_from' => $filters['date_started_from'] ?? null,
             'date_to' => $filters['date_started_to'] ?? null,
             'academic_industry_id' => $industry !== null && $industry !== '' ? (int) $industry : null,
-            'academic_program_id' => $this->intListFilter($filters['academic_program_id'] ?? null),
+            'academic_program_type_id' => $this->intListFilter($filters['academic_program_type_id'] ?? null),
         ];
     }
 
@@ -192,8 +192,8 @@ class ReportController extends Controller
 
     protected function applyProgramFilter(Builder $query, array $filters): void
     {
-        if (! empty($filters['academic_program_id'])) {
-            $query->whereIn('academic_program_id', $filters['academic_program_id']);
+        if (! empty($filters['academic_program_type_id'])) {
+            $query->whereIn('academic_program_type_id', $filters['academic_program_type_id']);
         }
     }
 
@@ -203,7 +203,7 @@ class ReportController extends Controller
         return Batches::query()
             ->with([
                 'academicIndustry:id,name',
-                'academicProgram:id,name',
+                'academicProgramType:id,name',
             ])
             ->when($filters['date_from'] ?? null, fn($q, $v) => $q->whereDate('date_started', '>=', $v))
             ->when($filters['date_to'] ?? null, fn($q, $v) => $q->whereDate('date_started', '<=', $v))
@@ -232,7 +232,7 @@ class ReportController extends Controller
         $data = [
             'id' => $batch->id,
             'batchNo' => $batch->batch_code,
-            'programType' => $batch->academicProgram?->name ?? '—',
+            'programType' => $batch->academicProgramType?->name ?? '—',
             'industry' => $batch->academicIndustry?->name ?? '—',
             'setup' => $batch->setup,
             'status' => $batch->status,

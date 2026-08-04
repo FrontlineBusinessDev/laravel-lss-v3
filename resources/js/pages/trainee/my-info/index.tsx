@@ -123,15 +123,15 @@ function AcademicInfoSection({ trainee }: { trainee: TraineeDetail }) {
                 />
                 <Field
                     label="Academic program"
-                    value={trainee.batch?.academic_program?.name ?? ''}
+                    value={trainee.academic_program?.name ?? ''}
                 />
                 <Field
                     label="Academic level"
-                    value={trainee.batch?.academic_level?.name ?? ''}
+                    value={trainee.academic_level?.name ?? ''}
                 />
                 <Field
                     label="Program type"
-                    value={trainee.academic_program_type?.name ?? ''}
+                    value={trainee.batch?.academic_program_type?.name ?? ''}
                 />
                 <Field
                     label="Industry"

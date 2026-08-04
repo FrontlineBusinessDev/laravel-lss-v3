@@ -14,7 +14,7 @@ import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
 function buildDoc(trainee: TraineeDetail): CertificateDoc {
     const subtitle = [
-        trainee.batch?.academic_program?.name,
+        trainee.academic_program?.name,
         trainee.batch?.academic_industry?.name,
     ]
         .filter(Boolean)
