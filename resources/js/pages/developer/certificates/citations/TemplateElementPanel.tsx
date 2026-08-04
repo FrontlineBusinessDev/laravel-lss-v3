@@ -1,6 +1,7 @@
+import { useLayoutEffect, useRef } from 'react';
 import { AlignCenter, AlignLeft, AlignRight, Crop, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { TextField } from '@/components/FormField';
+import { TextAreaField, TextField } from '@/components/FormField';
 import { cn } from '@/lib/utils';
 import type { TemplateAlign, TemplateElement, TemplateShapeKind } from '../types';
 
@@ -11,6 +12,19 @@ const TEXT_TOKENS = [
   { value: 'citationText', label: 'Citation text' },
   { value: 'certificateNo', label: 'Certificate no.' },
   { value: 'issuedDate', label: 'Issued date' },
+  { value: 'courseTitle', label: 'Course title' },
+  { value: 'completionDate', label: 'Completion date' },
+  { value: 'certificateId', label: 'Certificate ID' },
+  { value: 'issuerName', label: 'Issuer name' },
+];
+
+/** Inline {{token}} chips insertable into static text — resolved by resolveElementText/resolveSampleText via renderCitation. */
+const INLINE_TOKEN_CHIPS = [
+  { value: 'trainee_name', label: 'Trainee name' },
+  { value: 'course_title', label: 'Course title' },
+  { value: 'completion_date', label: 'Completion date' },
+  { value: 'certificate_id', label: 'Certificate ID' },
+  { value: 'issuer_name', label: 'Issuer name' },
 ];
 
 const FONT_FAMILIES = [
@@ -35,6 +49,40 @@ interface TemplateElementPanelProps {
 
 /** Contextual properties panel for the currently-selected canvas element. */
 export function TemplateElementPanel({ selected, onUpdate, onRemove, onCropImage }: TemplateElementPanelProps) {
+  const staticTextRef = useRef<HTMLTextAreaElement>(null);
+  const pendingCaretRef = useRef<number | null>(null);
+
+  // Restores the caret synchronously right after the inserted-token value lands in the
+  // DOM (before paint), rather than via requestAnimationFrame — which can lose the race
+  // against the next keystroke and leave the caret at a stale position.
+  useLayoutEffect(() => {
+    const caret = pendingCaretRef.current;
+    const el = staticTextRef.current;
+    if (caret === null || !el) return;
+
+    pendingCaretRef.current = null;
+    el.focus();
+    el.setSelectionRange(caret, caret);
+  }, [selected?.text]);
+
+  function insertInlineToken(token: string) {
+    if (!selected) return;
+    const el = staticTextRef.current;
+    const current = selected.text ?? '';
+    const chip = `{{${token}}}`;
+
+    if (!el) {
+      onUpdate(selected.id, { text: `${current}${chip}` });
+      return;
+    }
+
+    const start = el.selectionStart ?? current.length;
+    const end = el.selectionEnd ?? current.length;
+    const next = `${current.slice(0, start)}${chip}${current.slice(end)}`;
+    pendingCaretRef.current = start + chip.length;
+    onUpdate(selected.id, { text: next });
+  }
+
   if (!selected) {
     return (
       <div className="rounded-md border border-dashed border-neutral-200 p-3 text-center text-xs text-neutral-400" data-cy="template-element-panel-empty">
@@ -65,18 +113,23 @@ export function TemplateElementPanel({ selected, onUpdate, onRemove, onCropImage
         onChange={(e) => onUpdate(selected.id, { rotation: Number(e.target.value) })}
       />
 
-      {selected.type === 'image' && (
+      {(selected.type === 'image' || selected.type === 'signature') && (
         <>
           <TextField
-            label="Image URL"
+            label={selected.type === 'signature' ? 'Signature image URL' : 'Image URL'}
             value={selected.src ?? ''}
-            placeholder="https://…"
+            placeholder="https://… or paste an image"
             onChange={(e) => onUpdate(selected.id, { src: e.target.value })}
           />
           {selected.src && onCropImage && (
             <Button variant="secondary" size="sm" icon={Crop} className="mb-2.5 w-full" onClick={() => onCropImage(selected.id)}>
               Crop image
             </Button>
+          )}
+          {selected.type === 'signature' && (
+            <p className="mb-2.5 text-[10px] leading-relaxed text-neutral-400">
+              Hidden from trainees on screen; always included in downloaded PDF/PNG and print output.
+            </p>
           )}
         </>
       )}
@@ -194,11 +247,28 @@ export function TemplateElementPanel({ selected, onUpdate, onRemove, onCropImage
             ))}
           </select>
           {!selected.token && (
-            <TextField
-              label="Static text"
-              value={selected.text ?? ''}
-              onChange={(e) => onUpdate(selected.id, { text: e.target.value })}
-            />
+            <>
+              <TextAreaField
+                ref={staticTextRef}
+                label="Static text"
+                value={selected.text ?? ''}
+                rows={2}
+                onChange={(e) => onUpdate(selected.id, { text: e.target.value })}
+              />
+              <div className="mb-2.5 flex flex-wrap gap-1.5">
+                {INLINE_TOKEN_CHIPS.map((chip) => (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => insertInlineToken(chip.value)}
+                    className="rounded-pill border border-dashed border-brand-200 bg-brand-50 px-2 py-0.5 text-[10px] font-medium text-brand-600 hover:border-brand-400"
+                    title={`Insert {{${chip.value}}}`}
+                  >
+                    + {chip.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           <label className="mb-1 block text-[11px] font-medium text-neutral-500">Font family</label>
           <select

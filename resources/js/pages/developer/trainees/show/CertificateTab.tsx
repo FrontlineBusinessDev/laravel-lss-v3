@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
-import { Printer, RefreshCw } from 'lucide-react';
+import { ExternalLink, Printer, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/Button';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import {
@@ -21,16 +21,21 @@ function buildDoc(trainee: TraineeDetail): CertificateDoc {
         .filter(Boolean)
         .join(' — ');
 
+    const citationTokens = { name: trainee.name, school: trainee.school?.school_name, hours: trainee.required_hours };
+    const citationBody = trainee.certificate?.citation?.body_text;
+
     return {
         key: trainee.id,
         recipientName: trainee.name,
         subtitle,
-        citationText: renderCitation(
-            'This is to certify that {{name}} has completed {{hours}} hours of training.',
-            { name: trainee.name, hours: trainee.required_hours },
-        ),
+        citationText: citationBody
+            ? renderCitation(citationBody, citationTokens)
+            : renderCitation('This is to certify that {{name}} has completed {{hours}} hours of training.', citationTokens),
         certificateNo: trainee.certificate?.certificate_no ?? '—',
         issuedDate: trainee.certificate?.issued_at,
+        courseTitle: trainee.academic_program?.name,
+        issuerName: trainee.certificate?.issued_by?.name,
+        verificationUrl: trainee.certificate?.verification_url,
         template: trainee.certificate?.template,
         // Frozen at issue/reissue time — not the trainee's current live outcomes.
         achievedOutcomes: (
@@ -104,6 +109,17 @@ export default function CertificateTab({
                                 >
                                     Print
                                 </Button>
+                                {doc.verificationUrl && (
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        icon={ExternalLink}
+                                        onClick={() => window.open(doc.verificationUrl as string, '_blank', 'noopener')}
+                                        data-cy="certificate-tab-button-view-public"
+                                    >
+                                        View public certificate
+                                    </Button>
+                                )}
                                 <Button
                                     variant="primary"
                                     size="sm"
@@ -157,6 +173,9 @@ export default function CertificateTab({
                 recipientName={trainee.name}
                 appliesTo="trainee"
                 issueUrl={`/certificates/trainees/${trainee.id}/issue`}
+                courseTitle={trainee.academic_program?.name}
+                subtitle={trainee.school?.school_name}
+                requiredHours={trainee.required_hours}
                 onClose={() => setIssueOpen(false)}
                 onIssued={() => router.reload({ only: ['trainee'] })}
             />

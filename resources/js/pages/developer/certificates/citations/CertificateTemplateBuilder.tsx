@@ -6,6 +6,7 @@ import { useToast } from '@/components/Toast';
 import { useUndoRedo } from '@/hooks/use-undo-redo';
 import { apiFetchJson } from '@/lib/apiFetch';
 import { cn } from '@/lib/utils';
+import { renderCitation } from '../certificateUtils';
 import { exportTemplateAsPdf, exportTemplateAsPng } from '../certificateExport';
 import type { CertificateTemplate, CertificateType, TemplateElement, TemplateElementType } from '../types';
 import { TemplateAddRail } from './TemplateAddRail';
@@ -22,6 +23,19 @@ const SAMPLE_TEXT: Record<string, string> = {
   citationText: 'This is to certify that Juan Dela Cruz has completed the program.',
   certificateNo: 'Certificate No. PREVIEW-0000',
   issuedDate: 'Issued July 17, 2026',
+  courseTitle: 'Sample Course',
+  issuerName: 'Program Director',
+  completionDate: 'Issued July 17, 2026',
+  certificateId: 'Certificate No. PREVIEW-0000',
+};
+
+/** Sample values for the inline {{token}} chips, matching the vocabulary in TemplateElementPanel. */
+const SAMPLE_INLINE_TOKENS = {
+  trainee_name: SAMPLE_TEXT.recipientName,
+  course_title: SAMPLE_TEXT.courseTitle,
+  completion_date: 'July 17, 2026',
+  certificate_id: 'PREVIEW-0000',
+  issuer_name: SAMPLE_TEXT.issuerName,
 };
 
 const SAMPLE_OUTCOMES = [
@@ -41,7 +55,7 @@ function resolveSampleText(el: TemplateElement): string {
 return SAMPLE_TEXT[el.token] ?? el.token;
 }
 
-  return el.text || 'Text';
+  return el.text ? renderCitation(el.text, SAMPLE_INLINE_TOKENS) : 'Text';
 }
 
 interface CertificateTemplateBuilderProps {
@@ -59,7 +73,7 @@ function newElement(type: TemplateElementType): TemplateElement {
     x: 30,
     y: 40,
     width: type === 'line' ? 40 : 40,
-    height: type === 'image' || type === 'qr' ? 15 : type === 'outcomes' ? 25 : type === 'shape' ? 20 : undefined,
+    height: type === 'image' || type === 'qr' || type === 'signature' ? 15 : type === 'outcomes' ? 25 : type === 'shape' ? 20 : undefined,
     fontSize: type === 'text' ? 14 : type === 'outcomes' ? 11 : undefined,
     columns: type === 'outcomes' ? 2 : undefined,
     align: 'left',
@@ -204,80 +218,86 @@ return;
 
   return (
     <Modal open={open} onClose={onClose} title={initial ? 'Edit template' : 'New certificate template'} maxWidth={1560} data-cy="certificate-template-builder-modal">
-      <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_auto_auto]">
-        <TextField label="Template name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Standard Landscape" />
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-neutral-600">Orientation</label>
-          <div className="flex overflow-hidden rounded-md border border-neutral-200">
-            {(['landscape', 'portrait'] as const).map((o) => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => setOrientation(o)}
-                className={cn('flex-1 px-2.5 py-1.5 text-xs font-medium capitalize', orientation === o ? 'bg-brand-500 text-white' : 'bg-white text-neutral-600 hover:bg-neutral-50')}
-              >
-                {o}
-              </button>
-            ))}
+      {/* Bounded to the modal's available height so only the canvas region (not this whole block) ever needs to scroll — keeps the header fields and Save/Cancel/Export footer always visible. */}
+      <div className="flex max-h-[calc(90vh-150px)] flex-col">
+        <div className="mb-3 grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_auto_auto]">
+          <TextField label="Template name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Standard Landscape" />
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-neutral-600">Orientation</label>
+            <div className="flex overflow-hidden rounded-md border border-neutral-200">
+              {(['landscape', 'portrait'] as const).map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => setOrientation(o)}
+                  className={cn('flex-1 px-2.5 py-1.5 text-xs font-medium capitalize', orientation === o ? 'bg-brand-500 text-white' : 'bg-white text-neutral-600 hover:bg-neutral-50')}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-neutral-600">Background</label>
+            <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="h-8 w-14 cursor-pointer rounded-md border border-neutral-200" aria-label="Canvas background color" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-neutral-600">Border</label>
+            <input type="color" value={borderColor} onChange={(e) => setBorderColor(e.target.value)} className="h-8 w-14 cursor-pointer rounded-md border border-neutral-200" aria-label="Canvas border color" />
           </div>
         </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-neutral-600">Background</label>
-          <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="h-8 w-14 cursor-pointer rounded-md border border-neutral-200" aria-label="Canvas background color" />
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-medium text-neutral-600">Border</label>
-          <input type="color" value={borderColor} onChange={(e) => setBorderColor(e.target.value)} className="h-8 w-14 cursor-pointer rounded-md border border-neutral-200" aria-label="Canvas border color" />
-        </div>
-      </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <TemplateAddRail onAdd={addElement} />
+        <div className="flex min-h-0 flex-1 flex-col gap-4 sm:flex-row">
+          <TemplateAddRail onAdd={addElement} />
 
-        <div className="flex-1 overflow-x-auto">
-          <TemplateCanvasToolbar zoom={zoom} onZoomChange={setZoom} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
-          <TemplateCanvas
-            elements={elements}
-            selectedId={selectedId}
-            orientation={orientation}
-            zoom={zoom}
-            backgroundColor={backgroundColor}
-            borderColor={borderColor}
-            onSelect={setSelectedId}
-            onMove={moveElement}
-            onTransform={updateElement}
-          /> 
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <TemplateCanvasToolbar zoom={zoom} onZoomChange={setZoom} undo={undo} redo={redo} canUndo={canUndo} canRedo={canRedo} />
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <TemplateCanvas
+                elements={elements}
+                selectedId={selectedId}
+                orientation={orientation}
+                zoom={zoom}
+                backgroundColor={backgroundColor}
+                borderColor={borderColor}
+                onSelect={setSelectedId}
+                onMove={moveElement}
+                onTransform={updateElement}
+                onZoomChange={setZoom}
+              />
+            </div>
+          </div>
+
+          <div className="flex w-full shrink-0 flex-col gap-3 overflow-y-auto lss-scrollbar sm:w-64">
+            <TemplateLayersPanel elements={elements} selectedId={selectedId} onSelect={setSelectedId} onReorder={setElements} />
+            <TemplateElementPanel selected={selected} onUpdate={updateElement} onRemove={removeElement} onCropImage={setCroppingId} />
+          </div>
         </div>
 
-        <div className="flex w-full flex-col gap-3 sm:w-64">
-          <TemplateLayersPanel elements={elements} selectedId={selectedId} onSelect={setSelectedId} onReorder={setElements} />
-          <TemplateElementPanel selected={selected} onUpdate={updateElement} onRemove={removeElement} onCropImage={setCroppingId} />
+        <div className="mt-5 flex shrink-0 gap-2">
+          <Button variant="secondary" className="flex-1" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex-1"
+            disabled={elements.length === 0 || exporting !== null}
+            onClick={() => void handleExport('png')}
+          >
+            {exporting === 'png' ? 'Exporting…' : 'Download PNG'}
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex-1"
+            disabled={elements.length === 0 || exporting !== null}
+            onClick={() => void handleExport('pdf')}
+          >
+            {exporting === 'pdf' ? 'Exporting…' : 'Download PDF'}
+          </Button>
+          <Button variant="primary" className="flex-1" disabled={!name.trim() || elements.length === 0 || saving} onClick={handleSave}>
+            Save template
+          </Button>
         </div>
-      </div>
-
-      <div className="mt-5 flex gap-2">
-        <Button variant="secondary" className="flex-1" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          variant="secondary"
-          className="flex-1"
-          disabled={elements.length === 0 || exporting !== null}
-          onClick={() => void handleExport('png')}
-        >
-          {exporting === 'png' ? 'Exporting…' : 'Download PNG'}
-        </Button>
-        <Button
-          variant="secondary"
-          className="flex-1"
-          disabled={elements.length === 0 || exporting !== null}
-          onClick={() => void handleExport('pdf')}
-        >
-          {exporting === 'pdf' ? 'Exporting…' : 'Download PDF'}
-        </Button>
-        <Button variant="primary" className="flex-1" disabled={!name.trim() || elements.length === 0 || saving} onClick={handleSave}>
-          Save template
-        </Button>
       </div>
 
       <TemplateImageCropModal

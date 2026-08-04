@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Award, Printer, X } from 'lucide-react';
+import { Award, ExternalLink, Printer, X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { TooltipIconButton } from '@/components/TooltipIconButton';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
@@ -67,6 +67,7 @@ function buildDoc(row: SeminarCertificateRow): CertificateDoc {
     citationText: renderCitation('This is to certify that {{name}} has attended "{{seminarTopic}}".', tokensForSeminarParticipant(row)),
     certificateNo: row.certificate?.certificate_no ?? '—',
     issuedDate: row.certificate?.issued_at,
+    verificationUrl: row.certificate?.verification_url,
     template: row.certificate?.template,
   };
 }
@@ -120,7 +121,12 @@ export default function SeminarCertificatesPage() {
         onRefreshRef={(fn) => setRefreshTable(() => fn)}
       />
 
-      {previewDoc && <PreviewOverlay doc={previewDoc} onClose={() => setPreviewRow(null)} />}
+      {previewDoc && (
+        <>
+          <PreviewOverlay doc={previewDoc} onClose={() => setPreviewRow(null)} />
+          <CertificateSheet doc={previewDoc} variant="print" />
+        </>
+      )}
 
       {issueRow && (
         <IssueCertificateModal
@@ -128,6 +134,7 @@ export default function SeminarCertificatesPage() {
           recipientName={issueRow.name}
           appliesTo="seminar"
           issueUrl={`/certificates/seminar/${issueRow.id}/issue`}
+          courseTitle={issueRow.seminar?.topic}
           onClose={() => setIssueRow(null)}
           onIssued={() => refreshTable()}
         />
@@ -155,6 +162,11 @@ function PreviewOverlay({ doc, onClose }: { doc: CertificateDoc; onClose: () => 
           <Button variant="secondary" icon={X} onClick={onClose}>
             Close
           </Button>
+          {doc.verificationUrl && (
+            <Button variant="secondary" icon={ExternalLink} onClick={() => window.open(doc.verificationUrl as string, '_blank', 'noopener')}>
+              View public certificate
+            </Button>
+          )}
           <Button variant="primary" icon={Printer} onClick={() => window.print()}>
             Print
           </Button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Award, Printer, X } from 'lucide-react';
+import { Award, ExternalLink, Printer, X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { TooltipIconButton } from '@/components/TooltipIconButton';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
@@ -81,6 +81,9 @@ function buildDoc(row: TraineeCertificateRow): CertificateDoc {
       : renderCitation('This is to certify that {{name}} has completed {{hours}} hours of training.', tokensForTrainee(row)),
     certificateNo: row.certificate?.certificate_no ?? '—',
     issuedDate: row.certificate?.issued_at,
+    courseTitle: row.academic_program?.name,
+    issuerName: row.certificate?.issued_by?.name,
+    verificationUrl: row.certificate?.verification_url,
     template: row.certificate?.template,
     achievedOutcomes: row.certificate?.learning_outcomes_snapshot?.map((o) => o.title) ?? [],
   };
@@ -136,7 +139,10 @@ export default function TraineeCertificatesPage() {
       />
 
       {previewDoc && (
-        <PreviewOverlay doc={previewDoc} onClose={() => setPreviewRow(null)} />
+        <>
+          <PreviewOverlay doc={previewDoc} onClose={() => setPreviewRow(null)} />
+          <CertificateSheet doc={previewDoc} variant="print" />
+        </>
       )}
 
       {issueRow && (
@@ -145,6 +151,9 @@ export default function TraineeCertificatesPage() {
           recipientName={traineeCertName(issueRow)}
           appliesTo="trainee"
           issueUrl={`/certificates/trainees/${issueRow.id}/issue`}
+          courseTitle={issueRow.academic_program?.name}
+          subtitle={issueRow.school?.school_name}
+          requiredHours={issueRow.required_hours}
           onClose={() => setIssueRow(null)}
           onIssued={() => refreshTable()}
         />
@@ -172,6 +181,11 @@ function PreviewOverlay({ doc, onClose }: { doc: CertificateDoc; onClose: () => 
           <Button variant="secondary" icon={X} onClick={onClose}>
             Close
           </Button>
+          {doc.verificationUrl && (
+            <Button variant="secondary" icon={ExternalLink} onClick={() => window.open(doc.verificationUrl as string, '_blank', 'noopener')}>
+              View public certificate
+            </Button>
+          )}
           <Button variant="primary" icon={Printer} onClick={() => window.print()}>
             Print
           </Button>

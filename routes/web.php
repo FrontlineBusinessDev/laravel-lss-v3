@@ -76,6 +76,7 @@ use App\Http\Controllers\v1\Trainee\MyInfo\MyInfoController as TraineeMyInfoCont
 use App\Http\Controllers\v1\Trainee\Payments\PaymentsController as TraineeSelfPaymentsController;
 use App\Http\Controllers\v1\Trainee\Ratings\RatingsController as TraineeRatingsController;
 use App\Http\Controllers\v1\Trainee\Tasks\TasksController as TraineeTasksController;
+use App\Http\Controllers\v1\PublicCertificateController;
 use App\Http\Controllers\v1\PublicRegistrationController;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
@@ -100,6 +101,12 @@ Route::post('/register/{token}', [PublicRegistrationController::class, 'store'])
 // HEAD as well as GET: some social scrapers issue a HEAD to validate the image
 // (content-type/length) before fetching it, and a HEAD-less route 405s them.
 Route::match(['get', 'head'], '/register/{token}/qr', [PublicRegistrationController::class, 'qr'])->name('public.register.qr');
+
+// Public certificate verification. Resolved by a certificate's system-generated
+// public_id (the QR/shareable link target) — never certificate_no, which is
+// sequential and therefore guessable. Guest-accessible.
+Route::get('/certificates/verify/{publicId}', [PublicCertificateController::class, 'show'])->name('public.certificates.show');
+Route::match(['get', 'head'], '/certificates/verify/{publicId}/qr', [PublicCertificateController::class, 'qr'])->name('public.certificates.qr');
 
 Route::middleware('guest')->group(function () {
     Route::inertia('/forgot-password', 'auth/forgot-password')->name('password.request');
@@ -399,6 +406,10 @@ Route::middleware('auth')->group(function () {
     // BaseController via crudModule, same as the settings sub-modules.
     Route::crudModule('/certificates/citations', CitationController::class, 'certificates.citations');
     Route::crudModule('/certificates/templates', CertificateTemplateController::class, 'certificates.templates');
+    Route::patch('/certificates/templates/{id}/set-default', [CertificateTemplateController::class, 'setDefault'])->name('certificates.templates.set-default');
+    // Full-record fetches (body_text / layout) for the Issue-certificate modal's live preview — deliberately not part of the lightweight lookup() dropdown response.
+    Route::get('/certificates/citations/{id}/preview-data', [CitationController::class, 'previewData'])->name('certificates.citations.preview-data');
+    Route::get('/certificates/templates/{id}/preview-data', [CertificateTemplateController::class, 'previewData'])->name('certificates.templates.preview-data');
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
     Route::crudModule('/announcements', AnnoucementController::class, 'announcements');
