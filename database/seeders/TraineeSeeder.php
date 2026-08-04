@@ -29,7 +29,7 @@ class TraineeSeeder extends Seeder
                     ->make();
 
                 if ($statuses[$i] === 'completed') {
-                    $trainee->date_completed = fake()->dateTimeBetween($batch->date_started, 'now');
+                    $trainee->date_completed = fake()->dateTimeBetween($batch->date_started, DatabaseSeeder::SEED_NOW);
                 }
                 if ($statuses[$i] === 'terminated') {
                     $trainee->termination_remarks = fake()->sentence();

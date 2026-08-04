@@ -29,7 +29,7 @@ class CertificateSeeder extends Seeder
             ->filter(fn(Trainees $trainee) => (float) ($trainee->completed_hours ?? 0) >= (float) $trainee->required_hours
                 && $trainee->outstanding_balance <= 0);
 
-        $year = now()->year;
+        $year = (int) date('Y', strtotime(DatabaseSeeder::SEED_NOW));
         $sequence = 1;
 
         foreach ($eligibleTrainees as $trainee) {
@@ -39,7 +39,7 @@ class CertificateSeeder extends Seeder
                 'certificate_no' => sprintf('CERT-%d-%04d', $year, $sequence++),
                 'citation_id' => $citationId,
                 'template_id' => $templateId,
-                'issued_at' => fake()->dateTimeBetween($trainee->date_completed ?? '2020-01-01', 'now'),
+                'issued_at' => fake()->dateTimeBetween($trainee->date_completed ?? '2020-01-01', DatabaseSeeder::SEED_NOW),
                 'issued_by' => $issuerId,
             ]);
         }
