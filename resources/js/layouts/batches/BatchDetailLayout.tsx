@@ -170,7 +170,7 @@ export default function BatchDetailLayout({
                         className="text-xs text-neutral-500"
                         data-cy="batch-detail-layout-p-9"
                     >
-                        {batch.academic_program?.name ?? '—'} ·{' '}
+                        {batch.academic_program_type?.name ?? '—'} ·{' '}
                         {batch.academic_industry?.name ?? '—'} · {setupLabel} ·
                         Created {created}
                     </p>
@@ -314,7 +314,7 @@ export default function BatchDetailLayout({
                         className="text-sm font-medium text-ink"
                         data-cy="batch-detail-layout-span-24"
                     >
-                        {batch.academic_program?.name ?? '—'}
+                        {batch.academic_program_type?.name ?? '—'}
                     </span>
                 </SummaryCard>
             </div>

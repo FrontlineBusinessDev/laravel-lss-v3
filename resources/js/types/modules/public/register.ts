@@ -16,7 +16,8 @@ export interface RegisterPayload {
     emergency_contact_name: string;
     emergency_contact_number: string;
     school_id: string;
-    academic_program_type_id: string;
+    academic_program_id: string;
+    academic_level_id: string;
     required_hours: string;
     resume: File | null;
     endorsement_letter: File | null;

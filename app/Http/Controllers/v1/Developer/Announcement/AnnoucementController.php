@@ -12,9 +12,14 @@ class AnnoucementController extends BaseController
 {
     protected string $model = Announcement::class;
     protected string $view = 'developer/announcements/index';
-    protected array $searchable = ['status', 'subject', 'audience'];
-    protected array $filterable = ['status', 'subject', 'audience', 'audience_type'];
+    protected array $searchable = ['status', 'subject', 'audience', 'description'];
+    protected array $filterable = ['status', 'subject', 'audience', 'audience_type', 'audience_batch_id', 'audience_user_ids', 'description'];
     protected array $sortable = ['status', 'subject', 'audience', 'scheduled_at'];
+    // audience_batch_id is a numeric FK — must match exactly, not LIKE '%id%'.
+    protected array $exactFilters = ['status', 'audience_batch_id'];
+    // audience_user_ids is a JSON array column (trainee ids) — match if it
+    // contains ANY of the selected trainees, not a flat whereIn().
+    protected array $jsonContainsFilters = ['audience_user_ids' => 'audience_user_ids'];
     protected array $activeColumns = ['id', 'subject'];
     protected string $sortBy = 'subject';
 

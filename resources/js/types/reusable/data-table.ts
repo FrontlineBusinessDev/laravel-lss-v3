@@ -21,6 +21,13 @@ export interface ColumnDef<T = object> {
     width?: string;
     type?: string;
     typeData?: string[] | Record<string, unknown>[];
+    /**
+     * Drives automatic value formatting in `formatCell` (see
+     * components/table/utils) instead of a bespoke `render` callback:
+     * 'date' → formatDate, 'datetime' → formatDateTime, 'date-short' →
+     * formatDateShort (all from '@/lib/date'). Ignored when `render` is set.
+     */
+    formatType?: 'date' | 'datetime' | 'date-short';
     exactFilters?: boolean;
     // | { label: string; value: unknown }[];
     render?: (value: unknown, row: T) => ReactNode;
@@ -31,6 +38,15 @@ export interface ColumnDef<T = object> {
      * (e.g. changing Industry clears the dependent Program filter).
      */
     filterResets?: string[];
+    /**
+     * Controls whether this filter is shown in the filter panel, based on the
+     * current values of every column filter. Omit to always show it.
+     * Lets one column's filter conditionally reveal another's (e.g. an
+     * "audience_batch_id" filter that only appears once "audience_type" is
+     * set to "batch") without hard-coding that relationship into the table
+     * components — any module can reuse this the same way.
+     */
+    showWhen?: (filters: Record<string, string | string[]>) => boolean;
 }
 
 /** A single segment of the status filter segmented control. */
@@ -83,8 +99,7 @@ export interface DataTableProps<T> {
     renderCard?: (row: T, actions: CardActions) => ReactNode;
     renderModal?: (props: RenderModalProps<T>) => ReactNode;
     createUrl?:
-        | string
-        | ((payload: Partial<Record<string, unknown>>) => string);
+        string | ((payload: Partial<Record<string, unknown>>) => string);
     updateUrl?: (row: T) => string;
     updateMethod?: 'POST' | 'PUT' | 'PATCH';
     enableCreate?: boolean;
@@ -94,8 +109,8 @@ export interface DataTableProps<T> {
     restoreUrl?: (row: T) => string;
     archiveUrl?: (row: T) => string;
     deleteUrl?: (row: T) => string;
-    /** When set, the delete modal requires typing this exact value before Delete unlocks (GitHub-style). */
-    deleteConfirmText?: (row: T) => string;
+    /** When set, the delete modal requires typing this exact value before Delete unlocks (GitHub-style). Return undefined to skip the typed-confirm requirement for a given row. */
+    deleteConfirmText?: (row: T) => string | undefined;
     modalTitle?: (state: ModalState<T>) => string;
     onRestore?: (row: T, url: string) => Promise<void>;
     onArchive?: (row: T, url: string) => Promise<void>;

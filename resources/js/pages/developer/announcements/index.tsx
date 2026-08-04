@@ -111,7 +111,8 @@ export default function AnnouncementsPage() {
                         {row.subject}
                     </TextCell>
                     <TextCell muted={false} className="truncate">
-                        {row.audience_type}
+                        {row.audience_type}{' '}
+                        {row.audience_type == 'role' && `(${row.audience})`}
                     </TextCell>
                     <TextCell muted={false} className="truncate">
                         {formatDateTime(row.scheduled_at)}

@@ -6,7 +6,8 @@ export interface AppTrainees extends Record<string, unknown> {
     status: string;
     batch_id: number;
     school_id: number;
-    academic_program_type_id: number | null;
+    academic_program_id: number | null;
+    academic_level_id: number | null;
     public_url_id: string;
     first_name: string;
     last_name: string;
@@ -24,17 +25,17 @@ export interface AppTrainees extends Record<string, unknown> {
     date_completed: string | null;
     address: string;
     // Eager-loaded relations (serialized snake_case by Laravel) — see
-    // TraineesController::newQuery(). `academic_program`/`academic_level` are
-    // nested under `batch` since they live on the batch, not the trainee.
-    // `academic_program_type` is direct — collected per-trainee at registration.
+    // TraineesController::newQuery(). `academic_program_type` is nested under
+    // `batch` since it lives on the batch, not the trainee. `academic_program`/
+    // `academic_level` are direct — collected per-trainee at registration.
     batch?: {
         id: number;
         batch_code: string;
-        academic_program?: { id: number; name: string } | null;
-        academic_level?: { id: number; name: string } | null;
+        academic_program_type?: { id: number; name: string } | null;
     } | null;
     school?: { id: number; school_name: string } | null;
-    academic_program_type?: { id: number; name: string } | null;
+    academic_program?: { id: number; name: string } | null;
+    academic_level?: { id: number; name: string } | null;
     created_at: string;
     updated_at: string;
 }

@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\AcademicIndustry;
-use App\Models\AcademicProgram;
+use App\Models\AcademicProgramType;
 use App\Models\Batches;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -28,7 +28,7 @@ class BatchesFactory extends Factory
             'projected_end_date' => (clone $dateStarted)->modify('+' . fake()->numberBetween(4, 12) . ' weeks'),
             'setup' => fake()->randomElement(['f2f', 'online']),
             'academic_industry_id' => AcademicIndustry::query()->inRandomOrder()->value('id'),
-            'academic_program_id' => AcademicProgram::query()->inRandomOrder()->value('id'),
+            'academic_program_type_id' => AcademicProgramType::query()->inRandomOrder()->value('id'),
         ];
     }
 

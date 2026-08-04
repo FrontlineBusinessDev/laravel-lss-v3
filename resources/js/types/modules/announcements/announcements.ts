@@ -1,6 +1,7 @@
 import { formatDateTime } from '@/lib/date';
+import { apiFetchJson } from '@/lib/apiFetch';
 import type { ColumnDef } from '@/types/reusable/data-table';
-import { FieldDef } from '@/types/reusable/fields';
+import { FieldDef, FieldOption, loadLookupOptions } from '@/types/reusable/fields';
 import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 /**
@@ -34,6 +35,23 @@ export const AUDIENCE_ROLE_OPTIONS = [
     { value: 'trainee', label: 'Trainees' },
     { value: 'trainer', label: 'Trainers' },
 ] as const;
+
+/**
+ * Shared trainee option loader for the "Custom group" audience — used by both
+ * the create/edit modal's trainee multi-select and the list filter panel's
+ * dependent "Trainees" filter, so the two stay in sync automatically.
+ */
+export async function loadTraineeOptions(query: string): Promise<FieldOption[]> {
+    const res = await apiFetchJson<{
+        data: { id: number; first_name: string; last_name: string }[];
+    }>(
+        `/trainees/pagination-search?filters[status]=active&per_page=50&search=${encodeURIComponent(query)}`,
+    );
+    return (res.data?.data ?? []).map((p) => ({
+        value: String(p.id),
+        label: `${p.first_name} ${p.last_name}`,
+    }));
+}
 
 export type AnnouncementInput = Partial<
     Pick<
@@ -72,9 +90,44 @@ export const columns: ColumnDef<Announcements>[] = [
         filterable: true,
         type: 'select',
         typeData: AUDIENCE_TYPE_OPTIONS.map((o) => ({ ...o })),
+        // The dependent filters below only make sense for one audience_type
+        // each, so clear whichever doesn't match whenever this changes.
+        filterResets: ['audience_batch_id', 'audience', 'audience_user_ids'],
         render: (value) =>
             AUDIENCE_TYPE_OPTIONS.find((o) => o.value === value)?.label ??
             String(value ?? ''),
+    },
+    {
+        // Only relevant once Audience is set to "Specific batch" — see
+        // audience_type's showWhen-driven reveal above.
+        key: 'audience_batch_id',
+        label: 'Batch',
+        filterable: true,
+        sortable: false,
+        type: 'async-select',
+        loadOptions: (q) => loadLookupOptions('/batches', q, 'batch_code'),
+        showWhen: (filters) => filters.audience_type === 'batch',
+    },
+    {
+        // Only relevant once Audience is set to "Specific role".
+        key: 'audience',
+        label: 'Role',
+        filterable: true,
+        sortable: false,
+        type: 'select',
+        typeData: AUDIENCE_ROLE_OPTIONS.map((o) => ({ ...o })),
+        showWhen: (filters) => filters.audience_type === 'role',
+    },
+    {
+        // Only relevant once Audience is set to "Custom group" — mirrors the
+        // modal's trainee multi-select for the same audience_type.
+        key: 'audience_user_ids',
+        label: 'Trainees',
+        filterable: true,
+        sortable: false,
+        type: 'async-multi-select',
+        loadOptions: loadTraineeOptions,
+        showWhen: (filters) => filters.audience_type === 'custom',
     },
     {
         key: 'scheduled_at',

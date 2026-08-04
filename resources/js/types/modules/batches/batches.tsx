@@ -18,15 +18,13 @@ export interface AppBatches extends Record<string, unknown> {
     projected_end_date: string | null;
     setup: 'f2f' | 'online';
     academic_industry_id: number;
-    academic_program_id: number;
-    academic_level_id: number | null;
+    academic_program_type_id: number;
     trainees_count?: number;
     is_public_url_enable?: boolean;
     // Eager-loaded relations (serialized snake_case by Laravel) — present when
     // the list query uses `with()`. Used for list cells + async-select labels.
     academic_industry?: { id: number; name: string } | null;
-    academic_program?: { id: number; name: string } | null;
-    academic_level?: { id: number; name: string } | null;
+    academic_program_type?: { id: number; name: string } | null;
     trainers?: { id: number; first_name: string; last_name: string; email: string }[];
     created_at: string;
     updated_at: string;
@@ -49,20 +47,12 @@ export const STATUS_OPTIONS: FieldOption[] = [
 export const columns: ColumnDef<AppBatches>[] = [
     { key: 'batch_code', label: 'Batch Code', searchable: true },
     {
-        key: 'academic_program_id',
-        label: 'Academic Program',
+        key: 'academic_program_type_id',
+        label: 'Academic Program Type',
         type: 'async-select',
         filterable: true,
         sortable: false,
-        loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
-    },
-    {
-        key: 'academic_level_id',
-        label: 'Academic Level',
-        type: 'async-select',
-        filterable: true,
-        sortable: false,
-        loadOptions: (q) => loadLookupOptions('/settings/academic/level', q),
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
     },
     {
         key: 'academic_industry_id',
@@ -109,24 +99,14 @@ export const columns: ColumnDef<AppBatches>[] = [
 // intentionally absent — both are system-generated and protected from input.
 export const fields: FieldDef<AppBatches>[] = [
     {
-        key: 'academic_program_id',
-        label: 'Academic Program',
+        key: 'academic_program_type_id',
+        label: 'Academic Program Type',
         type: 'async-select',
         required: true,
-        placeholder: 'Select program…',
+        placeholder: 'Select program type…',
         colSpan: 2,
-        loadOptions: (q) => loadLookupOptions('/settings/academic/program', q),
-        initialLabel: (row) => row.academic_program?.name,
-    },
-    {
-        key: 'academic_level_id',
-        label: 'Academic Level',
-        type: 'async-select',
-        required: true,
-        placeholder: 'Select academic level…',
-        colSpan: 2,
-        loadOptions: (q) => loadLookupOptions('/settings/academic/level', q),
-        initialLabel: (row) => row.academic_level?.name,
+        loadOptions: (q) => loadLookupOptions('/settings/academic/program-type', q),
+        initialLabel: (row) => row.academic_program_type?.name,
     },
     {
         key: 'academic_industry_id',

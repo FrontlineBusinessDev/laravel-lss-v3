@@ -28,7 +28,7 @@ class BatchViewController extends BaseController
         $batch = Batches::query()
             ->with([
                 'academicIndustry:id,name',
-                'academicProgram:id,name',
+                'academicProgramType:id,name',
             ])
             ->withCount('trainees')
             ->findOrFail($id);

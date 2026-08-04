@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
 import {
     SelectField,
@@ -8,7 +7,6 @@ import {
 import { Modal } from '@/components/Modal';
 import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { apiFetchJson } from '@/lib/apiFetch';
 import type {
     AnnouncementInput,
     Announcements,
@@ -16,8 +14,10 @@ import type {
 import {
     AUDIENCE_ROLE_OPTIONS,
     AUDIENCE_TYPE_OPTIONS,
+    loadTraineeOptions,
 } from '@/types/modules/announcements/announcements';
-import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
+import { loadLookupOptions } from '@/types/reusable/fields';
+import { useEffect, useState } from 'react';
 
 interface AddAnnouncementModalProps {
     open: boolean;
@@ -37,18 +37,6 @@ function emptyValues(): AnnouncementInput {
         audience_user_ids: [],
         scheduled_at: '',
     };
-}
-
-async function loadTraineeOptions(query: string): Promise<FieldOption[]> {
-    const res = await apiFetchJson<{
-        data: { id: number; first_name: string; last_name: string }[];
-    }>(
-        `/trainees/pagination-search?filters[status]=active&per_page=50&search=${encodeURIComponent(query)}`,
-    );
-    return (res.data?.data ?? []).map((p) => ({
-        value: String(p.id),
-        label: `${p.first_name} ${p.last_name}`,
-    }));
 }
 
 export function AddAnnouncementModal({

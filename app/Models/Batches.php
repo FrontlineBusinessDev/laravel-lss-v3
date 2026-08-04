@@ -23,8 +23,7 @@ class Batches extends Model
         'projected_end_date',
         'setup',
         'academic_industry_id',
-        'academic_program_id',
-        'academic_level_id',
+        'academic_program_type_id',
     ];
 
     protected $casts = [
@@ -38,14 +37,9 @@ class Batches extends Model
         return $this->belongsTo(AcademicIndustry::class, 'academic_industry_id');
     }
 
-    public function academicProgram(): BelongsTo
+    public function academicProgramType(): BelongsTo
     {
-        return $this->belongsTo(AcademicProgram::class, 'academic_program_id');
-    }
-
-    public function academicLevel(): BelongsTo
-    {
-        return $this->belongsTo(AcademicLevel::class, 'academic_level_id');
+        return $this->belongsTo(AcademicProgramType::class, 'academic_program_type_id');
     }
 
     public function trainees(): HasMany

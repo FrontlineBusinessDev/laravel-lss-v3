@@ -198,7 +198,7 @@ export default function BatchesListPage() {
                         {row.batch_code}
                     </TextCell>
                     <TextCell muted data-cy="index-text-cell-6">
-                        {row.academic_program?.name ?? '—'}
+                        {row.academic_program_type?.name ?? '—'}
                     </TextCell>
                     <TextCell muted data-cy="index-text-cell-7">
                         {row.academic_industry?.name ?? '—'}

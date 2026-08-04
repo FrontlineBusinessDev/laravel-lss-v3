@@ -1,5 +1,6 @@
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import TrainerTraineeDetailLayout from '@/layouts/trainees/TrainerTraineeDetailLayout';
+import { formatDate } from '@/lib/date';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
@@ -21,7 +22,7 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                     <Field label="School" value={trainee.school?.school_name} />
                     <Field
                         label="Program"
-                        value={trainee.batch?.academic_program?.name}
+                        value={trainee.academic_program?.name}
                     />
                     <Field
                         label="Industry"
@@ -29,11 +30,11 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                     />
                     <Field
                         label="Level"
-                        value={trainee.batch?.academic_level?.name}
+                        value={trainee.academic_level?.name}
                     />
                     <Field
                         label="Program type"
-                        value={trainee.academic_program_type?.name}
+                        value={trainee.batch?.academic_program_type?.name}
                     />
                     <Field
                         label="Setup"
@@ -47,7 +48,7 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                         label="Completed hours"
                         value={trainee.completed_hours ? `${trainee.completed_hours} hrs` : null}
                     />
-                    <Field label="Date completed" value={trainee.date_completed} />
+                    <Field label="Date completed" value={formatDate(trainee.date_completed)} />
                 </div>
             </TrainerTraineeDetailLayout>
         </TrainerLayout>

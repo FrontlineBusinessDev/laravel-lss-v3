@@ -72,7 +72,7 @@ class OgDoctor extends Command
     private function resolveBatch(?string $token): ?Batches
     {
         $query = Batches::query()
-            ->with(['academicProgram:id,name'])
+            ->with(['academicProgramType:id,name'])
             ->whereNotNull('public_registration_url_id');
 
         if ($token !== null) {
