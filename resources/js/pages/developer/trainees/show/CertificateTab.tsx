@@ -11,6 +11,7 @@ import {
 import { renderCitation } from '@/pages/developer/certificates/certificateUtils';
 import { IssueCertificateModal } from '@/pages/developer/certificates/IssueCertificateModal';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import { formatToTwoDecimals } from '@/lib/number';
 
 function buildDoc(trainee: TraineeDetail): CertificateDoc {
     const subtitle = [
@@ -32,13 +33,17 @@ function buildDoc(trainee: TraineeDetail): CertificateDoc {
         issuedDate: trainee.certificate?.issued_at,
         template: trainee.certificate?.template,
         // Frozen at issue/reissue time — not the trainee's current live outcomes.
-        achievedOutcomes: (trainee.certificate?.learning_outcomes_snapshot ?? []).map(
-            (o) => o.title,
-        ),
+        achievedOutcomes: (
+            trainee.certificate?.learning_outcomes_snapshot ?? []
+        ).map((o) => o.title),
     };
 }
 
-export default function CertificateTab({ trainee }: { trainee: TraineeDetail }) {
+export default function CertificateTab({
+    trainee,
+}: {
+    trainee: TraineeDetail;
+}) {
     const [printing, setPrinting] = useState(false);
     const [issueOpen, setIssueOpen] = useState(false);
 
@@ -117,10 +122,13 @@ export default function CertificateTab({ trainee }: { trainee: TraineeDetail }) 
                                 className="mb-4 rounded-md bg-warning-50 px-3.5 py-2.5 text-xs text-warning-800"
                                 data-cy="certificate-tab-div-certificate-can-only-be-generated-once"
                             >
-                                Certificate can only be issued once the
-                                trainee completes {trainee.required_hours}{' '}
-                                required hours ({completedHours} /{' '}
-                                {trainee.required_hours} so far).
+                                Certificate can only be issued once the trainee
+                                completes{' '}
+                                {formatToTwoDecimals(trainee.required_hours)}{' '}
+                                required hours (
+                                {formatToTwoDecimals(completedHours)} /{' '}
+                                {formatToTwoDecimals(trainee.required_hours)} so
+                                far).
                             </div>
                         )}
 

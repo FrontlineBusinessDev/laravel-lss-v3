@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import { Pencil, X, Check } from 'lucide-react';
 import { traineeService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
-import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { Button } from '@/components/Button';
-import { TextField, TextAreaField } from '@/components/FormField';
+import { Field as FormField } from '@/components/form/Field';
+import { TextAreaField, TextField } from '@/components/FormField';
 import { RequiredHoursCompletedPill } from '@/components/RatingsBadges';
 import { useToast } from '@/components/Toast';
-import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
-import { Field as FormField } from '@/components/form/Field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
-import { loadLookupOptions } from '@/types/reusable/fields';
+import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import { formatDate } from '@/lib/date';
+import { formatToTwoDecimals } from '@/lib/number';
 import { getHoursProgress } from '@/lib/ratings';
+import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import { loadLookupOptions } from '@/types/reusable/fields';
 import { router } from '@inertiajs/react';
+import { Check, Pencil, X } from 'lucide-react';
+import { useState } from 'react';
 
 function Field({
     label,
@@ -148,8 +149,9 @@ export default function AcademicInfoTab({
             showToast('Academic information updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            const apiErrors = (error as Error & { errors?: Record<string, string[]> })
-                .errors;
+            const apiErrors = (
+                error as Error & { errors?: Record<string, string[]> }
+            ).errors;
             if (apiErrors) {
                 const mapped: Record<string, string> = {};
                 Object.entries(apiErrors).forEach(([key, msgs]) => {
@@ -231,69 +233,71 @@ export default function AcademicInfoTab({
                         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
                         data-cy="academic-info-tab-div-12"
                     >
-                        {editing
-                            ? LOOKUPS.map((lookup) => (
-                                  <FormField
-                                      key={lookup.key}
-                                      label={lookup.label}
-                                      error={errors[lookup.key]}
-                                      data-cy={`academic-info-tab-field-${lookup.key}`}
-                                  >
-                                      <AsyncSelectField
-                                          value={draft[lookup.key]}
-                                          onChange={(v) =>
-                                              set(
-                                                  lookup.key,
-                                                  v as FormState[typeof lookup.key],
-                                              )
-                                          }
-                                          loadOptions={(q) =>
-                                              loadLookupOptions(
-                                                  lookup.endpoint,
-                                                  q,
-                                                  lookup.columnNameShow,
-                                              )
-                                          }
-                                          initialLabel={
-                                              (
-                                                  trainee[lookup.rel] as {
-                                                      name?: string;
-                                                      school_name?: string;
-                                                  } | null
-                                              )?.name ??
-                                              (
-                                                  trainee[lookup.rel] as {
-                                                      school_name?: string;
-                                                  } | null
-                                              )?.school_name
-                                          }
-                                          placeholder={lookup.placeholder}
-                                          error={errors[lookup.key]}
-                                      />
-                                  </FormField>
-                              ))
-                            : (
-                                  <>
-                                      <Field
-                                          label="School"
-                                          value={trainee.school?.school_name ?? ''}
-                                          data-cy="academic-info-tab-field-school"
-                                      />
-                                      <Field
-                                          label="Academic program"
-                                          value={trainee.academic_program?.name ?? ''}
-                                          data-cy="academic-info-tab-field-academic-program"
-                                      />
-                                      <Field
-                                          label="Academic level"
-                                          value={trainee.academic_level?.name ?? ''}
-                                          data-cy="academic-info-tab-field-academic-level"
-                                      />
-                                  </>
-                              )}
+                        {editing ? (
+                            LOOKUPS.map((lookup) => (
+                                <FormField
+                                    key={lookup.key}
+                                    label={lookup.label}
+                                    error={errors[lookup.key]}
+                                    data-cy={`academic-info-tab-field-${lookup.key}`}
+                                >
+                                    <AsyncSelectField
+                                        value={draft[lookup.key]}
+                                        onChange={(v) =>
+                                            set(
+                                                lookup.key,
+                                                v as FormState[typeof lookup.key],
+                                            )
+                                        }
+                                        loadOptions={(q) =>
+                                            loadLookupOptions(
+                                                lookup.endpoint,
+                                                q,
+                                                lookup.columnNameShow,
+                                            )
+                                        }
+                                        initialLabel={
+                                            (
+                                                trainee[lookup.rel] as {
+                                                    name?: string;
+                                                    school_name?: string;
+                                                } | null
+                                            )?.name ??
+                                            (
+                                                trainee[lookup.rel] as {
+                                                    school_name?: string;
+                                                } | null
+                                            )?.school_name
+                                        }
+                                        placeholder={lookup.placeholder}
+                                        error={errors[lookup.key]}
+                                    />
+                                </FormField>
+                            ))
+                        ) : (
+                            <>
+                                <Field
+                                    label="School"
+                                    value={trainee.school?.school_name ?? ''}
+                                    data-cy="academic-info-tab-field-school"
+                                />
+                                <Field
+                                    label="Academic program"
+                                    value={trainee.academic_program?.name ?? ''}
+                                    data-cy="academic-info-tab-field-academic-program"
+                                />
+                                <Field
+                                    label="Academic level"
+                                    value={trainee.academic_level?.name ?? ''}
+                                    data-cy="academic-info-tab-field-academic-level"
+                                />
+                            </>
+                        )}
                         <Field
                             label="Program type"
-                            value={trainee.batch?.academic_program_type?.name ?? ''}
+                            value={
+                                trainee.batch?.academic_program_type?.name ?? ''
+                            }
                             data-cy="academic-info-tab-field-program-type"
                         />
                         <Field
@@ -316,7 +320,7 @@ export default function AcademicInfoTab({
                         >
                             <Field
                                 label="Required hours"
-                                value={`${hours.required} hrs`}
+                                value={`${formatToTwoDecimals(hours.required)} hrs`}
                                 data-cy="academic-info-tab-field-required-hours"
                             />
                             <Field
@@ -417,7 +421,8 @@ export default function AcademicInfoTab({
                             className="mt-1.5 flex items-center gap-2 text-xs text-neutral-500"
                             data-cy="academic-info-tab-div-of"
                         >
-                            {hours.completed} of {hours.required} hrs completed
+                            {formatToTwoDecimals(hours.completed)} of{' '}
+                            {formatToTwoDecimals(hours.required)} hrs completed
                             {hours.hoursComplete && (
                                 <RequiredHoursCompletedPill />
                             )}

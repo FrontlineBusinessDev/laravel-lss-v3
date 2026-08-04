@@ -1,13 +1,14 @@
+import type { ReportBatch } from '@/api-service-layer/developer/report';
+import { StatusBadge } from '@/components/StatusBadge';
+import { formatToTwoDecimals } from '@/lib/number';
+import { cn } from '@/lib/utils';
 import {
+    CheckCircle2,
     ChevronDown,
     ChevronRight,
     Users2,
-    CheckCircle2,
     UserX,
 } from 'lucide-react';
-import { StatusBadge } from '@/components/StatusBadge';
-import { cn } from '@/lib/utils';
-import type { ReportBatch } from '@/api-service-layer/developer/report';
 import { formatCurrency } from '../reportsUtils';
 
 interface AnnualBatchCardProps {
@@ -224,7 +225,11 @@ export function AnnualBatchCard({
                                             className="px-4 py-2 font-mono text-xs text-neutral-600"
                                             data-cy="annual-batch-card-td-3"
                                         >
-                                            {t.completedHrs}/{t.requiredHrs}
+                                            {formatToTwoDecimals(
+                                                t.completedHrs,
+                                            )}
+                                            /
+                                            {formatToTwoDecimals(t.requiredHrs)}
                                             {completedHours && (
                                                 <CheckCircle2
                                                     size={12}
