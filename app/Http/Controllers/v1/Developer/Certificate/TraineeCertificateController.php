@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,8 +37,10 @@ class TraineeCertificateController extends Controller
             ->with([
                 'batch:id,batch_code',
                 'school:id,school_name',
+                'academicProgram:id,name',
                 'certificate.citation:id,title,body_text',
                 'certificate.template',
+                'certificate.issuedBy:id,first_name,last_name',
             ]);
 
         $search = trim((string) $request->input('search', ''));
@@ -152,13 +155,16 @@ class TraineeCertificateController extends Controller
         $certificate = DB::transaction(function () use ($traineeModel, $validated) {
             $existing = TraineeCertificate::where('trainee_id', $traineeModel->id)->first();
             $certificateNo = $existing?->certificate_no ?? $this->nextCertificateNo();
+            $publicId = $existing?->public_id ?? (string) Str::ulid();
+            $templateId = $validated['template_id'] ?? $this->defaultTemplateId('trainee');
 
             return TraineeCertificate::updateOrCreate(
                 ['trainee_id' => $traineeModel->id],
                 [
                     'certificate_no' => $certificateNo,
+                    'public_id' => $publicId,
                     'citation_id' => $validated['citation_id'],
-                    'template_id' => $validated['template_id'] ?? null,
+                    'template_id' => $templateId,
                     'issued_at' => now()->toDateString(),
                     'issued_by' => auth()->id(),
                     'learning_outcomes_snapshot' => $this->currentOutcomesSnapshot($traineeModel),
@@ -217,5 +223,14 @@ class TraineeCertificateController extends Controller
         $sequence = TraineeCertificate::whereYear('created_at', $year)->count() + 1;
 
         return sprintf('CERT-%d-%04d', $year, $sequence);
+    }
+
+    /** Resolves the active default template for the given type, used when no template is explicitly chosen at issuance. */
+    private function defaultTemplateId(string $certificateType): ?int
+    {
+        return CertificateTemplate::where('certificate_type', $certificateType)
+            ->where('is_default', true)
+            ->where('status', 'active')
+            ->value('id');
     }
 }

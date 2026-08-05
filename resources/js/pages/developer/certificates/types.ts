@@ -15,7 +15,7 @@ export interface CertificateCitation {
   [key: string]: unknown;
 }
 
-export type TemplateElementType = 'text' | 'image' | 'qr' | 'line' | 'outcomes' | 'shape';
+export type TemplateElementType = 'text' | 'image' | 'qr' | 'line' | 'outcomes' | 'shape' | 'signature';
 export type TemplateAlign = 'left' | 'center' | 'right';
 export type TemplateShapeKind = 'rectangle' | 'circle';
 
@@ -30,7 +30,7 @@ export interface TemplateElement {
   height?: number;
   /** Degrees, clockwise. Defaults to 0 when unset. */
   rotation?: number;
-  /** Image URL for `type: 'image'` elements — pasted, not uploaded (v1). May be a data URL after cropping. */
+  /** Image URL for `type: 'image'`/`type: 'signature'` elements — pasted, not uploaded (v1). May be a data URL after cropping. */
   src?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
@@ -70,7 +70,9 @@ interface IssuedCertificate {
   issued_at: string | null;
   citation?: { id: number; title: string; body_text?: string } | null;
   template?: CertificateTemplate | null;
+  issued_by?: { id: number; name: string } | null;
   learning_outcomes_snapshot?: { id: number; title: string }[] | null;
+  verification_url?: string | null;
 }
 
 export interface TraineeCertificateRow {
@@ -82,6 +84,7 @@ export interface TraineeCertificateRow {
   completed_hours: string;
   batch?: { id: number; batch_code: string } | null;
   school?: { id: number; school_name: string } | null;
+  academic_program?: { id: number; name: string } | null;
   certificate?: IssuedCertificate | null;
   [key: string]: unknown;
 }

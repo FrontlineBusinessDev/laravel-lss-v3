@@ -12,6 +12,7 @@ class SeminarCertificate extends Model
     protected $fillable = [
         'seminar_participant_id',
         'certificate_no',
+        'public_id',
         'citation_id',
         'template_id',
         'issued_at',
@@ -21,6 +22,8 @@ class SeminarCertificate extends Model
     protected $casts = [
         'issued_at' => 'date',
     ];
+
+    protected $appends = ['verification_url'];
 
     public function participant(): BelongsTo
     {
@@ -40,5 +43,11 @@ class SeminarCertificate extends Model
     public function issuedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'issued_by');
+    }
+
+    /** Public, unguessable QR/verification link — null until first issuance stamps public_id. */
+    public function getVerificationUrlAttribute(): ?string
+    {
+        return $this->public_id ? route('public.certificates.show', $this->public_id) : null;
     }
 }

@@ -49,6 +49,19 @@ class CitationController extends BaseController
     }
 
     /**
+     * Full citation record (including body_text, deliberately excluded from
+     * lookup()'s $activeColumns) — used by the Issue-certificate modal to
+     * build a live preview of the certificate before confirming issuance.
+     */
+    public function previewData(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        return $this->sendResponse($model);
+    }
+
+    /**
      * Extends the base lookup() with an optional applies_to filter, so the
      * Issue-certificate modal's Citation select only offers citations valid
      * for the certificate type it's issuing (trainee/seminar/both).

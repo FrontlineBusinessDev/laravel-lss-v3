@@ -1,6 +1,6 @@
 import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type WheelEvent } from 'react';
 import {
     Ellipse,
     Group,
@@ -12,6 +12,7 @@ import {
     Text,
     Transformer,
 } from 'react-konva';
+import { renderCitation } from '../certificateUtils';
 import type { TemplateElement } from '../types';
 import {
     computeSnap,
@@ -20,9 +21,10 @@ import {
     pxToPct,
     splitIntoColumns,
     stageSize
-    
+
 } from './templateStage';
 import type {Guide} from './templateStage';
+import { ZOOM_MAX, ZOOM_MIN } from './TemplateCanvasToolbar';
 import { useHtmlImage } from './useHtmlImage';
 
 interface TemplateCanvasProps {
@@ -35,6 +37,8 @@ interface TemplateCanvasProps {
     onSelect: (id: string | null) => void;
     onMove: (id: string, x: number, y: number) => void;
     onTransform: (id: string, patch: Partial<TemplateElement>) => void;
+    /** Ctrl/Cmd+wheel over the canvas adjusts zoom when provided. */
+    onZoomChange?: (zoom: number) => void;
 }
 
 /** Must match the border width applied to the stage wrapper below. */
@@ -47,6 +51,19 @@ const SAMPLE_TEXT: Record<string, string> = {
         'This is to certify that Juan Dela Cruz has completed the program.',
     certificateNo: 'Certificate No. PREVIEW-0000',
     issuedDate: 'Issued July 17, 2026',
+    courseTitle: 'Sample Course',
+    issuerName: 'Program Director',
+    completionDate: 'Issued July 17, 2026',
+    certificateId: 'Certificate No. PREVIEW-0000',
+};
+
+/** Sample values for the inline {{token}} chips, matching the vocabulary in TemplateElementPanel. */
+const SAMPLE_INLINE_TOKENS = {
+    trainee_name: SAMPLE_TEXT.recipientName,
+    course_title: SAMPLE_TEXT.courseTitle,
+    completion_date: 'July 17, 2026',
+    certificate_id: 'PREVIEW-0000',
+    issuer_name: SAMPLE_TEXT.issuerName,
 };
 
 const SAMPLE_OUTCOMES = [
@@ -63,7 +80,11 @@ function elementText(el: TemplateElement): string {
 return '';
 }
 
-    return el.token ? (SAMPLE_TEXT[el.token] ?? el.token) : el.text || 'Text';
+    if (el.token) {
+        return SAMPLE_TEXT[el.token] ?? el.token;
+    }
+
+    return el.text ? renderCitation(el.text, SAMPLE_INLINE_TOKENS) : 'Text';
 }
 
 function ElementNode({
@@ -88,7 +109,7 @@ function ElementNode({
     onTransformEnd: (e: KonvaEventObject<Event>) => void;
 }) {
     const rect = elementRect(el, stageWidth, stageHeight);
-    const image = useHtmlImage(el.type === 'image' ? el.src : undefined);
+    const image = useHtmlImage(el.type === 'image' || el.type === 'signature' ? el.src : undefined);
     const common = {
         id: el.id,
         x: rect.x,
@@ -148,7 +169,7 @@ function ElementNode({
         );
     }
 
-    if (el.type === 'image') {
+    if (el.type === 'image' || el.type === 'signature') {
         if (image) {
             return (
                 <KonvaImage
@@ -161,14 +182,27 @@ function ElementNode({
         }
 
         return (
-            <Rect
-                {...common}
-                width={rect.width}
-                height={rect.height}
-                fill={isSelected ? '#eff6ff' : '#fafafa'}
-                stroke="#d4d4d4"
-                dash={[6, 4]}
-            />
+            <Group {...common} width={rect.width} height={rect.height}>
+                <Rect
+                    width={rect.width}
+                    height={rect.height}
+                    fill={isSelected ? '#eff6ff' : '#fafafa'}
+                    stroke="#d4d4d4"
+                    dash={[6, 4]}
+                />
+                {el.type === 'signature' && (
+                    <Text
+                        width={rect.width}
+                        height={rect.height}
+                        text="Signature"
+                        fontSize={11}
+                        fill="#a3a3a3"
+                        align="center"
+                        verticalAlign="middle"
+                        listening={false}
+                    />
+                )}
+            </Group>
         );
     }
 
@@ -242,6 +276,7 @@ export function TemplateCanvas({
     onSelect,
     onMove,
     onTransform,
+    onZoomChange,
 }: TemplateCanvasProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const stageRef = useRef<Konva.Stage>(null);
@@ -312,6 +347,16 @@ return;
         });
     }, [elements]);
 
+    function handleWheel(e: WheelEvent<HTMLDivElement>) {
+        if (!onZoomChange || !(e.ctrlKey || e.metaKey)) {
+return;
+}
+
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        onZoomChange(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number((zoom + delta).toFixed(2)))));
+    }
+
     function otherRects(excludeId: string) {
         return elements
             .filter((e) => e.id !== excludeId)
@@ -366,8 +411,8 @@ return;
     }
 
     return (
-        <div ref={containerRef} data-cy="template-canvas-div">
-            <div className="overflow-auto">
+        <div ref={containerRef} className="flex h-full min-h-0 flex-col" data-cy="template-canvas-div">
+            <div className="min-h-0 flex-1 overflow-auto lss-scrollbar" onWheel={handleWheel}>
                 <div
                     className="shadow-card"
                     style={{ display: 'inline-block', lineHeight: 0, border: `${BORDER_WIDTH}px solid ${borderColor}` }}

@@ -10,6 +10,7 @@ import { router } from '@inertiajs/react';
 import { Check, KeyRound, Pencil, Unlink, X } from 'lucide-react';
 import { useState } from 'react';
 import { ApprovalSection } from './ApprovalSection';
+import { formatDateShort } from '@/lib/date';
 
 function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
     const { showToast } = useToast();
@@ -169,7 +170,9 @@ export default function PersonalInfoTab({ trainee }: Props) {
             router.reload({ only: ['trainee'] });
         } catch (error) {
             showToast(
-                error instanceof ApiError ? error.message : 'Failed to save changes',
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to save changes',
                 'error',
             );
         } finally {
@@ -201,7 +204,7 @@ export default function PersonalInfoTab({ trainee }: Props) {
                             />
                             <Field
                                 label="Birth date"
-                                value={saved.birthday}
+                                value={formatDateShort(saved.birthday)}
                                 data-cy="personal-info-tab-field-birth-date"
                             />
                             <Field

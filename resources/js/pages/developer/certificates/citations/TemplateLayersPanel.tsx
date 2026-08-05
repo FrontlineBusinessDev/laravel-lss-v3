@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Image, ListChecks, Minus, QrCode, Square, Type } from 'lucide-react';
+import { ChevronDown, ChevronUp, Image, ListChecks, Minus, PenTool, QrCode, Square, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TemplateElement } from '../types';
 import { reorder } from './templateStage';
@@ -17,6 +17,7 @@ const TYPE_ICON: Record<TemplateElement['type'], typeof Type> = {
   line: Minus,
   outcomes: ListChecks,
   shape: Square,
+  signature: PenTool,
 };
 
 function elementLabel(el: TemplateElement): string {

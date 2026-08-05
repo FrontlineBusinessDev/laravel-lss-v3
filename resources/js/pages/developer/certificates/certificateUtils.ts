@@ -9,6 +9,12 @@ export interface CitationTokens {
   hours?: string | number;
   seminarTopic?: string;
   date?: string;
+  /** Inline {{trainee_name}} etc. quick-insert tokens available in template text elements — see TemplateElementPanel's token chips. */
+  trainee_name?: string;
+  course_title?: string;
+  completion_date?: string;
+  certificate_id?: string;
+  issuer_name?: string;
 }
 
 /** Replaces {{token}} placeholders in a citation body with the given values. Unknown/missing tokens collapse to an em dash. */

@@ -7,13 +7,20 @@ import { AttachmentViewerModal } from '@/components/modal/AttachmentViewerModal'
 import { StatCard } from '@/components/StatCard';
 import { BillingOverridePanel } from '@/components/trainees/BillingOverridePanel';
 import { useToast } from '@/components/Toast';
-import { FileUploadField, emptyFileFieldValue } from '@/hooks/use-file-upload-field';
+import {
+    FileUploadField,
+    emptyFileFieldValue,
+} from '@/hooks/use-file-upload-field';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
-import type { AppTraineePayment, TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import type {
+    AppTraineePayment,
+    TraineeDetail,
+} from '@/types/modules/trainees/trainee-detail';
 import type { FileFieldValue } from '@/types/reusable/fields';
 import { router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { formatDateTime } from '@/lib/date';
 
 const currency = (value: string | number) =>
     `₱${Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
@@ -35,9 +42,7 @@ export default function PaymentDetailsTab({
         notes: '',
         official_receipt_number: '',
     });
-    const [receipt, setReceipt] = useState<FileFieldValue>(
-        emptyFileFieldValue,
-    );
+    const [receipt, setReceipt] = useState<FileFieldValue>(emptyFileFieldValue);
 
     const handleRecord = async () => {
         const amount = Number(form.amount_paid);
@@ -62,7 +67,9 @@ export default function PaymentDetailsTab({
             router.reload({ only: ['trainee'] });
         } catch (error) {
             showToast(
-                error instanceof ApiError ? error.message : 'Failed to record payment',
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to record payment',
                 'error',
             );
         } finally {
@@ -77,7 +84,9 @@ export default function PaymentDetailsTab({
             router.reload({ only: ['trainee'] });
         } catch (error) {
             showToast(
-                error instanceof ApiError ? error.message : 'Failed to remove payment',
+                error instanceof ApiError
+                    ? error.message
+                    : 'Failed to remove payment',
                 'error',
             );
         }
@@ -213,10 +222,10 @@ export default function PaymentDetailsTab({
                                                 className="px-3.5 py-2.5 text-neutral-600"
                                                 data-cy="payment-details-tab-td-23"
                                             >
-                                                {p.payment_date}
+                                                {formatDateTime(p.payment_date)}
                                             </td>
                                             <td
-                                                className="px-3.5 py-2.5 font-medium text-ink"
+                                                className="px-3.5 py-2.5 text-right font-medium text-ink"
                                                 data-cy="payment-details-tab-td-24"
                                             >
                                                 {currency(p.amount_paid)}
@@ -241,9 +250,7 @@ export default function PaymentDetailsTab({
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            setViewingReceipt(
-                                                                p,
-                                                            )
+                                                            setViewingReceipt(p)
                                                         }
                                                         className="text-xs font-medium text-brand-600 hover:underline"
                                                         data-cy="payment-details-tab-button-view-receipt"
@@ -404,8 +411,7 @@ export default function PaymentDetailsTab({
                                   mime_type:
                                       viewingReceipt.receipt_mime_type ??
                                       'application/octet-stream',
-                                  file_size:
-                                      viewingReceipt.receipt_size ?? 0,
+                                  file_size: viewingReceipt.receipt_size ?? 0,
                                   view_url: viewingReceipt.receipt_view_url,
                                   download_url:
                                       viewingReceipt.receipt_download_url ??

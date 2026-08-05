@@ -1,5 +1,10 @@
 import { useRef, useState } from 'react';
-import { ArchiveRestore, Archive as ArchiveIcon, ShieldOff, Shuffle } from 'lucide-react';
+import {
+    ArchiveRestore,
+    Archive as ArchiveIcon,
+    ShieldOff,
+    Shuffle,
+} from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { SettingsListHeader, TextCell } from '@/components/settings';
 import { StatusBadge } from '@/components/StatusBadge';
