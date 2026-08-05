@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CertificateTemplateController extends BaseController
@@ -19,7 +20,7 @@ class CertificateTemplateController extends BaseController
     protected array $filterable = ['status', 'certificate_type'];
     protected array $exactFilters = ['status', 'certificate_type'];
     protected array $sortable = ['id', 'name', 'status', 'created_at'];
-    protected array $activeColumns = ['id', 'name', 'certificate_type'];
+    protected array $activeColumns = ['id', 'name', 'certificate_type', 'is_default'];
     protected string $sortBy = 'name';
 
     protected function storeRules(): array
@@ -29,7 +30,7 @@ class CertificateTemplateController extends BaseController
             'name' => ['required', 'string', 'max:255'],
             'layout' => ['required', 'array'],
             'layout.*.id' => ['required', 'string'],
-            'layout.*.type' => ['required', Rule::in(['text', 'image', 'qr', 'line', 'outcomes', 'shape'])],
+            'layout.*.type' => ['required', Rule::in(['text', 'image', 'qr', 'line', 'outcomes', 'shape', 'signature'])],
             'layout.*.x' => ['required', 'numeric'],
             'layout.*.y' => ['required', 'numeric'],
             'layout.*.width' => ['required', 'numeric'],
@@ -71,6 +72,43 @@ class CertificateTemplateController extends BaseController
         }
 
         return $validated;
+    }
+
+    /**
+     * Full template record (including layout, deliberately excluded from
+     * lookup()'s $activeColumns — templates can embed large data-URL images)
+     * — used by the Issue-certificate modal to build a live preview of the
+     * certificate before confirming issuance.
+     */
+    public function previewData(int|string $id): JsonResponse
+    {
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        return $this->sendResponse($model);
+    }
+
+    /**
+     * Marks this template as the default for its certificate_type, atomically
+     * unsetting whichever template previously held that flag so at most one
+     * default ever exists per type — the fallback TraineeCertificateController
+     * and SeminarCertificateController resolve to when no template is chosen.
+     */
+    public function setDefault(int|string $id): JsonResponse
+    {
+        /** @var CertificateTemplate $model */
+        $model = $this->resolveModel($id);
+        $this->authorize('update', $model);
+
+        DB::transaction(function () use ($model) {
+            CertificateTemplate::where('certificate_type', $model->certificate_type)
+                ->where('is_default', true)
+                ->update(['is_default' => false]);
+
+            $model->update(['is_default' => true]);
+        });
+
+        return $this->sendResponse($model->fresh(), 'Default template updated.');
     }
 
     /** Default (is_default) templates are protected from archiving — they're the fallback every issue flow relies on. */

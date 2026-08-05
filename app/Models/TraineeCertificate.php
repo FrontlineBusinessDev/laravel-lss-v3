@@ -13,6 +13,7 @@ class TraineeCertificate extends Model
         'trainee_id',
         'eligibility_status',
         'certificate_no',
+        'public_id',
         'citation_id',
         'template_id',
         'issued_at',
@@ -24,6 +25,8 @@ class TraineeCertificate extends Model
         'issued_at' => 'date',
         'learning_outcomes_snapshot' => 'array',
     ];
+
+    protected $appends = ['verification_url'];
 
     public function trainee(): BelongsTo
     {
@@ -43,5 +46,11 @@ class TraineeCertificate extends Model
     public function issuedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'issued_by');
+    }
+
+    /** Public, unguessable QR/verification link — null until first issuance stamps public_id. */
+    public function getVerificationUrlAttribute(): ?string
+    {
+        return $this->public_id ? route('public.certificates.show', $this->public_id) : null;
     }
 }

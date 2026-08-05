@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Archive, ArchiveRestore, Lock, Pencil } from 'lucide-react';
+import { Archive, ArchiveRestore, BadgeCheck, Lock, Pencil } from 'lucide-react';
 import { RowMenu, type RowMenuAction } from '@/components/RowMenu';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
 import type { ColumnDef } from '@/types/reusable/data-table';
+import { apiFetchJson } from '@/lib/apiFetch';
+import { useToast } from '@/components/Toast';
 import { cn } from '@/lib/utils';
 import type { CertificateTemplate, CertificateType } from '../types';
 import { CertificateTemplateBuilder } from './CertificateTemplateBuilder';
@@ -39,11 +41,13 @@ interface CertificateTemplateListProps {
 export function CertificateTemplateList({
     onRegisterOpenNew,
 }: CertificateTemplateListProps) {
+    const { showToast } = useToast();
     const [editing, setEditing] = useState<CertificateTemplate | null>(null);
     const [creatingType, setCreatingType] = useState<CertificateType | null>(
         null,
     );
     const [choosingType, setChoosingType] = useState(false);
+    const [settingDefaultId, setSettingDefaultId] = useState<number | null>(null);
     const [refreshTable, setRefreshTable] = useState<() => void>(
         () => () => {},
     );
@@ -51,6 +55,20 @@ export function CertificateTemplateList({
     useEffect(() => {
         onRegisterOpenNew?.(() => setChoosingType(true));
     }, [onRegisterOpenNew]);
+
+    async function handleSetDefault(row: CertificateTemplate) {
+        setSettingDefaultId(row.id);
+
+        try {
+            await apiFetchJson(`/certificates/templates/${row.id}/set-default`, { method: 'PATCH' });
+            showToast(`"${row.name}" is now the default ${row.certificate_type} template.`, 'success');
+            refreshTable();
+        } catch {
+            showToast('Failed to set default template.', 'error');
+        } finally {
+            setSettingDefaultId(null);
+        }
+    }
 
     function renderRow(
         row: CertificateTemplate,
@@ -76,6 +94,15 @@ export function CertificateTemplateList({
                         onClick: actions.onArchive,
                     },
         ];
+
+        if (row.status === 'active' && !row.is_default) {
+            menu.unshift({
+                label: settingDefaultId === row.id ? 'Setting default…' : 'Set as default',
+                icon: BadgeCheck,
+                disabled: settingDefaultId === row.id,
+                onClick: () => void handleSetDefault(row),
+            });
+        }
 
         return (
             <div

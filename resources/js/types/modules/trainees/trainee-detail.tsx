@@ -95,8 +95,10 @@ export interface AppTraineeCertificate {
     id: number;
     certificate_no: string;
     issued_at: string | null;
-    citation: { id: number; title: string } | null;
+    citation: { id: number; title: string; body_text?: string } | null;
     template?: CertificateTemplate | null;
+    issued_by?: { id: number; name: string } | null;
+    verification_url?: string | null;
     // Frozen at issue()/reissue() time — the outcomes the trainee had achieved
     // as of that moment, independent of their current live outcome state.
     learning_outcomes_snapshot?: { id: number; title: string }[] | null;

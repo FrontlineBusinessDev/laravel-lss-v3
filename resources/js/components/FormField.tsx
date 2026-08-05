@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'react';
+import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, ReactNode, Ref } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 function Label({
@@ -51,16 +51,18 @@ export function SelectField({
 interface TextAreaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   optional?: boolean;
+  ref?: Ref<HTMLTextAreaElement>;
 }
 export function TextAreaField({
   label,
   optional,
   className,
+  ref,
   ...props
 }: TextAreaFieldProps) {
   return <div className="mb-3.5" data-cy="form-field-div-12">
       <Label optional={optional} data-cy="form-field-label-13">{label}</Label>
-      <textarea className={cn(fieldBase, 'resize-none py-2', className)} rows={3} {...props} data-cy="form-field-textarea-14" />
+      <textarea ref={ref} className={cn(fieldBase, 'resize-none py-2', className)} rows={3} {...props} data-cy="form-field-textarea-14" />
     </div>;
 }
 export function InfoNote({

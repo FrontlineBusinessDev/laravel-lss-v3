@@ -2,6 +2,8 @@ import { Award, Download } from 'lucide-react';
 import { useState } from 'react';
 import { LogoMark } from '@/components/Logo';
 import { Button } from '@/components/Button';
+import { usePermission } from '@/hooks/use-permissions';
+import { renderCitation } from './certificateUtils';
 import { exportTemplateAsPdf, exportTemplateAsPng } from './certificateExport';
 import type { CertificateTemplate, TemplateElement } from './types';
 
@@ -12,6 +14,12 @@ export interface CertificateDoc {
   citationText: string;
   certificateNo: string;
   issuedDate?: string | null;
+  /** Course/program title — distinct from `subtitle`, which may mix program + industry. */
+  courseTitle?: string;
+  /** Name of the person/office issuing the certificate. */
+  issuerName?: string;
+  /** Public verification page URL (`/certificates/verify/{public_id}`) — its `/qr` suffix serves the QR PNG a `type: 'qr'` element renders. Unset for not-yet-issued certificates. */
+  verificationUrl?: string | null;
   /** When set, the certificate renders using this template's positioned layout instead of the plain layout below. */
   template?: CertificateTemplate | null;
   /** Learning outcomes achieved as of issue/reissue time (frozen snapshot). Only rendered on the plain (non-templated) layout. */
@@ -25,6 +33,19 @@ interface CertificateSheetProps {
   variant?: 'print' | 'preview';
   /** Adds a page-break after this sheet so multiple certificates each print on their own page. */
   breakAfter?: boolean;
+  /** Tailwind max-width class for the sheet itself — callers with more room (e.g. the public verification page) can size it up beyond the modal-friendly default. */
+  maxWidthClass?: string;
+}
+
+/** Whole-element token values, and the {{inline_token}} vocabulary insertable into any free-text element via TemplateElementPanel's quick-insert chips. */
+export function certificateDocTokens(doc: CertificateDoc) {
+  return {
+    trainee_name: doc.recipientName,
+    course_title: doc.courseTitle || doc.subtitle,
+    completion_date: doc.issuedDate || '',
+    certificate_id: doc.certificateNo,
+    issuer_name: doc.issuerName || '',
+  };
 }
 
 export function resolveElementText(el: TemplateElement, doc: CertificateDoc): string {
@@ -33,7 +54,11 @@ export function resolveElementText(el: TemplateElement, doc: CertificateDoc): st
   if (el.token === 'citationText') return doc.citationText;
   if (el.token === 'certificateNo') return `Certificate No. ${doc.certificateNo}`;
   if (el.token === 'issuedDate') return doc.issuedDate ? `Issued ${doc.issuedDate}` : 'Not yet issued';
-  return el.text ?? '';
+  if (el.token === 'courseTitle') return doc.courseTitle || doc.subtitle;
+  if (el.token === 'issuerName') return doc.issuerName || '';
+  if (el.token === 'completionDate') return doc.issuedDate ? `Issued ${doc.issuedDate}` : 'Not yet issued';
+  if (el.token === 'certificateId') return `Certificate No. ${doc.certificateNo}`;
+  return renderCitation(el.text ?? '', certificateDocTokens(doc));
 }
 
 const OUTCOMES_COLUMN_CLASS: Record<number, string> = {
@@ -42,11 +67,25 @@ const OUTCOMES_COLUMN_CLASS: Record<number, string> = {
   3: 'columns-3',
 };
 
-function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; template: CertificateTemplate }) {
+function TemplateRenderedSheet({
+  doc,
+  template,
+  variant,
+  maxWidthClass,
+}: {
+  doc: CertificateDoc;
+  template: CertificateTemplate;
+  variant: 'print' | 'preview';
+  maxWidthClass: string;
+}) {
+  const { hasRole } = usePermission();
+  // Trainees never see the raw signature on screen; the print layout (triggered by an
+  // authorized admin/issuer action) and PDF/PNG export always embed it regardless of role.
+  const hideSignature = variant !== 'print' && hasRole('trainee');
   const aspect = template.orientation === 'portrait' ? '1 / 1.4142' : '1.4142 / 1';
   return (
     <div
-      className="relative w-full max-w-2xl shadow-card"
+      className={`relative w-full ${maxWidthClass} shadow-card`}
       style={{ aspectRatio: aspect, backgroundColor: template.background_color || '#ffffff', border: `3px solid ${template.border_color || '#0b3d66'}` }}
       data-cy="certificate-print-template-div-1"
     >
@@ -79,9 +118,13 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
             />
           )}
           {el.type === 'qr' && (
-            <div className="flex h-full w-full items-center justify-center border border-dashed border-neutral-300 text-[9px] text-neutral-400">
-              QR
-            </div>
+            doc.verificationUrl ? (
+              <img src={`${doc.verificationUrl}/qr`} alt="Certificate verification QR code" className="h-full w-full object-contain" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center border border-dashed border-neutral-300 text-[9px] text-neutral-400">
+                QR
+              </div>
+            )
           )}
           {el.type === 'outcomes' && !!doc.achievedOutcomes?.length && (
             <ul className={`${OUTCOMES_COLUMN_CLASS[el.columns ?? 2]} list-disc gap-x-4 pl-3 leading-snug`}>
@@ -90,7 +133,13 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
               ))}
             </ul>
           )}
-          {(el.type === 'text' || el.type === 'image') && <span>{resolveElementText(el, doc)}</span>}
+          {el.type === 'image' && el.src && (
+            <img src={el.src} alt="" className="h-full w-full object-contain" />
+          )}
+          {el.type === 'signature' && el.src && !hideSignature && (
+            <img src={el.src} alt="Authorized signature" className="h-full w-full object-contain" />
+          )}
+          {el.type === 'text' && <span>{resolveElementText(el, doc)}</span>}
         </div>
       ))}
     </div>
@@ -103,12 +152,16 @@ function TemplateRenderedSheet({ doc, template }: { doc: CertificateDoc; templat
  * the trainee-level Certificate tab so the design stays consistent everywhere
  * a certificate is rendered in the system.
  */
-export function CertificateSheet({ doc, variant = 'preview', breakAfter }: CertificateSheetProps) {
+export function CertificateSheet({ doc, variant = 'preview', breakAfter, maxWidthClass = 'max-w-2xl' }: CertificateSheetProps) {
   const [exporting, setExporting] = useState<'png' | 'pdf' | null>(null);
+  // w-full matters specifically for the templated branch below: it's nested inside a
+  // `flex flex-col items-center` wrapper, whose `items-center` stops children from
+  // stretching to the parent's width — without it this div (and the aspect-ratio'd,
+  // percentage-positioned template sheet inside it) collapses to near-zero width.
   const wrapperClass =
     variant === 'print'
-      ? `hidden print:flex print-area bg-white text-ink items-center justify-center p-10 ${breakAfter ? 'cert-page-break' : ''}`
-      : 'flex items-center justify-center bg-neutral-50 p-4 sm:p-8 rounded-lg border border-dashed border-neutral-300';
+      ? `hidden w-full print:flex print-area bg-white text-ink items-center justify-center p-10 ${breakAfter ? 'cert-page-break' : ''}`
+      : 'flex w-full items-center justify-center bg-neutral-50 p-4 sm:p-8 rounded-lg border border-dashed border-neutral-300';
 
   if (doc.template) {
     const template = doc.template;
@@ -121,6 +174,7 @@ export function CertificateSheet({ doc, variant = 'preview', breakAfter }: Certi
           achievedOutcomes: doc.achievedOutcomes ?? [],
           backgroundColor: template.background_color || undefined,
           borderColor: template.border_color || undefined,
+          verificationUrl: doc.verificationUrl || undefined,
         };
         if (format === 'png') {
           await exportTemplateAsPng(template.layout, template.orientation, resolve, filename, options);
@@ -133,9 +187,9 @@ export function CertificateSheet({ doc, variant = 'preview', breakAfter }: Certi
     }
 
     return (
-      <div className="flex flex-col items-center gap-3" data-cy="certificate-print-div-1">
+      <div className="flex w-full flex-col items-center gap-3" data-cy="certificate-print-div-1">
         <div className={wrapperClass}>
-          <TemplateRenderedSheet doc={doc} template={template} />
+          <TemplateRenderedSheet doc={doc} template={template} variant={variant} maxWidthClass={maxWidthClass} />
         </div>
         {variant === 'preview' && (
           <div className="no-print flex gap-2">
@@ -153,7 +207,7 @@ export function CertificateSheet({ doc, variant = 'preview', breakAfter }: Certi
 
   return (
     <div className={wrapperClass} data-cy="certificate-print-div-1">
-      <div className="relative w-full max-w-2xl border-[3px] border-brand-700 bg-white p-6 sm:p-10 shadow-card" data-cy="certificate-print-div-2">
+      <div className={`relative w-full ${maxWidthClass} border-[3px] border-brand-700 bg-white p-6 sm:p-10 shadow-card`} data-cy="certificate-print-div-2">
         <div className="absolute inset-2 border border-brand-200" aria-hidden="true" data-cy="certificate-print-div-3" />
         <div className="relative flex flex-col items-center text-center" data-cy="certificate-print-div-4">
           <LogoMark size={44} data-cy="certificate-print-logo-mark-5" />

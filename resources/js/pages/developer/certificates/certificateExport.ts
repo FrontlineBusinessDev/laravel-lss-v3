@@ -8,6 +8,8 @@ export interface ExportOptions {
     achievedOutcomes?: string[];
     backgroundColor?: string;
     borderColor?: string;
+    /** Public verification page URL — its `/qr` suffix is loaded as the image for `type: 'qr'` elements. Unset for not-yet-issued certificates (qr elements are then skipped, as before). */
+    verificationUrl?: string;
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -42,9 +44,9 @@ async function ensureFontsLoaded(elements: TemplateElement[]): Promise<void> {
 /**
  * Builds an offscreen Konva stage for the given template + resolved text,
  * renders it, and returns the stage (caller must call `.destroy()` and
- * remove the container once done). QR-code elements are skipped — no QR
- * image generation is wired up yet, so a placeholder box has no place in a
- * finished, downloadable certificate.
+ * remove the container once done). QR-code elements load the verification
+ * QR from `options.verificationUrl`'s `/qr` endpoint; if unset (no issued
+ * certificate to verify yet) they're skipped, same as before.
  */
 async function buildOffscreenStage(
     elements: TemplateElement[],
@@ -53,11 +55,15 @@ async function buildOffscreenStage(
     options: ExportOptions = {},
 ): Promise<{ stage: Konva.Stage; container: HTMLDivElement }> {
     const { width, height } = stageSize(orientation);
+<<<<<<< HEAD
     const {
         achievedOutcomes = [],
         backgroundColor = '#ffffff',
         borderColor = '#0b3d66',
     } = options;
+=======
+    const { achievedOutcomes = [], backgroundColor = '#ffffff', borderColor = '#0b3d66', verificationUrl } = options;
+>>>>>>> 093c8fc99b4ab5e4dbf82244f25ce7389e3f9bd6
 
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -88,12 +94,21 @@ async function buildOffscreenStage(
     await Promise.all([
         ensureFontsLoaded(elements),
         ...elements
-            .filter((el) => el.type === 'image' && el.src)
+            .filter((el) => (el.type === 'image' || el.type === 'signature') && el.src)
             .map(async (el) => {
                 try {
                     images.set(el.id, await loadImage(el.src as string));
                 } catch {
                     // Broken/unreachable image URL — element is simply omitted below.
+                }
+            }),
+        ...elements
+            .filter((el) => el.type === 'qr' && verificationUrl)
+            .map(async (el) => {
+                try {
+                    images.set(el.id, await loadImage(`${verificationUrl}/qr`));
+                } catch {
+                    // Verification QR unreachable — element is simply omitted below.
                 }
             }),
     ]);
@@ -147,7 +162,7 @@ async function buildOffscreenStage(
                     }),
                 );
             }
-        } else if (el.type === 'image') {
+        } else if (el.type === 'image' || el.type === 'signature') {
             const image = images.get(el.id);
             if (image)
                 layer.add(
@@ -195,8 +210,10 @@ async function buildOffscreenStage(
                     }),
                 );
             });
+        } else if (el.type === 'qr') {
+            const image = images.get(el.id);
+            if (image) layer.add(new Konva.Image({ x, y, rotation, width: w, height: h, image }));
         }
-        // type === 'qr': intentionally skipped, see doc comment above.
     }
 
     layer.draw();

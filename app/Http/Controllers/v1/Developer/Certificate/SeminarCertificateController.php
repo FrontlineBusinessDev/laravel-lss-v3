@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\v1\Developer\Certificate;
 
 use App\Http\Controllers\v1\Controller;
+use App\Models\CertificateTemplate;
 use App\Models\SeminarCertificate;
 use App\Models\SeminarParticipant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -96,13 +98,16 @@ class SeminarCertificateController extends Controller
         $certificate = DB::transaction(function () use ($participantModel, $validated) {
             $existing = SeminarCertificate::where('seminar_participant_id', $participantModel->id)->first();
             $certificateNo = $existing?->certificate_no ?? $this->nextCertificateNo();
+            $publicId = $existing?->public_id ?? (string) Str::ulid();
+            $templateId = $validated['template_id'] ?? $this->defaultTemplateId('seminar');
 
             return SeminarCertificate::updateOrCreate(
                 ['seminar_participant_id' => $participantModel->id],
                 [
                     'certificate_no' => $certificateNo,
+                    'public_id' => $publicId,
                     'citation_id' => $validated['citation_id'],
-                    'template_id' => $validated['template_id'] ?? null,
+                    'template_id' => $templateId,
                     'issued_at' => now()->toDateString(),
                     'issued_by' => auth()->id(),
                 ],
@@ -122,5 +127,14 @@ class SeminarCertificateController extends Controller
         $sequence = SeminarCertificate::whereYear('created_at', $year)->count() + 1;
 
         return sprintf('SEM-CERT-%d-%04d', $year, $sequence);
+    }
+
+    /** Resolves the active default template for the given type, used when no template is explicitly chosen at issuance. */
+    private function defaultTemplateId(string $certificateType): ?int
+    {
+        return CertificateTemplate::where('certificate_type', $certificateType)
+            ->where('is_default', true)
+            ->where('status', 'active')
+            ->value('id');
     }
 }
