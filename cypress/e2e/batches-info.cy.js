@@ -1,4 +1,5 @@
 const { Cylinder } = require('lucide-react');
+const { it } = require('node:test');
 
 describe('Batches Module', () => {
     beforeEach(() => {
@@ -225,28 +226,91 @@ describe('Batches Module', () => {
     //         .and('be.visible');
     // });
 
-    //trainees tab
-    it('should check the display and function of trainees tab', () => {
+    // //trainees tab
+    // it('should check the display of trainees tab', () => {
+    //     cy.visit('/batches/8');
+
+    //     cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+    //     cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
+    //         'be.visible',
+    //     );
+    //     cy.get('[data-cy="toolbar-select-rows-per-page"]').should('be.visible');
+    // });
+
+    // //trainees tab search
+    // it ('should check if the search function is working', () => {
+    //     cy.visit('/batches/8');
+
+    //     //search
+    //     cy.get('[data-cy="toolbar-input-text"]').click().type('Ludwig');
+
+    //     //verify search
+    //     cy.get('[data-cy="trainees-div-2"]')
+    //         .should('contain.text', 'Ludwig')
+    //         .and('be.visible');
+
+    //     //clear search
+    //     cy.get('[data-cy="toolbar-input-text"]').clear();
+    // });
+
+    //trainees tab filter
+    it('should check if the filter function is working', () => {
         cy.visit('/batches/8');
 
-        cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
-        cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
-        cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
-            'be.visible',
-        );
-        cy.get('[data-cy="toolbar-select-rows-per-page"]').should('be.visible');
+        //filter
+        cy.get('[data-cy="toolbar-button-button"]').click();
 
-        //search
-        cy.get('[data-cy="toolbar-input-text"]').click().type('Ludwig');
+        //filter status
+        cy.get('[data-cy="dropdown-button-button"]').click();
 
-        //verify search
+        cy.get('[data-cy="dropdown-div-4"]')
+            .should('contain.text', 'All Status')
+            .and('contain.text', 'Active')
+            .and('contain.text', 'Terminated')
+            .and('contain.text', 'Archived');
+
+        //select a status
+        cy.get('[data-cy="dropdown-button-set-selected"]').eq(1).click();
+
+        //verify status
         cy.get('[data-cy="trainees-div-2"]')
-            .should('contain.text', 'Ludwig')
+            .should('contain.text', 'Active')
             .and('be.visible');
 
-        //clear search
-        cy.get('[data-cy="toolbar-input-text"]').clear();
+        //select all
+        cy.get('[data-cy="dropdown-button-button"]').click();
 
-        //
+        cy.get('[data-cy="dropdown-button-set-selected"]').eq(0).click();
+
+        //first name filter
+        cy.get('[data-cy="data-input-first_name"]').click().type('Kari');
+
+        //verify first name filter
+        cy.get('[data-cy="trainees-div-2"]')
+            .should('contain.text', 'Kari')
+            .and('be.visible');
+
+        //clear first name filter
+        cy.get('[data-cy="data-input-first_name"]').clear();
     });
+
+    //trainees tab sort
+    it('should check if the sort function is working', () => {
+        cy.visit('/batches/8');
+
+        cy.get('[data-cy="toolbar-select-sort-by-change"] option')
+            .should('have.length', 4)
+            .and('contain.text', 'Status')
+            .and('contain.text', 'First Name')
+            .and('contain.text', 'Last Name')
+            .and('contain.text', 'Required hrs');
+    });
+
+    // //trainees tab page
+    // it('should check if the page filter is working', () => {
+    //     cy.visit('/batches/8');
+
+    //     cy.filterPerPage();
+    // });
 });
