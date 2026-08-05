@@ -49,5 +49,9 @@ describe('Settings - Rates', () => {
 
         cy.get('[data-cy="form-field-input-5"]').eq(0).clear().type('20');
         cy.get('[data-cy="form-field-input-5"]').eq(1).clear().type('27');
+
+        cy.get('[data-cy="button-button-1"]').click();
+
+        cy.get('[data-cy="toast-div-3"]').should('be.visible');
     });
 });
