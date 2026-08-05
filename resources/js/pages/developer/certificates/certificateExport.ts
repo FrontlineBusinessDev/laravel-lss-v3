@@ -1,4 +1,5 @@
 import Konva from 'konva';
+import { jsPDF } from 'jspdf';
 import { splitIntoColumns, stageSize } from './citations/templateStage';
 import type { TemplateElement } from './types';
 
@@ -55,15 +56,12 @@ async function buildOffscreenStage(
     options: ExportOptions = {},
 ): Promise<{ stage: Konva.Stage; container: HTMLDivElement }> {
     const { width, height } = stageSize(orientation);
-<<<<<<< HEAD
     const {
         achievedOutcomes = [],
         backgroundColor = '#ffffff',
         borderColor = '#0b3d66',
+        verificationUrl,
     } = options;
-=======
-    const { achievedOutcomes = [], backgroundColor = '#ffffff', borderColor = '#0b3d66', verificationUrl } = options;
->>>>>>> 093c8fc99b4ab5e4dbf82244f25ce7389e3f9bd6
 
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -94,7 +92,10 @@ async function buildOffscreenStage(
     await Promise.all([
         ensureFontsLoaded(elements),
         ...elements
-            .filter((el) => (el.type === 'image' || el.type === 'signature') && el.src)
+            .filter(
+                (el) =>
+                    (el.type === 'image' || el.type === 'signature') && el.src,
+            )
             .map(async (el) => {
                 try {
                     images.set(el.id, await loadImage(el.src as string));
@@ -212,7 +213,17 @@ async function buildOffscreenStage(
             });
         } else if (el.type === 'qr') {
             const image = images.get(el.id);
-            if (image) layer.add(new Konva.Image({ x, y, rotation, width: w, height: h, image }));
+            if (image)
+                layer.add(
+                    new Konva.Image({
+                        x,
+                        y,
+                        rotation,
+                        width: w,
+                        height: h,
+                        image,
+                    }),
+                );
         }
     }
 
