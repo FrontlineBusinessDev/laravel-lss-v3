@@ -81,8 +81,8 @@ export const columns: ColumnDef<AppTrainees>[] = [
     {
         key: 'academic_industry_id',
         label: 'Industry',
-        searchable: true,
-        filterable: true,
+        searchable: false,
+        filterable: false,
         type: 'async-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/industry', q, 'name'),
@@ -92,8 +92,8 @@ export const columns: ColumnDef<AppTrainees>[] = [
     {
         key: 'academic_level_id',
         label: 'Level',
-        searchable: true,
-        filterable: true,
+        searchable: false,
+        filterable: false,
         type: 'async-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/level', q, 'name'),
@@ -112,8 +112,8 @@ export const columns: ColumnDef<AppTrainees>[] = [
     {
         key: 'academic_program_type_id',
         label: 'Program Type',
-        searchable: true,
-        filterable: true,
+        searchable: false,
+        filterable: false,
         type: 'async-multi-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/program-type', q, 'name'),
