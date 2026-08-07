@@ -43,9 +43,9 @@ export interface AppTrainees extends Record<string, unknown> {
 export const STATUS_FILTER_PAIRS = [
     { value: '', label: 'All Status' },
     { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
+    { value: 'inactive', label: 'Archived' },
     { value: 'pending', label: 'Pending' },
-    { value: 'ongoing', label: 'Ongoing' },
+    // { value: 'ongoing', label: 'Ongoing' },
     { value: 'completed', label: 'Completed' },
 ];
 
