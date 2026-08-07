@@ -144,7 +144,8 @@ export const columns: ColumnDef<AppTrainees>[] = [
     // },
     {
         key: 'date_completed',
-        label: 'Status',
+        label: 'Date Completed',
+        sortable: false,
         render: (value) =>
             value ? (
                 <span
