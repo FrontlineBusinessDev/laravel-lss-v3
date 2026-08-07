@@ -618,8 +618,6 @@ describe('Settings - Partner School Tab Page', () => {
             'deletePartnerSchool',
         );
 
-        // delete
-
         // Search Partner School
         cy.get('[data-cy="toolbar-input-text"]').clear().type('Sample School');
 
@@ -659,7 +657,5 @@ describe('Settings - Partner School Tab Page', () => {
         cy.wait('@deletePartnerSchool');
 
         cy.get('[data-cy="toast-div-3"]').should('be.visible');
-        //data-cy="confirm-delete-modal-button-button"
-        //data-cy="confirm-delete-modal-button-button-2"
     });
 });
