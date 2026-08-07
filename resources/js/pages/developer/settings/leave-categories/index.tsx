@@ -1,19 +1,19 @@
 import { useGlobalModal } from '@/components/global-modal';
 import {
     AddRecordButton,
+    buildRecordMenu,
     SettingsListHeader,
     SettingsRow,
     TextCell,
 } from '@/components/settings';
+import { StatusBadge } from '@/components/StatusBadge';
+import type { CardActions } from '@/components/table';
 import DataTableCardField from '@/components/table/DataTableCardField';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import type { LeaveCategories } from '@/types/modules/settings/leave-categories';
 import { columns } from '@/types/modules/settings/leave-categories';
+import type { StatusKind } from '@/types/reusable/status-kind';
 import LeaveCategoryModal from './LeaveCategoryModal';
-import { StatusBadge } from '@/components/StatusBadge';
-import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react';
-import { RowMenuAction } from '@/components/RowMenu';
-import type { CardActions } from '@/components/table';
 
 const PERMISSION = 'manage leave';
 
@@ -36,49 +36,16 @@ export default function LeaveCategoriesPage() {
     const modal = useGlobalModal<LeaveCategories | null>('leaveCategory', null);
 
     const renderRow = (row: LeaveCategories, actions: CardActions) => {
-        const nonActive = row.status !== 'active';
-        const menu: RowMenuAction[] = [
-            nonActive
-                ? {
-                      label: 'Restore',
-                      icon: ArchiveRestore,
-                      onClick: actions.onRestore,
-                  }
-                : {
-                      label: 'Archive',
-                      icon: Archive,
-                      onClick: actions.onArchive,
-                      disabled: !actions.canArchive,
-                  },
-            nonActive
-                ? {
-                      label: 'Delete',
-                      icon: Trash2,
-                      danger: true,
-                      onClick: () => void actions.onDelete(),
-                      disabled: !actions.canDelete || !nonActive,
-                  }
-                : {
-                      label: 'Edit',
-                      icon: Pencil,
-                      onClick: actions.onEdit,
-                      disabled: !actions.canEdit,
-                  },
-        ];
+        const isArchived = row.status !== 'active';
+        const badge: StatusKind = isArchived ? 'archived' : 'active';
 
         return (
             <div key={row.id}>
                 <SettingsRow
                     grid={GRID}
-                    isArchived={nonActive}
-                    badge={
-                        <StatusBadge
-                            status={
-                                row.status === 'active' ? 'active' : 'archived'
-                            }
-                        />
-                    }
-                    menu={menu}
+                    isArchived={isArchived}
+                    badge={<StatusBadge status={badge} />}
+                    menu={buildRecordMenu(actions, isArchived)}
                     data-cy="index-settings-row-1"
                 >
                     <TextCell muted={false} className="truncate">
