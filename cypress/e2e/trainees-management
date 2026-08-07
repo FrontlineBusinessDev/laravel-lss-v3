@@ -1,0 +1,62 @@
+const { Cylinder } = require('lucide-react');
+
+describe('Trainees Module', () => {
+    beforeEach(() => {
+        cy.session(
+            'admin',
+            () => {
+                cy.login();
+            },
+            {
+                validate() {
+                    cy.visit('/dashboard');
+                    cy.url().should('include', '/dashboard');
+                },
+            },
+        );
+        cy.visit('/trainees');
+    });
+
+    //check trainees management display
+    it('should check the trainees management display', () => {
+        //title
+        cy.get('[data-cy="index-h1-trainees"]')
+            .should('be.visible')
+            .and('contain.text', 'Trainees');
+        cy.get('[data-cy="index-p-manage-trainees"]')
+            .should('be.visible')
+            .and('contain.text', 'Manage Trainees data.');
+
+        //search bar
+        cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+
+        //filter
+        cy.get('[data-cy="toolbar-button-button"]').should('be.visble').click();
+
+        //status filter
+        cy.get('[data-cy="dropdown-button-button"]')
+            .should('be.visible')
+            .click();
+
+        cy.get('[data-cy="dropdown-div-4"]')
+            .should('contain.text', 'All Status')
+            .and('contain.text', 'Active')
+            .and('contain.text', 'Inactive')
+            .and('contain.text', 'Pending')
+            .and('contain.text', 'Ongoing')
+            .and('contain.text', 'Completed');
+
+        //batch filter
+        cy.get('[data-cy="use-async-select-field-button-button"]')
+            .eq(0)
+            .should('be.visible')
+            .click();
+        cy.get('[data-cy="use-async-select-field-input-placeholder"]').should(
+            'be.visible',
+        );
+        cy.get('[data-cy="use-async-select-field-div-8"]')
+            .should('be.visible')
+            .and('contain.text', 'All')
+            .and('contain.text', 'FBS-');
+    });
+});
