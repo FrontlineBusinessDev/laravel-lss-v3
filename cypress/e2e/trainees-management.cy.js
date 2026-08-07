@@ -294,32 +294,31 @@ describe('Trainees Module', () => {
     //     cy.get('[data-cy="clear-all"]').click();
     // });
 
-    //filter industry
-    it('should check if the filtering of industry is working', () => {
+    //filter program
+    it('should check if the filtering of program is working', () => {
         cy.visit('/trainees');
 
         cy.get('[data-cy="toolbar-button-button"]').click();
 
-        cy.get('[data-cy="use-async-select-field-button-button"]')
-            .eq(2)
+        cy.get('[data-cy="use-async-multi-select-field-button-button"]')
+            .eq(0)
             .click();
 
-        cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
-            'Accounting',
-            { timeout: 5000 },
-        );
+        cy.get('[data-cy="use-async-multi-select-field-input-search"]')
+            .clear()
+            .type('Accountancy', { timeout: 5000 });
 
-        cy.get('[data-cy="use-async-select-field-div-8"]')
-            .contains('Accounting')
+        cy.get('[data-cy="use-async-multi-select-field-button-button-2"]')
+            .contains('Accountancy')
             .click();
 
         //verify
         cy.get('[data-cy="settings-row-div-4"]').should(
             'contain.text',
-            'Accounting',
+            'Bachelor of Science in Accountancy',
         );
-
-        //clear
-        cy.get('[data-cy="clear-all"]').click();
     });
+
+    //filter first name
+    // it('should check if the filtering of first name is working', ())
 });
