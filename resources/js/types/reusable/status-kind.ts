@@ -4,6 +4,7 @@ export type StatusKind =
     | 'pending'
     | 'completed'
     | 'terminated'
+    | 'archive'
     | 'archived'
     | 'declined'
     | 'dissolved'
