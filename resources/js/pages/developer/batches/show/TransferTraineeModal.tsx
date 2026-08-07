@@ -94,9 +94,7 @@ export function TransferTraineeModal({
                         error={error ?? undefined}
                     />
                     {error && (
-                        <p className="mt-1 text-xs text-danger-600">
-                            {error}
-                        </p>
+                        <p className="mt-1 text-xs text-danger-600">{error}</p>
                     )}
                 </div>
 
@@ -106,6 +104,7 @@ export function TransferTraineeModal({
                         onClick={onClose}
                         disabled={submitting}
                         className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-60"
+                        data-cy="transfer-trainee-modal-cancel-button"
                     >
                         Cancel
                     </button>
@@ -113,6 +112,7 @@ export function TransferTraineeModal({
                         type="submit"
                         disabled={submitting}
                         className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500/90 disabled:opacity-60"
+                        data-cy="transfer-trainee-modal-submit-button"
                     >
                         {submitting && (
                             <Loader2 className="h-4 w-4 animate-spin" />
