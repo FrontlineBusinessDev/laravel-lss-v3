@@ -1,7 +1,7 @@
+import { cn } from '@/lib/utils';
+import { Check, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
 type DropdownOption =
     | string
     | {
@@ -98,7 +98,7 @@ export function Dropdown({
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 className={cn(
-                    'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 text-xs font-medium text-neutral-700 shadow-card transition-all duration-150 hover:border-neutral-300 hover:shadow-none focus:ring-2 focus:ring-brand-100 focus:outline-none',
+                    'flex h-9 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 shadow-card transition-all duration-150 hover:border-neutral-300 hover:shadow-none focus:ring-2 focus:ring-brand-100 focus:outline-none',
                     open && 'border-brand-400 ring-2 ring-brand-100',
                     // Dim only when the value maps to no real option (placeholder
                     // state); a real empty-value option like "All Status" stays
@@ -146,7 +146,7 @@ export function Dropdown({
                                     setOpen(false);
                                 }}
                                 className={cn(
-                                    'flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-xs font-medium text-neutral-700 transition-colors hover:bg-brand-50 hover:text-brand-700',
+                                    'flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium text-neutral-700 transition-colors hover:bg-brand-50 hover:text-brand-700',
                                     selected === opt.value &&
                                         'bg-brand-50 text-brand-700',
                                 )}

@@ -23,7 +23,10 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        batchViewService.trainerOptions().then(setOptions).catch(() => setOptions([]));
+        batchViewService
+            .trainerOptions()
+            .then(setOptions)
+            .catch(() => setOptions([]));
     }, []);
 
     const toggle = (id: number) =>
@@ -39,7 +42,9 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
             router.reload();
         } catch (err) {
             showToast(
-                err instanceof ApiError ? err.message : 'Failed to update trainers',
+                err instanceof ApiError
+                    ? err.message
+                    : 'Failed to update trainers',
                 'error',
             );
         } finally {
@@ -49,13 +54,22 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
 
     return (
         <BatchDetailLayout batch={record} registrationUrl={registrationUrl}>
-            <div className="rounded-lg border border-neutral-200 bg-white p-5">
+            <div
+                className="rounded-lg border border-neutral-200 bg-white p-5"
+                data-cy="batch-trainers-page-section"
+            >
                 <div className="mb-4 flex items-center justify-between">
                     <div>
-                        <h3 className="text-sm font-semibold text-ink">
+                        <h3
+                            className="text-sm font-semibold text-ink"
+                            data-cy="batch-trainers-header"
+                        >
                             Assigned trainers
                         </h3>
-                        <p className="mt-1 text-xs text-neutral-500">
+                        <p
+                            className="mt-1 text-xs text-neutral-500"
+                            data-cy="batch-trainers-description"
+                        >
                             Trainers assigned here can see this batch, its
                             trainees, tasks, ratings, leave, and can post
                             batch-scoped announcements.
@@ -67,6 +81,7 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
                         icon={Save}
                         disabled={saving}
                         onClick={() => void save()}
+                        data-cy="batch-trainers-trainers-button-save"
                     >
                         {saving ? 'Saving…' : 'Save changes'}
                     </Button>
@@ -79,7 +94,9 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
                 ) : (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {options.map((opt) => {
-                            const checked = selected.includes(Number(opt.value));
+                            const checked = selected.includes(
+                                Number(opt.value),
+                            );
                             return (
                                 <button
                                     key={opt.value}
@@ -90,6 +107,7 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
                                             ? 'border-brand-400 bg-brand-50 text-brand-800'
                                             : 'border-neutral-200 text-ink hover:bg-neutral-50'
                                     }`}
+                                    data-cy={`batch-trainers-trainers-button-${opt.value}`}
                                 >
                                     <span
                                         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border ${
@@ -97,12 +115,14 @@ export default function BatchTrainersPage({ record, registrationUrl }: Props) {
                                                 ? 'border-brand-500 bg-brand-500'
                                                 : 'border-neutral-300 bg-white'
                                         }`}
+                                        data-cy={`batch-trainers-trainers-span-${opt.value}`}
                                     >
                                         {checked && (
                                             <Check
                                                 size={11}
                                                 className="text-white"
                                                 strokeWidth={3}
+                                                data-cy={`batch-trainers-trainers-check-${opt.value}`}
                                             />
                                         )}
                                     </span>

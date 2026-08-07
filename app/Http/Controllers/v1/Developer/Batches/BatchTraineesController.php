@@ -39,10 +39,10 @@ class BatchTraineesController extends BaseController
         return Trainees::query()
             ->with('school:id,school_name')
             ->where('batch_id', $batchId)
-            ->when(
-                $statusFilter === '',
-                fn(Builder $q) => $q->where('status', '!=', Statuses::INACTIVE),
-            )
+            // ->when(
+            //     $statusFilter === '',
+            //     fn(Builder $q) => $q->where('status', '!=', Statuses::INACTIVE),
+            // )
             ->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', [Statuses::TERMINATED]);
     }
 }
