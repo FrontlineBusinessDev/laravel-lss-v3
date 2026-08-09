@@ -59,10 +59,10 @@ interface NotificationsContextValue {
     markRead: (id: string) => void;
     markAllRead: () => void;
     /** Pushes a locally-simulated notification. Only backs the still-mocked
-     *  Seminars / Evaluation-reminder features — not persisted server-side. */
+     *  Seminars module — not persisted server-side. */
     notify: (n: Omit<AppNotification, 'id' | 'read'>) => void;
     /** Locally-simulated trainee-facing notifications sent via `notify`
-     *  (Evaluation reminders panel). Not backed by the real API. */
+     *  (Seminars module only). Not backed by the real API. */
     traineeNotifications: AppNotification[];
 }
 

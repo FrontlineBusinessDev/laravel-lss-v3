@@ -516,8 +516,10 @@ Route::middleware('auth')->group(function () {
                 Route::patch('/{id}/remarks', [TraineeTasksController::class, 'updateRemarks'])->name('remarks');
             });
         Route::get('/announcements', [TraineeAnnouncementsController::class, 'index'])->name('announcements');
+        Route::get('/announcements-data', [TraineeAnnouncementsController::class, 'list'])->name('announcements.data');
         Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
         Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
+        Route::get('/biometrics-data', [TraineeBiometricsController::class, 'records'])->name('biometrics.data');
         Route::middleware('permission:' . Permissions::MANAGE_OWN_EVALUATION)
             ->prefix('evaluations')->name('evaluations.')->group(function () {
                 Route::get('/', [TraineeEvaluationsController::class, 'index'])->name('index');
