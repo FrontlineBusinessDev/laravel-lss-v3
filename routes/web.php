@@ -15,6 +15,16 @@ use App\Http\Controllers\v1\Developer\Settings\PaymentMethodsController;
 use App\Http\Controllers\v1\Developer\Settings\RatesController;
 use App\Http\Controllers\v1\Developer\Settings\RoleController;
 use App\Http\Controllers\v1\Developer\Settings\SettingController;
+use App\Http\Controllers\v1\Developer\Settings\ImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\AcademicImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\BatchImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\BehavioralEvaluationImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\CitationImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\LearningOutcomeImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\PartnerSchoolImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\PaymentImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\TaskImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\TraineeImportController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicProgramTypeController;
 use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
@@ -121,55 +131,6 @@ Route::middleware('guest')->group(function () {
     // persists it. Shared by both the admin-invite and forgot-password flows.
     Route::get('/invitation/{token}', [AccountSetupController::class, 'edit'])->name('password.setup');
     Route::post('/invitation/{token}', [AccountSetupController::class, 'update'])->name('password.setup.store');
-});
-
-// ==========================================
-// SETTINGS MODULE GROUP
-// ==========================================
-Route::prefix('settings')->name('settings.')->group(function () {
-    // Base /settings page (Redirects to users, or loads a default settings index layout)
-    Route::get('/', [SettingController::class, 'index'])->name('index');
-    // Users Management
-    Route::crudModule('/users', UserController::class, 'users');
-    // Roles Management
-    Route::crudModule('/roles', RoleController::class, 'roles');
-    // Partner School Management
-    Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
-    // Payment Method Management
-    Route::crudModule('/payment-methods', PaymentMethodsController::class, 'payment-methods');
-    // Leave category limits (max days / instances per category), enforced by
-    // LeaveRequestController on submission.
-    Route::crudModule('/leave-categories', LeaveCategoryController::class, 'leave-categories');
-    Route::prefix('academic')->name('academic.')->group(function () {
-        Route::get('/', [AcademicController::class, 'index'])->name('index');
-        Route::crudModule('/industry', AcademicIndustryController::class, 'industry');
-        Route::crudModule('/learning-outcomes', AcademicLearningOutcomesController::class, 'learning-outcomes');
-        Route::crudModule('/level', AcademicLevelController::class, 'level');
-        Route::crudModule('/program', AcademicProgramController::class, 'program');
-        Route::crudModule('/program-type', AcademicProgramTypeController::class, 'program-type');
-    });
-    // Rates & discount matrices: its own top-level Settings section (sibling
-    // to Academic/Users/Partner Schools), with a "Default Rates" landing page
-    // plus 2 further sub-pages.
-    Route::prefix('rates')->name('rates.')->group(function () {
-        Route::get('/', [RatesController::class, 'index'])->name('default.index');
-        Route::put('/', [RatesController::class, 'updateRates'])->name('default.update');
-        // No status column on these two tables, so no archive/restore routes.
-        Route::prefix('hours-discounts')->name('hours-discounts.')->group(function () {
-            Route::get('/', [HoursDiscountController::class, 'index'])->name('index');
-            Route::get('/pagination-search', [HoursDiscountController::class, 'paginationSearch'])->name('pagination-search');
-            Route::post('/', [HoursDiscountController::class, 'store'])->name('store');
-            Route::post('/{id}', [HoursDiscountController::class, 'update'])->name('update');
-            Route::delete('/{id}', [HoursDiscountController::class, 'destroy'])->name('destroy');
-        });
-        Route::prefix('group-discounts')->name('group-discounts.')->group(function () {
-            Route::get('/', [GroupDiscountController::class, 'index'])->name('index');
-            Route::get('/pagination-search', [GroupDiscountController::class, 'paginationSearch'])->name('pagination-search');
-            Route::post('/', [GroupDiscountController::class, 'store'])->name('store');
-            Route::post('/{id}', [GroupDiscountController::class, 'update'])->name('update');
-            Route::delete('/{id}', [GroupDiscountController::class, 'destroy'])->name('destroy');
-        });
-    });
 });
 
 /**
@@ -413,17 +374,89 @@ Route::middleware('auth')->group(function () {
     // Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
     Route::crudModule('/announcements', AnnoucementController::class, 'announcements');
-    // Users & Roles admin JSON API consumed by the settings DataTableField.
-    // Coarse access is gated by the Spatie permission; UserController layers on
-    // the creator-scoped role matrix, and RolesController is developer-only.
-    Route::middleware('permission:manage users')->group(function () {
-        Route::crudModule('/settings/users', UserController::class, 'settings.users');
-        // Admin "Send password reset" action: queues the invite/reset email.
-        Route::post('/settings/users/{id}/reset-password', [UserController::class, 'sendPasswordReset'])
-            ->name('settings.users.reset-password');
+
+    // ==========================================
+    // SETTINGS MODULE GROUP — every sub-module gated by its matching
+    // `manage settings *` permission (admin+developer hold all of them via
+    // RoleSeeder, trainer/trainee hold none, so this naturally restricts
+    // Settings CRUD to those two roles).
+    // ==========================================
+    Route::prefix('settings')->name('settings.')->group(function () {
+        // Base /settings page (redirects to the first sub-module the user can access).
+        Route::get('/', [SettingController::class, 'index'])->name('index');
+
+        // Users & Roles admin JSON API consumed by the settings DataTableField.
+        // Coarse access is gated by the Spatie permission; UserController layers on
+        // the creator-scoped role matrix, and RolesController is developer-only.
+        Route::middleware('permission:' . Permissions::MANAGE_USERS)->group(function () {
+            Route::crudModule('/users', UserController::class, 'users');
+            // Admin "Send password reset" action: queues the invite/reset email.
+            Route::post('/users/{id}/reset-password', [UserController::class, 'sendPasswordReset'])
+                ->name('users.reset-password');
+        });
+        Route::middleware('permission:' . Permissions::MANAGE_ROLES)->group(function () {
+            Route::crudModule('/roles', RoleController::class, 'roles');
+        });
+        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_PARTNER_SCHOOLS)->group(function () {
+            Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
+        });
+        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_PAYMENT_METHODS)->group(function () {
+            Route::crudModule('/payment-methods', PaymentMethodsController::class, 'payment-methods');
+        });
+        // Leave category limits (max days / instances per category), enforced by
+        // LeaveRequestController on submission. No dedicated permission constant
+        // exists for this sub-module — gated by the umbrella `manage settings`.
+        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS)->group(function () {
+            Route::crudModule('/leave-categories', LeaveCategoryController::class, 'leave-categories');
+        });
+        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_ACADEMIC)
+            ->prefix('academic')->name('academic.')->group(function () {
+                Route::get('/', [AcademicController::class, 'index'])->name('index');
+                Route::crudModule('/industry', AcademicIndustryController::class, 'industry');
+                Route::crudModule('/learning-outcomes', AcademicLearningOutcomesController::class, 'learning-outcomes');
+                Route::crudModule('/level', AcademicLevelController::class, 'level');
+                Route::crudModule('/program', AcademicProgramController::class, 'program');
+                Route::crudModule('/program-type', AcademicProgramTypeController::class, 'program-type');
+            });
+        // Rates & discount matrices: its own top-level Settings section (sibling
+        // to Academic/Users/Partner Schools), with a "Default Rates" landing page
+        // plus 2 further sub-pages.
+        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_RATES)
+            ->prefix('rates')->name('rates.')->group(function () {
+                Route::get('/', [RatesController::class, 'index'])->name('default.index');
+                Route::put('/', [RatesController::class, 'updateRates'])->name('default.update');
+                // No status column on these two tables, so no archive/restore routes.
+                Route::prefix('hours-discounts')->name('hours-discounts.')->group(function () {
+                    Route::get('/', [HoursDiscountController::class, 'index'])->name('index');
+                    Route::get('/pagination-search', [HoursDiscountController::class, 'paginationSearch'])->name('pagination-search');
+                    Route::post('/', [HoursDiscountController::class, 'store'])->name('store');
+                    Route::post('/{id}', [HoursDiscountController::class, 'update'])->name('update');
+                    Route::delete('/{id}', [HoursDiscountController::class, 'destroy'])->name('destroy');
+                });
+                Route::prefix('group-discounts')->name('group-discounts.')->group(function () {
+                    Route::get('/', [GroupDiscountController::class, 'index'])->name('index');
+                    Route::get('/pagination-search', [GroupDiscountController::class, 'paginationSearch'])->name('pagination-search');
+                    Route::post('/', [GroupDiscountController::class, 'store'])->name('store');
+                    Route::post('/{id}', [GroupDiscountController::class, 'update'])->name('update');
+                    Route::delete('/{id}', [GroupDiscountController::class, 'destroy'])->name('destroy');
+                });
+            });
     });
-    Route::middleware('permission:manage roles')->group(function () {
-        Route::crudModule('/settings/roles', RoleController::class, 'settings.roles');
+
+    // Legacy-data import — admin/developer only (role-gated, a deliberate
+    // exception to the permission-based convention above, per explicit
+    // product decision). See app/Http/Controllers/v1/Developer/Settings/Import/*.
+    Route::middleware('role:admin|developer')->prefix('settings/import')->name('settings.import.')->group(function () {
+        Route::get('/', [ImportController::class, 'index'])->name('index');
+        Route::post('/academic/{type}', [AcademicImportController::class, 'import'])->name('academic');
+        Route::post('/partner-schools', [PartnerSchoolImportController::class, 'import'])->name('partner-schools');
+        Route::post('/batches', [BatchImportController::class, 'import'])->name('batches');
+        Route::post('/trainees', [TraineeImportController::class, 'import'])->name('trainees');
+        Route::post('/payments', [PaymentImportController::class, 'import'])->name('payments');
+        Route::post('/tasks', [TaskImportController::class, 'import'])->name('tasks');
+        Route::post('/behavioral-evaluations', [BehavioralEvaluationImportController::class, 'import'])->name('behavioral-evaluations');
+        Route::post('/learning-outcomes', [LearningOutcomeImportController::class, 'import'])->name('learning-outcomes');
+        Route::post('/citations', [CitationImportController::class, 'import'])->name('citations');
     });
 
     // Developer-only global audit trail. Read-only: the index CSR shell plus the
