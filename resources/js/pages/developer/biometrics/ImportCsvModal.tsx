@@ -5,18 +5,20 @@ import { Button } from '@/components/Button';
 import { cn } from '@/lib/utils';
 import { traineeService } from '@/api-service-layer/admin/trainee';
 import { parseCsv, validateCsvRows, CSV_TEMPLATE, type ParsedRow, type CsvTrainee } from '@/pages/developer/biometrics/biometricsUtils';
-import type { BiometricLogRow } from '@/types/modules/biometrics/biometrics';
 interface ImportCsvModalProps {
   open: boolean;
   onClose: () => void;
-  existingRecords: BiometricLogRow[];
+  existingRecords: { trainee_id: number; date: string }[];
   onConfirmImport: (fileName: string, validRows: ParsedRow[], totalRows: number, errorRows: number) => void;
+  /** When set, scopes the CSV's "Trainee Name" matching to this single trainee instead of fetching the full roster — used by the trainee-detail Biometrics tab. */
+  presetTrainee?: CsvTrainee;
 }
 export function ImportCsvModal({
   open,
   onClose,
   existingRecords,
-  onConfirmImport
+  onConfirmImport,
+  presetTrainee
 }: ImportCsvModalProps) {
   const [trainees, setTrainees] = useState<CsvTrainee[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -26,6 +28,10 @@ export function ImportCsvModal({
   const [dragOver, setDragOver] = useState(false);
   useEffect(() => {
     if (!open) return;
+    if (presetTrainee) {
+      setTrainees([presetTrainee]);
+      return;
+    }
     traineeService.getPaginatedFilterSearch({ per_page: 1000 }).then((res) => {
       setTrainees(
         res.data.map((t) => ({
@@ -35,7 +41,7 @@ export function ImportCsvModal({
         })),
       );
     });
-  }, [open]);
+  }, [open, presetTrainee]);
   function reset() {
     setFileName('');
     setRows(null);
