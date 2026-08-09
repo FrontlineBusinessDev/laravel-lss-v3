@@ -108,7 +108,7 @@ export function AnnualBatchCard({
                     </div>
                 )}
                 <div
-                    className="ml-auto flex gap-5 text-right"
+                    className="ml-auto flex flex-wrap gap-x-5 gap-y-1 text-right"
                     data-cy="annual-batch-card-div-6"
                 >
                     <div data-cy="annual-batch-card-div-7">
@@ -119,7 +119,7 @@ export function AnnualBatchCard({
                             Received
                         </div>
                         <div
-                            className="text-xs font-semibold text-ink"
+                            className="whitespace-nowrap text-xs font-semibold text-ink"
                             data-cy="annual-batch-card-div-8"
                         >
                             {formatCurrency(fin.totalReceived)}
@@ -134,7 +134,7 @@ export function AnnualBatchCard({
                         </div>
                         <div
                             className={cn(
-                                'text-xs font-semibold',
+                                'whitespace-nowrap text-xs font-semibold',
                                 fin.totalBalance > 0
                                     ? 'text-warning-700'
                                     : 'text-ink',
