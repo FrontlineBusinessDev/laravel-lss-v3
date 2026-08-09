@@ -39,6 +39,7 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
 
         $errors = [];
         $successCount = 0;
+        $createdIds = [];
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -59,13 +60,20 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
             }
 
             try {
+                $alreadyAttached = DB::table('app_trainees_learning_outcomes')
+                    ->where('trainee_id', $trainee->id)
+                    ->where('learning_outcome_id', $outcome->id)
+                    ->exists();
                 DB::transaction(fn () => $trainee->learningOutcomes()->syncWithoutDetaching([$outcome->id => ['status' => 'active']]));
+                if (! $alreadyAttached) {
+                    $createdIds[] = ['model' => 'pivot:trainee_learning_outcome', 'trainee_id' => $trainee->id, 'outcome_id' => $outcome->id];
+                }
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('learning_outcomes', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors);
+        return $this->finishImport('learning_outcomes', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
     }
 }

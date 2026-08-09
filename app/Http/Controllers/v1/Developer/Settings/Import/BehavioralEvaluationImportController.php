@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Developer\Settings\Import;
 
 use App\Http\Controllers\v1\Controller;
 use App\Models\BehavioralEvaluation;
+use App\Models\BehavioralEvaluationAnswer;
 use App\Models\BehavioralQuestion;
 use App\Models\Trainees;
 use App\Models\User;
@@ -49,6 +50,7 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
         $errors = [];
         $warnings = [];
         $successCount = 0;
+        $createdIds = [];
 
         // Group by trainee_email|date, preserving first-seen order within each group.
         $groups = [];
@@ -75,15 +77,25 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
             }
 
             try {
-                DB::transaction(function () use ($group, $trainee, $trainer, &$warnings) {
+                $rowCreatedIds = DB::transaction(function () use ($group, $trainee, $trainer, &$warnings) {
                     $evaluation = BehavioralEvaluation::firstOrNew([
                         'batch_id' => $trainee->batch_id,
                         'trainee_id' => $trainee->id,
                     ]);
+                    $evaluationIsNew = ! $evaluation->exists;
                     $evaluation->evaluator_id = $trainer->id;
                     $evaluation->remarks = collect($group)->pluck('row.remarks')->filter()->first();
                     $evaluation->save();
-                    $evaluation->answers()->delete();
+
+                    if (! $evaluationIsNew) {
+                        // A pre-existing evaluation is being matched, not created — its answers get replaced
+                        // (a stated, pre-existing limitation, see class doc), but nothing here is safely
+                        // reversible without a stored diff, so this row is left out of the rollback trail.
+                        $warnings[] = "Trainee {$trainee->email}: matched an existing behavioral evaluation — its answers were replaced but this row is not included in rollback.";
+                        $evaluation->answers()->delete();
+                    }
+
+                    $entries = $evaluationIsNew ? [['model' => BehavioralEvaluation::class, 'id' => $evaluation->id]] : [];
 
                     $scores = [];
                     foreach ($group as $entry) {
@@ -94,22 +106,28 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
                             $warnings[] = "Row {$entryRowNum}: no matching question for \"{$row['question_text']}\" — answer skipped.";
                             continue;
                         }
-                        $evaluation->answers()->create([
+                        $answer = $evaluation->answers()->create([
                             'question_id' => $question->id,
                             'score' => $row['score'],
                         ]);
+                        if ($evaluationIsNew) {
+                            $entries[] = ['model' => BehavioralEvaluationAnswer::class, 'id' => $answer->id];
+                        }
                         $scores[] = (int) $row['score'];
                     }
 
                     $evaluation->total_score = count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : null;
                     $evaluation->save();
+
+                    return $entries;
                 });
+                array_push($createdIds, ...$rowCreatedIds);
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('behavioral_evaluations', $validated['file_name'] ?? 'import.csv', count($rows), $successCount, $errors, $warnings);
+        return $this->finishImport('behavioral_evaluations', $validated['file_name'] ?? 'import.csv', count($rows), $successCount, $errors, $warnings, $createdIds);
     }
 }

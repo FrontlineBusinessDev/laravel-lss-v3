@@ -60,6 +60,7 @@ class TraineeImportController extends Controller implements HasMiddleware
 
         $errors = [];
         $successCount = 0;
+        $createdIds = [];
 
         // Each row is its own transaction: app_trainees.birthday and other
         // columns are NOT NULL, and a bad row's constraint violation must
@@ -103,7 +104,7 @@ class TraineeImportController extends Controller implements HasMiddleware
             $rate = $batch->setup === 'online' ? ($row['online_hours_rate'] ?? null) : ($row['f2f_hours_rate'] ?? null);
 
             try {
-                DB::transaction(fn () => Trainees::create([
+                $trainee = DB::transaction(fn () => Trainees::create([
                     'status' => $this->truthy($row['is_active'] ?? 1) ? Statuses::ACTIVE : Statuses::INACTIVE,
                     'batch_id' => $batch->id,
                     'school_id' => $school->id,
@@ -126,13 +127,14 @@ class TraineeImportController extends Controller implements HasMiddleware
                         ? (float) $row['discount_percent']
                         : null,
                 ]));
+                $createdIds[] = ['model' => Trainees::class, 'id' => $trainee->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('trainees', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors);
+        return $this->finishImport('trainees', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
     }
 
     private function truthy(mixed $value): bool

@@ -42,6 +42,7 @@ class CitationImportController extends Controller implements HasMiddleware
         $errors = [];
         $warnings = ['Imported citation templates carry legacy "(Placeholder)" tokens as-is — rewrite them to this app\'s {{token}} syntax before issuing certificates from them.'];
         $successCount = 0;
+        $createdIds = [];
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -52,7 +53,7 @@ class CitationImportController extends Controller implements HasMiddleware
             }
 
             try {
-                DB::transaction(fn () => CertificateCitation::create([
+                $citation = DB::transaction(fn () => CertificateCitation::create([
                     'title' => "{$row['industry']} – {$row['program_type']} (imported)",
                     'applies_to' => 'trainee',
                     'body_text' => $body,
@@ -60,12 +61,13 @@ class CitationImportController extends Controller implements HasMiddleware
                     'critical' => false,
                     'created_by' => auth()->id(),
                 ]));
+                $createdIds[] = ['model' => CertificateCitation::class, 'id' => $citation->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('citations', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings);
+        return $this->finishImport('citations', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 }

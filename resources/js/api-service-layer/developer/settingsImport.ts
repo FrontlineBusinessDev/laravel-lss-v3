@@ -8,18 +8,38 @@
 
 import { http, unwrap } from '../client';
 
+export interface SettingsImportLogUser {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+}
+
+export interface SettingsImportLogEntry {
+    id: number;
+    type: string;
+    file_name: string;
+    status: 'success' | 'partial' | 'failed';
+    total_rows: number;
+    success_count: number;
+    error_count: number;
+    imported_by: SettingsImportLogUser | null;
+    rolled_back_at: string | null;
+    rolled_back_by: SettingsImportLogUser | null;
+    created_at: string;
+}
+
 export interface SettingsImportResult {
-    log: {
-        id: number;
-        type: string;
-        status: 'success' | 'partial' | 'failed';
-        total_rows: number;
-        success_count: number;
-        error_count: number;
-    };
+    log: SettingsImportLogEntry;
     created_count: number;
     errors: string[];
     warnings: string[];
+}
+
+export interface SettingsImportRollbackResult {
+    log: SettingsImportLogEntry;
+    deleted_count: number;
+    errors: string[];
 }
 
 export const settingsImportService = {
@@ -34,4 +54,10 @@ export const settingsImportService = {
                 rows,
             }),
         ),
+
+    listLogs: async (): Promise<SettingsImportLogEntry[]> =>
+        unwrap<SettingsImportLogEntry[]>(await http.get('/settings/import/logs')),
+
+    rollback: async (logId: number): Promise<SettingsImportRollbackResult> =>
+        unwrap<SettingsImportRollbackResult>(await http.post(`/settings/import/logs/${logId}/rollback`)),
 };

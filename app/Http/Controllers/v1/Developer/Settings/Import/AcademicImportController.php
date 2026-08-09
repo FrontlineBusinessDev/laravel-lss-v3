@@ -52,6 +52,7 @@ class AcademicImportController extends Controller implements HasMiddleware
 
         $errors = [];
         $successCount = 0;
+        $createdIds = [];
 
         // Each row isolated in its own transaction so one bad row can't roll
         // back rows already successfully matched/created earlier in the batch.
@@ -78,14 +79,15 @@ class AcademicImportController extends Controller implements HasMiddleware
                     $payload['description'] = $row['description'];
                 }
 
-                DB::transaction(fn () => $modelClass::create($payload));
+                $created = DB::transaction(fn () => $modelClass::create($payload));
+                $createdIds[] = ['model' => $modelClass, 'id' => $created->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport("academic_{$type}", $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors);
+        return $this->finishImport("academic_{$type}", $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
     }
 
     private function hasColumn(string $modelClass, string $column): bool

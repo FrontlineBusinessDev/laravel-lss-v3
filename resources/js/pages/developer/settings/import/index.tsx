@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import { CsvImportCard } from './CsvImportCard';
+import { ImportLogsPanel } from './ImportLogsPanel';
 import { IMPORT_STEPS } from './importUtils';
 
 export default function index() {
+    const [refreshKey, setRefreshKey] = useState(0);
+
     return (
         <SettingsPrimaryLayout>
             <div className="mb-4 rounded-md border border-neutral-200 bg-neutral-50 px-3.5 py-2.5 text-xs text-neutral-600">
@@ -12,9 +16,10 @@ export default function index() {
             </div>
             <div className="flex flex-col gap-3" data-cy="settings-import-list">
                 {IMPORT_STEPS.map((step) => (
-                    <CsvImportCard key={step.key} step={step} />
+                    <CsvImportCard key={step.key} step={step} onImported={() => setRefreshKey((k) => k + 1)} />
                 ))}
             </div>
+            <ImportLogsPanel refreshKey={refreshKey} />
         </SettingsPrimaryLayout>
     );
 }

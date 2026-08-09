@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1\Developer\Settings\Import;
 use App\Http\Controllers\v1\Controller;
 use App\Models\Task;
 use App\Models\TaskRating;
+use App\Models\TaskRatingHistory;
 use App\Models\Trainees;
 use App\Models\User;
 use App\Support\Import\ImportLogging;
@@ -49,6 +50,7 @@ class TaskImportController extends Controller implements HasMiddleware
 
         $errors = [];
         $successCount = 0;
+        $createdIds = [];
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -66,8 +68,10 @@ class TaskImportController extends Controller implements HasMiddleware
             $complete = $this->truthy($row['is_complete'] ?? null);
 
             try {
-                DB::transaction(function () use ($row, $trainee, $trainer, $complete) {
-                    Task::create([
+                $rowCreatedIds = DB::transaction(function () use ($row, $trainee, $trainer, $complete) {
+                    $entries = [];
+
+                    $task = Task::create([
                         'status' => $complete ? 'completed' : 'open',
                         'batch_id' => $trainee->batch_id,
                         'trainee_id' => $trainee->id,
@@ -80,6 +84,7 @@ class TaskImportController extends Controller implements HasMiddleware
                         'remarks' => $row['remarks'] ?? null,
                         'completed_at' => $complete ? $row['date'] : null,
                     ]);
+                    $entries[] = ['model' => Task::class, 'id' => $task->id];
 
                     if (isset($row['grade']) && $row['grade'] !== '') {
                         $rating = TaskRating::firstOrNew([
@@ -87,27 +92,36 @@ class TaskImportController extends Controller implements HasMiddleware
                             'task_name' => $row['task_title'],
                             'trainee_id' => $trainee->id,
                         ]);
+                        $ratingIsNew = ! $rating->exists;
                         $rating->rating = (int) round((float) $row['grade']);
                         $rating->evaluator_id = $trainer->id;
                         $rating->rated_at = $row['date'];
                         $rating->comments = $row['remarks'] ?? $rating->comments;
                         $rating->save();
+                        if ($ratingIsNew) {
+                            $entries[] = ['model' => TaskRating::class, 'id' => $rating->id];
+                        }
 
-                        $rating->history()->create([
+                        $history = $rating->history()->create([
                             'rating' => $rating->rating,
                             'comments' => $rating->comments,
                             'evaluator_id' => $trainer->id,
                             'rated_at' => $row['date'],
                         ]);
+                        // Append-only audit trail — always a genuinely new row regardless of whether the rating itself was new.
+                        $entries[] = ['model' => TaskRatingHistory::class, 'id' => $history->id];
                     }
+
+                    return $entries;
                 });
+                array_push($createdIds, ...$rowCreatedIds);
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('tasks', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors);
+        return $this->finishImport('tasks', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
     }
 
     private function truthy(mixed $value): bool

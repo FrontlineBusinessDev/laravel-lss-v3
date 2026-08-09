@@ -36,6 +36,7 @@ class PaymentImportController extends Controller implements HasMiddleware
 
         $errors = [];
         $successCount = 0;
+        $createdIds = [];
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -48,18 +49,19 @@ class PaymentImportController extends Controller implements HasMiddleware
             $notes = ! empty($row['receipt_link']) ? "Legacy receipt link: {$row['receipt_link']}" : null;
 
             try {
-                DB::transaction(fn () => $trainee->payments()->create([
+                $payment = DB::transaction(fn () => $trainee->payments()->create([
                     'amount_paid' => $row['amount_paid'],
                     'payment_date' => $row['payment_date'],
                     'official_receipt_number' => $row['official_receipt_number'] ?? null,
                     'notes' => $notes,
                 ]));
+                $createdIds[] = ['model' => \App\Models\TraineesPayments::class, 'id' => $payment->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('payments', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors);
+        return $this->finishImport('payments', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
     }
 }

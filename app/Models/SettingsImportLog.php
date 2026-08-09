@@ -18,14 +18,24 @@ class SettingsImportLog extends Model
         'error_count',
         'status',
         'warnings',
+        'created_ids',
+        'rolled_back_at',
+        'rolled_back_by_id',
     ];
 
     protected $casts = [
         'warnings' => 'array',
+        'created_ids' => 'array',
+        'rolled_back_at' => 'datetime',
     ];
 
     public function importedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'imported_by_id');
+    }
+
+    public function rolledBackBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rolled_back_by_id');
     }
 }

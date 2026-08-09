@@ -53,6 +53,7 @@ class BatchImportController extends Controller implements HasMiddleware
         $errors = [];
         $warnings = [];
         $successCount = 0;
+        $createdIds = [];
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -79,7 +80,7 @@ class BatchImportController extends Controller implements HasMiddleware
             }
 
             try {
-                DB::transaction(fn () => Batches::create([
+                $batch = DB::transaction(fn () => Batches::create([
                     'status' => $this->resolveStatus($row),
                     'batch_code' => $code,
                     'public_registration_url_id' => (string) Str::ulid(),
@@ -90,13 +91,14 @@ class BatchImportController extends Controller implements HasMiddleware
                     'academic_industry_id' => $industry->id,
                     'academic_program_type_id' => $programType->id,
                 ]));
+                $createdIds[] = ['model' => Batches::class, 'id' => $batch->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('batches', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings);
+        return $this->finishImport('batches', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 
     /** Collapses legacy's 3 booleans onto the current single status string. Dissolved wins, then completed, then open/default active. */

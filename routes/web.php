@@ -20,6 +20,7 @@ use App\Http\Controllers\v1\Developer\Settings\Import\AcademicImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\BatchImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\BehavioralEvaluationImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\CitationImportController;
+use App\Http\Controllers\v1\Developer\Settings\Import\ImportRollbackController;
 use App\Http\Controllers\v1\Developer\Settings\Import\LearningOutcomeImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\PartnerSchoolImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\PaymentImportController;
@@ -457,6 +458,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/behavioral-evaluations', [BehavioralEvaluationImportController::class, 'import'])->name('behavioral-evaluations');
         Route::post('/learning-outcomes', [LearningOutcomeImportController::class, 'import'])->name('learning-outcomes');
         Route::post('/citations', [CitationImportController::class, 'import'])->name('citations');
+        Route::get('/logs', [ImportRollbackController::class, 'index'])->name('logs');
+        Route::post('/logs/{log}/rollback', [ImportRollbackController::class, 'rollback'])->name('logs.rollback');
     });
 
     // Developer-only global audit trail. Read-only: the index CSR shell plus the

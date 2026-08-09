@@ -37,6 +37,7 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
 
         $errors = [];
         $successCount = 0;
+        $createdIds = [];
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -55,7 +56,7 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
                 $contactPerson = trim($row['contact_person'] ?? '');
                 $parts = $contactPerson !== '' ? preg_split('/\s+/', $contactPerson, 2) : [];
 
-                DB::transaction(fn () => PartnerSchools::create([
+                $school = DB::transaction(fn () => PartnerSchools::create([
                     'status' => Statuses::ACTIVE,
                     'school_name' => $name,
                     'abbreviation' => $row['abbreviation'] ?? null,
@@ -64,12 +65,13 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
                     'contact_email' => $row['contact_email'] ?? null,
                     'physical_address' => $row['address'] ?? null,
                 ]));
+                $createdIds[] = ['model' => PartnerSchools::class, 'id' => $school->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }
         }
 
-        return $this->finishImport('partner_schools', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors);
+        return $this->finishImport('partner_schools', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
     }
 }

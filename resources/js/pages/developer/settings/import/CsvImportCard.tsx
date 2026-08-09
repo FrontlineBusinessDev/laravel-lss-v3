@@ -5,7 +5,7 @@ import { settingsImportService, type SettingsImportResult } from '@/api-service-
 import { csvRowsToObjects, downloadCsvTemplate, type ImportStepConfig } from './importUtils';
 
 /** One self-contained CSV upload + import card for a single Settings > Import phase/step. */
-export function CsvImportCard({ step }: { step: ImportStepConfig }) {
+export function CsvImportCard({ step, onImported }: { step: ImportStepConfig; onImported?: () => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileName, setFileName] = useState('');
     const [rows, setRows] = useState<Record<string, string>[] | null>(null);
@@ -38,6 +38,7 @@ export function CsvImportCard({ step }: { step: ImportStepConfig }) {
             const res = await settingsImportService.import(step.endpoint, fileName || 'import.csv', rows);
             setResult(res);
             setRows(null);
+            onImported?.();
         } catch {
             setReadError('Import failed — check the file and try again.');
         } finally {
