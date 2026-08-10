@@ -29,8 +29,8 @@ use Illuminate\Validation\Rule;
 class BatchesController extends BaseController
 {
     // ── Batch number seed ────────────────────────────────────────────────
-    // Batch codes render as FBS-NNN (e.g. FBS-076). Legacy/migrated batches
-    // occupied 1..75, so live auto-generation MUST begin at 76. To move the
+    // Batch codes render as FBS-NNN (e.g. FBS-077). Legacy/migrated batches
+    // occupied 1..77, so live auto-generation MUST begin at 77. To move the
     // starting point in the future, change ONLY this constant.
     private const BATCH_SEQUENCE_START = 77;
 

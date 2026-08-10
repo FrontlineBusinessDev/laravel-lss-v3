@@ -26,7 +26,7 @@ class BatchImportController extends Controller implements HasMiddleware
     use ImportLogging;
 
     /** Mirrors BatchesController::BATCH_SEQUENCE_START — codes at/above this are reserved for live auto-generation. */
-    private const RESERVED_SEQUENCE_START = 76;
+    private const RESERVED_SEQUENCE_START = 77;
 
     public static function middleware(): array
     {
