@@ -13,7 +13,7 @@ class LeaveCategoryController extends BaseController
     protected string $view = 'developer/settings/leave-categories/index';
     protected array $searchable = ['name'];
     protected array $filterable = ['status', 'name'];
-    protected array $sortable = ['name', 'max_days', 'max_instances'];
+    protected array $sortable = ['name', 'max_days', 'max_instances', 'status', 'requires_document'];
     protected array $activeColumns = ['id', 'name', 'requires_document'];
     protected string $sortBy = 'name';
     protected array $inUseRelations = ['leaveRequests'];

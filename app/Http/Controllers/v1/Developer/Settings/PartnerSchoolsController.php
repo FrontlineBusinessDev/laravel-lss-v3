@@ -21,7 +21,7 @@ class PartnerSchoolsController extends BaseController
     protected string $view = 'developer/settings/partner-schools/index';
     protected array $searchable = ['school_name', 'abbreviation', 'contact_email', 'contact_first_name', 'contact_last_name', 'physical_address'];
     protected array $filterable = ['status', 'school_name', 'abbreviation', 'contact_email', 'contact_first_name', 'contact_last_name', 'physical_address'];
-    protected array $sortable   = ['id', 'school_name', 'status', 'contact_email', 'created_at'];
+    protected array $sortable   = ['id', 'school_name', 'status', 'contact_email', 'created_at', 'abbreviation', 'contact_first_name', 'contact_last_name', 'physical_address'];
     // Transforms the stored path into a temporary (presigned) URL on list responses.
     protected array $fileFields = ['image'];
     protected array $activeColumns = ['id', 'school_name'];

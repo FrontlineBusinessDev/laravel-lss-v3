@@ -83,6 +83,7 @@ export const columns: ColumnDef<AppTrainees>[] = [
         label: 'Industry',
         searchable: false,
         filterable: false,
+        sortable: false,
         type: 'async-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/industry', q, 'name'),
@@ -94,6 +95,7 @@ export const columns: ColumnDef<AppTrainees>[] = [
         label: 'Level',
         searchable: false,
         filterable: false,
+        sortable: false,
         type: 'async-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/level', q, 'name'),
@@ -114,6 +116,7 @@ export const columns: ColumnDef<AppTrainees>[] = [
         label: 'Program Type',
         searchable: false,
         filterable: false,
+        sortable: false,
         type: 'async-multi-select',
         loadOptions: (q) =>
             loadLookupOptions('/settings/academic/program-type', q, 'name'),

@@ -46,7 +46,12 @@ export function AddRecordButton({
                 strokeWidth={2}
                 data-cy="add-record-button-plus"
             />
-            {label}
+            <span className="hidden sm:inline" aria-hidden={false}>
+                {label}
+            </span>
+            <span className="sm:hidden" aria-hidden="true">
+                Add
+            </span>
         </button>
     );
 }
