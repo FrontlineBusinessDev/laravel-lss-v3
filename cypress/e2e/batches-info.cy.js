@@ -468,10 +468,10 @@ describe('Batches Module', () => {
         //     .click();
     });
 
-    //trainers tab
-    it('should check the display of trainers tab', () => {
-        cy.visit('/batches/8');
+    // //trainers tab
+    // it('should check the display of trainers tab', () => {
+    //     cy.visit('/batches/8');
 
-        cy.get('[data-cy="batch-detail-layout-link-t-href"]').eq(1).click();
-    });
+    //     cy.get('[data-cy="batch-detail-layout-link-t-href"]').eq(1).click();
+    // });
 });

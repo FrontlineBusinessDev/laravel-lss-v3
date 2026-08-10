@@ -279,6 +279,374 @@ describe('Trainees Module', () => {
 
         cy.get('[data-cy="toolbar-button-button"]').click();
 
-        cy.get('[data-cy="data-input-first_name"]')
+        cy.get('[data-cy="data-input-first_name"]').type('Verni');
+
+        //verify
+        cy.get('[data-cy="settings-row-div-4"]').should(
+            'contain.text',
+            'Verni',
+        );
+    });
+
+    //filter last name
+    it('should check if the filtering of last name is working', () => {
+        cy.visit('/trainees');
+
+        cy.get('[data-cy="toolbar-button-button"]').click();
+
+        cy.get('[data-cy="data-input-last_name"]').type('Ba');
+
+        //verify
+        cy.get('[data-cy="settings-row-div-4"]').should('contain.text', 'Ba');
+    });
+
+    //filter email
+    it('should check if the filtering of email is working', () => {
+        cy.visit('/trainees');
+
+        cy.get('[data-cy="toolbar-button-button"]').click();
+
+        cy.get('[data-cy="data-input-email"]').type('green');
+
+        //verify
+        cy.get('[data-cy="settings-row-div-4"]').should('contain.text', 'green');
+    });
+
+    //sort status
+    it('should check if the sorting of status is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as('sortstatusTrainees');
+
+        // select status sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: status',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortstatusTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortstatusTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+    });
+
+    //sort batch
+    it('should check if the sorting of batches is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as('sortbatchTrainees');
+
+        // select batch sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Batch',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortbatchTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortbatchTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+    });
+
+    //sort school name
+    it('should check if the sorting of school name is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as(
+            'sortschoolnameTrainees',
+        );
+
+        // select schoolname sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: School Name',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortschoolnameTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortschoolnameTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+    });
+
+    //sort program
+    it('should check if the sorting of program is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as('sortprogramTrainees');
+
+        // select program sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Program',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortprogramTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortprogramTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+    });
+
+    //sort first name
+    it('should check if the sorting of first name is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as('sortfirstnameTrainees');
+
+        // select firstname sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: First Name',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortfirstnameTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortfirstnameTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+
+        cy.get('[data-cy="index-span-name"]').first().invoke('text').then((text) => {
+        const firstName = text.split('\n')[0].trim();
+
+        expect(firstName).to.match(/^Z/i);
+        });
+    });
+
+    //sort last name
+    it('should check if the sorting of last name is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as('sortlastnameTrainees');
+
+        // select lastname sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Last Name',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortlastnameTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortlastnameTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+
+        cy.get('[data-cy="index-span-name"]')
+            .first()
+            .invoke('text')
+            .then((text) => {
+                const fullName = text.trim();
+                const lastName = fullName.split(' ').pop();
+
+                expect(lastName).to.match(/^[Zz]/);
+            });
+    });
+
+    //sort email
+    it('should check if the sorting of email is working', () => {
+        cy.visit('/trainees');
+
+        // intercept sorting request
+        cy.intercept('GET', '**/pagination-search*').as('sortemailTrainees');
+
+        // select email sorting
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Email',
+        );
+
+        // verify ascending sorting request was successful
+        cy.get('[data-cy="toolbar-arrow-up-15"]').should('be.visible');
+
+        cy.wait('@sortemailTrainees').its('request.url');
+
+        //click descending btn
+        cy.get('[data-cy="toolbar-arrow-up-15"]').click();
+
+        // verify descending sorting request was successful
+        cy.wait('@sortemailTrainees').its('request.url');
+
+        cy.get('[data-cy="toolbar-arrow-down-16"]').should('be.visible');
+
+        cy.get('[data-cy="settings-row-div-1"]')
+            .first()
+            .invoke('text')
+            .then((text) => {
+                const email = text.split('\n')[0].trim();
+
+                expect(email).to.match(/^Z/i);
+            });
+    });
+
+    //per page 15
+    it('should check if the number of records displays correctly when the rows per page changed to 15', () => {
+        cy.visit('/trainees');
+
+        cy.intercept('GET', '**/pagination-search*').as('changeRowsPerPage');
+
+        // change rows per page to 15
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('15');
+
+        // wait for updated records
+        cy.wait('@changeRowsPerPage')
+            .its('response.statusCode')
+            .should('eq', 200);
+
+        // verify that 15 records are displayed
+        cy.get('[data-cy="settings-row-div-4"]').should('have.length', 15);
+    });
+
+    //per page 25
+    it('should check if the number of records displays correctly when the rows per page changed to 25', () => {
+        cy.visit('/trainees');
+
+        cy.intercept('GET', '**/pagination-search*').as('changeRowsPerPage');
+
+        // change rows per page to 25
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('25');
+
+        // wait for updated records
+        cy.wait('@changeRowsPerPage')
+            .its('response.statusCode')
+            .should('eq', 200);
+
+        // verify that 25 records are displayed
+        cy.get('[data-cy="settings-row-div-4"]').should('have.length', 25);
+    });
+
+    //per page 50
+    it('should check if the number of records displays correctly when the rows per page changed to 50', () => {
+        cy.visit('/trainees');
+
+        cy.intercept('GET', '**/pagination-search*').as('changeRowsPerPage');
+
+        // change rows per page to 50
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('50');
+
+        // wait for updated records
+        cy.wait('@changeRowsPerPage')
+            .its('response.statusCode')
+            .should('eq', 200);
+
+        // verify that 50 records are displayed
+        cy.get('[data-cy="settings-row-div-4"]').should('have.length', 50);
+    });
+
+    //per page 100
+    it('should check if the number of records displays correctly when the rows per page changed to 100', () => {
+        cy.visit('/trainees');
+
+        cy.intercept('GET', '**/pagination-search*').as('changeRowsPerPage');
+
+        // change rows per page to 100
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('100');
+
+        // wait for updated records
+        cy.wait('@changeRowsPerPage')
+            .its('response.statusCode')
+            .should('eq', 200);
+
+        // verify that 100 records are displayed
+        cy.get('[data-cy="settings-row-div-4"]').should('have.length', 100);
+    });
+
+    //archive trainee
+    it('should archive a trainee', () => {
+        cy.visit('/trainees');
+
+        cy.get('[data-cy="settings-row-div-4"]')
+            .eq(0)
+            .find('[data-cy="row-menu-more-horizontal-2"]')
+            .click();
+
+        cy.get('[data-cy="row-menu-button-4"]').eq(0).click();
+
+        //verify archive
+        cy.get('[data-cy="toast-div-3"]')
+            .should('be.visible')
+            .and('contain.text', 'Archived');
+    });
+
+    //restore trainee
+    it('should restore archived trainee', () => {
+        cy.visit('/trainees');
+
+        cy.get('[data-cy="settings-row-div-4"]')
+            .eq(0)
+            .find('[data-cy="row-menu-more-horizontal-2"]')
+            .click();
+
+        cy.get('[data-cy="row-menu-button-4"]').eq(0).click();
+
+        //verify archive
+        cy.get('[data-cy="toast-div-3"]')
+            .should('be.visible')
+            .and('contain.text', 'Restored');
+    });
+
+    //delete trainee
+    it('should check if delete trainee button is working', () => {
+        cy.visit('/trainees');
+
+        //search a trainee
+        cy.get('[data-cy="toolbar-input-text"]').type('Matilda', {
+            timeout: 5000,
+        });
+
+        cy.contains('[data-cy="settings-row-div-4"]', 'Matilda')
+            .eq(0)
+            .find('[data-cy="row-menu-more-horizontal-2"]')
+            .click({ timeout: 5000 });
+
+        cy.get('[data-cy="row-menu-button-4"]').eq(1).click();
+
+        //delete modal
+        cy.get('[data-cy="confirm-delete-modal-div-2"]').should('be.visible');
+
+        //cancel
+        cy.get('[data-cy="confirm-delete-modal-button-button"]').click();
     });
 });

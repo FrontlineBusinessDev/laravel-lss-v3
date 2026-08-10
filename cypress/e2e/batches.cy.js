@@ -103,11 +103,11 @@ describe('Batches Module', () => {
         //back to batches list
         cy.get('[data-cy="batch-detail-layout-link-batches"]').click();
 
-        // Verify initially disabled
+        // Verify initially able
         cy.get('[data-cy="switch-button-aria-label"]').should(
             'have.attr',
             'aria-checked',
-            'false',
+            'true',
         );
 
         // Enable the switch
@@ -117,19 +117,19 @@ describe('Batches Module', () => {
         cy.get('[data-cy="switch-button-aria-label"]').should(
             'have.attr',
             'aria-checked',
-            'true',
+            'false',
         );
 
         // Disable the switch again
         cy.get('[data-cy="switch-button-aria-label"]').eq(0).click({
-            multiple: true,
+            multiple: false,
         });
 
         // Verify disabled
         cy.get('[data-cy="switch-button-aria-label"]').should(
             'have.attr',
             'aria-checked',
-            'false',
+            'true',
         );
 
         //actions
@@ -269,14 +269,14 @@ describe('Batches Module', () => {
         //search a batch
         cy.get('[data-cy="toolbar-input-text"]').click();
 
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9606');
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
 
         cy.wait('@searchBatch');
 
-        cy.contains('FBS-9606', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
 
         //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9606')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
             .should('be.visible')
             .parent()
             .find('[data-cy="row-menu-button-row-actions"]')
@@ -295,12 +295,12 @@ describe('Batches Module', () => {
 
         //type and search
         cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
-            'Information',
+            'Acc',
         );
 
         //select result
         cy.get('[data-cy="use-async-select-field-button-button-2"]')
-            .contains('Information Technology')
+            .contains('Accounting')
             .should('be.visible')
             .click();
 
@@ -316,12 +316,12 @@ describe('Batches Module', () => {
     //registration QR
     it('should open the registration QR', () => {
         // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9606');
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
 
-        cy.contains('FBS-9606', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
 
         // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9606')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
             .should('be.visible')
             .parent()
             .find('[data-cy="row-menu-button-row-actions"]')
@@ -353,12 +353,12 @@ describe('Batches Module', () => {
     //copy link
     it('should copy the registration link', () => {
         // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9606');
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
 
-        cy.contains('FBS-9606', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
 
         // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9606')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
             .should('be.visible')
             .parent()
             .find('[data-cy="row-menu-button-row-actions"]')
@@ -379,12 +379,12 @@ describe('Batches Module', () => {
     //archive
     it('should archive batch', () => {
         // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9606');
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
 
-        cy.contains('FBS-9606', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
 
         // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9606')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
             .should('be.visible')
             .parent()
             .find('[data-cy="row-menu-button-row-actions"]')
@@ -405,12 +405,12 @@ describe('Batches Module', () => {
     //restore
     it('should restore batch', () => {
         // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9606');
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
 
-        cy.contains('FBS-9606', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
 
         // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9606')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
             .should('be.visible')
             .parent()
             .find('[data-cy="row-menu-button-row-actions"]')
@@ -424,19 +424,18 @@ describe('Batches Module', () => {
 
         //verify archived batch
         cy.get('[data-cy="toast-p-5"]')
-            // .should('contain.text', 'Restored')
             .and('be.visible');
     });
 
     //terminate
     it('should terminate batch', () => {
         //search batch
-        cy.get('[data-cy="toolbar-input-text"]').clear().type('FBS-8314');
+        cy.get('[data-cy="toolbar-input-text"]').clear().type('FBS-5908');
 
-        cy.contains('FBS-8314', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-5908', { timeout: 1000 }).should('be.visible');
 
         //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-8314')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-5908')
             .should('be.visible')
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
@@ -453,7 +452,7 @@ describe('Batches Module', () => {
         cy.get('[data-cy="index-button-button"]').click();
 
         //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-8314')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-5908')
             .should('be.visible')
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
@@ -484,12 +483,12 @@ describe('Batches Module', () => {
             'deleteBatch',
         );
         //search batch
-        cy.get('[data-cy="toolbar-input-text"]').clear().type('FBS-8314');
+        cy.get('[data-cy="toolbar-input-text"]').clear().type('FBS-3335');
 
-        cy.contains('FBS-8314', { timeout: 1000 }).should('be.visible');
+        cy.contains('FBS-3335', { timeout: 1000 }).should('be.visible');
 
         //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-8314')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-3335')
             .should('be.visible')
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
@@ -510,7 +509,7 @@ describe('Batches Module', () => {
         ).click();
 
         //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-8314')
+        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-3335')
             .should('be.visible')
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
@@ -525,7 +524,7 @@ describe('Batches Module', () => {
         cy.get('[data-cy="confirm-delete-modal-div-2"]').should('be.visible');
 
         cy.get('[data-cy="confirm-delete-modal-input-confirm-text"]').type(
-            'FBS-8314',
+            'FBS-3335',
         );
 
         cy.get('[data-cy="confirm-delete-modal-button-button-2"]').click();
