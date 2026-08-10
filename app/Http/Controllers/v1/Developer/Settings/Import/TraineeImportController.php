@@ -34,29 +34,35 @@ class TraineeImportController extends Controller implements HasMiddleware
 
     public function import(Request $request): JsonResponse
     {
+        $this->nullifyBlankRowFields($request, ['birthday']);
+        $this->normalizeDateRowFields($request, ['birthday']);
+
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.first_name' => ['required', 'string', 'max:255'],
-            'rows.*.last_name' => ['required', 'string', 'max:255'],
-            'rows.*.email' => ['required', 'email', 'max:255'],
-            'rows.*.batch_code' => ['required', 'string'],
-            'rows.*.school_name' => ['required', 'string'],
-            'rows.*.program_name' => ['nullable', 'string'],
-            'rows.*.level_name' => ['nullable', 'string'],
-            'rows.*.gender' => ['required', 'string'],
-            'rows.*.birthday' => ['nullable', 'date'],
-            'rows.*.birth_place' => ['nullable', 'string'],
-            'rows.*.address' => ['nullable', 'string'],
-            'rows.*.mobile_number' => ['nullable', 'string'],
-            'rows.*.emergency_contact_name' => ['nullable', 'string'],
-            'rows.*.emergency_contact_number' => ['nullable', 'string'],
-            'rows.*.required_hours' => ['required', 'numeric', 'min:0'],
-            'rows.*.f2f_hours_rate' => ['nullable', 'numeric'],
-            'rows.*.online_hours_rate' => ['nullable', 'numeric'],
-            'rows.*.discount_percent' => ['nullable', 'numeric'],
-            'rows.*.is_active' => ['nullable'],
         ]);
+
+        $rowRules = [
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'batch_code' => ['required', 'string'],
+            'school_name' => ['required', 'string'],
+            'program_name' => ['nullable', 'string'],
+            'level_name' => ['nullable', 'string'],
+            'gender' => ['required', 'string'],
+            'birthday' => ['nullable', 'date'],
+            'birth_place' => ['nullable', 'string'],
+            'address' => ['nullable', 'string'],
+            'mobile_number' => ['nullable', 'string'],
+            'emergency_contact_name' => ['nullable', 'string'],
+            'emergency_contact_number' => ['nullable', 'string'],
+            'required_hours' => ['required', 'numeric', 'min:0'],
+            'f2f_hours_rate' => ['nullable', 'numeric'],
+            'online_hours_rate' => ['nullable', 'numeric'],
+            'discount_percent' => ['nullable', 'numeric'],
+            'is_active' => ['nullable'],
+        ];
 
         $errors = [];
         $successCount = 0;
@@ -67,6 +73,10 @@ class TraineeImportController extends Controller implements HasMiddleware
         // only roll back that row, not every row already imported this batch.
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $email = trim($row['email']);
             $gender = strtolower(trim($row['gender']));
 

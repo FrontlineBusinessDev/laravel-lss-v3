@@ -458,7 +458,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/behavioral-evaluations', [BehavioralEvaluationImportController::class, 'import'])->name('behavioral-evaluations');
         Route::post('/learning-outcomes', [LearningOutcomeImportController::class, 'import'])->name('learning-outcomes');
         Route::post('/citations', [CitationImportController::class, 'import'])->name('citations');
-        Route::get('/logs', [ImportRollbackController::class, 'index'])->name('logs');
+        Route::get('/logs/pagination-search', [ImportRollbackController::class, 'paginationSearch'])->name('logs.pagination-search');
         Route::post('/logs/{log}/rollback', [ImportRollbackController::class, 'rollback'])->name('logs.rollback');
     });
 

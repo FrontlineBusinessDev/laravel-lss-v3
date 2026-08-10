@@ -24,15 +24,20 @@ class PaymentImportController extends Controller implements HasMiddleware
     /** rows: [{trainee_email, amount_paid, payment_date, official_receipt_number?, receipt_link?}] */
     public function import(Request $request): JsonResponse
     {
+        $this->normalizeDateRowFields($request, ['payment_date']);
+
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.trainee_email' => ['required', 'email'],
-            'rows.*.amount_paid' => ['required', 'numeric', 'min:0.01'],
-            'rows.*.payment_date' => ['required', 'date'],
-            'rows.*.official_receipt_number' => ['nullable', 'string', 'max:100'],
-            'rows.*.receipt_link' => ['nullable', 'string'],
         ]);
+
+        $rowRules = [
+            'trainee_email' => ['required', 'email'],
+            'amount_paid' => ['required', 'numeric', 'min:0.01'],
+            'payment_date' => ['required', 'date'],
+            'official_receipt_number' => ['nullable', 'string', 'max:100'],
+            'receipt_link' => ['nullable', 'string'],
+        ];
 
         $errors = [];
         $successCount = 0;
@@ -40,6 +45,10 @@ class PaymentImportController extends Controller implements HasMiddleware
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $trainee = Trainees::where('email', trim($row['trainee_email']))->first();
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$row['trainee_email']}\" — run the Trainees import first.";

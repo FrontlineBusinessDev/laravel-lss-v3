@@ -32,7 +32,7 @@ class BatchesController extends BaseController
     // Batch codes render as FBS-NNN (e.g. FBS-076). Legacy/migrated batches
     // occupied 1..75, so live auto-generation MUST begin at 76. To move the
     // starting point in the future, change ONLY this constant.
-    private const BATCH_SEQUENCE_START = 76;
+    private const BATCH_SEQUENCE_START = 77;
 
     /** Terminated is a lifecycle end-state distinct from the active/inactive archive flag. */
     private const STATUS_TERMINATED = 'terminated';
