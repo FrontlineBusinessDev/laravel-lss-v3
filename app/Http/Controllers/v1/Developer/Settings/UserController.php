@@ -44,8 +44,8 @@ class UserController extends BaseController
 
     protected array $inUseLabels = ['assignedBatches' => 'Batches (as trainer)'];
 
-    /** Role captured during validation so afterCreate/afterUpdate can sync it. */
-    private ?string $pendingRole = null;
+    /** Roles captured during validation so afterCreate/afterUpdate can sync them. */
+    private array $pendingRoles = [];
 
     /** The settings shell is rendered by SettingController; bounce stray hits. */
     // public function index(Request $request): mixed
@@ -82,7 +82,8 @@ class UserController extends BaseController
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', Rule::in($this->assignableRoles())],
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => ['string', Rule::in($this->assignableRoles())],
         ];
     }
 
@@ -97,13 +98,14 @@ class UserController extends BaseController
                 'max:255',
                 Rule::unique('users', 'email')->ignore($model->getKey()),
             ],
-            'role' => ['required', 'string', Rule::in($this->assignableRoles())],
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*' => ['string', Rule::in($this->assignableRoles())],
         ];
     }
 
     protected function validationMessages(): array
     {
-        return ['role.in' => 'You are not allowed to assign that role.'];
+        return ['roles.*.in' => 'You are not allowed to assign that role.'];
     }
 
     /**
@@ -113,8 +115,8 @@ class UserController extends BaseController
      */
     protected function beforeSave(array $validated, ?Model $model = null): array
     {
-        $this->pendingRole = $validated['role'] ?? null;
-        unset($validated['role']);
+        $this->pendingRoles = $validated['roles'] ?? [];
+        unset($validated['roles']);
 
         if (isset($validated['name'])) {
             [$first, $last] = $this->splitName($validated['name']);
@@ -123,8 +125,10 @@ class UserController extends BaseController
             unset($validated['name']);
         }
 
-        // Block demoting the final administrator on update.
-        if ($model instanceof User && $this->pendingRole !== 'admin') {
+        // Block demoting the final administrator on update — only trips when
+        // `admin` is actually being dropped from the role set, not when other
+        // roles are simply being added alongside it.
+        if ($model instanceof User && ! in_array('admin', $this->pendingRoles, true)) {
             abort_if(
                 $this->isLastActiveAdmin($model),
                 422,
@@ -146,7 +150,7 @@ class UserController extends BaseController
      */
     protected function afterCreate(Model $model): void
     {
-        $this->syncPendingRole($model);
+        $this->syncPendingRoles($model);
 
         if ($model instanceof User) {
             $resetUrl = PasswordSetupUrl::generate($model);
@@ -156,7 +160,7 @@ class UserController extends BaseController
 
     protected function afterUpdate(Model $model): void
     {
-        $this->syncPendingRole($model);
+        $this->syncPendingRoles($model);
     }
 
     /**
@@ -212,10 +216,10 @@ class UserController extends BaseController
         return [];
     }
 
-    private function syncPendingRole(Model $model): void
+    private function syncPendingRoles(Model $model): void
     {
-        if ($model instanceof User && $this->pendingRole !== null) {
-            $model->syncRoles([$this->pendingRole]);
+        if ($model instanceof User && $this->pendingRoles !== []) {
+            $model->syncRoles($this->pendingRoles);
         }
     }
 

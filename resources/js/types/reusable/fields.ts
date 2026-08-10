@@ -21,6 +21,7 @@ export type FieldType =
     | 'datetime-local'
     | 'textarea'
     | 'select'
+    | 'multi-select'
     | 'checkbox'
     | 'async-select'
     | 'file';

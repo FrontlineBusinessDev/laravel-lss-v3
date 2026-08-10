@@ -22,6 +22,8 @@ function baseFor<T>(field: FieldDef<T>): Yup.Schema {
             return Yup.string().url('Enter a valid URL.');
         case 'checkbox':
             return Yup.boolean();
+        case 'multi-select':
+            return Yup.array().of(Yup.string().defined());
         case 'file':
             return Yup.mixed();
         default:
@@ -49,6 +51,14 @@ function withRequired<T>(schema: Yup.Schema, field: FieldDef<T>): Yup.Schema {
 
     if (field.type === 'checkbox') {
         return (schema as Yup.BooleanSchema).oneOf([true], msg);
+    }
+
+    if (field.type === 'multi-select') {
+        return schema.test(
+            'multi-select-required',
+            msg,
+            (value) => Array.isArray(value) && value.length > 0,
+        );
     }
 
     return schema.required(msg);

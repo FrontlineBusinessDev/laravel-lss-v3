@@ -19,6 +19,7 @@ class HomeController extends Controller
         }
 
         return match (true) {
+            $user->hasAnyRole(['admin', 'developer']) => redirect()->route('dashboard'),
             $user->hasRole('trainer') => redirect()->route('trainer.dashboard'),
             $user->hasRole('trainee') => redirect()->route('trainee.dashboard'),
             default => redirect()->route('dashboard'),

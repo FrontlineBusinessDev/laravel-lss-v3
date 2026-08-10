@@ -31,8 +31,8 @@ class UserInviteMail extends Mailable
             ->text('emails.users.invite-text')
             ->with([
                 'user' => $this->user,
-                // User has no singular `role` relation — read the Spatie role name.
-                'roleLabel' => ucfirst($this->user->getRoleNames()->first() ?? 'Member'),
+                // A user may hold more than one Spatie role — join them all.
+                'roleLabel' => $this->user->getRoleNames()->map(fn ($r) => ucfirst($r))->implode(' & ') ?: 'Member',
                 'resetUrl' => $this->resetUrl,
             ]);
     }
