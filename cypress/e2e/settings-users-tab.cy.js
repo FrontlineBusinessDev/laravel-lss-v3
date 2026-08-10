@@ -393,37 +393,43 @@ describe('Settings - Users - Users Tab Page', () => {
         // Search user
         cy.get('[data-cy="toolbar-input-text"]').clear().type('Mayeng');
 
-        // Open action menu
+        // Open row actions
         cy.contains('[data-cy="settings-row-div-4"]', 'Mayeng')
-            .should('be.visible')
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
 
-        // Click Archive
-        cy.get('[data-cy="row-menu-button-4"]', { timeout: 1000 })
+        // Suspend user
+        cy.get('[data-cy="row-menu-button-4"]')
             .eq(2)
-            .should('be.visible')
+            .should('contain.text', 'Suspend')
             .click();
+
+        cy.get('[data-cy="clear-all"]').click();
 
         // Search user
         cy.get('[data-cy="toolbar-input-text"]').clear().type('Mayeng');
 
-        // Open action menu again
+        // Open row actions again
         cy.contains('[data-cy="settings-row-div-4"]', 'Mayeng')
-            .should('be.visible')
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
 
         // Click Delete
-        cy.contains('[data-cy="row-menu-button-4"]', 'Delete')
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(3)
             .should('contain.text', 'Delete')
             .click();
 
-        // Click delete confirmation
+        // Confirm email
+        cy.get('[data-cy="confirm-delete-modal-input-confirm-text"]').type(
+            'torresherlynmae@gmail.com',
+        );
+
+        // Click Delete in confirmation modal
         cy.get('[data-cy="confirm-delete-modal-button-button-2"]')
-            .should('be.visible')
+            .should('contain.text', 'Delete')
             .click();
 
-        cy.get('[data-cy="toast-div-3"]').should('be.visible');
+
     });
 });

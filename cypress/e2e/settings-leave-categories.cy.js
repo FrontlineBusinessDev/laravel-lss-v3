@@ -16,7 +16,7 @@ describe('Settings - Leave Categories Page', () => {
         cy.visit('/settings/leave-categories');
     });
 
-    // //display
+     //display
     it('should display leave categories page correctly', () => {
         cy.verifySettingsModuleHeader();
 
@@ -53,11 +53,11 @@ describe('Settings - Leave Categories Page', () => {
 
         cy.get('[data-cy="row-menu-button-4"]')
             .eq(0)
-            .should('contain.text', 'Archive');
+            .should('contain.text', 'Edit');
 
         cy.get('[data-cy="row-menu-button-4"]')
             .eq(1)
-            .should('contain.text', 'Edit');
+            .should('contain.text', 'Archive');
     });
 
     // search and clear
@@ -230,6 +230,7 @@ describe('Settings - Leave Categories Page', () => {
 
         cy.contains('Maternity Leave', { timeout: 1000 }).should('be.visible');
     });
+
     //update
     it('should update leave category', () => {
         cy.intercept('GET', '**/pagination-search*').as('searchLeaveCategory');
@@ -249,7 +250,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
+            .eq(0)
             .should('be.visible')
             .click();
 
@@ -263,7 +264,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
+            .eq(0)
             .should('be.visible')
             .click();
 
@@ -277,7 +278,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
+            .eq(0)
             .should('be.visible')
             .click();
 
@@ -291,7 +292,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
+            .eq(0)
             .should('be.visible')
             .click();
 
@@ -326,7 +327,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
+            .eq(1)
             .should('be.visible')
             .click();
 
@@ -350,7 +351,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
+            .eq(1)
             .should('be.visible')
             .click();
 
@@ -377,7 +378,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
+            .eq(1)
             .should('be.visible')
             .click();
 
@@ -392,7 +393,7 @@ describe('Settings - Leave Categories Page', () => {
             .click();
 
         cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
+            .eq(2)
             .should('be.visible')
             .click();
 
