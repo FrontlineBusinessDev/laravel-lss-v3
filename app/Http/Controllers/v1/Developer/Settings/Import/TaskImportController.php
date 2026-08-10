@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Phase 5b — legacy lcssv2_task+lcssv2_task_list onto BOTH app_tasks (the
@@ -36,6 +37,7 @@ class TaskImportController extends Controller implements HasMiddleware
         $this->nullifyBlankRowFields($request, ['date', 'time_spent']);
         $this->normalizeDateRowFields($request, ['date']);
         $this->normalizeDurationRowFields($request, ['time_goal', 'time_spent']);
+        $this->defaultInvalidNumericRowFields($request, ['time_spent']);
 
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
@@ -93,6 +95,7 @@ class TaskImportController extends Controller implements HasMiddleware
                     $entries = [];
 
                     $task = Task::create([
+                        'task_group_id' => (string) Str::uuid(),
                         'status' => $complete ? 'completed' : 'open',
                         'batch_id' => $trainee->batch_id,
                         'trainee_id' => $trainee->id,

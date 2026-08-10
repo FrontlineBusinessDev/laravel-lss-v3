@@ -321,6 +321,8 @@ export default function TasksPage() {
                     apiUrl="/tasks"
                     apiQueryKey="tasks"
                     columns={columns}
+                    defaultSortBy="created_at"
+                    defaultSortDir="desc"
                     listHeader={listHeader}
                     renderCard={renderRow}
                     enableStatusFilter

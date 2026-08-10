@@ -91,6 +91,30 @@ trait ImportLogging
     }
 
     /**
+     * Coerces any `rows.*` field value that isn't null/blank and isn't numeric (after nullify/duration
+     * normalization already ran) to $default, instead of letting it fail the `numeric` validation rule
+     * and reject the whole row over one bad cell.
+     */
+    protected function defaultInvalidNumericRowFields(Request $request, array $fields, string $default = '0'): void
+    {
+        $rows = $request->input('rows', []);
+        if (! is_array($rows)) {
+            return;
+        }
+
+        foreach ($rows as $i => $row) {
+            foreach ($fields as $field) {
+                $value = $row[$field] ?? null;
+                if ($value !== null && $value !== '' && ! is_numeric($value)) {
+                    $rows[$i][$field] = $default;
+                }
+            }
+        }
+
+        $request->merge(['rows' => $rows]);
+    }
+
+    /**
      * Rewrites the given `rows.*` date field names to ISO `Y-m-d` before validation, accepting either
      * `Y-m-d` (the documented template format) or `d/m/Y` (day-first, seen from some DB export tools).
      * Slash-separated dates are deliberately never guessed as `m/d/Y` — that would silently swap day/month
