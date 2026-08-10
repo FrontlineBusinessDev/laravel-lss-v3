@@ -68,7 +68,9 @@ describe('Settings - Academic Industry', () => {
 
     //     // Close modal using Close button
     //     cy.get('[data-cy="add-record-button"]').click();
-    //     cy.get('[data-cy="close-button"]').click();
+    //     cy.get('[data-cy="close-button"]')
+    //         .should('contain.text', 'Cancel')
+    //         .click();
 
     //     // Create academic industry
     //     cy.get('[data-cy="add-record-button"]').click();
@@ -86,7 +88,9 @@ describe('Settings - Academic Industry', () => {
     //     cy.intercept('GET', '**/pagination-search*').as(
     //         'searchAcademicIndustry',
     //     );
-    //     cy.get('[data-cy="submit-button"]').click();
+    //     cy.get('[data-cy="submit-button"]')
+    //         .should('contain.text', 'Create Industry')
+    //         .click();
 
     //     cy.get('[data-cy="toast-div-3"]')
     //         .should('be.visible')
@@ -101,6 +105,35 @@ describe('Settings - Academic Industry', () => {
 
     //update
     it('should update academic industry', () => {
-        
-    })
+        cy.intercept('GET', '**/pagination-search*').as(
+            'searchAcademicIndustry',
+        );
+
+        cy.intercept('POST', '**/settings/academic/industry/**').as(
+            'updateAcademicIndustry',
+        );
+
+        //esc
+        // Search academic industry
+        cy.get('[data-cy="toolbar-input-text"]').clear().type('Marketing');
+
+        // Verify Marketing is visible
+        cy.contains('[data-cy="settings-row-div-4"]', 'Marketing').should(
+            'be.visible',
+        );
+
+        // Open row actions
+        cy.contains('[data-cy="settings-row-div-4"]', 'Marketing')
+            .find('[data-cy="row-menu-button-row-actions"]')
+            .click();
+
+        // Click Edit
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(0)
+            .should('contain.text', 'Edit')
+            .click();
+
+        // Close edit modal using ESC
+        cy.get('body').type('{esc}');
+    });
 });

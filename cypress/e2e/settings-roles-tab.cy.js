@@ -18,82 +18,82 @@ describe('Settings - Users - Roles Tab Page', () => {
         cy.visit('/settings/roles');
     });
 
-    // //check roles tab page display
-    // it('should  display roles tab  page correctly', () => {
-    //     cy.viewport(1280, 720);
-    //     cy.verifySettingsModuleHeader();
+    //check roles tab page display
+    it('should  display roles tab  page correctly', () => {
+        cy.viewport(1280, 720);
+        cy.verifySettingsModuleHeader();
 
-    //     cy.get('[data-cy="add-record-button"]').should('be.visible');
-    //     cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"] option').should(
-    //         'contain.text',
-    //         'Role',
-    //     );
-    //     cy.filterPerPage();
+        cy.get('[data-cy="add-record-button"]').should('be.visible');
+        cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+        cy.get('[data-cy="toolbar-select-sort-by-change"] option').should(
+            'contain.text',
+            'Role',
+        );
+        cy.filterPerPage();
 
-    //     cy.get('[data-cy="toolbar-button-button"]').click();
-    //     cy.get('[data-cy="dropdown-button-button"]').click();
+        cy.get('[data-cy="toolbar-button-button"]').click();
+        cy.get('[data-cy="dropdown-button-button"]').click();
 
-    //     cy.contains('All Status').should('be.visible');
-    //     cy.contains('Active').should('be.visible');
-    //     cy.contains('Inactive').should('be.visible');
+        cy.contains('All Status').should('be.visible');
+        cy.contains('Active').should('be.visible');
+        cy.contains('Inactive').should('be.visible');
 
-    //     cy.get('[data-cy="data-input-name"]').should('be.visible');
+        cy.get('[data-cy="data-input-name"]').should('be.visible');
 
-    //     cy.get('[data-cy="settings-list-header-div-1"]')
-    //         .should('contain.text', 'Role')
-    //         .and('contain.text', 'Permissions')
-    //         .and('contain.text', 'Status');
+        cy.get('[data-cy="settings-list-header-div-1"]')
+            .should('contain.text', 'Role')
+            .and('contain.text', 'Permissions')
+            .and('contain.text', 'Status');
 
-    //     cy.get('[data-cy="row-menu-button-row-actions"]').first().click();
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(0)
-    //         .should('contain.text', 'Edit role');
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(1)
-    //         .should('contain.text', 'Delete role');
-    // });
+        cy.get('[data-cy="row-menu-button-row-actions"]').first().click();
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(0)
+            .should('contain.text', 'Edit role');
+        cy.get('[data-cy="row-menu-button-4"]')
+            .eq(1)
+            .should('contain.text', 'Delete role');
+    });
 
-    // //search and clear
-    // it('should search and clear the search input', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as('searchRole');
+    //search and clear
+    it('should search and clear the search input', () => {
+        cy.intercept('GET', '**/pagination-search*').as('searchRole');
 
-    //     cy.get('[data-cy="toolbar-input-text"]').type('Trainee');
+        cy.get('[data-cy="toolbar-input-text"]').type('Trainee');
 
-    //     cy.wait('@searchRole').its('response.statusCode').should('eq', 200);
+        cy.wait('@searchRole').its('response.statusCode').should('eq', 200);
 
-    //     cy.get('[data-cy="toolbar-button-clear-search"]').click();
+        cy.get('[data-cy="toolbar-button-clear-search"]').click();
 
-    //     cy.get('[data-cy="toolbar-input-text"]').clear().type('Trainer');
+        cy.get('[data-cy="toolbar-input-text"]').clear().type('Trainer');
 
-    //     cy.wait('@searchRole');
+        cy.wait('@searchRole');
 
-    //     cy.get('[data-cy="clear-all"]').click();
-    // });
+        cy.get('[data-cy="clear-all"]').click();
+    });
 
-    // //sorting
-    // it('should sort role by status', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as('sortRole');
+    //sorting
+    it('should sort role by status', () => {
+        cy.intercept('GET', '**/pagination-search*').as('sortRole');
 
-    //     cy.get('[data-cy="toolbar-option-sort"]')
-    //         .contains('Role')
-    //         .should('exist');
+        cy.get('[data-cy="toolbar-option-sort"]')
+            .contains('Role')
+            .should('exist');
 
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-    //         'Sort: Role',
-    //     );
+        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+            'Sort: Role',
+        );
 
-    //     cy.wait('@sortRole').its('response.statusCode').should('eq', 200);
-    // });
+        cy.wait('@sortRole').its('response.statusCode').should('eq', 200);
+    });
 
-    // //per page
-    // it('should display correct number of records when changing rows per page', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as('getRole');
+    //per page
+    it('should display correct number of records when changing rows per page', () => {
+        cy.intercept('GET', '**/pagination-search*').as('getRole');
 
-    //     cy.get('[data-cy="toolbar-select-rows-per-page"]').select('25');
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('25');
 
-    //     cy.wait('@getRole').its('response.statusCode').should('eq', 200);
-    // });
+        cy.wait('@getRole').its('response.statusCode').should('eq', 200);
+    });
 
     //create
     it('should create a role', () => {
