@@ -113,13 +113,13 @@ describe('Settings - Users - Users Tab Page', () => {
 
     //search and clear
     it('should search and clear the search input', () => {
-        cy.get('[data-cy="toolbar-input-text"]', { timeout: 10000 }).type(
-            'Admin',
-        );
+        cy.get('[data-cy="toolbar-input-text"]').type('Admin');
+        cy.wait(2000);
         cy.get('[data-cy="toolbar-button-clear-search"]').click();
 
         cy.get('[data-cy="toolbar-input-text"]').type('Veronica');
-        cy.get('[data-cy="clear-all"]', { timeout: 10000 }).click();
+        cy.wait(2000);
+        cy.get('[data-cy="clear-all"]').click();
     });
 
     //  sorting
@@ -163,7 +163,7 @@ describe('Settings - Users - Users Tab Page', () => {
         cy.wait('@sortUser').its('response.statusCode').should('eq', 200);
     });
 
-     // per page
+    // per page
     it('should display correct number of records when changing rows per page', () => {
         cy.intercept('GET', '**/pagination-search*').as('getUser');
 
@@ -429,7 +429,5 @@ describe('Settings - Users - Users Tab Page', () => {
         cy.get('[data-cy="confirm-delete-modal-button-button-2"]')
             .should('contain.text', 'Delete')
             .click();
-
-
     });
 });

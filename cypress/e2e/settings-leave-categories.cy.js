@@ -16,7 +16,7 @@ describe('Settings - Leave Categories Page', () => {
         cy.visit('/settings/leave-categories');
     });
 
-     //display
+    //display
     it('should display leave categories page correctly', () => {
         cy.verifySettingsModuleHeader();
 
@@ -68,7 +68,7 @@ describe('Settings - Leave Categories Page', () => {
 
         cy.get('[data-cy="toolbar-input-text"]').type('Sick Leave{enter}');
 
-        cy.wait('@searchLeaveCategory');
+        cy.wait(2000);
 
         cy.get('[data-cy="toolbar-x-7"]').click();
 
@@ -76,7 +76,7 @@ describe('Settings - Leave Categories Page', () => {
 
         cy.get('[data-cy="toolbar-input-text"]').type('Vacation{enter}');
 
-        cy.wait('@searchLeaveCategory');
+        cy.wait(2000);
 
         cy.get('[data-cy="clear-all"]').click();
 

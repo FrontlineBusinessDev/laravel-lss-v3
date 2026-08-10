@@ -85,9 +85,11 @@ describe('Settings - Partner School Tab Page', () => {
     // search and clear
     it('should search and clear the search input', () => {
         cy.get('[data-cy="toolbar-input-text"]').type('Bicol');
+        cy.wait(2000);
         cy.get('[data-cy="toolbar-x-7"]').click();
 
         cy.get('[data-cy="toolbar-input-text"]').type('Lipa');
+        cy.wait(2000);
         cy.get('[data-cy="clear-all"]').click();
     });
 

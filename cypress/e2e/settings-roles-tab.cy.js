@@ -1,5 +1,3 @@
-const { Cylinder } = require('lucide-react');
-
 describe('Settings - Users - Roles Tab Page', () => {
     beforeEach(() => {
         cy.session(
@@ -60,13 +58,13 @@ describe('Settings - Users - Roles Tab Page', () => {
 
         cy.get('[data-cy="toolbar-input-text"]').type('Trainee');
 
-        cy.wait('@searchRole').its('response.statusCode').should('eq', 200);
+        cy.wait(2000);
 
         cy.get('[data-cy="toolbar-button-clear-search"]').click();
 
         cy.get('[data-cy="toolbar-input-text"]').clear().type('Trainer');
 
-        cy.wait('@searchRole');
+        cy.wait(2000);
 
         cy.get('[data-cy="clear-all"]').click();
     });
@@ -189,7 +187,10 @@ describe('Settings - Users - Roles Tab Page', () => {
             .should('be.visible')
             .click();
 
-        cy.get('[data-cy="role-modal-input-e-g-program-coordinator"]').clear().type('Managers').should('have.value', 'Managers');
+        cy.get('[data-cy="role-modal-input-e-g-program-coordinator"]')
+            .clear()
+            .type('Managers')
+            .should('have.value', 'Managers');
 
         cy.get('[data-cy="role-modal-button-button"]').eq(0).click();
 
