@@ -45,14 +45,23 @@ const NAV_LINKS = [
         href: '/settings/payment-methods',
         permission: 'manage settings payment methods',
     },
+    {
+        id: 'Import',
+        label: 'Import',
+        href: '/settings/import',
+        // Admin/developer only — role-gated (not permission-gated) to match
+        // the backend's deliberate `role:admin,developer` middleware.
+        permission: null,
+    },
 ] as const;
 
 export default function SettingsPrimaryLayout({
     children,
     actionNode,
 }: LayoutProps) {
-    const { can } = usePermission(); // Used to permission
+    const { can, hasRole } = usePermission(); // Used to permission
     const { url } = usePage(); // Used to automatically highlight the active tab
+    const canImport = hasRole('admin') || hasRole('developer');
 
     return (
         <>
@@ -81,7 +90,9 @@ export default function SettingsPrimaryLayout({
                 >
                     {NAV_LINKS.map((link) => {
                         // 2. Filter tabs out dynamically based on user permissions
-                        if (!can(link.permission)) {
+                        // (role, for the Import tab, which has no permission).
+                        const visible = link.permission === null ? canImport : can(link.permission);
+                        if (!visible) {
                             return null;
                         }
 

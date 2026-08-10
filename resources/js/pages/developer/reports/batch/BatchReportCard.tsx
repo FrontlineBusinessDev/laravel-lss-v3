@@ -88,7 +88,7 @@ export function BatchReportCard({
                     {activities.length} activities completed
                 </div>
                 <div
-                    className="ml-auto flex gap-5 text-right"
+                    className="ml-auto flex flex-wrap gap-x-5 gap-y-1 text-right"
                     data-cy="batch-report-card-div-7"
                 >
                     <div data-cy="batch-report-card-div-8">
@@ -99,7 +99,7 @@ export function BatchReportCard({
                             Received
                         </div>
                         <div
-                            className="text-xs font-semibold text-ink"
+                            className="whitespace-nowrap text-xs font-semibold text-ink"
                             data-cy="batch-report-card-div-9"
                         >
                             {formatCurrency(fin.totalReceived)}
@@ -114,7 +114,7 @@ export function BatchReportCard({
                         </div>
                         <div
                             className={cn(
-                                'text-xs font-semibold',
+                                'whitespace-nowrap text-xs font-semibold',
                                 fin.totalBalance > 0
                                     ? 'text-warning-700'
                                     : 'text-ink',
@@ -144,7 +144,7 @@ export function BatchReportCard({
                                 Trainees
                             </div>
                             <div
-                                className="font-semibold text-ink"
+                                className="truncate font-semibold text-ink"
                                 data-cy="batch-report-card-div-15"
                             >
                                 {list.length}
@@ -158,7 +158,7 @@ export function BatchReportCard({
                                 Created
                             </div>
                             <div
-                                className="font-semibold text-ink"
+                                className="truncate font-semibold text-ink"
                                 data-cy="batch-report-card-div-17"
                             >
                                 {batch.createdDate}
@@ -172,7 +172,7 @@ export function BatchReportCard({
                                 Total received
                             </div>
                             <div
-                                className="text-success-700 font-semibold"
+                                className="truncate text-success-700 font-semibold"
                                 data-cy="batch-report-card-div-19"
                             >
                                 {formatCurrency(fin.totalReceived)}
@@ -187,7 +187,7 @@ export function BatchReportCard({
                             </div>
                             <div
                                 className={cn(
-                                    'font-semibold',
+                                    'truncate font-semibold',
                                     fin.totalBalance > 0
                                         ? 'text-warning-700'
                                         : 'text-ink',

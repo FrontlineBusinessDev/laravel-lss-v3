@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { formatDate, formatDateTime } from '@/lib/date';
-import { Printer, AlertTriangle, X } from 'lucide-react';
+import { Printer, AlertTriangle, Upload, X } from 'lucide-react';
 import { biometricsService } from '@/api-service-layer/admin/biometrics';
 import { Button } from '@/components/Button';
 import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
+import { useToast } from '@/components/Toast';
 import { useDashboardWidget } from '@/hooks/use-dashboard-widget';
-import { missingPunchLabel } from '@/pages/developer/biometrics/biometricsUtils';
+import { missingPunchLabel, toImportRow } from '@/pages/developer/biometrics/biometricsUtils';
+import type { ParsedRow } from '@/pages/developer/biometrics/biometricsUtils';
 import { BiometricsPrint } from '@/pages/developer/biometrics/BiometricsPrint';
+import { ImportCsvModal } from '@/pages/developer/biometrics/ImportCsvModal';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
 export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
+    const { showToast } = useToast();
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const { data, isLoading, error } = useDashboardWidget(
         () =>
@@ -23,11 +29,44 @@ export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
                 end_date: dateTo || undefined,
                 training_period_id: trainee.batch_id,
             }),
-        [trainee.id, dateFrom, dateTo],
+        [trainee.id, dateFrom, dateTo, reloadKey],
     );
     const records = data?.records ?? [];
     const totalHours = data?.summary.total_hours ?? 0;
     const printGeneratedAt = formatDateTime(new Date());
+
+    async function handleConfirmImport(
+        fileName: string,
+        validRows: ParsedRow[],
+        totalRows: number,
+        errorCount: number,
+    ) {
+        try {
+            const result = await biometricsService.import({
+                file_name: fileName || 'import.csv',
+                rows: validRows.map(toImportRow),
+                total_rows: totalRows,
+                error_count: errorCount,
+            });
+            setImportOpen(false);
+            setReloadKey((k) => k + 1);
+            if (result.import.status === 'success') {
+                showToast(
+                    `Import successful — ${result.created_count} record${result.created_count === 1 ? '' : 's'} added.`,
+                    'success',
+                );
+            } else if (result.import.status === 'partial') {
+                showToast(
+                    `Import partially successful — ${result.created_count} added, ${result.skipped_count + errorCount} skipped due to errors.`,
+                    'info',
+                );
+            } else {
+                showToast('Import failed — no records were added.', 'error');
+            }
+        } catch {
+            showToast('Failed to import biometric records.', 'error');
+        }
+    }
 
     return (
         <>
@@ -51,9 +90,9 @@ export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
                                 className="text-xs text-neutral-500"
                                 data-cy="biometrics-tab-p-attendance-logs-for"
                             >
-                                Attendance logs for {trainee.name} ·
-                                view-and-print only. Import and bulk edits
-                                happen in Admin {'>'} Biometrics.
+                                Attendance logs for {trainee.name}. Import a
+                                CSV to add records, or manage/edit existing
+                                records in Admin {'>'} Biometrics.
                             </p>
                         </div>
                         <div
@@ -106,6 +145,17 @@ export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
                                     data-cy="biometrics-tab-input-date-2"
                                 />
                             </div>
+                            <button
+                                onClick={() => setImportOpen(true)}
+                                className="flex h-8 items-center gap-1.5 rounded-md border border-neutral-200 px-3 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50"
+                                data-cy="biometrics-tab-button-import"
+                            >
+                                <Upload
+                                    size={13}
+                                    data-cy="biometrics-tab-upload-icon"
+                                />{' '}
+                                Import CSV
+                            </button>
                             <button
                                 onClick={() => setPreviewOpen(true)}
                                 disabled={records.length === 0}
@@ -310,6 +360,21 @@ export default function BiometricsTab({ trainee }: { trainee: TraineeDetail }) {
                             {totalHours}h
                         </span>
                     </div>
+
+                    <ImportCsvModal
+                        open={importOpen}
+                        onClose={() => setImportOpen(false)}
+                        existingRecords={records.map((r) => ({
+                            trainee_id: trainee.id,
+                            date: r.date,
+                        }))}
+                        presetTrainee={{
+                            id: trainee.id,
+                            name: trainee.name,
+                            batchCode: trainee.batch?.batch_code ?? '',
+                        }}
+                        onConfirmImport={handleConfirmImport}
+                    />
 
                     <Modal
                         open={previewOpen}
