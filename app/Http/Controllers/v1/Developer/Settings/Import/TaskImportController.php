@@ -60,6 +60,15 @@ class TaskImportController extends Controller implements HasMiddleware
         $successCount = 0;
         $createdIds = [];
 
+        $distinctTrainerEmails = collect($validated['rows'])
+            ->pluck('trainer_email')
+            ->filter()
+            ->map(fn ($e) => strtolower(trim($e)))
+            ->unique();
+        if (count($validated['rows']) > 1 && $distinctTrainerEmails->count() === 1) {
+            $warnings[] = 'All ' . count($validated['rows']) . " rows use the same trainer_email (\"{$distinctTrainerEmails->first()}\") — double-check the file's trainer_email column wasn't accidentally filled with one repeated value before assuming this is correct.";
+        }
+
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
             if ($error = $this->validateRow($row, $rowRules)) {

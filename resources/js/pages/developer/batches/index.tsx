@@ -269,6 +269,7 @@ export default function BatchesListPage() {
                 apiQueryKey="batches"
                 columns={columns}
                 defaultSortBy="batch_code"
+                defaultSortDir="desc"
                 editPermission={PERMISSION}
                 archivePermission={PERMISSION}
                 deletePermission={PERMISSION}

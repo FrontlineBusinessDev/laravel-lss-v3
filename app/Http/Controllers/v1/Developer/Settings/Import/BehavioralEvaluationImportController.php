@@ -58,6 +58,15 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
         $successCount = 0;
         $createdIds = [];
 
+        $distinctTrainerEmails = collect($rows)
+            ->pluck('trainer_email')
+            ->filter()
+            ->map(fn ($e) => strtolower(trim($e)))
+            ->unique();
+        if (count($rows) > 1 && $distinctTrainerEmails->count() === 1) {
+            $warnings[] = 'All ' . count($rows) . " rows use the same trainer_email (\"{$distinctTrainerEmails->first()}\") — double-check the file's trainer_email column wasn't accidentally filled with one repeated value before assuming this is correct.";
+        }
+
         // Group by trainee_email|date, preserving first-seen order within each group.
         // Rows failing field validation are rejected here, before grouping, so a bad
         // row can't poison its group's key or the date-based sort below.

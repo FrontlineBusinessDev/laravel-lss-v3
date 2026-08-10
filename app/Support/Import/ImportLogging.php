@@ -2,15 +2,12 @@
 
 namespace App\Support\Import;
 
-use App\Mail\UserInviteMail;
 use App\Models\SettingsImportLog;
 use App\Models\User;
-use App\Support\PasswordSetupUrl;
 use App\Support\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -18,10 +15,11 @@ use Illuminate\Support\Str;
 trait ImportLogging
 {
     /**
-     * Matches an existing trainer by email, or creates+invites one — mirroring the real "add staff" flow in
-     * UserController (active status, random unusable password, trainer role, password-setup invite email)
-     * so an import-created account is never left inactive or emailless. Returns the user plus a warning to
-     * surface when one was created.
+     * Matches an existing trainer by email, or creates one — mirroring the real "add staff" flow in
+     * UserController (random unusable password, trainer role), except the account is left inactive and
+     * no invite email is sent, since it's provisional (name guessed from the email address) and shouldn't
+     * be able to log in — or be notified — until an admin reviews and activates it. Returns the user plus
+     * a warning to surface when one was created.
      *
      * @return array{user: User, warning: ?string}
      */
@@ -40,16 +38,13 @@ trait ImportLogging
             'last_name' => $lastName,
             'email' => $email,
             'password' => Hash::make(Str::password(16)),
-            'status' => Statuses::ACTIVE,
+            'status' => Statuses::INACTIVE,
         ]);
         $user->assignRole('trainer');
 
-        $resetUrl = PasswordSetupUrl::generate($user);
-        Mail::to($user->email)->queue(new UserInviteMail($user, $resetUrl));
-
         return [
             'user' => $user,
-            'warning' => "No trainer found for \"{$email}\" — created a new active trainer account and emailed a password-setup invite (name guessed from the address; correct it in Settings > Users if wrong).",
+            'warning' => "No trainer found for \"{$email}\" — created a new inactive trainer account (name guessed from the address; correct it and activate the account in Settings > Users to invite them).",
         ];
     }
 

@@ -88,6 +88,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // via that route would recursively re-invoke schedule:run on every tick.
         Schedule::command('announcements:dispatch-scheduled')->everyMinute();
 
+        // Keeps app_holidays fresh for the dashboard calendar (App\Support\HolidaySync).
+        Schedule::command('holidays:sync')->daily();
+
         // Guaranteed queue drain: rides the same confirmed-working per-minute
         // schedule:run tick, independent of whether a separate long-running
         // queue:work worker service/container is correctly deployed. Bounded
