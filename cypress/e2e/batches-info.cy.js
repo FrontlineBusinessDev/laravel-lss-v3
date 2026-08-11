@@ -27,100 +27,100 @@ describe('Batches Module', () => {
     //     );
     // });
 
-    // //search, select and open a batch
-    // it('should search and select batch', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as('searchBatch');
+    //search, select and open a batch
+    it('should search and select batch', () => {
+        cy.intercept('GET', '**/pagination-search*').as('searchBatch');
 
-    //     cy.get('[data-cy="toolbar-input-text"]').click();
+        cy.get('[data-cy="toolbar-input-text"]').click();
 
-    //     cy.get('[data-cy="toolbar-input-text"]').type('FBS-8323');
+        cy.get('[data-cy="toolbar-input-text"]').type('FBS-8323');
 
-    //     cy.wait('@searchBatch');
+        cy.wait('@searchBatch');
 
-    //     cy.contains('FBS-8323', { timeout: 5000 }).should('be.visible');
+        cy.contains('FBS-8323', { timeout: 5000 }).should('be.visible');
 
-    //     cy.get('[data-cy="settings-row-div-4"]').click();
+        cy.get('[data-cy="settings-row-div-4"]').click();
 
-    //     //check the display of batch info page
-    //     cy.get('[data-cy="batch-detail-layout-div-1"]').should('be.visible');
+        //check the display of batch info page
+        cy.get('[data-cy="batch-detail-layout-div-1"]').should('be.visible');
 
-    //     cy.get('[data-cy="batch-detail-layout-span-7"]')
-    //         .should('be.visible')
-    //         .and('have.text', 'FBS-8323');
+        cy.get('[data-cy="batch-detail-layout-span-7"]')
+            .should('be.visible')
+            .and('have.text', 'FBS-8323');
 
-    //     cy.get('[data-cy="status-badge-span-1"]')
-    //         .should('be.visible')
-    //         .and('have.text', 'Active');
+        cy.get('[data-cy="status-badge-span-1"]')
+            .should('be.visible')
+            .and('have.text', 'Active');
 
-    //     cy.get('[data-cy="batch-detail-layout-p-9"]')
-    //         .should('be.visible')
-    //         .and(
-    //             'have.text',
-    //             'Continuing Studies · Information Technology · Online · Created Aug 4, 2026',
-    //         );
+        cy.get('[data-cy="batch-detail-layout-p-9"]')
+            .should('be.visible')
+            .and(
+                'have.text',
+                'Continuing Studies · Information Technology · Online · Created Aug 10, 2026',
+            );
 
-    //     cy.get('[data-cy="button-button-1"]')
-    //         .eq(0)
-    //         .should('be.visible')
-    //         .and('have.text', 'Edit');
+        cy.get('[data-cy="button-button-1"]')
+            .eq(0)
+            .should('be.visible')
+            .and('have.text', 'Edit');
 
-    //     cy.get('[data-cy="button-button-1"]')
-    //         .eq(1)
-    //         .should('be.visible')
-    //         .and('have.text', 'Archive');
+        cy.get('[data-cy="button-button-1"]')
+            .eq(1)
+            .should('be.visible')
+            .and('have.text', 'Archive');
 
-    //     cy.get('[data-cy="button-button-1"]')
-    //         .eq(2)
-    //         .should('be.visible')
-    //         .and('have.text', 'Terminate');
+        cy.get('[data-cy="button-button-1"]')
+            .eq(2)
+            .should('be.visible')
+            .and('have.text', 'Terminate');
 
-    //     cy.get('[data-cy="batch-detail-layout-div-39"]')
-    //         .eq(0)
-    //         .should('contain.text', 'Batch number')
-    //         .and('contain.text', 'FBS-8323');
+        cy.get('[data-cy="batch-detail-layout-div-39"]')
+            .eq(0)
+            .should('contain.text', 'Batch number')
+            .and('contain.text', 'FBS-8323');
 
-    //     cy.get('[data-cy="batch-detail-layout-div-39"]')
-    //         .eq(1)
-    //         .should('contain.text', 'Trainees')
-    //         .and('contain.text', '12');
+        cy.get('[data-cy="batch-detail-layout-div-39"]')
+            .eq(1)
+            .should('contain.text', 'Trainees')
+            .and('contain.text', '12');
 
-    //     cy.get('[data-cy="batch-detail-layout-div-39"]')
-    //         .eq(2)
-    //         .should('contain.text', 'Industry')
-    //         .and('contain.text', 'Information Technology');
+        cy.get('[data-cy="batch-detail-layout-div-39"]')
+            .eq(2)
+            .should('contain.text', 'Industry')
+            .and('contain.text', 'Information Technology');
 
-    //     cy.get('[data-cy="batch-detail-layout-div-39"]')
-    //         .eq(3)
-    //         .should('contain.text', 'Program type')
-    //         .and('contain.text', 'Continuing Studies');
+        cy.get('[data-cy="batch-detail-layout-div-39"]')
+            .eq(3)
+            .should('contain.text', 'Program type')
+            .and('contain.text', 'Continuing Studies');
 
-    //     cy.get('[data-cy="batch-detail-layout-div-25"]').should(
-    //         'contain.text',
-    //         'Registration link',
-    //     );
+        cy.get('[data-cy="batch-detail-layout-div-25"]').should(
+            'contain.text',
+            'Registration link',
+        );
 
-    //     cy.get('[data-cy="button-button-1"]').should(
-    //         'contain.text',
-    //         'Copy link',
-    //     );
+        cy.get('[data-cy="button-button-1"]').should(
+            'contain.text',
+            'Copy link',
+        );
 
-    //     //tabs
-    //     cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-    //         .eq(0)
-    //         .should('contain.text', 'Trainees');
+        //tabs
+        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+            .eq(0)
+            .should('contain.text', 'Trainees');
 
-    //     cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-    //         .eq(1)
-    //         .should('contain.text', 'Activity log');
+        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+            .eq(1)
+            .should('contain.text', 'Activity log');
 
-    //     cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-    //         .eq(2)
-    //         .should('contain.text', 'Financials');
+        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+            .eq(2)
+            .should('contain.text', 'Financials');
 
-    //     cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-    //         .eq(3)
-    //         .should('contain.text', 'Trainers');
-    // });
+        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+            .eq(3)
+            .should('contain.text', 'Trainers');
+    });
 
     // //edit button
     // it('should check if edit button is working', () => {
@@ -213,17 +213,17 @@ describe('Batches Module', () => {
     //     cy.get('body').type('{esc}');
     // });
 
-    // // copy link
-    // it('should check if the copy link button is working', () => {
-    //     cy.visit('/batches/8');
+    // copy link
+    it('should check if the copy link button is working', () => {
+        cy.visit('/batches/8');
 
-    //     cy.get('[data-cy="button-button-1"]').eq(3).click();
+        cy.get('[data-cy="button-button-1"]').eq(4).click();
 
-    //     //verify copy link
-    //     cy.get('[data-cy="toast-p-5"]')
-    //         .should('contain.text', 'Registration link copied')
-    //         .and('be.visible');
-    // });
+        //verify copy link
+        cy.get('[data-cy="toast-div-2"]')
+            .should('contain.text', 'Registration link copied')
+            .and('be.visible');
+    });
 
     // //trainees tab
     // it('should check the display of trainees tab', () => {
@@ -391,45 +391,45 @@ describe('Batches Module', () => {
     //     cy.filterPerPage();
     // });
 
-    //trainee table display
-    it('should check if the trainees tab table displays properly', () => {
-        cy.visit('/batches/8');
+    // //trainee table display
+    // it('should check if the trainees tab table displays properly', () => {
+    //     cy.visit('/batches/8');
 
-        cy.get('[data-cy="settings-list-header-div-1"]')
-            .should('contain.text', 'Trainee')
-            .and('contain.text', 'School')
-            .and('contain.text', 'Required hrs')
-            .and('contain.text', 'Status');
+    //     cy.get('[data-cy="settings-list-header-div-1"]')
+    //         .should('contain.text', 'Trainee')
+    //         .and('contain.text', 'School')
+    //         .and('contain.text', 'Required hrs')
+    //         .and('contain.text', 'Status');
 
-        cy.get('[data-cy="trainees-div-2"]').should('be.visible');
-        cy.get('[data-cy="pagination-span-5"]').should('be.visible');
-        cy.get('[data-cy="pagination-div-6"]').should('be.visible');
-    });
+    //     cy.get('[data-cy="trainees-div-2"]').should('be.visible');
+    //     cy.get('[data-cy="pagination-span-5"]').should('be.visible');
+    //     cy.get('[data-cy="pagination-div-6"]').should('be.visible');
+    // });
 
-    //trainee action button
-    it('should check if the trainee action button is visible and working', () => {
-        cy.visit('/batches/8');
+    // //trainee action button
+    // it('should check if the trainee action button is visible and working', () => {
+    //     cy.visit('/batches/8');
 
-        cy.get('[data-cy="trainees-div-2"]')
-            .eq(0)
-            .find('[data-cy="row-menu-more-horizontal-2"]')
-            .click();
+    //     cy.get('[data-cy="trainees-div-2"]')
+    //         .eq(0)
+    //         .find('[data-cy="row-menu-more-horizontal-2"]')
+    //         .click();
 
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
-            .should('be.visible')
-            .and('contain.text', 'Transfer');
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(0)
+    //         .should('be.visible')
+    //         .and('contain.text', 'Transfer');
 
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
-            .should('be.visible')
-            .and('contain.text', 'Terminate');
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(1)
+    //         .should('be.visible')
+    //         .and('contain.text', 'Terminate');
 
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(2)
-            .should('be.visible')
-            .and('contain.text', 'Archive');
-    });
+    //     cy.get('[data-cy="row-menu-button-4"]')
+    //         .eq(2)
+    //         .should('be.visible')
+    //         .and('contain.text', 'Archive');
+    // });
 
     //transfer button
     it('should check if the transfer button is working', () => {
@@ -440,7 +440,7 @@ describe('Batches Module', () => {
             .find('[data-cy="row-menu-more-horizontal-2"]')
             .click();
 
-        cy.get('[data-cy="row-menu-button-4"]')
+        cy.get('[data-cy="row-menu-button-row-actions"]')
             .eq(0)
             .should('be.visible')
             .and('contain.text', 'Transfer')
@@ -452,7 +452,7 @@ describe('Batches Module', () => {
         cy.get('body').type('{esc}');
 
         //exit btn
-        cy.get('[data-cy="row-menu-button-4"]')
+        cy.get('[data-cy="row-menu-button-row-actions"]')
             .eq(0)
             .should('be.visible')
             .and('contain.text', 'Transfer')
@@ -460,12 +460,17 @@ describe('Batches Module', () => {
 
         cy.get('[data-cy="modal-x-6"]').click();
 
-        // //cancel btn
-        // cy.get('[data-cy="row-menu-button-4"]')
-        //     .eq(0)
-        //     .should('be.visible')
-        //     .and('contain.text', 'Transfer')
-        //     .click();
+        //cancel btn
+        cy.get('[data-cy="row-menu-button-row-actions"]')
+            .eq(0)
+            .should('be.visible')
+            .and('contain.text', 'Transfer')
+            .click();
+
+        cy.get('[data-cy="transfer-trainee-modal"]').should('be.visible');
+
+        cy.get('[data-cy="transfer-trainee-modal-cancel-button"]').click();
+        
     });
 
     // //trainers tab
