@@ -19,12 +19,14 @@ export interface User extends Record<string, unknown> {
 }
 
 export type UserInput = Partial<User> & {
-    role?: string;
+    roles?: string[];
     password?: string;
     password_confirmation?: string;
 };
 
-const base = createCrudResource<User, UserInput>({ baseUrl: '/settings/users' });
+const base = createCrudResource<User, UserInput>({
+    baseUrl: '/settings/users',
+});
 
 export const userService = {
     ...base,

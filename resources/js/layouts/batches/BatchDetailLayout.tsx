@@ -18,6 +18,7 @@ import {
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/Button';
+import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
 import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -361,9 +362,9 @@ export default function BatchDetailLayout({
                 </p>
             </div>
 
-            {/* Tab bar (Link-based, mirrors SettingsPrimaryLayout) */}
+            {/* Tab bar (Link-based, mirrors SettingsPrimaryLayout); collapses to a dropdown on mobile. */}
             <div
-                className="mb-3 flex gap-5 border-b border-neutral-200 pl-0.5"
+                className="mb-3 hidden gap-5 border-b border-neutral-200 pl-0.5 sm:flex"
                 data-cy="batch-detail-layout-div-32"
             >
                 {tabs.map((t) => {
@@ -384,6 +385,19 @@ export default function BatchDetailLayout({
                         </Link>
                     );
                 })}
+            </div>
+            <div className="mb-3 sm:hidden">
+                <Dropdown
+                    options={tabs.map((t) => ({
+                        label: t.label,
+                        value: t.href,
+                    }))}
+                    value={
+                        tabs.find((t) => path === t.href)?.href ?? tabs[0].href
+                    }
+                    onChange={(href) => router.visit(href)}
+                    data-cy="batch-detail-layout-dropdown-mobile"
+                />
             </div>
 
             {children}

@@ -34,10 +34,13 @@ class CitationImportController extends Controller implements HasMiddleware
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.industry' => ['required', 'string'],
-            'rows.*.program_type' => ['required', 'string'],
-            'rows.*.message' => ['required', 'string'],
         ]);
+
+        $rowRules = [
+            'industry' => ['required', 'string'],
+            'program_type' => ['required', 'string'],
+            'message' => ['required', 'string'],
+        ];
 
         $errors = [];
         $warnings = ['Imported citation templates carry legacy "(Placeholder)" tokens as-is — rewrite them to this app\'s {{token}} syntax before issuing certificates from them.'];
@@ -46,6 +49,10 @@ class CitationImportController extends Controller implements HasMiddleware
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $body = trim($row['message']);
             if ($body === '') {
                 $errors[] = "Row {$rowNum}: message is required.";

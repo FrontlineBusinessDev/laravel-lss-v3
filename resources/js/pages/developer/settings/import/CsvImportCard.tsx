@@ -1,8 +1,23 @@
 import { useRef, useState } from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle2, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { settingsImportService, type SettingsImportResult } from '@/api-service-layer/developer/settingsImport';
-import { csvRowsToObjects, downloadCsvTemplate, type ImportStepConfig } from './importUtils';
+import { settingsImportService } from '@/api-service-layer/developer/settingsImport';
+import { chunkArray, csvRowsToObjects, downloadCsvTemplate, IMPORT_CHUNK_SIZE, type ImportStepConfig } from './importUtils';
+
+interface AggregatedImportResult {
+    status: 'success' | 'partial' | 'failed';
+    totalRows: number;
+    createdCount: number;
+    errors: string[];
+    warnings: string[];
+}
+
+interface ImportProgress {
+    chunkIndex: number;
+    chunkCount: number;
+    rowsDone: number;
+    rowsTotal: number;
+}
 
 /** One self-contained CSV upload + import card for a single Settings > Import phase/step. */
 export function CsvImportCard({ step, onImported }: { step: ImportStepConfig; onImported?: () => void }) {
@@ -10,7 +25,8 @@ export function CsvImportCard({ step, onImported }: { step: ImportStepConfig; on
     const [fileName, setFileName] = useState('');
     const [rows, setRows] = useState<Record<string, string>[] | null>(null);
     const [importing, setImporting] = useState(false);
-    const [result, setResult] = useState<SettingsImportResult | null>(null);
+    const [progress, setProgress] = useState<ImportProgress | null>(null);
+    const [result, setResult] = useState<AggregatedImportResult | null>(null);
     const [readError, setReadError] = useState<string | null>(null);
 
     function processFile(file: File) {
@@ -34,15 +50,35 @@ export function CsvImportCard({ step, onImported }: { step: ImportStepConfig; on
     async function handleImport() {
         if (!rows) return;
         setImporting(true);
+        setReadError(null);
+
+        const chunks = chunkArray(rows, IMPORT_CHUNK_SIZE);
+        const aggregate: AggregatedImportResult = { status: 'success', totalRows: 0, createdCount: 0, errors: [], warnings: [] };
+        let rowsDone = 0;
+
         try {
-            const res = await settingsImportService.import(step.endpoint, fileName || 'import.csv', rows);
-            setResult(res);
+            for (const [chunkIndex, chunk] of chunks.entries()) {
+                const res = await settingsImportService.import(step.endpoint, fileName || 'import.csv', chunk);
+                aggregate.totalRows += res.log.total_rows;
+                aggregate.createdCount += res.created_count;
+                aggregate.errors.push(...res.errors);
+                aggregate.warnings.push(...res.warnings);
+
+                rowsDone += chunk.length;
+                setProgress({ chunkIndex: chunkIndex + 1, chunkCount: chunks.length, rowsDone, rowsTotal: rows.length });
+            }
+
+            aggregate.status = aggregate.errors.length === 0 ? 'success' : aggregate.createdCount === 0 ? 'failed' : 'partial';
+            setResult(aggregate);
             setRows(null);
             onImported?.();
         } catch {
-            setReadError('Import failed — check the file and try again.');
+            aggregate.status = aggregate.createdCount === 0 ? 'failed' : 'partial';
+            aggregate.errors.push(`Import stopped after ${rowsDone} of ${rows.length} rows — check the file and try again (already-imported rows are safely skipped on retry).`);
+            setResult(aggregate);
         } finally {
             setImporting(false);
+            setProgress(null);
         }
     }
 
@@ -89,22 +125,41 @@ export function CsvImportCard({ step, onImported }: { step: ImportStepConfig; on
                 </p>
             )}
 
+            {importing && progress && (
+                <div className="mt-3">
+                    <div className="mb-1 flex justify-between text-xs text-neutral-500">
+                        <span>
+                            Importing chunk {progress.chunkIndex} of {progress.chunkCount}
+                        </span>
+                        <span>
+                            {progress.rowsDone} / {progress.rowsTotal} rows
+                        </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+                        <div
+                            className="h-full rounded-full bg-brand-600 transition-all"
+                            style={{ width: `${Math.round((progress.rowsDone / progress.rowsTotal) * 100)}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
             {result && (
                 <div className="mt-3 rounded-md border border-neutral-200 p-3 text-xs">
                     <div className="flex items-center gap-1.5 font-medium">
-                        {result.log.status === 'success' && <CheckCircle2 size={13} className="text-success-600" />}
-                        {result.log.status !== 'success' && <AlertTriangle size={13} className="text-warning-600" />}
-                        {result.created_count} of {result.log.total_rows} rows imported ({result.log.status}).
+                        {result.status === 'success' && <CheckCircle2 size={13} className="text-success-600" />}
+                        {result.status !== 'success' && <AlertTriangle size={13} className="text-warning-600" />}
+                        {result.createdCount} of {result.totalRows} rows imported ({result.status}).
                     </div>
                     {result.errors.length > 0 && (
-                        <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-danger-700">
+                        <ul className="mt-1.5 max-h-64 list-disc space-y-0.5 overflow-y-auto pl-4 text-danger-700">
                             {result.errors.map((e, i) => (
                                 <li key={i}>{e}</li>
                             ))}
                         </ul>
                     )}
                     {result.warnings.length > 0 && (
-                        <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-warning-700">
+                        <ul className="mt-1.5 max-h-64 list-disc space-y-0.5 overflow-y-auto pl-4 text-warning-700">
                             {result.warnings.map((w, i) => (
                                 <li key={i}>{w}</li>
                             ))}

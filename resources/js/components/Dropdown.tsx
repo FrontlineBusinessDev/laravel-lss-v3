@@ -15,6 +15,14 @@ interface DropdownProps {
     onChange?: (value: string) => void;
     className?: string;
     fullWidthMenu?: boolean;
+    /**
+     * 'default' is the standard filter/select look (white, bordered, rounded-xl).
+     * 'pill' is a compact tinted-pill look — use for a secondary/nested tab
+     * selector stacked directly under a 'default' one (e.g. Settings > Academic's
+     * sub-tabs under the primary Settings tabs), so the two are visually
+     * distinguishable as different nesting levels rather than looking identical.
+     */
+    variant?: 'default' | 'pill';
 }
 
 /** Normalizes `string | {label,value}` options to a `{label,value}` pair. */
@@ -36,6 +44,7 @@ export function Dropdown({
     placeholder,
     onChange,
     className,
+    variant = 'default',
 }: DropdownProps) {
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(value ?? '');
@@ -98,12 +107,16 @@ export function Dropdown({
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 className={cn(
-                    'flex h-9 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-medium text-neutral-700 shadow-card transition-all duration-150 hover:border-neutral-300 hover:shadow-none focus:ring-2 focus:ring-brand-100 focus:outline-none',
+                    'flex w-full items-center justify-between gap-2 font-medium transition-all duration-150 focus:ring-2 focus:outline-none',
+                    variant === 'pill'
+                        ? 'h-8 rounded-pill border border-brand-100 bg-brand-50 px-3 text-xs text-brand-700 hover:border-brand-200 focus:ring-brand-100'
+                        : 'h-9 rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-700 shadow-card hover:border-neutral-300 hover:shadow-none focus:ring-brand-100',
                     open && 'border-brand-400 ring-2 ring-brand-100',
                     // Dim only when the value maps to no real option (placeholder
                     // state); a real empty-value option like "All Status" stays
                     // in normal ink.
                     !normalized.some((o) => o.value === selected) &&
+                        variant !== 'pill' &&
                         'text-neutral-400',
                     className,
                 )}

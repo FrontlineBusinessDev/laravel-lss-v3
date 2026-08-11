@@ -35,16 +35,22 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
     /** rows: [{trainee_email, trainer_email, date, question_text, score, remarks?}] */
     public function import(Request $request): JsonResponse
     {
+        $this->nullifyBlankRowFields($request, ['date']);
+        $this->normalizeDateRowFields($request, ['date']);
+
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.trainee_email' => ['required', 'email'],
-            'rows.*.trainer_email' => ['required', 'email'],
-            'rows.*.date' => ['required', 'date'],
-            'rows.*.question_text' => ['required', 'string'],
-            'rows.*.score' => ['required', 'integer', 'min:1', 'max:5'],
-            'rows.*.remarks' => ['nullable', 'string'],
         ]);
+
+        $rowRules = [
+            'trainee_email' => ['required', 'email'],
+            'trainer_email' => ['required', 'email'],
+            'date' => ['required', 'date'],
+            'question_text' => ['required', 'string'],
+            'score' => ['required', 'integer', 'min:1', 'max:5'],
+            'remarks' => ['nullable', 'string'],
+        ];
 
         $rows = $validated['rows'];
         $errors = [];
@@ -52,9 +58,25 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
         $successCount = 0;
         $createdIds = [];
 
+        $distinctTrainerEmails = collect($rows)
+            ->pluck('trainer_email')
+            ->filter()
+            ->map(fn ($e) => strtolower(trim($e)))
+            ->unique();
+        if (count($rows) > 1 && $distinctTrainerEmails->count() === 1) {
+            $warnings[] = 'All ' . count($rows) . " rows use the same trainer_email (\"{$distinctTrainerEmails->first()}\") — double-check the file's trainer_email column wasn't accidentally filled with one repeated value before assuming this is correct.";
+        }
+
         // Group by trainee_email|date, preserving first-seen order within each group.
+        // Rows failing field validation are rejected here, before grouping, so a bad
+        // row can't poison its group's key or the date-based sort below.
         $groups = [];
         foreach ($rows as $i => $row) {
+            $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $key = trim($row['trainee_email']) . '|' . $row['date'];
             $groups[$key][] = ['row' => $row, 'index' => $i];
         }
@@ -70,10 +92,10 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$first['trainee_email']}\" — run the Trainees import first.";
                 continue;
             }
-            $trainer = User::where('email', trim($first['trainer_email']))->first();
-            if (! $trainer) {
-                $errors[] = "Row {$rowNum}: no trainer/user found with email \"{$first['trainer_email']}\".";
-                continue;
+            ['user' => $trainer, 'warning' => $trainerWarning] = $this->findOrInviteTrainer($first['trainer_email']);
+            if ($trainerWarning) {
+                $warnings[] = "Row {$rowNum}: {$trainerWarning}";
+                $createdIds[] = ['model' => User::class, 'id' => $trainer->id];
             }
 
             try {

@@ -46,9 +46,10 @@ class GlobalSearchController extends Controller
         /** @var User $user */
         $user = $request->user();
         $groups = match (true) {
-            $user->hasRole('trainee') => $this->searchAsTrainee($user, $q),
+            $user->hasAnyRole(['admin', 'developer']) => $this->searchAsAdmin($q), // developer + admin: identical, per this app's admin/developer parity rule
             $user->hasRole('trainer') => $this->searchAsTrainer($q),
-            default => $this->searchAsAdmin($q), // developer + admin: identical, per this app's admin/developer parity rule
+            $user->hasRole('trainee') => $this->searchAsTrainee($user, $q),
+            default => $this->searchAsAdmin($q),
         };
 
         return response()->json([

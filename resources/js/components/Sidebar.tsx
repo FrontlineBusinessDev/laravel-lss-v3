@@ -155,13 +155,22 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
     const { role } = useAuth();
     const { hasRole } = usePermission();
     const { open: openSearch } = useGlobalSearchTrigger();
-    const navItems = hasRole('trainer')
-        ? TRAINER_ITEMS
-        : hasRole('trainee')
-          ? TRAINEE_ITEMS
-          : hasRole('developer')
-            ? [...NAV_ITEMS, ...DEVELOPER_ITEMS]
-            : NAV_ITEMS;
+    // A user may hold more than one role (e.g. admin + trainer) — union every
+    // matching role's nav set instead of picking just one, so no access is
+    // silently hidden. Deduped by `to` in case two role sets ever overlap.
+    const itemSets: NavigationItem[][] = [
+        hasRole('developer') ? [...NAV_ITEMS, ...DEVELOPER_ITEMS] : [],
+        hasRole('admin') ? NAV_ITEMS : [],
+        hasRole('trainer') ? TRAINER_ITEMS : [],
+        hasRole('trainee') ? TRAINEE_ITEMS : [],
+    ];
+    const seenPaths = new Set<string>();
+    const mergedItems = itemSets.flat().filter((item) => {
+        if (seenPaths.has(item.to)) return false;
+        seenPaths.add(item.to);
+        return true;
+    });
+    const navItems = mergedItems.length > 0 ? mergedItems : NAV_ITEMS;
 
     return (
         <>

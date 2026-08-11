@@ -26,7 +26,7 @@ class BatchImportController extends Controller implements HasMiddleware
     use ImportLogging;
 
     /** Mirrors BatchesController::BATCH_SEQUENCE_START — codes at/above this are reserved for live auto-generation. */
-    private const RESERVED_SEQUENCE_START = 76;
+    private const RESERVED_SEQUENCE_START = 77;
 
     public static function middleware(): array
     {
@@ -36,19 +36,25 @@ class BatchImportController extends Controller implements HasMiddleware
     /** POST /settings/import/batches — rows: [{batch_code, setup, industry, program_type, date_started, projected_end_date?, is_open, is_completed, is_dissolved}] */
     public function import(Request $request): JsonResponse
     {
+        $this->nullifyBlankRowFields($request, ['projected_end_date']);
+        $this->normalizeDateRowFields($request, ['date_started', 'projected_end_date']);
+
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.batch_code' => ['required', 'string', 'max:50'],
-            'rows.*.setup' => ['required', 'string', 'in:f2f,online'],
-            'rows.*.industry' => ['required', 'string'],
-            'rows.*.program_type' => ['required', 'string'],
-            'rows.*.date_started' => ['required', 'date'],
-            'rows.*.projected_end_date' => ['nullable', 'date'],
-            'rows.*.is_open' => ['nullable'],
-            'rows.*.is_completed' => ['nullable'],
-            'rows.*.is_dissolved' => ['nullable'],
         ]);
+
+        $rowRules = [
+            'batch_code' => ['required', 'string', 'max:50'],
+            'setup' => ['required', 'string', 'in:f2f,online'],
+            'industry' => ['required', 'string'],
+            'program_type' => ['required', 'string'],
+            'date_started' => ['required', 'date'],
+            'projected_end_date' => ['nullable', 'date'],
+            'is_open' => ['nullable'],
+            'is_completed' => ['nullable'],
+            'is_dissolved' => ['nullable'],
+        ];
 
         $errors = [];
         $warnings = [];
@@ -57,6 +63,10 @@ class BatchImportController extends Controller implements HasMiddleware
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $code = trim($row['batch_code']);
 
             if (Batches::where('batch_code', $code)->exists()) {

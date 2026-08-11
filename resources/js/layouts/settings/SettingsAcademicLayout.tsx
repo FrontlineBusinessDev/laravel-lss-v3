@@ -1,6 +1,7 @@
+import { Dropdown } from '@/components/Dropdown';
 import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { ReactNode } from 'react';
 interface LayoutProps {
     children: ReactNode;
@@ -44,37 +45,51 @@ export default function SettingsAcademicLayout({ children }: LayoutProps) {
     const hasAcademicAccess = can('manage settings academic');
     // 2. Only show the navigation if they can switch between BOTH
     const showNavigation = hasAcademicAccess;
+    const activeHref =
+        NAV_LINKS.find((link) => url === link.href)?.href ?? NAV_LINKS[0].href;
+
     return (
         <>
-            <div
-                className={cn(
-                    'my-2 inline-flex flex-wrap gap-1.5',
-                    !showNavigation && 'h-5',
-                )}
-                data-cy="settings-academic-layout-div-1"
-            >
-                {showNavigation &&
-                    NAV_LINKS.map((link) => {
-                        // Strict check to match current URL path exactly or partially
-                        // const isActive = url.includes(link.href);
-                        const isActive = url === link.href;
-                        return (
-                            <Link
-                                key={link.id}
-                                href={link.href}
-                                className={cn(
-                                    'rounded-pill px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.97]',
-                                    isActive
-                                        ? 'bg-brand-500 text-white'
-                                        : 'border border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300',
-                                )}
-                                data-cy="settings-academic-layout-link-link-href"
-                            >
-                                {link.label}
-                            </Link>
-                        );
-                    })}
-            </div>
+            {showNavigation && (
+                <>
+                    <div
+                        className="my-2 hidden flex-wrap gap-1.5 sm:inline-flex"
+                        data-cy="settings-academic-layout-div-1"
+                    >
+                        {NAV_LINKS.map((link) => {
+                            const isActive = url === link.href;
+                            return (
+                                <Link
+                                    key={link.id}
+                                    href={link.href}
+                                    className={cn(
+                                        'rounded-pill px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.97]',
+                                        isActive
+                                            ? 'bg-brand-500 text-white'
+                                            : 'border border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300',
+                                    )}
+                                    data-cy="settings-academic-layout-link-link-href"
+                                >
+                                    {link.label}
+                                </Link>
+                            );
+                        })}
+                    </div>
+                    <div className="my-2 sm:hidden">
+                        <Dropdown
+                            options={NAV_LINKS.map((link) => ({
+                                label: link.label,
+                                value: link.href,
+                            }))}
+                            value={activeHref}
+                            onChange={(href) => router.visit(href)}
+                            variant="pill"
+                            data-cy="settings-academic-layout-dropdown-mobile"
+                        />
+                    </div>
+                </>
+            )}
+            {!showNavigation && <div className="h-5" />}
             {children}
         </>
     );

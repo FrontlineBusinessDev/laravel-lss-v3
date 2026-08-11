@@ -14,6 +14,7 @@ class LssLoginResponse implements LoginResponseContract
 
         $user = $request->user();
         $target = match (true) {
+            $user->hasAnyRole(['admin', 'developer']) => route('dashboard'),
             $user->hasRole('trainer') => route('trainer.dashboard'),
             $user->hasRole('trainee') => route('trainee.dashboard'),
             default => route('dashboard'),

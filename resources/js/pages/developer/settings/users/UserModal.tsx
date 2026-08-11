@@ -1,5 +1,6 @@
 import { userService } from '@/api-service-layer/admin/user';
 import type { UserInput } from '@/api-service-layer/admin/user';
+import { assignableRoles } from '@/api-service-layer/roles';
 import { FormModal } from '@/components/form-modal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import type { FieldDef } from '@/components/table';
@@ -10,22 +11,15 @@ export interface UserRow extends Record<string, unknown> {
     id: number;
     name: string;
     email: string;
-    role: string | null;
+    roles: string[];
     status: string;
 }
 
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-/** Creator-scoped role matrix (mirrors UserController::assignableRoles). */
-export function roleOptions(actorRole: string) {
-    const roles =
-        actorRole === 'developer'
-            ? ['developer', 'admin', 'trainer']
-            : actorRole === 'admin'
-              ? ['admin', 'trainer']
-              : [];
-
-    return roles.map((r) => ({ value: r, label: cap(r) }));
+/** Creator-scoped role options for the multi-select, sourced from the single shared matrix in api-service-layer/roles.ts (mirrors UserController::assignableRoles). */
+function roleOptions(actorRole: string) {
+    return assignableRoles(actorRole).map((r) => ({ value: r, label: cap(r) }));
 }
 
 interface Props {
@@ -66,13 +60,13 @@ export default function UserModal({ open, onClose, row, actorRole }: Props) {
             disabled: (mode) => mode === 'edit',
         },
         {
-            key: 'role',
-            label: 'Role',
-            type: 'select',
+            key: 'roles',
+            label: 'Roles',
+            type: 'multi-select',
             required: true,
             colSpan: 2,
             options: roleOptions(actorRole),
-            defaultValue: roleOptions(actorRole)[0]?.value,
+            defaultValue: [],
         },
     ];
 

@@ -28,12 +28,15 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.school_name' => ['required', 'string', 'max:255'],
-            'rows.*.abbreviation' => ['nullable', 'string', 'max:50'],
-            'rows.*.contact_person' => ['nullable', 'string'],
-            'rows.*.contact_email' => ['nullable', 'string', 'max:255'],
-            'rows.*.address' => ['nullable', 'string'],
         ]);
+
+        $rowRules = [
+            'school_name' => ['required', 'string', 'max:255'],
+            'abbreviation' => ['nullable', 'string', 'max:50'],
+            'contact_person' => ['nullable', 'string'],
+            'contact_email' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string'],
+        ];
 
         $errors = [];
         $successCount = 0;
@@ -41,6 +44,10 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $name = trim($row['school_name']);
             if ($name === '') {
                 $errors[] = "Row {$rowNum}: school_name is required.";

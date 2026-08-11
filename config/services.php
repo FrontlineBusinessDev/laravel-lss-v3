@@ -54,4 +54,10 @@ return [
         'webhook_url' => env('GOOGLE_CHAT_WEBHOOK_URL'),
     ],
 
+    // Default country for the public-holidays sync (App\Support\HolidaySync),
+    // which populates app_holidays from the free Nager.Date API.
+    'holiday_api' => [
+        'country' => env('HOLIDAY_API_COUNTRY', 'PH'),
+    ],
+
 ];

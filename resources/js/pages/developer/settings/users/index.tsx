@@ -54,7 +54,9 @@ function buildColumns(actorRole: string): ColumnDef<UserRow>[] {
             typeData:
                 actorRole === 'developer'
                     ? ROLE_FILTER_PAIRS
-                    : ROLE_FILTER_PAIRS.filter((pair) => pair.value !== 'developer'),
+                    : ROLE_FILTER_PAIRS.filter(
+                          (pair) => pair.value !== 'developer',
+                      ),
         },
         { key: 'first_name', label: 'Name', sortable: true, filterable: true },
         { key: 'email', label: 'Email', sortable: true, filterable: true },
@@ -97,7 +99,7 @@ export default function index() {
         const isSelf = row.id === currentUserId;
         const isArchived = row.status !== 'active';
         const badge: StatusKind = isArchived ? 'suspended' : 'active';
-        const isTrainee = row.role === 'trainee';
+        const isTrainee = row.roles.includes('trainee');
         const menu: RowMenuAction[] = [
             isTrainee
                 ? null
@@ -171,7 +173,7 @@ export default function index() {
                     className="inline-flex items-center gap-1 text-sm text-neutral-600"
                     data-cy="index-div-8"
                 >
-                    {row.role === 'admin' &&
+                    {row.roles.includes('admin') &&
                         row.email == 'contact@frontlinebusiness.com.ph' && (
                             <ShieldCheck
                                 size={12}
@@ -179,7 +181,7 @@ export default function index() {
                                 data-cy="index-shield-check-9"
                             />
                         )}
-                    {row.role ? cap(row.role) : '—'}
+                    {row.roles.length ? row.roles.map(cap).join(', ') : '—'}
                 </div>
             </SettingsRow>
         );
@@ -210,7 +212,7 @@ export default function index() {
                         archivePermission={PERMISSION}
                         deletePermission={PERMISSION}
                         deleteConfirmText={(row) =>
-                            ADMIN_LIKE_ROLES.includes(row.role ?? '')
+                            row.roles.some((r) => ADMIN_LIKE_ROLES.includes(r))
                                 ? row.email
                                 : undefined
                         }
