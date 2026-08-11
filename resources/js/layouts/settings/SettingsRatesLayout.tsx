@@ -1,5 +1,6 @@
+import { Dropdown } from '@/components/Dropdown';
 import { cn } from '@/lib/utils';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { ReactNode } from 'react';
 
 interface LayoutProps {
@@ -27,11 +28,13 @@ const NAV_LINKS = [
 export default function SettingsRatesLayout({ children }: LayoutProps) {
     const { url } = usePage();
     const path = url.split('?')[0];
+    const activeHref =
+        NAV_LINKS.find((link) => path === link.href)?.href ?? NAV_LINKS[0].href;
 
     return (
         <>
             <div
-                className="mb-3 inline-flex flex-wrap gap-1.5"
+                className="mb-3 hidden flex-wrap gap-1.5 sm:inline-flex"
                 data-cy="settings-academic-rates-layout-div-1"
             >
                 {NAV_LINKS.map((link) => {
@@ -52,6 +55,18 @@ export default function SettingsRatesLayout({ children }: LayoutProps) {
                         </Link>
                     );
                 })}
+            </div>
+            <div className="mb-3 sm:hidden">
+                <Dropdown
+                    options={NAV_LINKS.map((link) => ({
+                        label: link.label,
+                        value: link.href,
+                    }))}
+                    value={activeHref}
+                    onChange={(href) => router.visit(href)}
+                    variant="pill"
+                    data-cy="settings-academic-rates-layout-dropdown-mobile"
+                />
             </div>
             {children}
         </>

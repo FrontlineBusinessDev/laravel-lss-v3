@@ -2,6 +2,7 @@ import { ApiError } from '@/api-service-layer/client';
 import { Avatar } from '@/components/Avatar';
 import { AvatarCropModal } from '@/components/AvatarCropModal';
 import { Button } from '@/components/Button';
+import { Dropdown } from '@/components/Dropdown';
 import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
 import { tableListInvalidateKeys } from '@/components/table/utils';
 import { useToast } from '@/components/Toast';
@@ -297,7 +298,10 @@ export default function TraineesDetailLayout({
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-wrap gap-2" data-cy="detail-div-actions">
+                <div
+                    className="flex flex-wrap gap-2"
+                    data-cy="detail-div-actions"
+                >
                     <Button
                         variant="secondary"
                         size="sm"
@@ -322,7 +326,7 @@ export default function TraineesDetailLayout({
             </div>
 
             <div
-                className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
+                className="lss-scrollbar mb-4 hidden gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5 sm:flex"
                 data-cy="detail-div-17"
             >
                 {TABS.map((t, key) => {
@@ -343,6 +347,19 @@ export default function TraineesDetailLayout({
                         </Link>
                     );
                 })}
+            </div>
+            <div className="mb-4 sm:hidden">
+                <Dropdown
+                    options={TABS.map((t) => ({
+                        label: t.label,
+                        value: t.href,
+                    }))}
+                    value={
+                        TABS.find((t) => path === t.href)?.href ?? TABS[0].href
+                    }
+                    onChange={(href) => router.visit(href)}
+                    data-cy="trainees-detail-layout-dropdown-mobile"
+                />
             </div>
 
             {children}

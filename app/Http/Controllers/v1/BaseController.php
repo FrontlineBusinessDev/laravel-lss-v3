@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Http\Controllers\v1\Concerns\AppliesQueryFilters;
 use App\Http\Responses\InertiaPageResponse;
 use App\Support\Statuses;
 use App\Traits\HandlesFileUploads;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 
 abstract class BaseController extends Controller implements HasMiddleware
 {
-    use AuthorizesRequests, HandlesFileUploads;
+    use AuthorizesRequests, HandlesFileUploads, AppliesQueryFilters;
     public const STATUS_ACTIVE = Statuses::ACTIVE;
     public const STATUS_INACTIVE = Statuses::INACTIVE;
     protected string $model; /** Fully qualified model class for this module. Set by child when using the CRUD helpers below. */
@@ -56,6 +57,16 @@ abstract class BaseController extends Controller implements HasMiddleware
      * @var array<string, string>
      */
     protected array $relationFilters = [];
+    /**
+     * Sort keys that should order by a column on a related table instead of
+     * this model's own table (e.g. sorting trainees by their batch's code,
+     * not by the raw `batch_id` FK). Map: sort key (the FK column on this
+     * model) => [related table, related column]. Applied via leftJoin so the
+     * related name orders correctly instead of the numeric id.
+     *
+     * @var array<string, array{0: string, 1: string}>
+     */
+    protected array $relationSortable = [];
     /**
      * Map of field name => storage subfolder.
      * Override in child controllers.
@@ -146,27 +157,10 @@ abstract class BaseController extends Controller implements HasMiddleware
                 continue;
             }
             if (array_key_exists($col, $this->jsonContainsFilters)) {
-                $jsonColumn = $this->jsonContainsFilters[$col];
-                $values = is_array($cleanedValue) ? $cleanedValue : [$cleanedValue];
-                $query->where(function (Builder $q) use ($jsonColumn, $values) {
-                    foreach ($values as $value) {
-                        // Stored JSON array elements are typically ints (IDs);
-                        // coerce so a string id from the request still matches.
-                        $q->orWhereJsonContains($jsonColumn, is_numeric($value) ? (int) $value : $value);
-                    }
-                });
+                $this->applyJsonContainsFilter($query, $this->jsonContainsFilters[$col], $cleanedValue);
                 continue;
             }
-            if (is_array($cleanedValue)) {
-                // Multi-select filter — match any of the given values.
-                $query->whereIn($col, $cleanedValue);
-            } elseif (in_array($col, $this->exactFilters, true)) {
-                // Exact match for columns like `status` (so 'active' doesn't
-                // also match 'inactive'); LIKE for everything else.
-                $query->where($col, $cleanedValue);
-            } else {
-                $query->where($col, 'like', "%{$cleanedValue}%");
-            }
+            $this->applyStandardFilter($query, $col, $cleanedValue);
         }
         // Optional Hook for child controllers needing highly complex logic
         $this->applyCustomFilters($query, $filters, $request);
@@ -174,7 +168,9 @@ abstract class BaseController extends Controller implements HasMiddleware
         // --- Sorting & Pagination (rest of your existing logic) ---
         $sortBy = $request->string('sort_by', 'id')->toString();
         $sortDir = $request->string('sort_dir', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
-        if (in_array($sortBy, $this->sortable, true)) {
+        if (array_key_exists($sortBy, $this->relationSortable)) {
+            $this->applyRelationSort($query, $sortBy, $sortDir);
+        } elseif (in_array($sortBy, $this->sortable, true)) {
             $query->orderBy($sortBy, $sortDir);
         }
         $perPage = (int) $request->input('per_page', 10);
@@ -203,31 +199,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             'sort_dir' => $sortDir,
         ];
         return $this->sendResponse($paginatedData);
-    }
-
-    /**
-     * Applies a filter declared in $relationFilters via whereHas, traversing
-     * a dot-path of relation names down to the final column.
-     */
-    protected function applyRelationFilter(Builder $query, string $path, mixed $value): void
-    {
-        $segments = explode('.', $path);
-        $column = array_pop($segments);
-        $this->nestedWhereHas($query, $segments, $column, $value);
-    }
-
-    /** @param list<string> $relations */
-    protected function nestedWhereHas(Builder $query, array $relations, string $column, mixed $value): void
-    {
-        $relation = array_shift($relations);
-        $query->whereHas($relation, function (Builder $q) use ($relations, $column, $value) {
-            if (empty($relations)) {
-                is_array($value) ? $q->whereIn($column, $value) : $q->where($column, $value);
-
-                return;
-            }
-            $this->nestedWhereHas($q, $relations, $column, $value);
-        });
     }
 
     public function searchActive(Request $request): JsonResponse
@@ -528,21 +499,6 @@ abstract class BaseController extends Controller implements HasMiddleware
     protected function resolveModelByPublicId(string $publicId): Model
     {
         return $this->newQuery()->where('public_id', $publicId)->firstOrFail();
-    }
-    /**
-     * Handles automatic dynamic date filters declared in $dateFilters.
-     */
-    protected function applyDateFilter(Builder $query, string $filterKey, mixed $value): void
-    {
-        if (empty($value)) return;
-        $column = $this->dateFilters[$filterKey];
-        if (str_ends_with($filterKey, '_from') || str_ends_with($filterKey, '_start')) {
-            $query->whereDate($column, '>=', $value);
-        } elseif (str_ends_with($filterKey, '_to') || str_ends_with($filterKey, '_end')) {
-            $query->whereDate($column, '<=', $value);
-        } else {
-            $query->whereDate($column, '=', $value);
-        }
     }
     /**
      * Extension point for child controllers to implement custom logic.

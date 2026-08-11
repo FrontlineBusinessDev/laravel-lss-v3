@@ -42,9 +42,18 @@ class TraineesController extends BaseController
     protected array $sortable = [
         'status',
         'id',
+        'first_name',
         'last_name',
+        'email',
         'date_completed',
         'required_hours'
+    ];
+    // Sort by the related name instead of the raw FK id — see
+    // BaseController::$relationSortable.
+    protected array $relationSortable = [
+        'batch_id' => ['app_batches', 'batch_code'],
+        'school_id' => ['app_settings_partner_schools', 'school_name'],
+        'academic_program_id' => ['app_settings_academic_program', 'name'],
     ];
     // batch_id/school_id/academic_program_id/academic_level_id are FK ids on
     // this table — must match exactly, not LIKE (a LIKE '%3%' would also

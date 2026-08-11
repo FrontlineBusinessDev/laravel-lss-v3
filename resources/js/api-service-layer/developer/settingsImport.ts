@@ -15,7 +15,7 @@ export interface SettingsImportLogUser {
     email: string;
 }
 
-export interface SettingsImportLogEntry {
+export interface SettingsImportLogEntry extends Record<string, unknown> {
     id: number;
     type: string;
     file_name: string;
@@ -54,9 +54,6 @@ export const settingsImportService = {
                 rows,
             }),
         ),
-
-    listLogs: async (): Promise<SettingsImportLogEntry[]> =>
-        unwrap<SettingsImportLogEntry[]>(await http.get('/settings/import/logs')),
 
     rollback: async (logId: number): Promise<SettingsImportRollbackResult> =>
         unwrap<SettingsImportRollbackResult>(await http.post(`/settings/import/logs/${logId}/rollback`)),

@@ -2,36 +2,47 @@
 
 namespace App\Http\Controllers\v1\Developer\Settings\Import;
 
-use App\Http\Controllers\v1\Controller;
+use App\Http\Controllers\v1\BaseController;
 use App\Models\SettingsImportLog;
 use App\Models\Trainees;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 
 /**
- * Lists recent Settings > Import runs and rolls one back by deleting exactly
- * the records it created (tracked in SettingsImportLog::created_ids, see
+ * Lists recent Settings > Import runs (via BaseController::paginationSearch(),
+ * same as SystemLogController) and rolls one back by deleting exactly the
+ * records it created (tracked in SettingsImportLog::created_ids, see
  * ImportLogging::finishImport()), in reverse creation order. Rows that only
  * matched/updated a pre-existing record were never tracked and are left
- * alone — rollback only ever undoes genuinely-new data.
+ * alone — rollback only ever undoes genuinely-new data. Read-only otherwise:
+ * create/update/archive/destroy are intentionally not wired.
  */
-class ImportRollbackController extends Controller implements HasMiddleware
+class ImportRollbackController extends BaseController
 {
+    protected string $model = SettingsImportLog::class;
+
+    protected array $searchable = ['type', 'file_name'];
+
+    protected array $filterable = ['type', 'status'];
+
+    protected array $exactFilters = ['type', 'status'];
+
+    protected array $sortable = ['id', 'type', 'status', 'created_at'];
+
+    protected string $sortBy = 'created_at';
+
     public static function middleware(): array
     {
         return [new Middleware(['auth', 'role:admin|developer', 'throttle:60,1'])];
     }
 
-    /** GET /settings/import/logs */
-    public function index(): JsonResponse
+    protected function newQuery(): Builder
     {
-        $logs = SettingsImportLog::with(['importedBy:id,first_name,last_name,email', 'rolledBackBy:id,first_name,last_name,email'])
-            ->latest()
-            ->limit(50)
-            ->get();
-
-        return response()->json(['success' => true, 'data' => $logs]);
+        return parent::newQuery()->with([
+            'importedBy:id,first_name,last_name,email',
+            'rolledBackBy:id,first_name,last_name,email',
+        ]);
     }
 
     /** POST /settings/import/logs/{log}/rollback */

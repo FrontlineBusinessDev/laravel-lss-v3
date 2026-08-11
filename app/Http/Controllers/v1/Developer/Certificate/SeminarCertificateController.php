@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\v1\Developer\Certificate;
 
 use App\Http\Controllers\v1\Controller;
-use App\Models\CertificateTemplate;
 use App\Models\SeminarCertificate;
 use App\Models\SeminarParticipant;
+use App\Support\CertificateNumberGenerator;
+use App\Support\CertificateTemplateResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,9 +98,9 @@ class SeminarCertificateController extends Controller
 
         $certificate = DB::transaction(function () use ($participantModel, $validated) {
             $existing = SeminarCertificate::where('seminar_participant_id', $participantModel->id)->first();
-            $certificateNo = $existing?->certificate_no ?? $this->nextCertificateNo();
+            $certificateNo = $existing?->certificate_no ?? CertificateNumberGenerator::next(SeminarCertificate::class, 'SEM-CERT-', now()->year);
             $publicId = $existing?->public_id ?? (string) Str::ulid();
-            $templateId = $validated['template_id'] ?? $this->defaultTemplateId('seminar');
+            $templateId = $validated['template_id'] ?? CertificateTemplateResolver::defaultTemplateId('seminar');
 
             return SeminarCertificate::updateOrCreate(
                 ['seminar_participant_id' => $participantModel->id],
@@ -121,20 +122,4 @@ class SeminarCertificateController extends Controller
         ]);
     }
 
-    private function nextCertificateNo(): string
-    {
-        $year = now()->year;
-        $sequence = SeminarCertificate::whereYear('created_at', $year)->count() + 1;
-
-        return sprintf('SEM-CERT-%d-%04d', $year, $sequence);
-    }
-
-    /** Resolves the active default template for the given type, used when no template is explicitly chosen at issuance. */
-    private function defaultTemplateId(string $certificateType): ?int
-    {
-        return CertificateTemplate::where('certificate_type', $certificateType)
-            ->where('is_default', true)
-            ->where('status', 'active')
-            ->value('id');
-    }
 }

@@ -47,6 +47,7 @@ export const columns: ColumnDef<PartnerSchools>[] = [
         // image comes back from the API as a plain URL string — render it as a
         // thumbnail (with graceful fallback for empty/broken URLs) instead of
         // the raw path text.
+        sortable: false,
         render: (value) => (
             <Thumbnail
                 src={value as string}

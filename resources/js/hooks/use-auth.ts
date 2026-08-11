@@ -28,11 +28,24 @@ function initialsFor(name: string): string {
 export function useAuth() {
     const { props } = usePage();
     const user = props.auth?.user ?? null;
-    const role = user?.roles?.[0] ?? 'admin';
+    const roles = user?.roles ?? [];
+    // A user may hold more than one role; this derives a single "home
+    // experience" label (display-only) using the same priority as the
+    // backend's redirect/search dispatch: admin/developer > trainer > trainee.
+    const role = roles.includes('developer')
+        ? 'developer'
+        : roles.includes('admin')
+          ? 'admin'
+          : roles.includes('trainer')
+            ? 'trainer'
+            : roles.includes('trainee')
+              ? 'trainee'
+              : 'admin';
 
     return {
         user,
         role,
+        roles,
         displayName: user?.name ?? 'Guest',
         email: user?.email ?? '',
         initials: user ? initialsFor(user.name) : '—',

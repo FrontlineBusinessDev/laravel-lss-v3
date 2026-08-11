@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Phase 5b — legacy lcssv2_task+lcssv2_task_list onto BOTH app_tasks (the
@@ -33,36 +34,58 @@ class TaskImportController extends Controller implements HasMiddleware
     /** rows: [{trainee_email, trainer_email, task_title, description?, date, time_goal, time_spent?, grade?, remarks?, is_complete}] */
     public function import(Request $request): JsonResponse
     {
+        $this->nullifyBlankRowFields($request, ['date', 'time_spent']);
+        $this->normalizeDateRowFields($request, ['date']);
+        $this->normalizeDurationRowFields($request, ['time_goal', 'time_spent']);
+        $this->defaultInvalidNumericRowFields($request, ['time_spent']);
+
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.trainee_email' => ['required', 'email'],
-            'rows.*.trainer_email' => ['required', 'email'],
-            'rows.*.task_title' => ['required', 'string', 'max:255'],
-            'rows.*.description' => ['nullable', 'string'],
-            'rows.*.date' => ['required', 'date'],
-            'rows.*.time_goal' => ['required', 'numeric', 'min:0'],
-            'rows.*.time_spent' => ['nullable', 'numeric', 'min:0'],
-            'rows.*.grade' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'rows.*.remarks' => ['nullable', 'string'],
-            'rows.*.is_complete' => ['nullable'],
         ]);
 
+        $rowRules = [
+            'trainee_email' => ['required', 'email'],
+            'trainer_email' => ['required', 'email'],
+            'task_title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'date' => ['required', 'date'],
+            'time_goal' => ['required', 'numeric', 'min:0'],
+            'time_spent' => ['nullable', 'numeric', 'min:0'],
+            'grade' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'remarks' => ['nullable', 'string'],
+            'is_complete' => ['nullable'],
+        ];
+
         $errors = [];
+        $warnings = [];
         $successCount = 0;
         $createdIds = [];
 
+        $distinctTrainerEmails = collect($validated['rows'])
+            ->pluck('trainer_email')
+            ->filter()
+            ->map(fn ($e) => strtolower(trim($e)))
+            ->unique();
+        if (count($validated['rows']) > 1 && $distinctTrainerEmails->count() === 1) {
+            $warnings[] = 'All ' . count($validated['rows']) . " rows use the same trainer_email (\"{$distinctTrainerEmails->first()}\") — double-check the file's trainer_email column wasn't accidentally filled with one repeated value before assuming this is correct.";
+        }
+
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $trainee = Trainees::where('email', trim($row['trainee_email']))->first();
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$row['trainee_email']}\" — run the Trainees import first.";
                 continue;
             }
-            $trainer = User::where('email', trim($row['trainer_email']))->first();
-            if (! $trainer) {
-                $errors[] = "Row {$rowNum}: no trainer/user found with email \"{$row['trainer_email']}\".";
-                continue;
+            ['user' => $trainer, 'warning' => $trainerWarning] = $this->findOrInviteTrainer($row['trainer_email']);
+            if ($trainerWarning) {
+                $warnings[] = "Row {$rowNum}: {$trainerWarning}";
+                $createdIds[] = ['model' => User::class, 'id' => $trainer->id];
             }
 
             $complete = $this->truthy($row['is_complete'] ?? null);
@@ -72,6 +95,7 @@ class TaskImportController extends Controller implements HasMiddleware
                     $entries = [];
 
                     $task = Task::create([
+                        'task_group_id' => (string) Str::uuid(),
                         'status' => $complete ? 'completed' : 'open',
                         'batch_id' => $trainee->batch_id,
                         'trainee_id' => $trainee->id,
@@ -121,7 +145,7 @@ class TaskImportController extends Controller implements HasMiddleware
             }
         }
 
-        return $this->finishImport('tasks', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
+        return $this->finishImport('tasks', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 
     private function truthy(mixed $value): bool

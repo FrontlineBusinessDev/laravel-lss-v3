@@ -1,5 +1,6 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import { Dropdown } from '@/components/Dropdown';
 import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +64,13 @@ export default function SettingsPrimaryLayout({
     const { url } = usePage(); // Used to automatically highlight the active tab
     const canImport = hasRole('admin') || hasRole('developer');
 
+    const visibleLinks = NAV_LINKS.filter((link) =>
+        link.permission === null ? canImport : can(link.permission),
+    );
+    const activeHref =
+        visibleLinks.find((link) => url.startsWith(link.href))?.href ??
+        visibleLinks[0]?.href;
+
     return (
         <>
             <div data-cy="settings-primary-layout-div-1">
@@ -85,19 +93,11 @@ export default function SettingsPrimaryLayout({
                     <div>{actionNode}</div>
                 </div>
                 <div
-                    className="lss-scrollbar mb-4 flex gap-5 overflow-x-auto border-b border-neutral-200 pl-0.5"
+                    className="lss-scrollbar mb-4 hidden sm:flex sm:gap-5 sm:overflow-x-auto sm:border-b sm:border-neutral-200 sm:pl-0.5"
                     data-cy="settings-primary-layout-div-4"
                 >
-                    {NAV_LINKS.map((link) => {
-                        // 2. Filter tabs out dynamically based on user permissions
-                        // (role, for the Import tab, which has no permission).
-                        const visible = link.permission === null ? canImport : can(link.permission);
-                        if (!visible) {
-                            return null;
-                        }
-
-                        // 3. Determine if the link is currently active
-                        const isActive = url.startsWith(link.href);
+                    {visibleLinks.map((link) => {
+                        const isActive = link.href === activeHref;
 
                         return (
                             <Link
@@ -115,6 +115,17 @@ export default function SettingsPrimaryLayout({
                             </Link>
                         );
                     })}
+                </div>
+                <div className="mb-4 sm:hidden">
+                    <Dropdown
+                        options={visibleLinks.map((link) => ({
+                            label: link.label,
+                            value: link.href,
+                        }))}
+                        value={activeHref}
+                        onChange={(href) => router.visit(href)}
+                        data-cy="settings-primary-layout-dropdown-mobile"
+                    />
                 </div>
                 {children}
             </div>

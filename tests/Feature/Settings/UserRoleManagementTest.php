@@ -56,10 +56,10 @@ test('admin cannot assign the developer role', function () {
         ->postJson(route('settings.users.store'), [
             'name' => 'New Person',
             'email' => 'new.person@example.com',
-            'role' => 'developer',
+            'roles' => ['developer'],
         ])
         ->assertStatus(422)
-        ->assertJsonValidationErrors('role');
+        ->assertJsonValidationErrors('roles.0');
 });
 
 test('admin cannot create a trainee account', function () {
@@ -67,10 +67,10 @@ test('admin cannot create a trainee account', function () {
         ->postJson(route('settings.users.store'), [
             'name' => 'Tina Trainee',
             'email' => 'tina@example.com',
-            'role' => 'trainee',
+            'roles' => ['trainee'],
         ])
         ->assertStatus(422)
-        ->assertJsonValidationErrors('role');
+        ->assertJsonValidationErrors('roles.0');
 });
 
 test('admin can create a trainer account and the name is split', function () {
@@ -78,7 +78,7 @@ test('admin can create a trainer account and the name is split', function () {
         ->postJson(route('settings.users.store'), [
             'name' => 'Juan Dela Cruz',
             'email' => 'juan@example.com',
-            'role' => 'trainer',
+            'roles' => ['trainer'],
         ])
         ->assertCreated();
 
@@ -96,7 +96,7 @@ test('developer can create an admin account', function () {
         ->postJson(route('settings.users.store'), [
             'name' => 'Ada Admin',
             'email' => 'ada@example.com',
-            'role' => 'admin',
+            'roles' => ['admin'],
         ])
         ->assertCreated();
 

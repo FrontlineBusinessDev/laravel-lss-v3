@@ -17,6 +17,17 @@ export function csvRowsToObjects(text: string): { headers: string[]; rows: Recor
     return { headers, rows };
 }
 
+/** Rows per import request. Keeps each request's server-side wildcard-rule validation cheap and every request comfortably under the 30s execution limit, regardless of how large the source CSV is. */
+export const IMPORT_CHUNK_SIZE = 300;
+
+export function chunkArray<T>(items: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += size) {
+        chunks.push(items.slice(i, i + size));
+    }
+    return chunks;
+}
+
 export function downloadCsvTemplate(fileName: string, template: string) {
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

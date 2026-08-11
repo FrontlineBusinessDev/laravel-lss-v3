@@ -33,9 +33,12 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.trainee_email' => ['required', 'email'],
-            'rows.*.outcome_text' => ['required', 'string'],
         ]);
+
+        $rowRules = [
+            'trainee_email' => ['required', 'email'],
+            'outcome_text' => ['required', 'string'],
+        ];
 
         $errors = [];
         $successCount = 0;
@@ -43,6 +46,10 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $trainee = Trainees::with('batch')->where('email', trim($row['trainee_email']))->first();
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$row['trainee_email']}\" — run the Trainees import first.";

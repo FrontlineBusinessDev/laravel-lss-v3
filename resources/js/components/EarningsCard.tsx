@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Eye, EyeOff, Banknote } from 'lucide-react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 function formatPHP(amount: number) {
   return `₱${amount.toLocaleString('en-PH', {
     minimumFractionDigits: 2,
@@ -11,7 +11,7 @@ export function EarningsCard({
 }: {
   amount: number;
 }) {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useLocalStorage('dashboard:earnings-visible', false);
   return <div className="rounded-lg border border-neutral-200 bg-white p-3.5" data-cy="earnings-card-div-1">
       <div className="flex items-center justify-between" data-cy="earnings-card-div-2">
         <span className="flex items-center gap-1.5 text-xs text-neutral-500" data-cy="earnings-card-span-total-earnings">

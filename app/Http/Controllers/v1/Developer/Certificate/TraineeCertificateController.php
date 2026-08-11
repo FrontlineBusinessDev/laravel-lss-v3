@@ -4,10 +4,11 @@ namespace App\Http\Controllers\v1\Developer\Certificate;
 
 use App\Http\Controllers\v1\Controller;
 use App\Models\CertificateCitation;
-use App\Models\CertificateTemplate;
 use App\Models\TraineeCertificate;
 use App\Models\Trainees;
 use App\Models\TrainerEvaluation;
+use App\Support\CertificateNumberGenerator;
+use App\Support\CertificateTemplateResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -154,9 +155,9 @@ class TraineeCertificateController extends Controller
 
         $certificate = DB::transaction(function () use ($traineeModel, $validated) {
             $existing = TraineeCertificate::where('trainee_id', $traineeModel->id)->first();
-            $certificateNo = $existing?->certificate_no ?? $this->nextCertificateNo();
+            $certificateNo = $existing?->certificate_no ?? CertificateNumberGenerator::next(TraineeCertificate::class, 'CERT-', now()->year);
             $publicId = $existing?->public_id ?? (string) Str::ulid();
-            $templateId = $validated['template_id'] ?? $this->defaultTemplateId('trainee');
+            $templateId = $validated['template_id'] ?? CertificateTemplateResolver::defaultTemplateId('trainee');
 
             return TraineeCertificate::updateOrCreate(
                 ['trainee_id' => $traineeModel->id],
@@ -217,20 +218,4 @@ class TraineeCertificateController extends Controller
             ->all();
     }
 
-    private function nextCertificateNo(): string
-    {
-        $year = now()->year;
-        $sequence = TraineeCertificate::whereYear('created_at', $year)->count() + 1;
-
-        return sprintf('CERT-%d-%04d', $year, $sequence);
-    }
-
-    /** Resolves the active default template for the given type, used when no template is explicitly chosen at issuance. */
-    private function defaultTemplateId(string $certificateType): ?int
-    {
-        return CertificateTemplate::where('certificate_type', $certificateType)
-            ->where('is_default', true)
-            ->where('status', 'active')
-            ->value('id');
-    }
 }

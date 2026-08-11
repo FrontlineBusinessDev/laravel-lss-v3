@@ -66,6 +66,7 @@ export default function TrainerBatchesPage() {
                 apiQueryKey="trainer-batches"
                 columns={columns}
                 defaultSortBy="batch_code"
+                defaultSortDir="desc"
                 listHeader={listHeader}
                 renderCard={renderRow}
             />

@@ -6,11 +6,13 @@ use App\Http\Controllers\v1\Controller;
 use App\Models\Announcement;
 use App\Models\Batches;
 use App\Models\BehavioralEvaluation;
+use App\Models\Holiday;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\Trainees;
 use App\Models\TraineesPayments;
 use App\Support\RequiredDocumentTypes;
+use App\Support\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -113,7 +115,16 @@ class DashboardController extends Controller
                 'type' => 'task',
             ]);
 
-        $events = $batchEvents->concat($leaveEvents)->concat($taskEvents)->values();
+        $holidayEvents = Holiday::whereBetween('date', [$monthStart, $monthEnd])
+            ->get(['id', 'name', 'date'])
+            ->map(fn(Holiday $holiday) => [
+                'id' => 'holiday-' . $holiday->id,
+                'date' => $holiday->date->toDateString(),
+                'title' => $holiday->name,
+                'type' => 'holiday',
+            ]);
+
+        $events = $batchEvents->concat($leaveEvents)->concat($taskEvents)->concat($holidayEvents)->values();
 
         return $this->respond($events);
     }
@@ -230,10 +241,10 @@ class DashboardController extends Controller
             ->pluck('count', 'status');
 
         return $this->respond([
-            'active' => (int) ($counts['active'] ?? 0),
+            'active' => (int) ($counts[Statuses::ACTIVE] ?? 0),
             'completed' => (int) ($counts['completed'] ?? 0),
-            'terminated' => (int) ($counts['terminated'] ?? 0),
-            'archived' => (int) ($counts['archived'] ?? 0),
+            'terminated' => (int) ($counts[Statuses::TERMINATED] ?? 0),
+            'archived' => (int) ($counts[Statuses::INACTIVE] ?? 0),
         ]);
     }
 

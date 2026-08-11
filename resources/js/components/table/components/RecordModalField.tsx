@@ -6,7 +6,7 @@
  * identical to CreateBatchModal.
  *
  * Supported types: text, number, email, password, date, datetime-local,
- *                  textarea, select, checkbox, async-select, file.
+ *                  textarea, select, multi-select, checkbox, async-select, file.
  */
 
 import { Field, inputCls, textareaCls } from '@/components/form/Field';
@@ -31,8 +31,7 @@ export function DynamicField<T>({
     initialLabel,
     onChange,
 }: DynamicFieldProps<T>) {
-    const fieldDataCy =
-        field.dataCy ?? `input-${field.key.replace(/_/g, '-')}`;
+    const fieldDataCy = field.dataCy ?? `input-${field.key.replace(/_/g, '-')}`;
 
     if (field.type === 'file') {
         return (
@@ -86,6 +85,48 @@ export function DynamicField<T>({
                     error={error}
                     data-cy="record-modal-field-async-select-field-field-placeholder"
                 />
+            </Field>
+        );
+    }
+
+    if (field.type === 'multi-select') {
+        const selected = Array.isArray(value) ? (value as string[]) : [];
+        const toggle = (optionValue: string) => {
+            onChange(
+                selected.includes(optionValue)
+                    ? selected.filter((v) => v !== optionValue)
+                    : [...selected, optionValue],
+            );
+        };
+
+        return (
+            <Field
+                label={field.label}
+                required={field.required}
+                helpText={field.helpText}
+                error={error}
+                data-cy={`${fieldDataCy}-field`}
+            >
+                <div className="flex flex-col gap-1.5" data-cy={fieldDataCy}>
+                    {field.options?.map((opt) => (
+                        <label
+                            key={opt.value}
+                            className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5"
+                            data-cy={`${fieldDataCy}-option-${opt.value}`}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={selected.includes(opt.value)}
+                                disabled={disabled}
+                                onChange={() => toggle(opt.value)}
+                                className="h-4 w-4 rounded border-neutral-300 text-brand-500 focus:ring-brand-100"
+                            />
+                            <span className="text-sm font-medium text-neutral-700">
+                                {opt.label}
+                            </span>
+                        </label>
+                    ))}
+                </div>
             </Field>
         );
     }

@@ -45,10 +45,13 @@ class AcademicImportController extends Controller implements HasMiddleware
         $validated = $request->validate([
             'file_name' => ['nullable', 'string'],
             'rows' => ['required', 'array', 'min:1'],
-            'rows.*.name' => ['required', 'string', 'max:255'],
-            'rows.*.abbreviation' => ['nullable', 'string', 'max:50'],
-            'rows.*.description' => ['nullable', 'string'],
         ]);
+
+        $rowRules = [
+            'name' => ['required', 'string', 'max:255'],
+            'abbreviation' => ['nullable', 'string', 'max:50'],
+            'description' => ['nullable', 'string'],
+        ];
 
         $errors = [];
         $successCount = 0;
@@ -58,6 +61,10 @@ class AcademicImportController extends Controller implements HasMiddleware
         // back rows already successfully matched/created earlier in the batch.
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
+            if ($error = $this->validateRow($row, $rowRules)) {
+                $errors[] = "Row {$rowNum}: {$error}";
+                continue;
+            }
             $name = trim($row['name']);
             if ($name === '') {
                 $errors[] = "Row {$rowNum}: name is required.";
