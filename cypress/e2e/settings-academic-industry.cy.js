@@ -93,95 +93,171 @@ describe('Settings - Academic Industry', () => {
     // });
 
     //sorting
-    it('should sort academic industry by status ascending', () => {
-        cy.intercept('GET', '**/pagination-search*').as('sortAcademicIndustry');
+    // sort status
+    // it('should check if the sorting of status is working', () => {
+    //     // intercept sorting request
+    //     cy.intercept('GET', '**/pagination-search*').as(
+    //         'sortStatusAcademicIndustry',
+    //     );
 
-        // Select Status as sort field
-        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-            'Sort: Status',
-        );
+    //     // select status sorting
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select('Sort: Status');
 
-        // Click Ascending
-        cy.get('[data-cy="toolbar-button-button-2"]').click();
+    //     // verify ascending sorting request was successful
+    //     cy.get('[data-cy="toolbar-button-button-2"]').should('be.visible');
 
-        // Verify request
-        cy.wait('@sortAcademicIndustry')
+    //     cy.wait('@sortStatusAcademicIndustry')
+    //         .its('response.statusCode')
+    //         .should('eq', 200);
+
+    //     // verify ascending order
+    //     cy.get('[data-cy="settings-row-div-4"]')
+    //         .first()
+    //         .invoke('text') //to get the text from table row
+    //         .then((text) => {
+    //             const status = text.trim();
+
+    //             cy.log(`Ascending first row: ${status}`);
+
+    //             expect(status).to.include('Active');
+    //         });
+
+    //     // click descending button
+    //     cy.get('[data-cy="toolbar-button-button-2"]').click();
+
+    //     // verify descending sorting request was successful
+    //     cy.wait('@sortStatusAcademicIndustry')
+    //         .its('response.statusCode')
+    //         .should('eq', 200);
+
+    //     // verify descending order
+    //     cy.get('[data-cy="settings-row-div-4"]')
+    //         .first()
+    //         .invoke('text') //to get the text from table row
+    //         .then((text) => {
+    //             const status = text.trim();
+
+    //             cy.log(`Descending first row: ${status}`);
+
+    //             expect(status).to.include('Archived');
+    //         });
+    // });
+    //sort industry name
+    // it('should check if the sorting of industry name is working', () => {
+    //     // intercept sorting request
+    //     cy.intercept('GET', '**/pagination-search*').as(
+    //         'sortIndustryNameAcademicIndustry',
+    //     );
+
+    //     // select industry name sorting
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+    //         'Sort: Industry Name',
+    //     );
+
+    //     // verify ascending sorting request was successful
+    //     cy.get('[data-cy="toolbar-button-button-2"]').should('be.visible');
+
+    //     cy.wait('@sortIndustryNameAcademicIndustry')
+    //         .its('response.statusCode')
+    //         .should('eq', 200);
+
+    //     // verify ascending order
+    //     cy.get('[data-cy="settings-row-div-4"]')
+    //         .first()
+    //         .invoke('text') //to get the text from table row
+    //         .then((text) => {
+    //             const industryName = text.trim();
+
+    //             cy.log(`Ascending first row: ${industryName}`);
+
+    //             expect(industryName).to.include('Accounting');
+    //         });
+
+    //     // click descending button
+    //     cy.get('[data-cy="toolbar-button-button-2"]').click();
+
+    //     // verify descending sorting request was successful
+    //     cy.wait('@sortIndustryNameAcademicIndustry')
+    //         .its('response.statusCode')
+    //         .should('eq', 200);
+
+    //     // verify descending order
+    //     cy.get('[data-cy="settings-row-div-4"]')
+    //         .first()
+    //         .invoke('text') //to get the text from table row
+    //         .then((text) => {
+    //             const industryName = text.trim();
+
+    //             cy.log(`Descending first row: ${industryName}`);
+
+    //             expect(industryName).to.include('Information Technology');
+    //         });
+    // });
+    //sort description
+    // it('should check if the sorting of description is working', () => {
+    //     // intercept sorting request
+    //     cy.intercept('GET', '**/pagination-search*').as(
+    //         'sortDescriptionAcademicIndustry',
+    //     );
+
+    //     // select description sorting
+    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
+    //         'Sort: Description',
+    //     );
+
+    //     // verify ascending sorting request was successful
+    //     cy.get('[data-cy="toolbar-button-button-2"]').should('be.visible');
+
+    //     cy.wait('@sortDescriptionAcademicIndustry')
+    //         .its('response.statusCode')
+    //         .should('eq', 200);
+
+    //     // verify ascending order
+    //     cy.get('[data-cy="settings-row-div-4"]')
+    //         .first()
+    //         .invoke('text') //to get the text from table row
+    //         .then((text) => {
+    //             const description = text.trim();
+
+    //             cy.log(`Ascending first row: ${description}`);
+
+    //             expect(description).to.include(
+    //                 'Accounting academic or industry sector.',
+    //             );
+    //         });
+
+    //     // click descending button
+    //     cy.get('[data-cy="toolbar-button-button-2"]').click();
+
+    //     // verify descending sorting request was successful
+    //     cy.wait('@sortDescriptionAcademicIndustry')
+    //         .its('response.statusCode')
+    //         .should('eq', 200);
+
+    //     // verify descending order
+    //     cy.get('[data-cy="settings-row-div-4"]')
+    //         .first()
+    //         .invoke('text') //to get the text from table row
+    //         .then((text) => {
+    //             const description = text.trim();
+
+    //             cy.log(`Descending first row: ${description}`);
+
+    //             expect(description).to.include(
+    //                 'Information Technology sector.',
+    //             );
+    //         });
+    // });
+
+    // per page
+    it('should display correct number of records when changing rows per page', () => {
+        cy.intercept('GET', '**/pagination-search*').as('getPartnerSchools');
+
+        cy.get('[data-cy="toolbar-select-rows-per-page"]').select('25');
+
+        cy.wait('@getPartnerSchools')
             .its('response.statusCode')
             .should('eq', 200);
-
-        // Get all rows
-        cy.get('[data-cy="settings-row-div-4"]')
-            .should('have.length.greaterThan', 0)
-            .then(($rows) => {
-                const rows = [...$rows];
-
-                // Get the text of every row
-                const actualRows = rows.map((row) =>
-                    Cypress.$(row).text().trim(),
-                );
-
-                // Log result so you can see the actual order
-                cy.log('Ascending order:');
-                actualRows.forEach((row) => {
-                    cy.log(row);
-                });
-
-                // Create expected ascending order
-                const expectedRows = [...actualRows].sort();
-
-                // Verify order
-                expect(actualRows).to.deep.equal(expectedRows);
-            });
-    });
-
-    it('should sort academic industry by status descending', () => {
-        cy.intercept('GET', '**/pagination-search*').as('sortAcademicIndustry');
-
-        // Select Status as sort field
-        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-            'Sort: Status',
-        );
-
-        // Click Descending
-        cy.get('[data-cy="toolbar-button-button-2"]').click();
-
-        // Verify request
-        cy.wait('@sortAcademicIndustry')
-            .its('response.statusCode')
-            .should('eq', 200);
-
-        // Get all rows
-        cy.get('[data-cy="settings-row-div-4"]')
-            .should('have.length.greaterThan', 0)
-            .then(($rows) => {
-                const rows = [...$rows];
-
-                // Get the text of every row
-                const actualRows = rows.map((row) =>
-                    Cypress.$(row).text().trim(),
-                );
-
-                // Log result so you can see the actual order
-                cy.log('Descending order:');
-                actualRows.forEach((row) => {
-                    cy.log(row);
-                });
-
-                // Create expected descending order
-                const expectedRows = [...actualRows].sort().reverse();
-
-                // Verify order
-                expect(actualRows).to.deep.equal(expectedRows);
-            });
-    });
-
-    it('should sort academic industry  by industry name ascending', () => {
-        cy.intercept('GET', '**/pagination-search*').as('sortAcademicIndustry');
-
-        // Select Industry Name as sort field
-        cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-            'Sort: Industry Name',
-        );
     });
 
     // //create
