@@ -6,10 +6,12 @@ import _stat_card from './stat-card.bones.json'
 import _dashboard_widget from './dashboard-widget.bones.json'
 import _trainee_growth_chart from './trainee-growth-chart.bones.json'
 import _table_rows from './table-rows.bones.json'
+import _biometrics_table from './biometrics-table.bones.json'
 
 registerBones({
   "stat-card": _stat_card,
   "dashboard-widget": _dashboard_widget,
   "trainee-growth-chart": _trainee_growth_chart,
   "table-rows": _table_rows,
+  "biometrics-table": _biometrics_table,
 })

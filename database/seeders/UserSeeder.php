@@ -18,6 +18,10 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $this->makeUser('developer@frontlinebusiness.com.ph', 'Dev', 'Eloper', 'developer');
+        // Automation-only account: the boneyard-js pre-commit hook logs in as
+        // this user to get an authenticated session cookie for crawling
+        // auth-gated pages (see .husky/pre-commit). Not a real person.
+        $this->makeUser('boneyard@frontlinebusiness.com.ph', 'Boneyard', 'Automation', 'developer');
         $this->makeUser('contact@frontlinebusiness.com.ph', 'Admin', 'Frontline', 'admin');
         // $this->makeUser('emmanuel.manalo@frontlinebusiness.com.ph', 'Emmanuel', 'Manalo', 'trainer');
         $this->makeUser('vincent.ramirez@frontlinebusiness.com.ph', 'Vincent', 'Ramirez', 'trainer');

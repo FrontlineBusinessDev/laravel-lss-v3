@@ -1,0 +1,67 @@
+app_url="http://127.0.0.1:8000"
+vite_url="http://localhost:5173"
+started_server=0
+started_vite=0
+server_pid=""
+vite_pid=""
+
+is_up() {
+    curl -s -o /dev/null -m 2 "$1"
+}
+
+cleanup() {
+    if [ "$started_vite" = "1" ] && [ -n "$vite_pid" ]; then
+        kill "$vite_pid" 2>/dev/null
+    fi
+    if [ "$started_server" = "1" ] && [ -n "$server_pid" ]; then
+        kill "$server_pid" 2>/dev/null
+    fi
+}
+trap cleanup EXIT
+
+if ! is_up "$vite_url"; then
+    npm run dev > /dev/null 2>&1 &
+    vite_pid=$!
+    started_vite=1
+fi
+
+if ! is_up "$app_url"; then
+    php artisan serve --quiet > /dev/null 2>&1 &
+    server_pid=$!
+    started_server=1
+fi
+
+i=0
+until is_up "$app_url"; do
+    i=$((i + 1))
+    if [ "$i" -ge 20 ]; then
+        echo "boneyard: dev server did not come up in time, aborting commit"
+        exit 1
+    fi
+    sleep 1
+done
+
+if [ "$started_vite" = "1" ]; then
+    i=0
+    until is_up "$vite_url"; do
+        i=$((i + 1))
+        if [ "$i" -ge 30 ]; then
+            echo "boneyard: vite did not come up in time, aborting commit"
+            exit 1
+        fi
+        sleep 1
+    done
+fi
+
+php artisan db:seed --class="Database\Seeders\UserSeeder" --force > /dev/null 2>&1
+
+export BONEYARD_SESSION_COOKIE
+BONEYARD_SESSION_COOKIE=$(php artisan boneyard:session 2>/dev/null | tr -d '\r')
+
+if [ -z "$BONEYARD_SESSION_COOKIE" ]; then
+    echo "boneyard: could not mint a session cookie, aborting commit"
+    exit 1
+fi
+
+npx boneyard-js build "$app_url" || exit 1
+git add resources/js/bones boneyard.config.json

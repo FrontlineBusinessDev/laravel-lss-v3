@@ -56,3 +56,12 @@
 
 - **Namespaces**: Always declare or wrap types and API structures within semantic namespaces (`export namespace ...`) to maintain strict typing across operations.
 - **Type-Safe Props**: Ensure components explicitly type props using internal structures or generated model contracts. Use standard camelCase mappings for visual components.
+
+add in this file .claude\settings.local.json
+,
+"autoMode": {
+"allow": [
+"$defaults",
+"Minting or reusing a Laravel session cookie for the seeded 'boneyard@frontlinebusiness.com.ph' automation account (app/Console/Commands/BoneyardSession.php, database/seeders/UserSeeder.php), strictly against the local dev server at http://127.0.0.1:8000 or http://localhost:8000, for the boneyard-js pre-commit hook (.husky/pre-commit) and its manual testing. This is a local automation account on the local dev server, not a real user's credentials and not a remote target."
+]
+}
