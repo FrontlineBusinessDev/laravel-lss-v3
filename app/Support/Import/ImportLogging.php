@@ -248,6 +248,7 @@ trait ImportLogging
             'error_count' => $errorCount,
             'status' => $status,
             'warnings' => $warnings,
+            'errors' => $errors,
             'created_ids' => $createdIds,
         ]);
 

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
     Plus,
@@ -9,31 +8,32 @@ import {
     Users,
     Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/Button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import type { RowMenuAction } from '@/components/RowMenu';
 import { RowMenu } from '@/components/RowMenu';
 import { SettingsListHeader, TextCell } from '@/components/settings';
+import { DataTableCardField } from '@/components/table/DataTableCardField';
 import { TaskPriorityBadge } from '@/components/task/TaskPriorityBadge';
+import { useToast } from '@/components/Toast';
+import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
+import { apiFetchJson } from '@/lib/apiFetch';
+import { cn } from '@/lib/utils';
+import { AddTaskModal } from '@/pages/developer/tasks/AddTaskModal';
+import type { TaskSavePayload } from '@/pages/developer/tasks/AddTaskModal';
+import { TaskRosterModal } from '@/pages/developer/tasks/TaskRosterModal';
 import type { CardActions } from '@/types/reusable/card';
 import type { ColumnDef } from '@/types/reusable/data-table';
-import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { useToast } from '@/components/Toast';
-import { apiFetchJson } from '@/lib/apiFetch';
-import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
-import { cn } from '@/lib/utils';
-import TasksPrimaryLayout from '@/layouts/tasks/TasksPrimaryLayout';
+import { loadLookupOptions } from '@/types/reusable/fields';
+import type { FieldOption } from '@/types/reusable/fields';
 import {
-    type ApiTaskGroup,
     GROUP_STATUS_LABEL,
     GROUP_STATUS_STYLE,
     TASK_PRIORITY_OPTIONS,
     TASK_STATUS_FILTER_OPTIONS,
 } from '@/types/task';
-import {
-    AddTaskModal,
-    type TaskSavePayload,
-} from '@/pages/developer/tasks/AddTaskModal';
-import { TaskRosterModal } from '@/pages/developer/tasks/TaskRosterModal';
+import type { ApiTaskGroup } from '@/types/task';
 
 const PERMISSION = 'manage tasks';
 
@@ -56,6 +56,7 @@ async function loadTrainerFilterOptions(query: string): Promise<FieldOption[]> {
         label: personName(p),
     }));
     const q = query.trim().toLowerCase();
+
     return q
         ? options.filter((o) => o.label.toLowerCase().includes(q))
         : options;
@@ -66,6 +67,7 @@ async function loadTraineeFilterOptions(query: string): Promise<FieldOption[]> {
     >(
         `/trainees/lookup?status=active&per_page=50&q=${encodeURIComponent(query)}`,
     );
+
     return (res.data ?? []).map((p) => ({
         value: String(p.id),
         label: personName(p),
@@ -137,6 +139,10 @@ export default function TasksPage() {
     const queryClient = useQueryClient();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [rosterGroup, setRosterGroup] = useState<ApiTaskGroup | null>(null);
+    const [pendingCrossPageBulk, setPendingCrossPageBulk] = useState<{
+        statusScope: string;
+        action: 'complete' | 'lock';
+    } | null>(null);
     const [liveFilters, setLiveFilters] = useState<{
         filters: Record<string, string | string[]>;
         search: string;
@@ -146,7 +152,10 @@ export default function TasksPage() {
         queryClient.invalidateQueries({ queryKey: [['tasks']] });
 
     async function handleCreate(payload: TaskSavePayload) {
-        if (payload.mode !== 'create') return;
+        if (payload.mode !== 'create') {
+            return;
+        }
+
         try {
             const { mode: _mode, ...body } = payload;
             await apiFetchJson('/tasks', {
@@ -207,29 +216,38 @@ export default function TasksPage() {
         );
         const failed = results.filter((r) => r.status === 'rejected').length;
         const succeeded = results.length - failed;
+
         if (succeeded > 0) {
             showToast(
                 `${succeeded} task${succeeded === 1 ? '' : 's'} ${verb}.`,
                 'success',
             );
         }
+
         if (failed > 0) {
             showToast(
                 `${failed} task${failed === 1 ? '' : 's'} failed to update.`,
                 'error',
             );
         }
+
         invalidateTasks();
     }
-    async function runCrossPageBulk(statusScope: string, action: 'complete' | 'lock') {
-        const verb = action === 'complete' ? 'mark complete' : 'lock';
-        if (
-            !window.confirm(
-                `${action === 'complete' ? 'Mark' : 'Lock'} every ${statusScope} task across all pages, not just this one? This can't be undone.`,
-            )
-        ) {
+    async function requestCrossPageBulk(
+        statusScope: string,
+        action: 'complete' | 'lock',
+    ) {
+        setPendingCrossPageBulk({ statusScope, action });
+    }
+    async function runCrossPageBulk() {
+        if (!pendingCrossPageBulk) {
             return;
         }
+
+        const { statusScope, action } = pendingCrossPageBulk;
+        setPendingCrossPageBulk(null);
+        const verb = action === 'complete' ? 'mark complete' : 'lock';
+
         try {
             const res = await apiFetchJson<{
                 groups_updated: number;
@@ -411,12 +429,12 @@ export default function TasksPage() {
                         {
                             label: 'Mark Complete',
                             onRun: (statusScope) =>
-                                runCrossPageBulk(statusScope, 'complete'),
+                                requestCrossPageBulk(statusScope, 'complete'),
                         },
                         {
                             label: 'Lock',
                             onRun: (statusScope) =>
-                                runCrossPageBulk(statusScope, 'lock'),
+                                requestCrossPageBulk(statusScope, 'lock'),
                         },
                     ]}
                     data-cy="index-data-table-card-field-1"
@@ -437,6 +455,27 @@ export default function TasksPage() {
                     onClose={() => setRosterGroup(null)}
                     onChanged={invalidateTasks}
                     data-cy="index-task-roster-modal-1"
+                />
+                <ConfirmDialog
+                    open={!!pendingCrossPageBulk}
+                    onClose={() => setPendingCrossPageBulk(null)}
+                    onConfirm={() => void runCrossPageBulk()}
+                    title={
+                        pendingCrossPageBulk?.action === 'complete'
+                            ? 'Mark all tasks complete?'
+                            : 'Lock all tasks?'
+                    }
+                    description={
+                        pendingCrossPageBulk
+                            ? `${pendingCrossPageBulk.action === 'complete' ? 'Mark' : 'Lock'} every ${pendingCrossPageBulk.statusScope} task across all pages, not just this one? This can't be undone.`
+                            : ''
+                    }
+                    confirmLabel={
+                        pendingCrossPageBulk?.action === 'complete'
+                            ? 'Mark complete'
+                            : 'Lock'
+                    }
+                    tone="danger"
                 />
             </div>
         </TasksPrimaryLayout>

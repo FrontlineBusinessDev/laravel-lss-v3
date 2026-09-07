@@ -18,6 +18,7 @@ class SettingsImportLog extends Model
         'error_count',
         'status',
         'warnings',
+        'errors',
         'created_ids',
         'rolled_back_at',
         'rolled_back_by_id',
@@ -25,6 +26,7 @@ class SettingsImportLog extends Model
 
     protected $casts = [
         'warnings' => 'array',
+        'errors' => 'array',
         'created_ids' => 'array',
         'rolled_back_at' => 'datetime',
     ];

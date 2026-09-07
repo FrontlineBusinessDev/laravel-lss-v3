@@ -21,4 +21,9 @@ class ImportController extends Controller implements HasMiddleware
     {
         return InertiaPageResponse::csr('developer/settings/import/index');
     }
+
+    public function logs()
+    {
+        return InertiaPageResponse::csr('developer/settings/import/logs/index');
+    }
 }

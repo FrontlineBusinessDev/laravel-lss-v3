@@ -1,18 +1,24 @@
-import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Archive, ClipboardList, Lock, ListChecks, Star, Trash2 } from 'lucide-react';
 import {
-    evaluationOverviewService,
-} from '@/api-service-layer/admin/evaluation';
+    Archive,
+    ClipboardList,
+    Lock,
+    ListChecks,
+    Star,
+    Trash2,
+} from 'lucide-react';
+import { useState } from 'react';
+import { evaluationOverviewService } from '@/api-service-layer/admin/evaluation';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { StatCard } from '@/components/StatCard';
 import type { ColumnDef } from '@/components/table';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { StatCard } from '@/components/StatCard';
 import { useToast } from '@/components/Toast';
-import { formatDate } from '@/lib/date';
 import EvaluationPrimaryLayout from '@/layouts/evaluation/EvaluationPrimaryLayout';
+import { formatDate } from '@/lib/date';
 import type { EvaluationRecordRow } from '@/types/modules/evaluation/evaluation';
-import { EvaluationRemindersPanel } from './EvaluationRemindersPanel';
 import { EvaluationProgressCards } from './EvaluationProgressCards';
+import { EvaluationRemindersPanel } from './EvaluationRemindersPanel';
 
 function BarList({
     rows,
@@ -41,6 +47,7 @@ function BarList({
         <div className="flex flex-col gap-2.5">
             {rows.map((row, i) => {
                 const value = Number(row[valueKey] ?? 0);
+
                 return (
                     <div key={i} className="flex items-center gap-3">
                         <span className="w-28 shrink-0 truncate text-xs text-neutral-600">
@@ -111,12 +118,15 @@ function RecordsTable() {
     const { showToast } = useToast();
     const queryClient = useQueryClient();
     const [busyId, setBusyId] = useState<number | null>(null);
+    const [deleteTarget, setDeleteTarget] =
+        useState<EvaluationRecordRow | null>(null);
 
     const invalidate = () =>
         queryClient.invalidateQueries({ queryKey: ['evaluation-records'] });
 
     async function archive(row: EvaluationRecordRow) {
         setBusyId(row.id);
+
         try {
             await evaluationOverviewService.archiveRecord(row.type, row.id);
             showToast('Record archived.', 'success');
@@ -131,11 +141,15 @@ function RecordsTable() {
         }
     }
 
-    async function remove(row: EvaluationRecordRow) {
-        if (!window.confirm('Delete this evaluation submission? This cannot be undone.')) {
+    async function confirmDelete() {
+        if (!deleteTarget) {
             return;
         }
+
+        const row = deleteTarget;
+        setDeleteTarget(null);
         setBusyId(row.id);
+
         try {
             await evaluationOverviewService.deleteRecord(row.type, row.id);
             showToast('Record deleted.', 'success');
@@ -151,65 +165,81 @@ function RecordsTable() {
     }
 
     return (
-        <DataTableCardField<EvaluationRecordRow>
-            apiUrl="/evaluation/overview/records"
-            apiQueryKey="evaluation-records"
-            columns={recordColumns}
-            title="Evaluation records"
-            description="Search, filter, archive, or delete individual evaluation submissions"
-            defaultSortBy="submitted_at"
-            defaultSortDir="desc"
-            enableEdit={false}
-            enableCreate={false}
-            renderCard={(row) => (
-                <div className="grid grid-cols-[1.6fr_2.2fr_1.2fr_0.9fr_2.5rem] items-center gap-3 px-4 py-3">
-                    <span className="truncate text-sm font-medium text-ink">
-                        {row.respondent}
-                    </span>
-                    <span className="truncate text-sm text-neutral-600">
-                        {row.evaluated}
-                        <span className="ml-1.5 rounded-pill bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 uppercase">
-                            {row.scope_label}
-                        </span>{' '}
-                        {row.scope_detail}
-                    </span>
-                    <span className="text-sm text-neutral-600">
-                        {row.score != null ? `${Number(row.score).toFixed(1)} ★` : '—'}
-                    </span>
-                    <span className="text-xs text-neutral-500">
-                        {formatDate(row.submitted_at)}
-                    </span>
-                    <div className="flex items-center justify-end gap-1">
-                        {row.locked ? (
-                            <span title="Backs an issued certificate — cannot be modified">
-                                <Lock size={14} className="text-neutral-400" />
-                            </span>
-                        ) : (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={() => archive(row)}
-                                    disabled={busyId === row.id}
-                                    title="Archive"
-                                    className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100"
-                                >
-                                    <Archive size={15} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => remove(row)}
-                                    disabled={busyId === row.id}
-                                    title="Delete"
-                                    className="rounded-md p-1.5 text-danger-600 transition-colors hover:bg-danger-50"
-                                >
-                                    <Trash2 size={15} />
-                                </button>
-                            </>
-                        )}
+        <>
+            <DataTableCardField<EvaluationRecordRow>
+                apiUrl="/evaluation/overview/records"
+                apiQueryKey="evaluation-records"
+                columns={recordColumns}
+                title="Evaluation records"
+                description="Search, filter, archive, or delete individual evaluation submissions"
+                defaultSortBy="submitted_at"
+                defaultSortDir="desc"
+                enableEdit={false}
+                enableCreate={false}
+                renderCard={(row) => (
+                    <div className="grid grid-cols-[1.6fr_2.2fr_1.2fr_0.9fr_2.5rem] items-center gap-3 px-4 py-3">
+                        <span className="truncate text-sm font-medium text-ink">
+                            {row.respondent}
+                        </span>
+                        <span className="truncate text-sm text-neutral-600">
+                            {row.evaluated}
+                            <span className="ml-1.5 rounded-pill bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500 uppercase">
+                                {row.scope_label}
+                            </span>{' '}
+                            {row.scope_detail}
+                        </span>
+                        <span className="text-sm text-neutral-600">
+                            {row.score != null
+                                ? `${Number(row.score).toFixed(1)} ★`
+                                : '—'}
+                        </span>
+                        <span className="text-xs text-neutral-500">
+                            {formatDate(row.submitted_at)}
+                        </span>
+                        <div className="flex items-center justify-end gap-1">
+                            {row.locked ? (
+                                <span title="Backs an issued certificate — cannot be modified">
+                                    <Lock
+                                        size={14}
+                                        className="text-neutral-400"
+                                    />
+                                </span>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => archive(row)}
+                                        disabled={busyId === row.id}
+                                        title="Archive"
+                                        className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100"
+                                    >
+                                        <Archive size={15} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDeleteTarget(row)}
+                                        disabled={busyId === row.id}
+                                        title="Delete"
+                                        className="rounded-md p-1.5 text-danger-600 transition-colors hover:bg-danger-50"
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        />
+                )}
+            />
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={() => void confirmDelete()}
+                title="Delete this evaluation submission?"
+                description="This cannot be undone."
+                confirmLabel="Delete"
+                tone="danger"
+            />
+        </>
     );
 }
 
@@ -230,7 +260,10 @@ export default function EvaluationOverviewPage() {
               count: data.rating_distribution[star] ?? 0,
           }))
         : [];
-    const totalDistribution = distributionRows.reduce((sum, r) => sum + r.count, 0);
+    const totalDistribution = distributionRows.reduce(
+        (sum, r) => sum + r.count,
+        0,
+    );
 
     return (
         <EvaluationPrimaryLayout>
@@ -286,11 +319,16 @@ export default function EvaluationOverviewPage() {
                             Rating distribution
                         </h3>
                         <p className="mb-3 text-xs text-neutral-500">
-                            {totalDistribution} evaluation responses across all categories
+                            {totalDistribution} evaluation responses across all
+                            categories
                         </p>
                         <div className="flex items-end justify-between gap-2">
                             {distributionRows.map((row) => {
-                                const max = Math.max(1, ...distributionRows.map((r) => r.count));
+                                const max = Math.max(
+                                    1,
+                                    ...distributionRows.map((r) => r.count),
+                                );
+
                                 return (
                                     <div
                                         key={row.star}

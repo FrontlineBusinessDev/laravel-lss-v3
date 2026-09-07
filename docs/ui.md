@@ -10,8 +10,6 @@ Card
 
 Modal
 
-Dialog
-
 Badge
 
 Avatar

@@ -27,6 +27,7 @@ export interface SettingsImportLogEntry extends Record<string, unknown> {
     rolled_back_at: string | null;
     rolled_back_by: SettingsImportLogUser | null;
     created_at: string;
+    errors: string[];
 }
 
 export interface SettingsImportResult {
@@ -56,5 +57,7 @@ export const settingsImportService = {
         ),
 
     rollback: async (logId: number): Promise<SettingsImportRollbackResult> =>
-        unwrap<SettingsImportRollbackResult>(await http.post(`/settings/import/logs/${logId}/rollback`)),
+        unwrap<SettingsImportRollbackResult>(
+            await http.post(`/settings/import/logs/${logId}/rollback`),
+        ),
 };

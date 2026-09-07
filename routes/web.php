@@ -451,6 +451,7 @@ Route::middleware('auth')->group(function () {
     // product decision). See app/Http/Controllers/v1/Developer/Settings/Import/*.
     Route::middleware('role:admin|developer')->prefix('settings/import')->name('settings.import.')->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');
+        Route::get('/logs', [ImportController::class, 'logs'])->name('logs');
         Route::post('/academic/{type}', [AcademicImportController::class, 'import'])->name('academic');
         Route::post('/partner-schools', [PartnerSchoolImportController::class, 'import'])->name('partner-schools');
         Route::post('/batches', [BatchImportController::class, 'import'])->name('batches');

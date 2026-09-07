@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FolderPlus, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { behavioralQuestionsService } from '@/api-service-layer/admin/behavioral-ratings';
 import { Button } from '@/components/Button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import type { BehavioralQuestion } from '@/types/modules/ratings/behavioral';
@@ -28,6 +29,9 @@ export function BehavioralAssessmentSetup() {
     const [editRow, setEditRow] = useState<BehavioralQuestion | null>(null);
     const [questionModalOpen, setQuestionModalOpen] = useState(false);
     const [busyId, setBusyId] = useState<number | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<BehavioralQuestion | null>(
+        null,
+    );
 
     const sectionsQuery = useQuery<string[]>({
         queryKey: ['behavioral-question-sections'],
@@ -44,7 +48,12 @@ export function BehavioralAssessmentSetup() {
     }, [pills.length]);
 
     const questionsQuery = useQuery<BehavioralQuestion[]>({
-        queryKey: ['behavioral-questions-for-section', selected, search, status],
+        queryKey: [
+            'behavioral-questions-for-section',
+            selected,
+            search,
+            status,
+        ],
         queryFn: () =>
             behavioralQuestionsService.forSection({
                 section: String(selected),
@@ -54,7 +63,9 @@ export function BehavioralAssessmentSetup() {
         enabled: selected !== null,
     });
 
-    const [localQuestions, setLocalQuestions] = useState<BehavioralQuestion[]>([]);
+    const [localQuestions, setLocalQuestions] = useState<BehavioralQuestion[]>(
+        [],
+    );
     const [dragId, setDragId] = useState<number | null>(null);
 
     useEffect(() => {
@@ -68,18 +79,26 @@ export function BehavioralAssessmentSetup() {
     const canReorder = selected !== null && search === '' && status === '';
 
     function invalidateQuestions() {
-        queryClient.invalidateQueries({ queryKey: ['behavioral-questions-for-section'] });
-        queryClient.invalidateQueries({ queryKey: ['behavioral-question-sections'] });
+        queryClient.invalidateQueries({
+            queryKey: ['behavioral-questions-for-section'],
+        });
+        queryClient.invalidateQueries({
+            queryKey: ['behavioral-question-sections'],
+        });
     }
 
     async function archive(q: BehavioralQuestion) {
         setBusyId(q.id);
+
         try {
             await behavioralQuestionsService.archive(q.id);
             showToast('Question archived.', 'success');
             invalidateQuestions();
         } catch (error) {
-            showToast(error instanceof Error ? error.message : 'Failed to archive.', 'error');
+            showToast(
+                error instanceof Error ? error.message : 'Failed to archive.',
+                'error',
+            );
         } finally {
             setBusyId(null);
         }
@@ -87,26 +106,39 @@ export function BehavioralAssessmentSetup() {
 
     async function restore(q: BehavioralQuestion) {
         setBusyId(q.id);
+
         try {
             await behavioralQuestionsService.restore(q.id);
             showToast('Question restored.', 'success');
             invalidateQuestions();
         } catch (error) {
-            showToast(error instanceof Error ? error.message : 'Failed to restore.', 'error');
+            showToast(
+                error instanceof Error ? error.message : 'Failed to restore.',
+                'error',
+            );
         } finally {
             setBusyId(null);
         }
     }
 
-    async function remove(q: BehavioralQuestion) {
-        if (!window.confirm('Delete this question? This cannot be undone.')) return;
+    async function confirmDelete() {
+        if (!deleteTarget) {
+            return;
+        }
+
+        const q = deleteTarget;
+        setDeleteTarget(null);
         setBusyId(q.id);
+
         try {
             await behavioralQuestionsService.delete(q.id);
             showToast('Question deleted.', 'success');
             invalidateQuestions();
         } catch (error) {
-            showToast(error instanceof Error ? error.message : 'Failed to delete.', 'error');
+            showToast(
+                error instanceof Error ? error.message : 'Failed to delete.',
+                'error',
+            );
         } finally {
             setBusyId(null);
         }
@@ -115,13 +147,18 @@ export function BehavioralAssessmentSetup() {
     function handleDrop(targetId: number) {
         if (dragId === null || dragId === targetId) {
             setDragId(null);
+
             return;
         }
+
         const next = [...localQuestions];
         const fromIdx = next.findIndex((q) => q.id === dragId);
         const toIdx = next.findIndex((q) => q.id === targetId);
         setDragId(null);
-        if (fromIdx === -1 || toIdx === -1) return;
+
+        if (fromIdx === -1 || toIdx === -1) {
+            return;
+        }
 
         const [moved] = next.splice(fromIdx, 1);
         next.splice(toIdx, 0, moved);
@@ -229,11 +266,13 @@ export function BehavioralAssessmentSetup() {
                 </div>
             )}
 
-            {selected !== null && questions.length === 0 && !questionsQuery.isLoading && (
-                <div className="rounded-md border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-500">
-                    No questions yet in this section.
-                </div>
-            )}
+            {selected !== null &&
+                questions.length === 0 &&
+                !questionsQuery.isLoading && (
+                    <div className="rounded-md border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-500">
+                        No questions yet in this section.
+                    </div>
+                )}
 
             {selected !== null && questions.length > 0 && (
                 <div className="flex flex-col divide-y divide-neutral-100 rounded-lg border border-neutral-200 bg-white">
@@ -250,7 +289,7 @@ export function BehavioralAssessmentSetup() {
                             }}
                             onArchive={() => archive(q)}
                             onRestore={() => restore(q)}
-                            onDelete={() => remove(q)}
+                            onDelete={() => setDeleteTarget(q)}
                             onDragStart={() => setDragId(q.id)}
                             onDragOver={(e) => e.preventDefault()}
                             onDrop={() => handleDrop(q.id)}
@@ -296,6 +335,16 @@ export function BehavioralAssessmentSetup() {
                     </Button>
                 </div>
             </Modal>
+
+            <ConfirmDialog
+                open={!!deleteTarget}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={() => void confirmDelete()}
+                title="Delete this question?"
+                description="This cannot be undone."
+                confirmLabel="Delete"
+                tone="danger"
+            />
         </div>
     );
 }
