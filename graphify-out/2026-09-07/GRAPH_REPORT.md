@@ -1,12 +1,12 @@
 # Graph Report - laravel-lss-v3  (2026-09-07)
 
 ## Corpus Check
-- 950 files · ~1,201,996 words
+- 978 files · ~1,209,526 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5139 nodes · 12311 edges · 389 communities (177 shown, 88 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 61 edges (avg confidence: 0.85)
+- 5164 nodes · 12368 edges · 402 communities (182 shown, 97 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 62 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -15,39 +15,39 @@
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- Illuminate\Database\Eloquent\Model
-- certificates/types.ts
+- Illuminate\Database\Eloquent\Relations\BelongsTo
+- Illuminate\Database\Eloquent\Relations\HasMany
 - Illuminate\Http\JsonResponse
 - my-info/index.tsx
 - UserController
-- date.ts
+- annual/index.tsx
 - tableListInvalidateKeys
-- Trainees
+- Batches
 - Illuminate\Database\Seeder
-- ImportLogsPanel.tsx
-- Modal.tsx
-- Illuminate\Http\Request
+- import-logs.tsx
+- seminars/index.tsx
+- Illuminate\Database\Eloquent\Model
 - useToast
-- Controller
+- Inertia\Response
 - data-table.ts
 - InertiaPageType
 - fields.ts
 - admin/evaluation.ts
-- developer/batches/show/trainees.tsx
+- BatchDetailLayout.tsx
 - developer/dashboard/index.tsx
 - web.php
-- form-modal/index.ts
-- trainee/leave/index.tsx
-- OgImage
+- FieldDef
+- trainer/leave/index.tsx
+- seminarUtils.ts
 - cn
 - AppServiceProvider
 - Button.tsx
-- ColumnDef
+- payment-methods/index.tsx
 - developer/tasks/index.tsx
 - Illuminate\Bus\Queueable
 - TableLoading.tsx
 - scheduleUtils.ts
-- BaseController
+- Illuminate\Database\Eloquent\Builder
 - DataTableCardField.tsx
 - LeaveRequest
 - useNavigate
@@ -55,17 +55,17 @@
 - PreventInactiveLogin.php
 - system-log/index.tsx
 - CertificateTemplateBuilder.tsx
-- TraineeDocument
+- Trainees
 - ReportController
 - dependencies
-- LeaveRequestController.php
-- api-service-layer/index.ts
-- TraineesPolicy
+- BiometricRecord
+- admin/trainee.ts
+- TaskRating
 - developer/tasks/daily-task.tsx
 - devDependencies
-- roles/index.tsx
+- CreateBatchModal.tsx
 - Illuminate\Database\Eloquent\Factories\Factory
-- SkeletonLoader.tsx
+- ColumnDef
 - User
 - register/index.tsx
 - client.ts
@@ -73,9 +73,9 @@
 - use-current-url.ts
 - bootstrap/app.php
 - admin/dashboard.ts
-- TemplateCanvas.tsx
+- developer/biometrics/index.tsx
 - Code Reviewer
-- trainee-detail.tsx
+- trainer/announcements/index.tsx
 - use-mobile.tsx
 - use-modal.ts
 - Senior Architect
@@ -87,11 +87,11 @@
 - trainee-dashboard.ts
 - compilerOptions
 - BiometricsTab.tsx
-- RatingsPrimaryLayout.tsx
+- BehavioralAssessmentSetup
 - use-flash-toast.ts
 - use-initials.tsx
 - Illuminate\Database\Migrations\Migration
-- Illuminate\Support\Facades\Log
+- Illuminate\Console\Command
 - Illuminate\Database\Schema\Blueprint
 - use-mobile-navigation.ts
 - 429.tsx
@@ -99,8 +99,8 @@
 - Senior Prompt Engineer
 - developer/dashboard/ScheduleCalendarWidget.tsx
 - octane.php
-- BehavioralQuestion
-- citations/index.tsx
+- Illuminate\Database\Eloquent\Factories\HasFactory
+- certificates/trainees/index.tsx
 - Code Review Checklist
 - Coding Standards
 - Common Antipatterns
@@ -125,19 +125,19 @@
 - Agentic System Design
 - Llm Evaluation Frameworks
 - Prompt Engineering Patterns
-- TraineesPayments
-- RecordsTable
+- documents/index.tsx
+- group-discounts/index.tsx
 - LSS Admin — Project Context
-- trainee/evaluation/index.tsx
-- UserModal.tsx
-- HoursDiscountModal.tsx
+- trainer-evaluation.ts
+- createCrudResource
+- AppProviders.tsx
 - UniqueEmailAcrossIdentities
 - Clean Code - Pragmatic AI Coding Standards
 - composer.json
 - require
 - scripts
-- developer/payments/index.tsx
-- seminar/index.tsx
+- formatDateTime
+- BiometricsPrint.tsx
 - CLAUDE.md
 - CodeQualityChecker
 - PrAnalyzer
@@ -156,10 +156,10 @@
 - ProjectScaffolder
 - optionalDependencies
 - TaskRatingPage.tsx
-- certificates/trainees/index.tsx
+- LeaveRequestPolicy
 - scripts
 - require-dev
-- Illuminate\Console\Command
+- Illuminate\Support\Facades\Log
 - 30. Where to Build Your Modules
 - trainee/ratings/index.tsx
 - global-modal/index.ts
@@ -168,8 +168,8 @@
 - AgentOrchestrator
 - PromptOptimizer
 - RagEvaluator
-- TopBar.tsx
-- BatchesPolicy
+- NotificationsContext.tsx
+- UserPolicy
 - User.php
 - Permissions
 - TaskPolicy
@@ -178,14 +178,14 @@
 - setup
 - Naming Conventions
 - package.json
-- IssueCertificateModal.tsx
+- BillingService
 - ModalContext.tsx
 - TestCase
-- certificateExport.ts
+- batch/index.tsx
 - report.ts
 - CertificateCitationPolicy
-- CertificateTemplatePolicy
-- cropTemplateImageToPngDataUrl
+- AcademicLearningOutcomesPolicy
+- TemplateImageCropModal.tsx
 - PaymentMethod
 - config
 - Production Email & Cron Checklist (Coolify + Hostinger)
@@ -201,11 +201,11 @@
 - Chainable
 - Async Select — Convention
 - 2. Install PHP 8.4
-- AcademicProgramTypePolicy
-- InertiaPageResponse
+- BehavioralQuestionPolicy
+- Illuminate\Http\Request
 - QrCode
 - EvaluationSeminarQuestionPolicy
-- HoursDiscountPolicy
+- PartnerSchoolsPolicy
 - is_server_ready
 - post-create-project-cmd
 - DatabaseSeeder
@@ -218,7 +218,7 @@
 - 2026_07_17_233423_add_leave_category_id_to_app_leave_requests_table.php
 - EvaluationTrainerQuestionPolicy
 - AppServiceProvider.php
-- EarningsWidget.tsx
+- BatchViewController
 - Changelog
 - Deployment
 - Project Documentation
@@ -271,180 +271,194 @@
 - @vitejs/plugin-react
 - yup
 - 18. App Entry Point
-- GroupDiscountController
-- HoursDiscountController
+- TaskRosterModal
+- HandleInertiaRequests
 - SeminarListTab
 - AddAnnouncementModal
 - LssLoginResponse
-- TaskPriority
-- UserSeeder
-- LeaveManagementPage
-- TrainerLeavePage
+- AddTaskModal.tsx
+- Role
+- AnnouncementsCard.tsx
+- AddAnnouncementModal
+- TraineeSeeder.php
+- AcademicLearningOutcomesSeeder.php
+- AcademicLevelSeeder.php
+- AcademicProgramSeeder.php
+- BatchSeeder.php
+- CertificateTemplateSeeder.php
+- GroupDiscountSeeder.php
+- HoursDiscountSeeder.php
+- LeaveCategorySeeder.php
+- PartnerSchoolsSeeder.php
+- SeminarParticipantSeeder.php
+- SeminarSeeder.php
+- renderRow
+- BehavioralQuestionSeeder
 
 ## God Nodes (most connected - your core abstractions)
-1. `User` - 234 edges
-2. `cn()` - 178 edges
-3. `Trainees` - 175 edges
-4. `useToast()` - 157 edges
+1. `User` - 235 edges
+2. `Trainees` - 178 edges
+3. `cn()` - 178 edges
+4. `useToast()` - 155 edges
 5. `BaseController` - 115 edges
-6. `apiFetchJson()` - 81 edges
-7. `Controller` - 71 edges
-8. `Batches` - 70 edges
+6. `apiFetchJson()` - 80 edges
+7. `Batches` - 73 edges
+8. `Controller` - 71 edges
 9. `formatDate()` - 68 edges
-10. `Button` - 67 edges
+10. `Button` - 66 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `up()` --calls--> `LeaveCategory`  [EXTRACTED]
   database/migrations/2026_07_17_233423_add_leave_category_id_to_app_leave_requests_table.php → app/Models/LeaveCategory.php
-- `userWithRole()` --calls--> `User`  [EXTRACTED]
-  tests/Feature/Settings/UserRoleManagementTest.php → app/Models/User.php
+- `makeAcademicIndustryForEvaluation()` --calls--> `AcademicIndustry`  [EXTRACTED]
+  tests/Feature/Evaluation/EvaluationAccessAndCrudTest.php → app/Models/AcademicIndustry.php
 - `makeShareBatch()` --calls--> `Batches`  [EXTRACTED]
   tests/Feature/PublicRegistrationShareTest.php → app/Models/Batches.php
+- `makeBatch()` --calls--> `Batches`  [EXTRACTED]
+  tests/Pest.php → app/Models/Batches.php
 - `makeLogUser()` --calls--> `Role`  [INFERRED]
   tests/Feature/SystemLogTest.php → app/Models/Role.php
-- `makeLogUser()` --calls--> `User`  [EXTRACTED]
-  tests/Feature/SystemLogTest.php → app/Models/User.php
 
 ## Import Cycles
 - None detected.
 
-## Communities (389 total, 88 thin omitted)
+## Communities (402 total, 97 thin omitted)
 
-### Community 0 - "Illuminate\Database\Eloquent\Model"
-Cohesion: 0.03
-Nodes (30): EvaluationSeminarQuestionnaire, EvaluationTrainerQuestionnaire, EvaluationViewController, PublicCertificateController, AcademicIndustry, BehavioralEvaluation, BehavioralEvaluationAnswer, EvaluationSeminarQuestion (+22 more)
+### Community 0 - "Illuminate\Database\Eloquent\Relations\BelongsTo"
+Cohesion: 0.04
+Nodes (14): EvaluationViewController, EvaluationsController, AnnouncementRead, SeminarEvaluation, SeminarEvaluationAnswer, SettingsImportLog, TraineeCertificate, TraineeLearningOutcome (+6 more)
 
-### Community 1 - "certificates/types.ts"
-Cohesion: 0.11
-Nodes (22): AddEditCitationModalProps, NewTemplateTypeModal(), NewTemplateTypeModalProps, OPTIONS, TemplateCanvasProps, FONT_FAMILIES, INLINE_TOKEN_CHIPS, SHAPE_KINDS (+14 more)
+### Community 1 - "Illuminate\Database\Eloquent\Relations\HasMany"
+Cohesion: 0.05
+Nodes (20): AcademicIndustry, AcademicLevel, AcademicProgram, AcademicProgramType, CertificateCitation, PartnerSchools, BatchesFactory, static (+12 more)
 
 ### Community 2 - "Illuminate\Http\JsonResponse"
-Cohesion: 0.04
-Nodes (15): BatchesController, DashboardController, TaskRatingController, TasksController, RatingsController, TasksController, DashboardController, Task (+7 more)
+Cohesion: 0.05
+Nodes (10): BatchesController, DashboardController, GroupDiscountController, HoursDiscountController, TasksController, TraineesController, DashboardController, TraineeCascadeDeleter (+2 more)
 
 ### Community 3 - "my-info/index.tsx"
 Cohesion: 0.08
-Nodes (25): myInfoService, RequiredHoursCompletedPill, TaskCompletedPill, getHoursProgress(), HoursProgress, AcademicInfoTab(), FormState, LOOKUPS (+17 more)
+Nodes (24): myInfoService, RatingInput(), RatingInputProps, RequiredHoursCompletedPill, TaskCompletedPill, getHoursProgress(), HoursProgress, RatingsTab() (+16 more)
 
-### Community 4 - "UserController"
-Cohesion: 0.09
-Nodes (10): ChangePasswordController, ForgotPasswordController, UserController, PasswordResetUrl, PasswordSetupUrl, Illuminate\Auth\Events\PasswordReset, Illuminate\Auth\Passwords\PasswordBroker, Illuminate\Support\Facades\Hash (+2 more)
-
-### Community 5 - "date.ts"
-Cohesion: 0.08
-Nodes (37): ReportBatch, reportService, LogoMark(), LogoProps, StatCard(), StatCardProps, TONE_TEXT, LayoutProps (+29 more)
+### Community 5 - "annual/index.tsx"
+Cohesion: 0.16
+Nodes (15): ReportBatch, reportService, StatCard(), StatCardProps, TONE_TEXT, formatCurrency(), AnnualBatchCard, AnnualReportPrint() (+7 more)
 
 ### Community 6 - "tableListInvalidateKeys"
-Cohesion: 0.06
-Nodes (48): academicIndustryService, academicLearningOutcomesService, academicLevelService, academicProgramService, academicProgramTypeService, LeaveCategoryInput, leaveCategoryService, groupDiscountService (+40 more)
+Cohesion: 0.07
+Nodes (41): academicIndustryService, academicLearningOutcomesService, academicLevelService, academicProgramService, academicProgramTypeService, hoursDiscountService, normalizeQueryKey(), tableListInvalidateKeys() (+33 more)
 
-### Community 7 - "Trainees"
-Cohesion: 0.04
-Nodes (31): TraineeImportController, PublicRegistrationController, EvaluationsController, AcademicLevel, AcademicProgram, Batches, Holiday, PartnerSchools (+23 more)
+### Community 7 - "Batches"
+Cohesion: 0.08
+Nodes (12): ScheduleController, PublicRegistrationController, BatchViewController, ScheduleController, Batches, Holiday, BatchStatusObserver, ProjectedCompletionCalculator (+4 more)
 
 ### Community 8 - "Illuminate\Database\Seeder"
-Cohesion: 0.04
-Nodes (21): CertificateTemplateController, CertificateCitation, CertificateTemplate, AcademicIndustrySeeder, AcademicLearningOutcomesSeeder, AcademicLevelSeeder, AcademicProgramSeeder, AcademicProgramTypeSeeder (+13 more)
+Cohesion: 0.21
+Nodes (5): AcademicIndustrySeeder, AcademicProgramTypeSeeder, CertificateCitationSeeder, RateSeeder, Illuminate\Database\Seeder
 
-### Community 9 - "ImportLogsPanel.tsx"
-Cohesion: 0.11
+### Community 9 - "import-logs.tsx"
+Cohesion: 0.10
 Nodes (25): SettingsImportLogEntry, SettingsImportLogUser, SettingsImportResult, SettingsImportRollbackResult, settingsImportService, parseCsv(), AggregatedImportResult, CsvImportCard() (+17 more)
 
-### Community 10 - "Modal.tsx"
-Cohesion: 0.05
-Nodes (55): InfoNote(), SelectField(), SelectFieldProps, TextAreaField(), TextAreaFieldProps, TextField(), TextFieldProps, Modal() (+47 more)
+### Community 10 - "seminars/index.tsx"
+Cohesion: 0.09
+Nodes (22): seminarAdminAlerts, seminarEmailTemplates, seminarParticipants, seminars, TODAY, LayoutProps, NAV_LINKS, SeminarPrimaryLayout() (+14 more)
 
-### Community 11 - "Illuminate\Http\Request"
+### Community 11 - "Illuminate\Database\Eloquent\Model"
 Cohesion: 0.03
-Nodes (25): CitationController, AcademicIndustryController, AcademicLearningOutcomesController, AcademicLevelController, AcademicProgramController, AcademicProgramTypeController, LearningOutcomeImportController, PartnerSchoolsController (+17 more)
+Nodes (24): BaseController, AnnoucementController, CertificateTemplateController, CitationController, EvaluationSeminarQuestionnaire, EvaluationTrainerQuestionnaire, AcademicIndustryController, AcademicLearningOutcomesController (+16 more)
 
 ### Community 12 - "useToast"
-Cohesion: 0.06
-Nodes (60): ApiError, ChangePasswordModal(), ChangePasswordModalProps, RULES, ICON_COLOR, SystemToastProvider(), ToastContext, ToastContextValue (+52 more)
+Cohesion: 0.05
+Nodes (75): ApiError, AttachmentViewerModal(), humanSize(), Props, ViewableAttachment, ChangePasswordModal(), ChangePasswordModalProps, RULES (+67 more)
 
-### Community 13 - "Controller"
+### Community 13 - "Inertia\Response"
 Cohesion: 0.04
-Nodes (26): Controller, AccountSetupController, SeminarCertificateController, TraineeCertificateController, LeaveController, PaymentController, ScheduleController, SeminarController (+18 more)
+Nodes (21): SeminarCertificateController, TraineeCertificateController, LeaveController, PaymentController, SeminarController, SeminarEmailNotificationController, SeminarListController, SeminarParticipantsController (+13 more)
 
 ### Community 14 - "data-table.ts"
-Cohesion: 0.06
-Nodes (60): batchTraineeService, InUseEntry, PageBtnProps, PageNumbersProps, PaginationBar(), PaginationBarProps, buildInitialValues(), collectErrors() (+52 more)
+Cohesion: 0.08
+Nodes (42): InUseEntry, PageBtnProps, PageNumbersProps, PaginationBar(), PaginationBarProps, ViewToggle(), ViewToggleProps, TableQueryParams (+34 more)
 
 ### Community 16 - "fields.ts"
-Cohesion: 0.05
-Nodes (51): CardFilterPanelProps, DEFAULT_TABS, StatusFilter(), StatusFilterProps, StatusFilterTab, StatusScope, AsyncMultiSelectField(), AsyncMultiSelectFieldProps (+43 more)
+Cohesion: 0.08
+Nodes (29): AsyncMultiSelectField(), AsyncMultiSelectFieldProps, AsyncSelectField(), valuesEqual(), emptyFileFieldValue, FileUploadField(), FileUploadFieldProps, formatBytes() (+21 more)
 
 ### Community 17 - "admin/evaluation.ts"
-Cohesion: 0.10
-Nodes (30): evaluationAccessOverrideService, evaluationQuestionCategoriesService, EvaluationQuestionInput, evaluationSeminarQuestionsService, evaluationTrainerQuestionsService, seminarCrud, trainerCrud, EvaluationQuestionModal() (+22 more)
+Cohesion: 0.07
+Nodes (36): evaluationAccessOverrideService, evaluationOverviewService, evaluationQuestionCategoriesService, EvaluationQuestionInput, evaluationSeminarQuestionsService, evaluationTrainerQuestionsService, seminarCrud, trainerCrud (+28 more)
 
-### Community 18 - "developer/batches/show/trainees.tsx"
-Cohesion: 0.08
-Nodes (25): RowMenu(), RowMenuAction, RowMenuActionConfig, Props, Props, Props, BatchTraineesPage(), Props (+17 more)
+### Community 18 - "BatchDetailLayout.tsx"
+Cohesion: 0.10
+Nodes (21): ConfirmDeleteModal(), ConfirmDeleteModalProps, useBatchLinkActions(), BatchDetailLayout(), Confirm, STATUS_BADGE, copyText(), legacyCopy() (+13 more)
 
 ### Community 19 - "developer/dashboard/index.tsx"
-Cohesion: 0.16
-Nodes (11): DonutChart(), Segment, Props, YearlyTraineesChart(), DashboardPage(), formatToday(), MetricsRow(), PendingRegistrationsWidget() (+3 more)
+Cohesion: 0.14
+Nodes (14): adminDashboardService, DonutChart(), Segment, EarningsCard(), formatPHP(), Props, YearlyTraineesChart(), useLocalStorage() (+6 more)
 
 ### Community 20 - "web.php"
-Cohesion: 0.05
-Nodes (18): AcademicController, AcademicImportController, BatchImportController, BehavioralEvaluationImportController, CitationImportController, PartnerSchoolImportController, PaymentImportController, TaskImportController (+10 more)
+Cohesion: 0.04
+Nodes (33): Controller, AccountSetupController, ChangePasswordController, ForgotPasswordController, AcademicController, AcademicImportController, BatchImportController, BehavioralEvaluationImportController (+25 more)
 
-### Community 21 - "form-modal/index.ts"
+### Community 21 - "FieldDef"
 Cohesion: 0.12
-Nodes (29): baseFor(), buildYupSchema(), withCustom(), withRequired(), buildInitialValues(), buildPayload(), mapApiErrorsToFormik(), seedFieldValue() (+21 more)
+Nodes (32): assignableRoles(), baseFor(), buildYupSchema(), withCustom(), withRequired(), buildInitialValues(), buildPayload(), mapApiErrorsToFormik() (+24 more)
 
-### Community 22 - "trainee/leave/index.tsx"
+### Community 22 - "trainer/leave/index.tsx"
+Cohesion: 0.09
+Nodes (20): leaveRequestService, LeaveManagementPage(), STATUS_BADGE, LEAVE_STATUS_LABEL, LEAVE_STATUS_STYLE, leaveDayCount(), LeaveDetailsModal(), LeaveDetailsModalProps (+12 more)
+
+### Community 23 - "seminarUtils.ts"
 Cohesion: 0.10
-Nodes (23): LeaveCategoryOption, LeaveRequestInput, leaveRequestService, STATUS_BADGE, LEAVE_STATUS_LABEL, LEAVE_STATUS_STYLE, leaveDayCount(), LeaveDetailsModal() (+15 more)
+Nodes (18): formatDateShort(), Props, ParticipantDetailModal(), Props, ParticipantsTab(), Props, Props, formatDate() (+10 more)
 
 ### Community 24 - "cn"
-Cohesion: 0.05
-Nodes (46): Avatar(), AvatarProps, AvatarSize, deriveInitials(), SIZE_CLASSES, ConfirmDialog(), ConfirmDialogProps, Dropdown() (+38 more)
+Cohesion: 0.06
+Nodes (36): ConfirmDialog(), ConfirmDialogProps, Dropdown(), DropdownOption, DropdownProps, toOption(), MultiSelectDropdown(), MultiSelectProps (+28 more)
 
 ### Community 25 - "AppServiceProvider"
 Cohesion: 0.14
 Nodes (7): ActivityLogServiceProvider, AppServiceProvider, EventServiceProvider, FortifyServiceProvider, InertiaServiceProvider, Illuminate\Foundation\Support\Providers\EventServiceProvider, Illuminate\Support\ServiceProvider
 
 ### Community 26 - "Button.tsx"
-Cohesion: 0.06
-Nodes (27): evaluationOverviewService, AuthLayout(), AvatarCropModal(), AvatarCropModalProps, Button, ButtonProps, SIZE_STYLES, VARIANT_STYLES (+19 more)
+Cohesion: 0.05
+Nodes (55): AuthLayout(), AvatarCropModal(), AvatarCropModalProps, Button, ButtonProps, SIZE_STYLES, VARIANT_STYLES, InfoNote() (+47 more)
 
-### Community 27 - "ColumnDef"
+### Community 27 - "payment-methods/index.tsx"
 Cohesion: 0.08
-Nodes (33): PaymentMethodInput, paymentMethodService, ColumnFilterControlProps, DefaultRecordCard(), DefaultRecordCardProps, Toolbar(), ToolbarProps, formatCell() (+25 more)
+Nodes (32): PaymentMethodInput, paymentMethodService, ImageLightbox(), ImageLightboxProps, DefaultRecordCard(), DefaultRecordCardProps, formatCell(), Thumbnail() (+24 more)
 
 ### Community 28 - "developer/tasks/index.tsx"
-Cohesion: 0.08
-Nodes (34): TaskAggregates, traineeTasksService, TrainerOption, PRIORITY_LABEL, PRIORITY_STYLE, TaskPriorityBadge(), formatElapsed(), Props (+26 more)
+Cohesion: 0.09
+Nodes (30): TaskAggregates, traineeTasksService, TrainerOption, PRIORITY_LABEL, PRIORITY_STYLE, TaskPriorityBadge(), formatElapsed(), Props (+22 more)
 
 ### Community 29 - "Illuminate\Bus\Queueable"
 Cohesion: 0.09
 Nodes (20): ApplicationSubmittedMail, self, ForgotPasswordMail, self, LeaveDecisionMail, self, LeaveSubmittedMail, self (+12 more)
 
 ### Community 31 - "scheduleUtils.ts"
-Cohesion: 0.11
-Nodes (37): MultiSelectDropdown(), MultiSelectProps, SchedulePage(), ViewMode, ScheduleEntryModal(), EMPTY_FILTERS, ScheduleFilters(), ScheduleFilterState (+29 more)
+Cohesion: 0.12
+Nodes (35): SchedulePage(), ViewMode, ScheduleEntryModal(), EMPTY_FILTERS, ScheduleFilters(), ScheduleFilterState, STATUS_LABELS, adaptScheduleEntries() (+27 more)
 
-### Community 32 - "BaseController"
-Cohesion: 0.05
-Nodes (15): BaseController, AppliesQueryFilters, BatchTraineesController, SystemLogController, DocumentsController, ImportRollbackController, AnnouncementsController, BatchesController (+7 more)
+### Community 32 - "Illuminate\Database\Eloquent\Builder"
+Cohesion: 0.07
+Nodes (12): AppliesQueryFilters, BatchTraineesController, SystemLogController, DocumentsController, ImportRollbackController, BatchesController, BatchTraineesController, EvaluationsController (+4 more)
 
 ### Community 33 - "DataTableCardField.tsx"
 Cohesion: 0.08
-Nodes (64): useGlobalModal(), AddRecordButton(), buildRecordMenu(), SettingsListHeader(), SettingsRow(), TextCell(), FetchingSpinner(), STATUS_LABELS (+56 more)
+Nodes (64): useGlobalModal(), RowMenu(), RowMenuAction, RowMenuActionConfig, AddRecordButton(), buildRecordMenu(), SettingsListHeader(), SettingsRow() (+56 more)
 
 ### Community 34 - "LeaveRequest"
 Cohesion: 0.07
-Nodes (10): LeaveRequestController, LeaveCategoryController, GlobalSearchController, NotificationController, LeaveCategory, LeaveRequest, Notification, GoogleChatAlert (+2 more)
+Nodes (10): LeaveRequestController, GlobalSearchController, NotificationController, LeaveCategory, LeaveRequest, Notification, Seminar, GoogleChatAlert (+2 more)
 
 ### Community 35 - "useNavigate"
 Cohesion: 0.09
 Nodes (24): ModalCenter(), ModalCenterProps, ModalComponentProps, Size, WIDTHS, ModalSide(), ModalSideProps, Side (+16 more)
 
 ### Community 36 - "Sidebar.tsx"
-Cohesion: 0.07
-Nodes (35): NotificationRow, notificationService, setup(), AppProviders(), makeQueryClient(), GlobalSearch(), DEVELOPER_ITEMS, NAV_ITEMS (+27 more)
+Cohesion: 0.12
+Nodes (20): GlobalSearch(), DEVELOPER_ITEMS, NAV_ITEMS, Sidebar(), SidebarProps, TRAINEE_ITEMS, TRAINER_ITEMS, UserMenu() (+12 more)
 
 ### Community 37 - "PreventInactiveLogin.php"
 Cohesion: 0.47
@@ -455,28 +469,32 @@ Cohesion: 0.13
 Nodes (21): ConfirmArchiveAccountModal(), ConfirmArchiveAccountModalProps, ConfirmDeleteLogsModal(), ConfirmDeleteLogsModalProps, ConfirmInUseModal(), ConfirmInUseModalProps, useScrollLock(), index() (+13 more)
 
 ### Community 39 - "CertificateTemplateBuilder.tsx"
-Cohesion: 0.09
-Nodes (21): HistoryAction, HistoryState, isEditableTarget(), useUndoRedo(), onKeyDown(), UseUndoRedoOptions, CertificateTemplateBuilder(), addElement() (+13 more)
+Cohesion: 0.04
+Nodes (83): HistoryAction, HistoryState, isEditableTarget(), useUndoRedo(), onKeyDown(), UseUndoRedoOptions, buildOffscreenStage(), downloadDataUrl() (+75 more)
 
-### Community 40 - "TraineeDocument"
-Cohesion: 0.15
-Nodes (5): TraineeDocumentsController, MyInfoController, TraineeDocumentsController, TraineesViewController, TraineeDocument
+### Community 40 - "Trainees"
+Cohesion: 0.05
+Nodes (18): TraineeDocumentsController, TraineePaymentsController, DashboardController, MyInfoController, TraineeDocumentsController, TraineesViewController, TraineeDocument, Trainees (+10 more)
 
 ### Community 41 - "ReportController"
-Cohesion: 0.14
-Nodes (5): ReportController, DashboardController, BatchFinancialsCalculator, SeminarEarnings, Illuminate\Support\Collection
+Cohesion: 0.32
+Nodes (3): ReportController, BatchFinancialsCalculator, SeminarEarnings
 
 ### Community 42 - "dependencies"
 Cohesion: 0.05
 Nodes (39): axios, boneyard-js, class-variance-authority, formik, @inertiajs/vite, jspdf, lucide-react, dependencies (+31 more)
 
-### Community 43 - "LeaveRequestController.php"
-Cohesion: 0.09
-Nodes (9): BiometricsController, TraineeBiometricsController, BiometricsController, BiometricImport, BiometricRecord, BiometricHours, Carbon\Carbon, Illuminate\Foundation\Auth\Access\AuthorizesRequests (+1 more)
+### Community 43 - "BiometricRecord"
+Cohesion: 0.10
+Nodes (7): BiometricsController, TraineeBiometricsController, BiometricsController, BiometricImport, BiometricRecord, BiometricHours, Illuminate\Routing\Controller
 
-### Community 44 - "api-service-layer/index.ts"
-Cohesion: 0.09
-Nodes (30): announcementService, suffix(), PartnerSchoolInput, partnerSchoolService, Role, RoleInput, roleService, TraineeBillingOverridePayload (+22 more)
+### Community 44 - "admin/trainee.ts"
+Cohesion: 0.10
+Nodes (24): batchTraineeService, suffix(), TraineeBillingOverridePayload, traineeBillingOverrideService, TraineeInput, TraineePaymentInput, traineePaymentsService, appendNestedObject() (+16 more)
+
+### Community 45 - "TaskRating"
+Cohesion: 0.13
+Nodes (4): TaskRatingController, RatingsController, TaskRating, TaskRatingSeeder
 
 ### Community 46 - "developer/tasks/daily-task.tsx"
 Cohesion: 0.12
@@ -486,49 +504,53 @@ Nodes (26): formatToTwoDecimals(), ApiDailyTaskRow, columns, DailyTaskSheetPage(
 Cohesion: 0.06
 Nodes (31): babel-plugin-react-compiler, cypress, eslint-config-prettier, eslint-import-resolver-typescript, @eslint/js, eslint-plugin-import, eslint-plugin-react, eslint-plugin-react-hooks (+23 more)
 
-### Community 48 - "roles/index.tsx"
-Cohesion: 0.14
-Nodes (18): Field(), formatDate, inputCls, labelCls, ReadonlyField(), textareaCls, SETUP_CHOICES, SetupToggle() (+10 more)
+### Community 48 - "CreateBatchModal.tsx"
+Cohesion: 0.13
+Nodes (19): Field(), formatDate, inputCls, labelCls, ReadonlyField(), textareaCls, DynamicField(), DynamicFieldProps (+11 more)
 
 ### Community 49 - "Illuminate\Database\Eloquent\Factories\Factory"
 Cohesion: 0.08
 Nodes (12): AnnouncementFactory, BehavioralEvaluationFactory, LeaveRequestFactory, SeminarFactory, SeminarParticipantFactory, TaskFactory, TaskRatingFactory, static (+4 more)
 
+### Community 50 - "ColumnDef"
+Cohesion: 0.12
+Nodes (18): LeaveCategoryInput, leaveCategoryService, CardFilterPanel(), CardFilterPanelProps, ColumnFilterControlProps, DEFAULT_TABS, StatusFilter(), StatusFilterProps (+10 more)
+
 ### Community 51 - "User"
-Cohesion: 0.05
-Nodes (9): User, AcademicIndustryPolicy, AcademicLearningOutcomesPolicy, BehavioralQuestionPolicy, LeaveCategoryPolicy, LeaveRequestPolicy, PartnerSchoolsPolicy, UserPolicy (+1 more)
+Cohesion: 0.04
+Nodes (10): User, AcademicIndustryPolicy, AcademicLevelPolicy, AcademicProgramTypePolicy, BatchesPolicy, CertificateTemplatePolicy, LeaveCategoryPolicy, TraineesPolicy (+2 more)
 
 ### Community 52 - "register/index.tsx"
 Cohesion: 0.13
 Nodes (14): publicRegisterService, RegisterWriteOptions, AcademicOption, EMPTY_FORM, fieldErrorsFromApi(), fieldErrorsFromYup(), PublicBatch, PublicRegisterPage() (+6 more)
 
 ### Community 53 - "client.ts"
-Cohesion: 0.10
-Nodes (23): base, BatchInput, batchService, batchViewService, ratesService, ApiEnvelope, attachHeaders(), createHttpClient() (+15 more)
+Cohesion: 0.11
+Nodes (26): announcementService, base, BatchInput, batchService, batchViewService, ApiEnvelope, attachHeaders(), createHttpClient() (+18 more)
 
 ### Community 55 - "use-current-url.ts"
 Cohesion: 0.33
-Nodes (4): IsCurrentOrParentUrlFn, IsCurrentUrlFn, UseCurrentUrlReturn, WhenCurrentUrlFn
+Nodes (6): IsCurrentOrParentUrlFn, IsCurrentUrlFn, useCurrentUrl(), UseCurrentUrlReturn, WhenCurrentUrlFn, toUrl()
 
 ### Community 56 - "bootstrap/app.php"
 Cohesion: 0.15
 Nodes (8): CronController, Illuminate\Foundation\Application, Illuminate\Foundation\Configuration\Exceptions, Illuminate\Foundation\Configuration\Middleware, Illuminate\Foundation\Inspiring, Illuminate\Support\Facades\Artisan, Illuminate\Support\Facades\Route, Illuminate\Support\Facades\Schedule
 
 ### Community 57 - "admin/dashboard.ts"
-Cohesion: 0.17
-Nodes (17): adminDashboardService, DashboardWidgetCard(), DashboardWidgetCardProps, daysUntil(), NearingEndWidget(), AdminDashboardAnnouncement, AdminDashboardMetrics, RecentBatch (+9 more)
+Cohesion: 0.29
+Nodes (12): AdminDashboardAnnouncement, AdminDashboardMetrics, RecentBatch, TraineeGrowthPoint, TraineeStatusBreakdown, DashboardAnnouncement, DashboardMetrics, DocumentComplianceRow (+4 more)
 
-### Community 58 - "TemplateCanvas.tsx"
-Cohesion: 0.12
-Nodes (24): ElementNode(), elementText(), SAMPLE_INLINE_TOKENS, SAMPLE_OUTCOMES, SAMPLE_TEXT, TemplateCanvas(), handleDragEnd(), handleDragMove() (+16 more)
+### Community 58 - "developer/biometrics/index.tsx"
+Cohesion: 0.15
+Nodes (11): TableRowsFixture(), EditRecordModal(), RecordFormValues, ImportCsvModal(), handleClose(), handleConfirm(), reset(), IMPORT_STATUS_LABEL (+3 more)
 
 ### Community 59 - "Code Reviewer"
 Cohesion: 0.07
 Nodes (26): 1. Pr Analyzer, 1. Setup and Configuration, 2. Code Quality Checker, 2. Run Quality Checks, 3. Implement Best Practices, 3. Review Report Generator, Best Practices Summary, Code Quality (+18 more)
 
-### Community 60 - "trainee-detail.tsx"
-Cohesion: 0.06
-Nodes (41): AttachmentViewerModal(), humanSize(), Props, ViewableAttachment, BillingOverridePanel(), OVERRIDE_FIELDS, OverrideKey, Props (+33 more)
+### Community 60 - "trainer/announcements/index.tsx"
+Cohesion: 0.09
+Nodes (19): Avatar(), AvatarProps, AvatarSize, deriveInitials(), SIZE_CLASSES, SkeletonLoader(), SkeletonLoaderProps, STATUS_BADGE (+11 more)
 
 ### Community 61 - "use-mobile.tsx"
 Cohesion: 0.70
@@ -563,8 +585,8 @@ Cohesion: 0.13
 Nodes (20): behavioralEvaluationsService, BehavioralQuestionInput, behavioralQuestionsService, crud, TYPE_LABEL, Props, BehavioralQuestionRow(), Props (+12 more)
 
 ### Community 69 - "trainee-dashboard.ts"
-Cohesion: 0.11
-Nodes (22): TraineeAnnouncementsPage, traineeAnnouncementsService, TraineeLayout(), TraineeLayoutProps, AnnouncementsCard(), EligibilityCard(), maskBalanceReason(), STATUS_META (+14 more)
+Cohesion: 0.14
+Nodes (17): AnnouncementsCard(), EligibilityCard(), maskBalanceReason(), STATUS_META, InfoSummaryCard(), OngoingTasksCard(), OnLeaveCard(), WelcomeHeader() (+9 more)
 
 ### Community 70 - "compilerOptions"
 Cohesion: 0.08
@@ -572,19 +594,19 @@ Nodes (24): cypress, cypress/**/*.d.ts, cypress/**/*.ts, node, resources/js/**/*
 
 ### Community 71 - "BiometricsTab.tsx"
 Cohesion: 0.11
-Nodes (29): RFC-4180, biometricsService, traineeService, BiometricsPrint(), CSV_TEMPLATE, CsvTrainee, CsvValidationResult, missingPunchLabel() (+21 more)
+Nodes (22): RFC-4180, traineeService, TraineeLayout(), TraineeLayoutProps, CSV_TEMPLATE, CsvTrainee, CsvValidationResult, missingPunchLabel() (+14 more)
 
-### Community 72 - "RatingsPrimaryLayout.tsx"
-Cohesion: 0.16
-Nodes (9): LayoutProps, NAV_LINKS, RatingsPrimaryLayout(), BehavioralAssessmentSetup(), archive(), handleDrop(), invalidateQuestions(), remove() (+1 more)
+### Community 72 - "BehavioralAssessmentSetup"
+Cohesion: 0.39
+Nodes (6): BehavioralAssessmentSetup(), archive(), handleDrop(), invalidateQuestions(), remove(), restore()
 
 ### Community 74 - "use-initials.tsx"
 Cohesion: 0.67
 Nodes (3): getInitial(), GetInitialsFn, useInitials()
 
-### Community 83 - "Illuminate\Support\Facades\Log"
-Cohesion: 0.21
-Nodes (8): SyncHolidays, HolidaySync, Illuminate\Console\Attributes\Description, Illuminate\Console\Attributes\Signature, Illuminate\Mail\Message, Illuminate\Support\Facades\Http, Illuminate\Support\Facades\Log, Throwable
+### Community 83 - "Illuminate\Console\Command"
+Cohesion: 0.20
+Nodes (9): DispatchScheduledAnnouncements, GenerateBoneyardRoutes, MailDiagnosticCommand, SyncHolidays, HolidaySync, Illuminate\Console\Attributes\Description, Illuminate\Console\Attributes\Signature, Illuminate\Console\Command (+1 more)
 
 ### Community 96 - "Senior Prompt Engineer"
 Cohesion: 0.09
@@ -598,13 +620,13 @@ Nodes (11): MiniCalendar(), MONTH_NAMES, toKey(), TYPE_DOT, WEEKDAYS, DayEventsM
 Cohesion: 0.09
 Nodes (22): Laravel\Octane\Contracts\OperationTerminated, Laravel\Octane\Events\RequestHandled, Laravel\Octane\Events\RequestReceived, Laravel\Octane\Events\RequestTerminated, Laravel\Octane\Events\TaskReceived, Laravel\Octane\Events\TaskTerminated, Laravel\Octane\Events\TickReceived, Laravel\Octane\Events\TickTerminated (+14 more)
 
-### Community 99 - "BehavioralQuestion"
-Cohesion: 0.15
-Nodes (4): BehavioralEvaluationController, BehavioralQuestionController, BehavioralQuestion, BehavioralQuestionSeeder
+### Community 99 - "Illuminate\Database\Eloquent\Factories\HasFactory"
+Cohesion: 0.08
+Nodes (8): BehavioralEvaluationController, BehavioralQuestionController, BehavioralEvaluation, BehavioralEvaluationAnswer, BehavioralQuestion, EvaluationSeminarQuestion, BehavioralEvaluationSeeder, Illuminate\Database\Eloquent\Factories\HasFactory
 
-### Community 100 - "citations/index.tsx"
-Cohesion: 0.16
-Nodes (17): CertificateBatchPrint(), CertificateDoc, certificateDocTokens(), CertificateSheet(), CertificateSheetProps, OUTCOMES_COLUMN_CLASS, resolveElementText(), TemplateRenderedSheet() (+9 more)
+### Community 100 - "certificates/trainees/index.tsx"
+Cohesion: 0.06
+Nodes (51): CertificatesPrimaryLayout(), LayoutProps, NAV_LINKS, CertificateBatchPrint(), CertificateDoc, certificateDocTokens(), CertificateSheet(), CertificateSheetProps (+43 more)
 
 ### Community 101 - "Code Review Checklist"
 Cohesion: 0.10
@@ -668,23 +690,23 @@ Nodes (20): Anti-Pattern 1, Anti-Pattern 2, Anti-Patterns to Avoid, Code Organiz
 
 ### Community 116 - "biometrics/biometrics.ts"
 Cohesion: 0.16
-Nodes (14): traineeBiometricsService, EditRecordModalProps, BiometricImportPayload, BiometricImportResult, BiometricImportRowInput, BiometricImportStatus, BiometricImportSummary, BiometricLogRow (+6 more)
+Nodes (14): biometricsService, traineeBiometricsService, EditRecordModalProps, BiometricImportPayload, BiometricImportResult, BiometricImportStatus, BiometricImportSummary, BiometricLogRow (+6 more)
 
 ### Community 117 - "Symfony\Component\HttpFoundation\Response"
-Cohesion: 0.26
-Nodes (6): EnsureUserIsActive, LogPageVisit, Closure, Illuminate\Support\Facades\Auth, Illuminate\Support\Facades\Request, Symfony\Component\HttpFoundation\Response
+Cohesion: 0.38
+Nodes (4): EnsureUserIsActive, LogPageVisit, Closure, Symfony\Component\HttpFoundation\Response
 
 ### Community 119 - "formatDate"
-Cohesion: 0.19
-Nodes (17): trainerDashboardService, DashboardWidgetState, useDashboardWidget(), formatDate(), AnnouncementsWidget(), OngoingTasksWidget(), index(), AnnouncementsFeedCard() (+9 more)
+Cohesion: 0.14
+Nodes (25): trainerDashboardService, DashboardWidgetCard(), DashboardWidgetCardProps, DashboardWidgetState, useDashboardWidget(), DateInput, formatDate(), toDate() (+17 more)
 
 ### Community 120 - "components.json"
 Cohesion: 0.11
 Nodes (17): aliases, components, hooks, lib, ui, utils, iconLibrary, rsc (+9 more)
 
 ### Community 121 - "Announcement"
-Cohesion: 0.11
-Nodes (7): AnnoucementController, AnnouncementMail, self, Announcement, AnnouncementPolicy, AnnouncementDispatcher, AnnouncementSeeder
+Cohesion: 0.08
+Nodes (7): AnnouncementMail, self, Announcement, AnnouncementPolicy, AnnouncementDispatcher, AnnouncementSeeder, RoleSeeder
 
 ### Community 122 - "Agentic System Design"
 Cohesion: 0.12
@@ -698,28 +720,32 @@ Nodes (16): Advanced Patterns, Best Practices, Code Quality, Core Principles, Fu
 Cohesion: 0.12
 Nodes (16): Advanced Patterns, Best Practices, Code Quality, Core Principles, Further Reading, Overview, Pattern 1: Distributed Processing, Pattern 2: Real-Time Systems (+8 more)
 
-### Community 125 - "TraineesPayments"
+### Community 125 - "documents/index.tsx"
 Cohesion: 0.24
-Nodes (3): TraineePaymentsController, TraineesPayments, TraineePaymentSeeder
+Nodes (11): TooltipIconButton(), TooltipIconButtonProps, DocumentsIndex(), renderRow(), columns, DOCUMENT_TYPE_FILTER_PAIRS, DOCUMENT_TYPE_LABELS, DocumentRow (+3 more)
+
+### Community 126 - "group-discounts/index.tsx"
+Cohesion: 0.33
+Nodes (8): groupDiscountService, GroupDiscountModal(), Props, buildMenu(), renderRow(), columns, fields, GroupDiscount
 
 ### Community 127 - "LSS Admin — Project Context"
 Cohesion: 0.12
 Nodes (15): Conventions, Data Model (mock, frontend), Data Model (real, backend), Frontend Architecture Notes, Local Dev, LSS Admin — Project Context, Modules (routes), Next Steps (+7 more)
 
-### Community 128 - "trainee/evaluation/index.tsx"
-Cohesion: 0.16
-Nodes (14): traineeEvaluationsService, trainerEvaluationsService, groupBySection(), TraineeEvaluationPage(), reload(), submit(), EvaluationTrainerOption, trainerEvaluationColumns (+6 more)
+### Community 128 - "trainer-evaluation.ts"
+Cohesion: 0.20
+Nodes (10): traineeEvaluationsService, trainerEvaluationsService, EvaluationTrainerOption, trainerEvaluationColumns, TrainerEvaluationGateway, TrainerEvaluationMetrics, TrainerEvaluationPerson, TrainerEvaluationQuestion (+2 more)
 
-### Community 129 - "UserModal.tsx"
-Cohesion: 0.22
-Nodes (10): base, User, UserInput, userService, assignableRoles(), cap(), Props, roleOptions() (+2 more)
+### Community 129 - "createCrudResource"
+Cohesion: 0.09
+Nodes (15): PartnerSchoolInput, partnerSchoolService, ratesService, Role, RoleInput, roleService, base, User (+7 more)
 
-### Community 130 - "HoursDiscountModal.tsx"
+### Community 130 - "AppProviders.tsx"
 Cohesion: 0.36
-Nodes (6): hoursDiscountService, HoursDiscountModal(), Props, columns, fields, HoursDiscount
+Nodes (6): setup(), AppProviders(), makeQueryClient(), SystemToastProvider(), AppLayout(), ResolvedLayout()
 
 ### Community 131 - "UniqueEmailAcrossIdentities"
-Cohesion: 0.24
+Cohesion: 0.27
 Nodes (4): Trainers, self, UniqueEmailAcrossIdentities, Illuminate\Contracts\Validation\ValidationRule
 
 ### Community 132 - "Clean Code - Pragmatic AI Coding Standards"
@@ -738,13 +764,13 @@ Nodes (14): require, doctrine/dbal, endroid/qr-code, inertiajs/inertia-laravel, 
 Cohesion: 0.11
 Nodes (19): scripts, lint, lint:check, post-autoload-dump, post-update-cmd, pre-package-uninstall, test, types:check (+11 more)
 
-### Community 136 - "developer/payments/index.tsx"
-Cohesion: 0.09
-Nodes (32): ConfirmDeleteModal(), ConfirmDeleteModalProps, BillingOverrideFormValues, EditPaymentInfoModal(), EditPaymentInfoModalProps, EMPTY, columns, PaymentsPage() (+24 more)
+### Community 136 - "formatDateTime"
+Cohesion: 0.13
+Nodes (25): formatDateTime(), columns, PaymentPrintOverlay(), STATUS_FILTER_OPTIONS, PaymentDetailModal(), PaymentDetailModalProps, Tab, TABS (+17 more)
 
-### Community 137 - "seminar/index.tsx"
-Cohesion: 0.16
-Nodes (13): CertificatesPrimaryLayout(), LayoutProps, NAV_LINKS, tokensForSeminarParticipant(), buildDoc(), columns, SeminarCertificatesPage(), renderRow() (+5 more)
+### Community 137 - "BiometricsPrint.tsx"
+Cohesion: 0.27
+Nodes (10): BiometricsPrint(), BiometricsPrintProps, PrintRow, summarizeAttendance(), BiometricsPage(), confirmDelete(), handleConfirmImport(), handleSaveEdit() (+2 more)
 
 ### Community 138 - "CLAUDE.md"
 Cohesion: 0.15
@@ -818,10 +844,6 @@ Nodes (13): lightningcss-linux-x64-gnu, lightningcss-win32-x64-msvc, optionalDep
 Cohesion: 0.16
 Nodes (19): taskRatingsService, RatingSheetPrint(), RatingSheetPrintProps, BatchOption, personName(), TaskRatingPage(), draftFor(), openHistory() (+11 more)
 
-### Community 156 - "certificates/trainees/index.tsx"
-Cohesion: 0.20
-Nodes (13): CitationTokens, tokensForTrainee(), traineeFullName(), buildDoc(), columns, STATUS_FILTER_OPTIONS, STATUS_LABEL, STATUS_STYLE (+5 more)
-
 ### Community 157 - "scripts"
 Cohesion: 0.17
 Nodes (12): scripts, build, build:ssr, dev, dev:php, format, format:check, lint (+4 more)
@@ -830,9 +852,9 @@ Nodes (12): scripts, build, build:ssr, dev, dev:php, format, format:check, lint 
 Cohesion: 0.18
 Nodes (11): require-dev, fakerphp/faker, larastan/larastan, laravel/pail, laravel/pao, laravel/pint, laravel/sail, mockery/mockery (+3 more)
 
-### Community 159 - "Illuminate\Console\Command"
-Cohesion: 0.22
-Nodes (4): DispatchScheduledAnnouncements, MailDiagnosticCommand, OgDoctor, Illuminate\Console\Command
+### Community 159 - "Illuminate\Support\Facades\Log"
+Cohesion: 0.29
+Nodes (5): Illuminate\Support\Facades\Auth, Illuminate\Support\Facades\Http, Illuminate\Support\Facades\Log, Illuminate\Support\Facades\Request, Throwable
 
 ### Community 160 - "30. Where to Build Your Modules"
 Cohesion: 0.18
@@ -847,8 +869,8 @@ Cohesion: 0.40
 Nodes (7): GlobalModalContext, GlobalModalProvider(), createGlobalModalStore(), GlobalModalStore, Listener, ModalEntry, GlobalModalHandle
 
 ### Community 164 - "usePermission"
-Cohesion: 0.29
-Nodes (7): ErrorFallback(), ErrorFallbackProps, AddRecordButtonProps, usePermission(), SettingsUsersLayout(), index(), index()
+Cohesion: 0.09
+Nodes (14): ErrorFallback(), ErrorFallbackProps, AddRecordButtonProps, usePermission(), EvaluationPrimaryLayout(), LayoutProps, NAV_LINKS, LayoutProps (+6 more)
 
 ### Community 165 - "AgentOrchestrator"
 Cohesion: 0.27
@@ -862,17 +884,17 @@ Nodes (5): main(), PromptOptimizer, Production-grade prompt optimizer, Validate 
 Cohesion: 0.27
 Nodes (5): main(), RagEvaluator, Production-grade rag evaluator, Validate configuration, Main processing logic
 
-### Community 168 - "TopBar.tsx"
-Cohesion: 0.36
-Nodes (4): NotificationBell(), timeAgoLabel(), useNotifications(), SeminarsPage()
+### Community 168 - "NotificationsContext.tsx"
+Cohesion: 0.16
+Nodes (14): NotificationRow, notificationService, NotificationBell(), timeAgoLabel(), authUserFromNavigateEvent(), linkFor(), NotificationsContext, NotificationsContextValue (+6 more)
 
 ### Community 170 - "User.php"
 Cohesion: 0.25
 Nodes (4): Illuminate\Database\Eloquent\Attributes\Fillable, Illuminate\Database\Eloquent\Attributes\Hidden, Illuminate\Database\Eloquent\Relations\BelongsToMany, Illuminate\Notifications\Notifiable
 
 ### Community 171 - "Permissions"
-Cohesion: 0.06
-Nodes (9): AcademicLevelPolicy, GroupDiscountPolicy, RatePolicy, Permissions, RoleSeeder, Spatie\Permission\DefaultTeamResolver, Spatie\Permission\Models\Permission, Spatie\Permission\PermissionRegistrar (+1 more)
+Cohesion: 0.08
+Nodes (7): GroupDiscountPolicy, HoursDiscountPolicy, RatePolicy, Permissions, Spatie\Permission\DefaultTeamResolver, Spatie\Permission\Models\Permission, Spatie\Permission\PermissionRegistrar
 
 ### Community 173 - "Web Application Testing"
 Cohesion: 0.25
@@ -894,29 +916,25 @@ Nodes (7): Components, Constants, Files, Functions, Hooks, Naming Conventions, V
 Cohesion: 0.25
 Nodes (7): engines, node, overrides, eslint-plugin-import, private, $schema, type
 
-### Community 178 - "IssueCertificateModal.tsx"
-Cohesion: 0.23
-Nodes (10): CitationRecord, findDefaultTemplateId(), IssueCertificateModal(), handleClose(), handlePreview(), reset(), IssueCertificateModalProps, loadCitationOptions() (+2 more)
-
 ### Community 179 - "ModalContext.tsx"
 Cohesion: 0.25
 Nodes (5): ModalContext, ModalContextType, ModalKey, ModalRegistry, ModalState
 
 ### Community 180 - "TestCase"
-Cohesion: 0.18
-Nodes (5): Illuminate\Foundation\Testing\RefreshDatabase, Illuminate\Foundation\Testing\TestCase, Illuminate\Support\Facades\RateLimiter, Laravel\Fortify\Features, TestCase
+Cohesion: 0.25
+Nodes (4): Illuminate\Foundation\Testing\TestCase, Illuminate\Support\Facades\RateLimiter, Laravel\Fortify\Features, TestCase
 
-### Community 181 - "certificateExport.ts"
-Cohesion: 0.35
-Nodes (10): buildOffscreenStage(), downloadDataUrl(), ensureFontsLoaded(), ExportOptions, exportTemplateAsPdf(), exportTemplateAsPng(), loadImage(), handleExport() (+2 more)
+### Community 181 - "batch/index.tsx"
+Cohesion: 0.29
+Nodes (5): LayoutProps, NAV_LINKS, ReportsPrimaryLayout(), BatchReportPage(), columns
 
 ### Community 182 - "report.ts"
-Cohesion: 0.25
-Nodes (7): AnnualExportResponse, BatchExportResponse, ReportActivity, ReportFinancials, ReportQueryParams, ReportTotals, ReportTrainee
+Cohesion: 0.12
+Nodes (14): AnnualExportResponse, BatchExportResponse, query(), ReportActivity, ReportFinancials, ReportQueryParams, ReportTotals, ReportTrainee (+6 more)
 
-### Community 185 - "cropTemplateImageToPngDataUrl"
-Cohesion: 0.50
-Nodes (4): cropTemplateImageToPngDataUrl(), loadImage(), TemplateImageCropModal(), handleSave()
+### Community 185 - "TemplateImageCropModal.tsx"
+Cohesion: 0.43
+Nodes (5): cropTemplateImageToPngDataUrl(), loadImage(), TemplateImageCropModal(), handleSave(), TemplateImageCropModalProps
 
 ### Community 187 - "config"
 Cohesion: 0.29
@@ -925,6 +943,10 @@ Nodes (7): pestphp/pest-plugin, php-http/discovery, config, allow-plugins, optim
 ### Community 188 - "Production Email & Cron Checklist (Coolify + Hostinger)"
 Cohesion: 0.29
 Nodes (6): 1. Is anything actually calling the scheduler?, 2. Is a queue worker actually running?, 3. Are the mail credentials actually valid for the target host?, 4. Is Hostinger's firewall blocking outbound mail ports?, Code bugs already fixed in this change (for context), Production Email & Cron Checklist (Coolify + Hostinger)
+
+### Community 190 - "cells.tsx"
+Cohesion: 0.24
+Nodes (5): AVATAR_COLORS, avatarBg(), initialsOf(), STATUS_STYLES, TableAvatar()
 
 ### Community 191 - "Architecture"
 Cohesion: 0.33
@@ -958,13 +980,13 @@ Nodes (4): Async Select — Convention, Filters, Menu overflow, Rule: show the p
 Cohesion: 0.40
 Nodes (5): 2. Install PHP 8.4, macOS (Homebrew), Ubuntu / Debian / WSL2, Verify, Windows (PowerShell — Run as Administrator)
 
-### Community 202 - "InertiaPageResponse"
-Cohesion: 0.12
-Nodes (7): BatchViewController, RatesController, DailyTaskController, Builder, Collection, InertiaPageResponse, Rate
+### Community 202 - "Illuminate\Http\Request"
+Cohesion: 0.06
+Nodes (17): PaymentMethodsController, RoleController, DailyTaskController, Builder, Collection, TasksController, DocumentResource, RoleResource (+9 more)
 
 ### Community 203 - "QrCode"
-Cohesion: 0.15
-Nodes (6): QrCode, BaconQrCode\Renderer\Image\SvgImageBackEnd, BaconQrCode\Renderer\ImageRenderer, BaconQrCode\Renderer\RendererStyle\RendererStyle, BaconQrCode\Writer, Endroid\QrCode\Bacon\MatrixFactory
+Cohesion: 0.06
+Nodes (12): OgDoctor, PublicCertificateController, SeminarCertificate, OgImage, QrCode, BaconQrCode\Renderer\Image\SvgImageBackEnd, BaconQrCode\Renderer\ImageRenderer, BaconQrCode\Renderer\RendererStyle\RendererStyle (+4 more)
 
 ### Community 206 - "is_server_ready"
 Cohesion: 0.67
@@ -998,13 +1020,13 @@ Nodes (4): 6. Post-Install Environment Configuration, Fix APP_NAME, Generate app
 Cohesion: 0.22
 Nodes (7): Carbon\CarbonImmutable, Illuminate\Queue\Events\JobFailed, Illuminate\Queue\Events\JobProcessed, Illuminate\Support\Facades\Date, Illuminate\Support\Facades\Queue, Illuminate\Support\Facades\URL, Illuminate\Validation\Rules\Password
 
-### Community 249 - "EarningsWidget.tsx"
-Cohesion: 0.48
-Nodes (4): EarningsCard(), formatPHP(), useLocalStorage(), EarningsWidget()
-
 ### Community 284 - "22. PostgreSQL for Production"
 Cohesion: 0.67
 Nodes (3): 22. PostgreSQL for Production, On the production server, Production .env
+
+### Community 379 - "TaskRosterModal"
+Cohesion: 0.67
+Nodes (6): personName(), TaskRosterModal(), handleEditSave(), refresh(), runAction(), runDelete()
 
 ### Community 381 - "SeminarListTab"
 Cohesion: 0.40
@@ -1014,29 +1036,41 @@ Nodes (3): SeminarListTab(), copyLink(), rowActions()
 Cohesion: 0.50
 Nodes (4): AddAnnouncementModal(), handleSubmit(), validate(), emptyValues()
 
-### Community 384 - "TaskPriority"
+### Community 384 - "AddTaskModal.tsx"
+Cohesion: 0.18
+Nodes (16): toDateInputValue(), AddTaskModal(), handleSubmit(), validate(), AddTaskModalProps, EditableTaskRow, emptyValues(), FormValues (+8 more)
+
+### Community 385 - "Role"
+Cohesion: 0.32
+Nodes (3): Role, UserSeeder, makeLogUser()
+
+### Community 386 - "AnnouncementsCard.tsx"
+Cohesion: 0.70
+Nodes (3): TraineeAnnouncementsPage, traineeAnnouncementsService, DashboardAnnouncement
+
+### Community 387 - "AddAnnouncementModal"
 Cohesion: 0.50
-Nodes (4): EditableTaskRow, TaskCreatePayload, TaskUpdatePayload, TaskPriority
+Nodes (4): AddAnnouncementModal(), handleSubmit(), validate(), emptyValues()
 
 ## Knowledge Gaps
-- **1095 isolated node(s):** `$schema`, `style`, `rsc`, `tsx`, `config` (+1090 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1829 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **88 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1093 isolated node(s):** `$schema`, `style`, `rsc`, `tsx`, `config` (+1088 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1824 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **97 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `User` connect `User` to `Illuminate\Database\Eloquent\Model`, `UserSeeder`, `Illuminate\Http\JsonResponse`, `UniqueEmailAcrossIdentities`, `UserController`, `.findOrInviteTrainer`, `Trainees`, `Illuminate\Database\Seeder`, `Illuminate\Http\Request`, `web.php`, `Illuminate\Bus\Queueable`, `LeaveRequest`, `PreventInactiveLogin.php`, `BatchesPolicy`, `User.php`, `LeaveRequestController.php`, `Permissions`, `TaskPolicy`, `TraineesPolicy`, `Illuminate\Database\Eloquent\Factories\Factory`, `TestCase`, `CertificateCitationPolicy`, `CertificateTemplatePolicy`, `PaymentMethod`, `AcademicProgramPolicy`, `AcademicProgramTypePolicy`, `EvaluationSeminarQuestionPolicy`, `HoursDiscountPolicy`, `Illuminate\Support\Facades\Log`, `EvaluationTrainerQuestionPolicy`, `AppServiceProvider.php`, `Announcement`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `Statuses` connect `Illuminate\Http\Request` to `Illuminate\Database\Eloquent\Model`, `BaseController`, `BehavioralQuestion`, `UserController`, `Trainees`, `Illuminate\Database\Seeder`, `Illuminate\Database\Migrations\Migration`, `Controller`, `2026_07_19_043044_create_app_behavioral_questions_table.php`, `web.php`, `2026_07_20_140731_create_app_evaluation_seminar_questions_table.php`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `Trainees` connect `Trainees` to `Illuminate\Database\Eloquent\Model`, `Illuminate\Http\JsonResponse`, `UniqueEmailAcrossIdentities`, `Illuminate\Database\Seeder`, `Illuminate\Http\Request`, `Controller`, `web.php`, `AppServiceProvider`, `Illuminate\Bus\Queueable`, `BaseController`, `LeaveRequest`, `TraineesViewController`, `TraineeDocument`, `ReportController`, `User.php`, `LeaveRequestController.php`, `TaskPolicy`, `Permissions`, `TraineesPolicy`, `Illuminate\Support\Facades\Log`, `BehavioralQuestion`, `AppServiceProvider.php`, `Announcement`, `TraineesPayments`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
+- **Why does `User` connect `User` to `Illuminate\Database\Eloquent\Relations\BelongsTo`, `Illuminate\Database\Eloquent\Relations\HasMany`, `Illuminate\Http\JsonResponse`, `UniqueEmailAcrossIdentities`, `UserController`, `Role`, `Batches`, `Illuminate\Database\Eloquent\Model`, `web.php`, `LeaveRequestPolicy`, `Illuminate\Bus\Queueable`, `Illuminate\Support\Facades\Log`, `Illuminate\Database\Eloquent\Builder`, `LeaveRequest`, `PreventInactiveLogin.php`, `Trainees`, `UserPolicy`, `User.php`, `Permissions`, `TaskPolicy`, `TaskRating`, `Illuminate\Database\Eloquent\Factories\Factory`, `TestCase`, `CertificateCitationPolicy`, `AcademicLearningOutcomesPolicy`, `PaymentMethod`, `AcademicProgramPolicy`, `BehavioralQuestionPolicy`, `Illuminate\Http\Request`, `EvaluationSeminarQuestionPolicy`, `PartnerSchoolsPolicy`, `Illuminate\Database\Eloquent\Factories\HasFactory`, `EvaluationTrainerQuestionPolicy`, `AppServiceProvider.php`, `Announcement`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **Why does `Statuses` connect `Illuminate\Database\Eloquent\Model` to `Illuminate\Database\Eloquent\Builder`, `Illuminate\Database\Eloquent\Relations\BelongsTo`, `Illuminate\Database\Eloquent\Factories\HasFactory`, `UserController`, `Batches`, `Trainees`, `Illuminate\Http\Request`, `Illuminate\Database\Migrations\Migration`, `Inertia\Response`, `2026_07_19_043044_create_app_behavioral_questions_table.php`, `web.php`, `2026_07_20_140731_create_app_evaluation_seminar_questions_table.php`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `cn()` connect `cn` to `AppProviders.tsx`, `my-info/index.tsx`, `annual/index.tsx`, `formatDateTime`, `BiometricsPrint.tsx`, `seminars/index.tsx`, `useToast`, `renderRow`, `admin/evaluation.ts`, `BatchDetailLayout.tsx`, `trainer/leave/index.tsx`, `seminarUtils.ts`, `Button.tsx`, `developer/tasks/index.tsx`, `scheduleUtils.ts`, `DataTableCardField.tsx`, `trainee/ratings/index.tsx`, `usePermission`, `Sidebar.tsx`, `CertificateTemplateBuilder.tsx`, `NotificationsContext.tsx`, `developer/tasks/daily-task.tsx`, `CreateBatchModal.tsx`, `batch/index.tsx`, `developer/biometrics/index.tsx`, `trainer/announcements/index.tsx`, `BiometricsTab.tsx`, `developer/dashboard/ScheduleCalendarWidget.tsx`, `certificates/trainees/index.tsx`, `SeminarListTab`, `formatDate`, `TaskRosterModal`, `documents/index.tsx`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **What connects `$schema`, `style`, `rsc` to the rest of the system?**
-  _1095 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Illuminate\Database\Eloquent\Model` be split into smaller, more focused modules?**
-  _Cohesion score 0.026402927849424888 - nodes in this community are weakly interconnected._
-- **Should `certificates/types.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.1076923076923077 - nodes in this community are weakly interconnected._
+  _1093 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Illuminate\Database\Eloquent\Relations\BelongsTo` be split into smaller, more focused modules?**
+  _Cohesion score 0.04460093896713615 - nodes in this community are weakly interconnected._
+- **Should `Illuminate\Database\Eloquent\Relations\HasMany` be split into smaller, more focused modules?**
+  _Cohesion score 0.05182443151771549 - nodes in this community are weakly interconnected._
 - **Should `Illuminate\Http\JsonResponse` be split into smaller, more focused modules?**
-  _Cohesion score 0.04329962073324905 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04604955586722768 - nodes in this community are weakly interconnected._
