@@ -137,6 +137,10 @@ export default function TasksPage() {
     const queryClient = useQueryClient();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [rosterGroup, setRosterGroup] = useState<ApiTaskGroup | null>(null);
+    const [liveFilters, setLiveFilters] = useState<{
+        filters: Record<string, string | string[]>;
+        search: string;
+    }>({ filters: {}, search: '' });
 
     const invalidateTasks = () =>
         queryClient.invalidateQueries({ queryKey: [['tasks']] });
@@ -187,6 +191,65 @@ export default function TasksPage() {
             invalidateTasks();
         } catch {
             showToast('Failed to reopen task(s).', 'error');
+        }
+    }
+    async function runBulk(
+        rows: ApiTaskGroup[],
+        action: 'complete' | 'lock',
+        verb: string,
+    ) {
+        const results = await Promise.allSettled(
+            rows.map((row) =>
+                apiFetchJson(`/tasks/groups/${row.group_id}/${action}`, {
+                    method: 'PATCH',
+                }),
+            ),
+        );
+        const failed = results.filter((r) => r.status === 'rejected').length;
+        const succeeded = results.length - failed;
+        if (succeeded > 0) {
+            showToast(
+                `${succeeded} task${succeeded === 1 ? '' : 's'} ${verb}.`,
+                'success',
+            );
+        }
+        if (failed > 0) {
+            showToast(
+                `${failed} task${failed === 1 ? '' : 's'} failed to update.`,
+                'error',
+            );
+        }
+        invalidateTasks();
+    }
+    async function runCrossPageBulk(statusScope: string, action: 'complete' | 'lock') {
+        const verb = action === 'complete' ? 'mark complete' : 'lock';
+        if (
+            !window.confirm(
+                `${action === 'complete' ? 'Mark' : 'Lock'} every ${statusScope} task across all pages, not just this one? This can't be undone.`,
+            )
+        ) {
+            return;
+        }
+        try {
+            const res = await apiFetchJson<{
+                groups_updated: number;
+                rows_updated: number;
+            }>('/tasks/bulk-status-by-filter', {
+                method: 'PATCH',
+                body: JSON.stringify({
+                    status_scope: statusScope,
+                    action,
+                    filters: liveFilters.filters,
+                    search: liveFilters.search,
+                }),
+            });
+            showToast(
+                `${res.data?.groups_updated ?? 0} task group(s) ${action === 'complete' ? 'marked as complete' : 'locked'}.`,
+                'success',
+            );
+            invalidateTasks();
+        } catch {
+            showToast(`Failed to ${verb} tasks.`, 'error');
         }
     }
     async function runGroupUnlock(row: ApiTaskGroup) {
@@ -329,6 +392,33 @@ export default function TasksPage() {
                     statusFilterOptions={TASK_STATUS_FILTER_OPTIONS}
                     deletePermission={PERMISSION}
                     deleteUrl={(row) => `/tasks/groups/${row.group_id}`}
+                    rowKey={(row) => row.group_id}
+                    onFiltersChange={(filters, search) =>
+                        setLiveFilters({ filters, search })
+                    }
+                    bulkActions={[
+                        {
+                            label: 'Mark Complete',
+                            onRun: (rows) =>
+                                runBulk(rows, 'complete', 'marked as complete'),
+                        },
+                        {
+                            label: 'Lock',
+                            onRun: (rows) => runBulk(rows, 'lock', 'locked'),
+                        },
+                    ]}
+                    crossPageBulkActions={[
+                        {
+                            label: 'Mark Complete',
+                            onRun: (statusScope) =>
+                                runCrossPageBulk(statusScope, 'complete'),
+                        },
+                        {
+                            label: 'Lock',
+                            onRun: (statusScope) =>
+                                runCrossPageBulk(statusScope, 'lock'),
+                        },
+                    ]}
                     data-cy="index-data-table-card-field-1"
                 />
                 {/* Add task modal — creates a new batch-assignment (fan-out). */}

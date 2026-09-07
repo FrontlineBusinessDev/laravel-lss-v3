@@ -37,7 +37,7 @@ export const fields: FieldDef<AcademicLevel>[] = [
         type: 'select',
         options: [
             { value: 'active', label: 'Active' },
-            { value: 'archived', label: 'Archived' },
+            { value: 'inactive', label: 'Archived' },
         ],
         defaultValue: 'active',
     },

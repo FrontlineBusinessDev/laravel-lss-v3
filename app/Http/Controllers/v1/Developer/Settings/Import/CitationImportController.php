@@ -51,17 +51,26 @@ class CitationImportController extends Controller implements HasMiddleware
             $rowNum = $i + 2;
             if ($error = $this->validateRow($row, $rowRules)) {
                 $errors[] = "Row {$rowNum}: {$error}";
+
                 continue;
             }
             $body = trim($row['message']);
             if ($body === '') {
                 $errors[] = "Row {$rowNum}: message is required.";
+
+                continue;
+            }
+
+            $title = "{$row['industry']} – {$row['program_type']} (imported)";
+            if (CertificateCitation::where('title', $title)->exists()) {
+                $errors[] = "Row {$rowNum}: duplicate citation template \"{$title}\" — skipped.";
+
                 continue;
             }
 
             try {
                 $citation = DB::transaction(fn () => CertificateCitation::create([
-                    'title' => "{$row['industry']} – {$row['program_type']} (imported)",
+                    'title' => $title,
                     'applies_to' => 'trainee',
                     'body_text' => $body,
                     'status' => 'active',

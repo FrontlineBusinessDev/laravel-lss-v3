@@ -16,7 +16,7 @@ import type {
     PaginationMeta,
     TableViewType,
 } from '@/types/reusable/data-table';
-import { deriveFieldsFromColumns } from '../utils';
+import { deriveFieldsFromColumns, getRowId } from '../utils';
 import { useRecordRowActions } from './use-record-row-actions';
 import { useDebouncedValue, useTableRefresh } from './index';
 
@@ -83,7 +83,9 @@ export function useCardTableController<T extends Record<string, unknown>>(
         paginationMode = 'server',
         onEditRow,
         onFiltersChange,
+        rowKey,
     } = props;
+    const resolveRowKey = rowKey ?? getRowId;
 
     const { can } = usePermission();
     const { showToast } = useToast();
@@ -114,6 +116,7 @@ export function useCardTableController<T extends Record<string, unknown>>(
         defaultSortDir ?? 'asc',
     );
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
     const [modalState, setModalState] = useState<{
         mode: 'edit';
         row?: T;
@@ -126,6 +129,8 @@ export function useCardTableController<T extends Record<string, unknown>>(
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setPage(1);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedKeys(new Set());
     }, [debouncedSearch, debouncedFilters, extraFiltersKey, perPage]);
 
     useEffect(() => {
@@ -169,6 +174,47 @@ export function useCardTableController<T extends Record<string, unknown>>(
         : crud.pageInfo;
 
     useTableRefresh(crud.list.refetch, onRefreshRef);
+
+    // ── Bulk selection (opt-in via `bulkActions`) ───────────────────────────────
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedKeys(new Set());
+    }, [page]);
+    const toggleRow = useCallback(
+        (row: T) => {
+            const key = resolveRowKey(row);
+            setSelectedKeys((prev) => {
+                const next = new Set(prev);
+                if (next.has(key)) {
+                    next.delete(key);
+                } else {
+                    next.add(key);
+                }
+                return next;
+            });
+        },
+        [resolveRowKey],
+    );
+    const toggleAll = useCallback(() => {
+        setSelectedKeys((prev) =>
+            prev.size === displayRows.length && displayRows.length > 0
+                ? new Set()
+                : new Set(displayRows.map(resolveRowKey)),
+        );
+    }, [displayRows, resolveRowKey]);
+    const clearSelection = useCallback(() => setSelectedKeys(new Set()), []);
+    const selectByPredicate = useCallback(
+        (predicate: (row: T) => boolean) => {
+            setSelectedKeys(
+                new Set(displayRows.filter(predicate).map(resolveRowKey)),
+            );
+        },
+        [displayRows, resolveRowKey],
+    );
+    const selectedRows = useMemo(
+        () => displayRows.filter((row) => selectedKeys.has(resolveRowKey(row))),
+        [displayRows, selectedKeys, resolveRowKey],
+    );
 
     // ── Permissions ───────────────────────────────────────────────────────────
     const resolvedFields = useMemo(
@@ -273,5 +319,14 @@ export function useCardTableController<T extends Record<string, unknown>>(
             onEditRow ? onEditRow(row) : setModalState({ mode: 'edit', row }),
         // row actions (archive / restore / delete + in-use guard)
         ...actions,
+        // bulk selection
+        resolveRowKey,
+        selectedKeys,
+        selectedRows,
+        toggleRow,
+        toggleAll,
+        clearSelection,
+        selectByPredicate,
+        statusCounts: crud.list.data?.status_counts,
     };
 }

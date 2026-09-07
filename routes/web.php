@@ -256,6 +256,7 @@ Route::middleware('auth')->group(function () {
             Route::patch('/{id}/reopen', [TasksController::class, 'reopenAction'])->name('reopen');
             Route::patch('/{id}/remarks', [TasksController::class, 'updateRemarks'])->name('remarks');
             Route::patch('/{id}/time-spent', [TasksController::class, 'updateTimeSpent'])->name('time-spent');
+            Route::patch('/bulk-status-by-filter', [TasksController::class, 'bulkStatusByFilter'])->name('bulk-status-by-filter');
             Route::delete('/{id}', [TasksController::class, 'destroy'])->name('destroy');
             Route::get('/groups/{groupId}/roster', [TasksController::class, 'roster'])->name('groups.roster');
             Route::patch('/groups/{groupId}/complete', [TasksController::class, 'completeGroupAction'])->name('groups.complete');

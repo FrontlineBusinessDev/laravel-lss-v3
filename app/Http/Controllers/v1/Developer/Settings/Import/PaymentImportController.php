@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Developer\Settings\Import;
 
 use App\Http\Controllers\v1\Controller;
 use App\Models\Trainees;
+use App\Models\TraineesPayments;
 use App\Support\Import\ImportLogging;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,11 +48,29 @@ class PaymentImportController extends Controller implements HasMiddleware
             $rowNum = $i + 2;
             if ($error = $this->validateRow($row, $rowRules)) {
                 $errors[] = "Row {$rowNum}: {$error}";
+
                 continue;
             }
             $trainee = Trainees::where('email', trim($row['trainee_email']))->first();
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$row['trainee_email']}\" — run the Trainees import first.";
+
+                continue;
+            }
+
+            $receiptNumber = $row['official_receipt_number'] ?? null;
+            $duplicateQuery = $trainee->payments();
+            if (! empty($receiptNumber)) {
+                $duplicateQuery->where('official_receipt_number', $receiptNumber);
+            } else {
+                $duplicateQuery->where('payment_date', $row['payment_date'])
+                    ->where('amount_paid', $row['amount_paid']);
+            }
+            if ($duplicateQuery->exists()) {
+                $errors[] = "Row {$rowNum}: duplicate payment for \"{$row['trainee_email']}\"".
+                    (! empty($receiptNumber) ? " (receipt #{$receiptNumber})" : " on {$row['payment_date']}").
+                    ' — skipped.';
+
                 continue;
             }
 
@@ -64,7 +83,7 @@ class PaymentImportController extends Controller implements HasMiddleware
                     'official_receipt_number' => $row['official_receipt_number'] ?? null,
                     'notes' => $notes,
                 ]));
-                $createdIds[] = ['model' => \App\Models\TraineesPayments::class, 'id' => $payment->id];
+                $createdIds[] = ['model' => TraineesPayments::class, 'id' => $payment->id];
                 $successCount++;
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";

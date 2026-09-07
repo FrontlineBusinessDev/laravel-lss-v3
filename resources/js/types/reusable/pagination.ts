@@ -23,6 +23,8 @@ export interface PaginatedResponse<T> {
     search?: string;
     sort_by?: string;
     sort_dir?: 'asc' | 'desc';
+    /** Global counts per status value, matching the current search/filters but not paginated. Opt-in — only present when the backend computes it. */
+    status_counts?: Record<string, number>;
 }
 
 /** Legacy alias kept for the table hooks that consumed the older name. */

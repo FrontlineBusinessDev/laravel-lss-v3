@@ -86,6 +86,22 @@ export interface InUseEntry {
     count: number;
 }
 
+/** One bulk action available in the multi-select action bar (see `bulkActions`). */
+export interface BulkAction<T> {
+    label: string;
+    /** Runs against the rows currently selected; the selection clears after it resolves. */
+    onRun: (rows: T[]) => Promise<void>;
+    variant?: 'default' | 'danger';
+}
+
+/** One cross-page bulk action — acts on every row matching a status, not just the current page (see `crossPageBulkActions`). */
+export interface CrossPageBulkAction {
+    label: string;
+    /** Runs against every row matching the chosen status scope, across all pages. */
+    onRun: (statusScope: string) => Promise<void>;
+    variant?: 'default' | 'danger';
+}
+
 export interface DataTableProps<T> {
     apiUrl: string;
     /** TanStack Query cache key for this resource. */
@@ -167,4 +183,25 @@ export interface DataTableProps<T> {
         filters: Record<string, string | string[]>,
         search: string,
     ) => void;
+    /**
+     * Enables checkbox multi-select + a "select all (this page)" toggle,
+     * with one action bar button per entry that runs against the current
+     * selection. Omit to leave the table exactly as before (no checkbox
+     * column, no action bar) — every existing caller is unaffected.
+     */
+    bulkActions?: BulkAction<T>[];
+    /**
+     * Identity key used for selection tracking. Defaults to `row.id` (via
+     * `getRowId`); override when a table's rows are keyed by something else
+     * (e.g. `group_id` for a grouped/aggregated row shape).
+     */
+    rowKey?: (row: T) => string;
+    /**
+     * When set alongside a status-scoped bulk selection, and the backend
+     * response carries `status_counts` (see `PaginatedResponse`) showing more
+     * matches than are loaded on the current page, an inline banner offers
+     * one button per entry here to act on every matching row across all
+     * pages instead of just the current page's selection.
+     */
+    crossPageBulkActions?: CrossPageBulkAction[];
 }

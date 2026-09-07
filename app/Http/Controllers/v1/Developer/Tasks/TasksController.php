@@ -28,12 +28,19 @@ class TasksController extends BaseController
     use ScopesToAssignedBatches;
 
     protected string $model = Task::class;
+
     protected string $view = 'developer/tasks/index';
+
     protected array $searchable = ['task'];
+
     protected array $filterable = ['status', 'priority', 'batch_id', 'trainee_id', 'trainer_id', 'date_from', 'date_to'];
+
     protected array $exactFilters = ['status', 'priority', 'batch_id', 'trainee_id', 'trainer_id'];
+
     protected array $sortable = ['date', 'status', 'created_at'];
+
     protected string $sortBy = 'date';
+
     protected array $activeColumns = ['id', 'task'];
 
     protected function newQuery(): Builder
@@ -80,84 +87,25 @@ class TasksController extends BaseController
      */
     public function paginationSearch(Request $request): JsonResponse
     {
-        $search = $request->string('search')->toString();
         $filters = (array) $request->input('filters', []);
         $sortByParam = $request->string('sort_by')->toString();
         $sortDir = $request->string('sort_dir', 'asc')->toString() === 'desc' ? 'desc' : 'asc';
-
-        $query = Task::query()
-            ->leftJoin('app_batches', 'app_batches.id', '=', 'app_tasks.batch_id')
-            ->leftJoin('app_trainees', 'app_trainees.id', '=', 'app_tasks.trainee_id')
-            ->leftJoin('users as trainer_users', 'trainer_users.id', '=', 'app_tasks.trainer_id');
-        $query = $this->scopeTrainerBatches($query, 'app_tasks.batch_id');
-
-        if ($search !== '') {
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('app_tasks.task', 'like', "%{$search}%")
-                    ->orWhere('app_trainees.first_name', 'like', "%{$search}%")
-                    ->orWhere('app_trainees.last_name', 'like', "%{$search}%");
-            });
-        }
+        $search = $request->string('search')->toString();
 
         // `status` describes a *group's* rolled-up state (see groupStatus()),
         // not an individual row, so it's deliberately NOT applied as a
-        // row-level WHERE here — doing so before aggregating would make a
-        // partially-completed group's trainee_count/completed_count reflect
-        // only the matching rows, which corrupts the "Complete all"/"Lock
-        // all" enablement (and the true target state those actions act on).
-        // It's applied after aggregation instead — see below.
+        // row-level WHERE inside buildGroupedQuery() — doing so before
+        // aggregating would make a partially-completed group's
+        // trainee_count/completed_count reflect only the matching rows,
+        // which corrupts the "Complete all"/"Lock all" enablement (and the
+        // true target state those actions act on). It's applied after
+        // aggregation instead — see below.
         $statusFilter = $filters['status'] ?? null;
         if ($statusFilter === '') {
             $statusFilter = null;
         }
 
-        foreach (['priority', 'batch_id', 'trainee_id', 'trainer_id'] as $col) {
-            $value = $filters[$col] ?? null;
-            if ($value === null || $value === '') {
-                continue;
-            }
-            if (is_array($value)) {
-                $clean = array_values(array_filter($value, fn($v) => $v !== null && $v !== ''));
-                if ($clean) {
-                    $query->whereIn("app_tasks.{$col}", $clean);
-                }
-            } else {
-                $query->where("app_tasks.{$col}", $value);
-            }
-        }
-
-        if (! empty($filters['date_from'])) {
-            $query->whereDate('app_tasks.date', '>=', $filters['date_from']);
-        }
-        if (! empty($filters['date_to'])) {
-            $query->whereDate('app_tasks.date', '<=', $filters['date_to']);
-        }
-
-        // Aggregate the (possibly search/filter-matched) row set into one row
-        // per task_group_id. Fields that are identical across every row in a
-        // group (task/date/batch/trainer/priority/time_goal — all set once at
-        // creation) are passed through via MIN(); status/count fields are
-        // genuinely aggregated so the frontend can render "3/5 completed".
-        $grouped = (clone $query)
-            ->select([
-                'app_tasks.task_group_id as group_id',
-                DB::raw('MIN(app_tasks.id) as id'),
-                DB::raw('MIN(app_tasks.task) as task'),
-                DB::raw('MIN(app_tasks.description) as description'),
-                DB::raw('MIN(app_tasks.date) as date'),
-                DB::raw('MIN(app_tasks.priority) as priority'),
-                DB::raw('MIN(app_tasks.time_goal) as time_goal'),
-                DB::raw('MIN(app_tasks.batch_id) as batch_id'),
-                DB::raw('MIN(app_tasks.trainer_id) as trainer_id'),
-                DB::raw('MIN(app_batches.batch_code) as batch_code'),
-                DB::raw("MIN(trainer_users.first_name) as trainer_first_name"),
-                DB::raw("MIN(trainer_users.last_name) as trainer_last_name"),
-                DB::raw('COUNT(*) as trainee_count'),
-                DB::raw("SUM(CASE WHEN app_tasks.status = 'completed' THEN 1 ELSE 0 END) as completed_count"),
-                DB::raw("SUM(CASE WHEN app_tasks.status = 'locked' THEN 1 ELSE 0 END) as locked_count"),
-                DB::raw('MAX(app_tasks.created_at) as created_at'),
-            ])
-            ->groupBy('app_tasks.task_group_id');
+        $grouped = $this->buildGroupedQuery($request);
 
         if ($sortByParam !== '' && in_array($sortByParam, $this->sortable, true)) {
             $grouped->orderBy($sortByParam, $sortDir);
@@ -169,14 +117,25 @@ class TasksController extends BaseController
 
         $perPage = max(1, min((int) $request->input('per_page', 10), 100));
 
+        // Materialize every matching group once (search/filters applied,
+        // status filter not yet applied) so both the status-filter/pagination
+        // branch below and the status_counts tally can share the same set
+        // without running the aggregation query twice.
+        $allGroups = (clone $grouped)->get();
+
+        $statusCounts = ['open' => 0, 'completed' => 0, 'locked' => 0, 'mixed' => 0];
+        foreach ($allGroups as $row) {
+            $statusCounts[$this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count)]++;
+        }
+
         if ($statusFilter !== null) {
             // The filter targets each group's rolled-up status, which only
             // exists after aggregation, so it can't be pushed down as SQL
             // pagination — fetch every matching group, roll each up, then
             // filter/paginate in PHP.
             $page = max(1, (int) $request->input('page', 1));
-            $filteredGroups = $grouped->get()->filter(
-                fn($row) => $this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count) === $statusFilter
+            $filteredGroups = $allGroups->filter(
+                fn ($row) => $this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count) === $statusFilter
             )->values();
 
             $paginator = new LengthAwarePaginator(
@@ -190,7 +149,7 @@ class TasksController extends BaseController
             $paginator = $grouped->paginate($perPage);
         }
 
-        $rows = collect($paginator->items())->map(fn($row) => [
+        $rows = collect($paginator->items())->map(fn ($row) => [
             'group_id' => $row->group_id,
             'id' => $row->id,
             'task' => $row->task,
@@ -231,9 +190,152 @@ class TasksController extends BaseController
             'search' => $search,
             'sort_by' => $sortByParam,
             'sort_dir' => $sortDir,
+            'status_counts' => $statusCounts,
         ];
 
         return $this->sendResponse($paginatedData);
+    }
+
+    /**
+     * Builds the search/filter-matched, grouped-by-task_group_id query shared
+     * by paginationSearch() (for the list + status_counts) and
+     * bulkStatusByFilter() (for resolving which groups a cross-page bulk
+     * action targets) — so both always agree on exactly what "the current
+     * view" means. Returns the aggregation unsorted/unpaginated/unfiltered by
+     * status; callers apply their own ordering/pagination/status filter.
+     */
+    protected function buildGroupedQuery(Request $request): Builder
+    {
+        $search = $request->string('search')->toString();
+        $filters = (array) $request->input('filters', []);
+
+        $query = Task::query()
+            ->leftJoin('app_batches', 'app_batches.id', '=', 'app_tasks.batch_id')
+            ->leftJoin('app_trainees', 'app_trainees.id', '=', 'app_tasks.trainee_id')
+            ->leftJoin('users as trainer_users', 'trainer_users.id', '=', 'app_tasks.trainer_id');
+        $query = $this->scopeTrainerBatches($query, 'app_tasks.batch_id');
+
+        if ($search !== '') {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('app_tasks.task', 'like', "%{$search}%")
+                    ->orWhere('app_trainees.first_name', 'like', "%{$search}%")
+                    ->orWhere('app_trainees.last_name', 'like', "%{$search}%");
+            });
+        }
+
+        foreach (['priority', 'batch_id', 'trainee_id', 'trainer_id'] as $col) {
+            $value = $filters[$col] ?? null;
+            if ($value === null || $value === '') {
+                continue;
+            }
+            if (is_array($value)) {
+                $clean = array_values(array_filter($value, fn ($v) => $v !== null && $v !== ''));
+                if ($clean) {
+                    $query->whereIn("app_tasks.{$col}", $clean);
+                }
+            } else {
+                $query->where("app_tasks.{$col}", $value);
+            }
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('app_tasks.date', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('app_tasks.date', '<=', $filters['date_to']);
+        }
+
+        // Aggregate the (possibly search/filter-matched) row set into one row
+        // per task_group_id. Fields that are identical across every row in a
+        // group (task/date/batch/trainer/priority/time_goal — all set once at
+        // creation) are passed through via MIN(); status/count fields are
+        // genuinely aggregated so the frontend can render "3/5 completed".
+        return $query
+            ->select([
+                'app_tasks.task_group_id as group_id',
+                DB::raw('MIN(app_tasks.id) as id'),
+                DB::raw('MIN(app_tasks.task) as task'),
+                DB::raw('MIN(app_tasks.description) as description'),
+                DB::raw('MIN(app_tasks.date) as date'),
+                DB::raw('MIN(app_tasks.priority) as priority'),
+                DB::raw('MIN(app_tasks.time_goal) as time_goal'),
+                DB::raw('MIN(app_tasks.batch_id) as batch_id'),
+                DB::raw('MIN(app_tasks.trainer_id) as trainer_id'),
+                DB::raw('MIN(app_batches.batch_code) as batch_code'),
+                DB::raw('MIN(trainer_users.first_name) as trainer_first_name'),
+                DB::raw('MIN(trainer_users.last_name) as trainer_last_name'),
+                DB::raw('COUNT(*) as trainee_count'),
+                DB::raw("SUM(CASE WHEN app_tasks.status = 'completed' THEN 1 ELSE 0 END) as completed_count"),
+                DB::raw("SUM(CASE WHEN app_tasks.status = 'locked' THEN 1 ELSE 0 END) as locked_count"),
+                DB::raw('MAX(app_tasks.created_at) as created_at'),
+            ])
+            ->groupBy('app_tasks.task_group_id');
+    }
+
+    /**
+     * Cross-page bulk action: complete/lock every task-group matching the
+     * current view (same search/filters as paginationSearch(), via
+     * buildGroupedQuery()) whose rolled-up status is `status_scope` — not
+     * just the rows loaded on the current page. Reuses the exact per-row
+     * guard logic already in completeGroupAction()/lockGroupAction() so
+     * behavior (skip rows already in the target state, dispatch
+     * HourThresholdDispatcher on completion) stays identical.
+     */
+    public function bulkStatusByFilter(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'status_scope' => ['required', 'in:open,completed,locked'],
+            'action' => ['required', 'in:complete,lock'],
+        ]);
+
+        $groups = $this->buildGroupedQuery($request)->get();
+        $groupIds = $groups
+            ->filter(fn ($row) => $this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count) === $validated['status_scope'])
+            ->pluck('group_id');
+
+        if ($groupIds->isEmpty()) {
+            return $this->sendResponse(['groups_updated' => 0, 'rows_updated' => 0], 'No matching tasks found.');
+        }
+
+        $groupsUpdated = 0;
+        $rowsUpdated = 0;
+
+        DB::transaction(function () use ($groupIds, $validated, &$groupsUpdated, &$rowsUpdated) {
+            foreach ($groupIds as $groupId) {
+                $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
+                if ($rows->isEmpty()) {
+                    continue;
+                }
+                $this->authorize('update', $rows->first());
+
+                $targetStatus = $validated['action'] === 'complete' ? 'completed' : 'locked';
+                $skipStatuses = $validated['action'] === 'complete' ? ['locked', 'completed'] : ['locked'];
+                $eligible = $rows->whereNotIn('status', $skipStatuses);
+
+                foreach ($eligible as $row) {
+                    $row->update($validated['action'] === 'complete'
+                        ? ['status' => 'completed', 'completed_at' => now()]
+                        : ['status' => 'locked', 'locked_at' => now()]);
+
+                    if ($validated['action'] === 'complete') {
+                        $trainee = Trainees::whereKey($row->trainee_id)->first();
+                        if ($trainee) {
+                            HourThresholdDispatcher::maybeDispatch($trainee);
+                        }
+                    }
+                    $rowsUpdated++;
+                }
+
+                if ($eligible->isNotEmpty()) {
+                    $groupsUpdated++;
+                }
+            }
+        });
+
+        return $this->sendResponse(
+            ['groups_updated' => $groupsUpdated, 'rows_updated' => $rowsUpdated],
+            "{$groupsUpdated} task group(s) updated.",
+        );
     }
 
     /** Rolls a group's per-trainee statuses up into one label for the list row. */
@@ -369,7 +471,7 @@ class TasksController extends BaseController
             'trainee_ids' => ['required', 'array', 'min:1'],
             'trainee_ids.*' => [
                 'integer',
-                Rule::exists('app_trainees', 'id')->where(fn($q) => $q->where('batch_id', request()->input('batch_id'))),
+                Rule::exists('app_trainees', 'id')->where(fn ($q) => $q->where('batch_id', request()->input('batch_id'))),
             ],
             // trainer_id is still validated here so admin's payload shape stays
             // unchanged; store() below forces it to auth()->id() for trainers.
@@ -397,7 +499,7 @@ class TasksController extends BaseController
             ],
             'trainee_id' => [
                 'required',
-                Rule::exists('app_trainees', 'id')->where(fn($q) => $q->where('batch_id', request()->input('batch_id'))),
+                Rule::exists('app_trainees', 'id')->where(fn ($q) => $q->where('batch_id', request()->input('batch_id'))),
             ],
             'trainer_id' => ['required', 'exists:users,id'],
             'task' => ['required', 'string', 'max:255'],

@@ -68,18 +68,20 @@ class TaskImportController extends Controller implements HasMiddleware
             ->map(fn ($e) => strtolower(trim($e)))
             ->unique();
         if (count($validated['rows']) > 1 && $distinctTrainerEmails->count() === 1) {
-            $warnings[] = 'All ' . count($validated['rows']) . " rows use the same trainer_email (\"{$distinctTrainerEmails->first()}\") — double-check the file's trainer_email column wasn't accidentally filled with one repeated value before assuming this is correct.";
+            $warnings[] = 'All '.count($validated['rows'])." rows use the same trainer_email (\"{$distinctTrainerEmails->first()}\") — double-check the file's trainer_email column wasn't accidentally filled with one repeated value before assuming this is correct.";
         }
 
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
             if ($error = $this->validateRow($row, $rowRules)) {
                 $errors[] = "Row {$rowNum}: {$error}";
+
                 continue;
             }
             $trainee = Trainees::where('email', trim($row['trainee_email']))->first();
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$row['trainee_email']}\" — run the Trainees import first.";
+
                 continue;
             }
             ['user' => $trainer, 'warning' => $trainerWarning] = $this->findOrInviteTrainer($row['trainer_email']);
@@ -89,6 +91,17 @@ class TaskImportController extends Controller implements HasMiddleware
             }
 
             $complete = $this->truthy($row['is_complete'] ?? null);
+
+            $isDuplicate = Task::where('trainee_id', $trainee->id)
+                ->where('batch_id', $trainee->batch_id)
+                ->where('task', $row['task_title'])
+                ->where('date', $row['date'])
+                ->exists();
+            if ($isDuplicate) {
+                $errors[] = "Row {$rowNum}: duplicate task \"{$row['task_title']}\" for \"{$row['trainee_email']}\" on {$row['date']} — skipped.";
+
+                continue;
+            }
 
             try {
                 $rowCreatedIds = DB::transaction(function () use ($row, $trainee, $trainer, $complete) {

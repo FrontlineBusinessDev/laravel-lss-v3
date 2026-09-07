@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Lock, LockOpen, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -161,9 +162,19 @@ return;
                                 data-cy="task-roster-modal-div-row"
                             >
                                 <div className="min-w-0" data-cy="task-roster-modal-div-info">
-                                    <p className="truncate text-sm font-medium text-ink" data-cy="task-roster-modal-p-trainee">
-                                        {personName(row.trainee)}
-                                    </p>
+                                    {row.trainee ? (
+                                        <Link
+                                            href={`/trainees/${row.trainee.id}`}
+                                            className="truncate text-sm font-medium text-brand-600 underline-offset-2 hover:underline"
+                                            data-cy="task-roster-modal-link-trainee"
+                                        >
+                                            {personName(row.trainee)}
+                                        </Link>
+                                    ) : (
+                                        <p className="truncate text-sm font-medium text-ink" data-cy="task-roster-modal-p-trainee">
+                                            {personName(row.trainee)}
+                                        </p>
+                                    )}
                                     <p className="text-xs text-neutral-500" data-cy="task-roster-modal-p-hours">
                                         {Number(row.time_spent ?? 0)}h / {Number(row.time_goal)}h
                                     </p>
