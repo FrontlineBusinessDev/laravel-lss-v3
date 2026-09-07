@@ -1,21 +1,43 @@
 <?php
 
-use App\Http\Controllers\v1\GlobalSearchController;
-use App\Http\Controllers\v1\HomeController;
+use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
+use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
+use App\Http\Controllers\v1\Developer\Auth\ChangePasswordController;
+use App\Http\Controllers\v1\Developer\Auth\ForgotPasswordController;
+use App\Http\Controllers\v1\Developer\Batches\BatchesController;
+use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
+use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
+use App\Http\Controllers\v1\Developer\Biometrics\BiometricsController;
+use App\Http\Controllers\v1\Developer\Certificate\CertificateTemplateController;
+use App\Http\Controllers\v1\Developer\Certificate\CitationController;
+use App\Http\Controllers\v1\Developer\Certificate\SeminarCertificateController;
+use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
+use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
+use App\Http\Controllers\v1\Developer\Developer\SystemLogController;
+use App\Http\Controllers\v1\Developer\Documents\DocumentsController;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationSeminarQuestionnaire;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationTrainerQuestionnaire;
+use App\Http\Controllers\v1\Developer\Evaluation\EvaluationViewController;
+use App\Http\Controllers\v1\Developer\Leave\LeaveController;
+use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
+use App\Http\Controllers\v1\Developer\Payment\PaymentController;
+use App\Http\Controllers\v1\Developer\Ratings\BehavioralEvaluationController;
+use App\Http\Controllers\v1\Developer\Ratings\BehavioralQuestionController;
+use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
+use App\Http\Controllers\v1\Developer\Report\ReportController;
+use App\Http\Controllers\v1\Developer\Schedule\ScheduleController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarEmailNotificationController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarListController;
+use App\Http\Controllers\v1\Developer\Seminar\SeminarParticipantsController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicIndustryController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicLearningOutcomesController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicLevelController;
 use App\Http\Controllers\v1\Developer\Settings\AcademicProgramController;
+use App\Http\Controllers\v1\Developer\Settings\AcademicProgramTypeController;
 use App\Http\Controllers\v1\Developer\Settings\GroupDiscountController;
 use App\Http\Controllers\v1\Developer\Settings\HoursDiscountController;
-use App\Http\Controllers\v1\Developer\Settings\LeaveCategoryController;
-use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
-use App\Http\Controllers\v1\Developer\Settings\PaymentMethodsController;
-use App\Http\Controllers\v1\Developer\Settings\RatesController;
-use App\Http\Controllers\v1\Developer\Settings\RoleController;
-use App\Http\Controllers\v1\Developer\Settings\SettingController;
-use App\Http\Controllers\v1\Developer\Settings\ImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\AcademicImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\BatchImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\BehavioralEvaluationImportController;
@@ -26,58 +48,26 @@ use App\Http\Controllers\v1\Developer\Settings\Import\PartnerSchoolImportControl
 use App\Http\Controllers\v1\Developer\Settings\Import\PaymentImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\TaskImportController;
 use App\Http\Controllers\v1\Developer\Settings\Import\TraineeImportController;
+use App\Http\Controllers\v1\Developer\Settings\ImportController;
+use App\Http\Controllers\v1\Developer\Settings\LeaveCategoryController;
+use App\Http\Controllers\v1\Developer\Settings\PartnerSchoolsController;
+use App\Http\Controllers\v1\Developer\Settings\PaymentMethodsController;
+use App\Http\Controllers\v1\Developer\Settings\RatesController;
+use App\Http\Controllers\v1\Developer\Settings\RoleController;
+use App\Http\Controllers\v1\Developer\Settings\SettingController;
 use App\Http\Controllers\v1\Developer\Settings\UserController;
-use App\Http\Controllers\v1\Developer\Settings\AcademicProgramTypeController;
-use App\Http\Controllers\v1\Developer\Announcement\AnnoucementController;
-use App\Http\Controllers\v1\Developer\Auth\AccountSetupController;
-use App\Http\Controllers\v1\Developer\Auth\ChangePasswordController;
-use App\Http\Controllers\v1\Developer\Auth\ForgotPasswordController;
-use App\Http\Controllers\v1\Developer\Batches\BatchesController;
-use App\Http\Controllers\v1\Developer\Batches\BatchTraineesController;
-use App\Http\Controllers\v1\Developer\Batches\BatchViewController;
-use App\Http\Controllers\v1\Developer\Developer\SystemLogController;
-use App\Http\Controllers\v1\Developer\Biometrics\BiometricsController;
-use App\Http\Controllers\v1\Developer\Certificate\CitationController;
-use App\Http\Controllers\v1\Developer\Certificate\CertificateTemplateController;
-use App\Http\Controllers\v1\Developer\Certificate\SeminarCertificateController;
-use App\Http\Controllers\v1\Developer\Certificate\TraineeCertificateController;
-use App\Http\Controllers\v1\Developer\Dashboard\DashboardController;
-use App\Http\Controllers\v1\Developer\Evaluation\EvaluationSeminarQuestionnaire;
-use App\Http\Controllers\v1\Developer\Evaluation\EvaluationTrainerQuestionnaire;
-use App\Http\Controllers\v1\Developer\Evaluation\EvaluationViewController;
-use App\Http\Controllers\v1\Developer\Leave\LeaveController;
-use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
-use App\Http\Controllers\v1\NotificationController;
-use App\Http\Controllers\v1\Trainer\Leave\LeaveController as TrainerLeaveController;
-use App\Http\Controllers\v1\Developer\Payment\PaymentController;
-use App\Http\Controllers\v1\Developer\Report\ReportController;
-use App\Http\Controllers\v1\Developer\Schedule\ScheduleController;
-use App\Http\Controllers\v1\Developer\Seminar\SeminarController;
 use App\Http\Controllers\v1\Developer\Tasks\DailyTaskController;
 use App\Http\Controllers\v1\Developer\Tasks\TasksController;
-use App\Http\Controllers\v1\Developer\Ratings\TaskRatingController;
-use App\Http\Controllers\v1\Developer\Ratings\BehavioralEvaluationController;
-use App\Http\Controllers\v1\Developer\Ratings\BehavioralQuestionController;
-use App\Http\Controllers\v1\Developer\Seminar\SeminarEmailNotificationController;
-use App\Http\Controllers\v1\Developer\Seminar\SeminarListController;
-use App\Http\Controllers\v1\Developer\Seminar\SeminarParticipantsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeBiometricsController as TraineeDetailBiometricsController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
-use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineePaymentsController;
+use App\Http\Controllers\v1\Developer\Trainees\TraineesController;
 use App\Http\Controllers\v1\Developer\Trainees\TraineesViewController;
-use App\Http\Controllers\v1\Trainer\Announcements\AnnouncementsController as TrainerAnnouncementsController;
-use App\Http\Controllers\v1\Trainer\Batches\BatchesController as TrainerBatchesController;
-use App\Http\Controllers\v1\Trainer\Batches\BatchTraineesController as TrainerBatchTraineesController;
-use App\Http\Controllers\v1\Trainer\Batches\BatchViewController as TrainerBatchViewController;
-use App\Http\Controllers\v1\Trainer\Dashboard\DashboardController as TrainerDashboardController;
-use App\Http\Controllers\v1\Trainer\Evaluations\EvaluationsController as TrainerEvaluationsController;
-use App\Http\Controllers\v1\Trainer\Ratings\RatingsController as TrainerRatingsController;
-use App\Http\Controllers\v1\Trainer\Schedule\ScheduleController as TrainerScheduleController;
-use App\Http\Controllers\v1\Trainer\Tasks\TasksController as TrainerTasksController;
-use App\Http\Controllers\v1\Trainer\Trainees\TraineeDocumentsController as TrainerTraineeDocumentsController;
-use App\Http\Controllers\v1\Trainer\Trainees\TraineesController as TrainerTraineesController;
-use App\Http\Controllers\v1\Trainer\Trainees\TraineesViewController as TrainerTraineesViewController;
+use App\Http\Controllers\v1\GlobalSearchController;
+use App\Http\Controllers\v1\HomeController;
+use App\Http\Controllers\v1\NotificationController;
+use App\Http\Controllers\v1\PublicCertificateController;
+use App\Http\Controllers\v1\PublicRegistrationController;
 use App\Http\Controllers\v1\Trainee\Announcements\AnnouncementsController as TraineeAnnouncementsController;
 use App\Http\Controllers\v1\Trainee\Biometrics\BiometricsController as TraineeBiometricsController;
 use App\Http\Controllers\v1\Trainee\Dashboard\DashboardController as TraineeDashboardController;
@@ -87,8 +77,19 @@ use App\Http\Controllers\v1\Trainee\MyInfo\MyInfoController as TraineeMyInfoCont
 use App\Http\Controllers\v1\Trainee\Payments\PaymentsController as TraineeSelfPaymentsController;
 use App\Http\Controllers\v1\Trainee\Ratings\RatingsController as TraineeRatingsController;
 use App\Http\Controllers\v1\Trainee\Tasks\TasksController as TraineeTasksController;
-use App\Http\Controllers\v1\PublicCertificateController;
-use App\Http\Controllers\v1\PublicRegistrationController;
+use App\Http\Controllers\v1\Trainer\Announcements\AnnouncementsController as TrainerAnnouncementsController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchesController as TrainerBatchesController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchTraineesController as TrainerBatchTraineesController;
+use App\Http\Controllers\v1\Trainer\Batches\BatchViewController as TrainerBatchViewController;
+use App\Http\Controllers\v1\Trainer\Dashboard\DashboardController as TrainerDashboardController;
+use App\Http\Controllers\v1\Trainer\Evaluations\EvaluationsController as TrainerEvaluationsController;
+use App\Http\Controllers\v1\Trainer\Leave\LeaveController as TrainerLeaveController;
+use App\Http\Controllers\v1\Trainer\Ratings\RatingsController as TrainerRatingsController;
+use App\Http\Controllers\v1\Trainer\Schedule\ScheduleController as TrainerScheduleController;
+use App\Http\Controllers\v1\Trainer\Tasks\TasksController as TrainerTasksController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineeDocumentsController as TrainerTraineeDocumentsController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineesController as TrainerTraineesController;
+use App\Http\Controllers\v1\Trainer\Trainees\TraineesViewController as TrainerTraineesViewController;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -190,7 +191,7 @@ Route::middleware('auth')->group(function () {
     Route::crudModule('/trainees', TraineesController::class, 'trainees');
     // Same static-segment-before-wildcard rule as above — backs the
     // Evaluation module's AccessOverridePanel bypass toggle.
-    Route::middleware('permission:' . Permissions::MANAGE_EVALUATION)->group(function () {
+    Route::middleware('permission:'.Permissions::MANAGE_EVALUATION)->group(function () {
         Route::get('/trainees/evaluation-override-candidates', [TraineesController::class, 'evaluationOverrideCandidates'])->name('trainees.evaluation-override-candidates');
         Route::patch('/trainees/{id}/evaluation-override', [TraineesController::class, 'toggleEvaluationOverride'])->name('trainees.evaluation-override.update');
     });
@@ -243,7 +244,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/biometrics/records/{id}', [BiometricsController::class, 'deleteRecord'])->name('biometrics.records.destroy');
 
     // Tasks module — Task Management (default) + Daily Task Sheet, real DB-backed.
-    Route::middleware('permission:' . Permissions::MANAGE_TASKS)->group(function () {
+    Route::middleware('permission:'.Permissions::MANAGE_TASKS)->group(function () {
         Route::prefix('tasks')->name('tasks.')->group(function () {
             Route::get('/', [TasksController::class, 'index'])->name('index');
             Route::get('/pagination-search', [TasksController::class, 'paginationSearch'])->name('pagination-search');
@@ -271,7 +272,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Ratings module — RatingsPrimaryLayout with one Inertia page route per tab.
-    Route::middleware('permission:' . Permissions::MANAGE_RATINGS)->group(function () {
+    Route::middleware('permission:'.Permissions::MANAGE_RATINGS)->group(function () {
         Route::redirect('/ratings', '/ratings/task-rating')->name('ratings.index');
         // Old bookmarked/typed URL for the pre-tab-refactor behavioral page.
         Route::redirect('/ratings/behavioral-rating', '/ratings/behavioral-form');
@@ -281,7 +282,7 @@ Route::middleware('auth')->group(function () {
         // Behavioral Assessment Setup — Admin only. Nested permission means a
         // trainer (who holds MANAGE_RATINGS but not this) 403s here while
         // still reaching the Form/Task Rating routes above.
-        Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
+        Route::middleware('permission:'.Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
             ->get('/ratings/behavioral-setup', [BehavioralQuestionController::class, 'index'])
             ->name('ratings.behavioral-setup.page');
 
@@ -298,7 +299,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/evaluation', [BehavioralEvaluationController::class, 'forTrainee'])->name('evaluation');
             Route::post('/evaluation', [BehavioralEvaluationController::class, 'store'])->name('evaluation.store');
         });
-        Route::middleware('permission:' . Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
+        Route::middleware('permission:'.Permissions::MANAGE_BEHAVIORAL_QUESTIONS)
             ->group(function () {
                 Route::get('/ratings/behavioral-questions/sections', [BehavioralQuestionController::class, 'sections'])->name('ratings.behavioral-questions.sections');
                 Route::get('/ratings/behavioral-questions/for-section', [BehavioralQuestionController::class, 'forSection'])->name('ratings.behavioral-questions.for-section');
@@ -310,7 +311,7 @@ Route::middleware('auth')->group(function () {
     // Evaluation module: Overview (analytics), Trainer Questionnaire and
     // Seminar Questionnaire question banks. Gated by `manage evaluation`,
     // matching the Ratings/Tasks module convention.
-    Route::middleware('permission:' . Permissions::MANAGE_EVALUATION)->group(function () {
+    Route::middleware('permission:'.Permissions::MANAGE_EVALUATION)->group(function () {
         Route::redirect('/evaluation', '/evaluation/overview')->name('evaluation.index');
         Route::get('/evaluation/overview', [EvaluationViewController::class, 'index'])->name('evaluation.overview.index');
         Route::get('/evaluation/overview/metrics', [EvaluationViewController::class, 'metrics'])->name('evaluation.overview.metrics');
@@ -332,7 +333,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payments/pagination-search', [PaymentController::class, 'paginationSearch'])->name('payments.pagination-search');
     Route::get('/payments/{id}', [PaymentController::class, 'show'])->name('payments.show');
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-    Route::middleware('permission:' . Permissions::MANAGE_SEMINARS)->group(function () {
+    Route::middleware('permission:'.Permissions::MANAGE_SEMINARS)->group(function () {
         Route::redirect('/seminars', '/seminars/list-of-seminars')->name('seminars.index');
         Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.list-of-seminars.index');
         Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
@@ -354,7 +355,7 @@ Route::middleware('auth')->group(function () {
     // routes sharing CertificatesPrimaryLayout, matching the settings pattern.
     // ==========================================
     Route::prefix('certificates')->name('certificates.')->group(function () {
-        Route::get('/', fn() => redirect()->route('certificates.trainees.index'))->name('index');
+        Route::get('/', fn () => redirect()->route('certificates.trainees.index'))->name('index');
         Route::get('/trainees', [TraineeCertificateController::class, 'index'])->name('trainees.index');
         Route::get('/trainees/pagination-search', [TraineeCertificateController::class, 'paginationSearch'])->name('trainees.pagination-search');
         Route::post('/trainees/{trainee}/issue', [TraineeCertificateController::class, 'issue'])->name('trainees.issue');
@@ -389,28 +390,28 @@ Route::middleware('auth')->group(function () {
         // Users & Roles admin JSON API consumed by the settings DataTableField.
         // Coarse access is gated by the Spatie permission; UserController layers on
         // the creator-scoped role matrix, and RolesController is developer-only.
-        Route::middleware('permission:' . Permissions::MANAGE_USERS)->group(function () {
+        Route::middleware('permission:'.Permissions::MANAGE_USERS)->group(function () {
             Route::crudModule('/users', UserController::class, 'users');
             // Admin "Send password reset" action: queues the invite/reset email.
             Route::post('/users/{id}/reset-password', [UserController::class, 'sendPasswordReset'])
                 ->name('users.reset-password');
         });
-        Route::middleware('permission:' . Permissions::MANAGE_ROLES)->group(function () {
+        Route::middleware('permission:'.Permissions::MANAGE_ROLES)->group(function () {
             Route::crudModule('/roles', RoleController::class, 'roles');
         });
-        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_PARTNER_SCHOOLS)->group(function () {
+        Route::middleware('permission:'.Permissions::MANAGE_SETTINGS_PARTNER_SCHOOLS)->group(function () {
             Route::crudModule('/partner-schools', PartnerSchoolsController::class, 'partner-schools');
         });
-        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_PAYMENT_METHODS)->group(function () {
+        Route::middleware('permission:'.Permissions::MANAGE_SETTINGS_PAYMENT_METHODS)->group(function () {
             Route::crudModule('/payment-methods', PaymentMethodsController::class, 'payment-methods');
         });
         // Leave category limits (max days / instances per category), enforced by
         // LeaveRequestController on submission. No dedicated permission constant
         // exists for this sub-module — gated by the umbrella `manage settings`.
-        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS)->group(function () {
+        Route::middleware('permission:'.Permissions::MANAGE_SETTINGS)->group(function () {
             Route::crudModule('/leave-categories', LeaveCategoryController::class, 'leave-categories');
         });
-        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_ACADEMIC)
+        Route::middleware('permission:'.Permissions::MANAGE_SETTINGS_ACADEMIC)
             ->prefix('academic')->name('academic.')->group(function () {
                 Route::get('/', [AcademicController::class, 'index'])->name('index');
                 Route::crudModule('/industry', AcademicIndustryController::class, 'industry');
@@ -422,7 +423,7 @@ Route::middleware('auth')->group(function () {
         // Rates & discount matrices: its own top-level Settings section (sibling
         // to Academic/Users/Partner Schools), with a "Default Rates" landing page
         // plus 2 further sub-pages.
-        Route::middleware('permission:' . Permissions::MANAGE_SETTINGS_RATES)
+        Route::middleware('permission:'.Permissions::MANAGE_SETTINGS_RATES)
             ->prefix('rates')->name('rates.')->group(function () {
                 Route::get('/', [RatesController::class, 'index'])->name('default.index');
                 Route::put('/', [RatesController::class, 'updateRates'])->name('default.update');
@@ -469,6 +470,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/system-log', [SystemLogController::class, 'index'])->name('system-log.index');
         Route::get('/system-log/pagination-search', [SystemLogController::class, 'paginationSearch'])->name('system-log.pagination-search');
         Route::delete('/system-log', [SystemLogController::class, 'deleteRange'])->name('system-log.delete-range');
+    });
+
+    // Master documents list — every trainee document across every trainee, on
+    // one page. Read-only, admin/developer only (uploads/deletes stay scoped
+    // to a trainee's own Documents tab). See Developer\Documents\DocumentsController.
+    Route::middleware('role:admin|developer')->group(function () {
+        Route::get('/documents', [DocumentsController::class, 'index'])->name('documents.index');
+        Route::get('/documents/pagination-search', [DocumentsController::class, 'paginationSearch'])->name('documents.pagination-search');
     });
 
     // Trainer-only placeholder module — role-gated, deliberately NOT reusing
@@ -539,7 +548,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:trainee')->prefix('trainee')->name('trainee.')->group(function () {
         Route::get('/dashboard', [TraineeDashboardController::class, 'index'])->name('dashboard');
         Route::post('/announcements/{id}/read', [TraineeDashboardController::class, 'markAnnouncementRead'])->name('announcements.read');
-        Route::middleware('permission:' . Permissions::MANAGE_OWN_TASKS)
+        Route::middleware('permission:'.Permissions::MANAGE_OWN_TASKS)
             ->prefix('tasks')->name('tasks.')->group(function () {
                 Route::get('/', [TraineeTasksController::class, 'index'])->name('index');
                 Route::get('/daily-task', [TraineeTasksController::class, 'dailyTask'])->name('daily-task');
@@ -556,7 +565,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/leave', [TraineeLeaveController::class, 'index'])->name('leave');
         Route::get('/biometrics', [TraineeBiometricsController::class, 'index'])->name('biometrics');
         Route::get('/biometrics-data', [TraineeBiometricsController::class, 'records'])->name('biometrics.data');
-        Route::middleware('permission:' . Permissions::MANAGE_OWN_EVALUATION)
+        Route::middleware('permission:'.Permissions::MANAGE_OWN_EVALUATION)
             ->prefix('evaluations')->name('evaluations.')->group(function () {
                 Route::get('/', [TraineeEvaluationsController::class, 'index'])->name('index');
                 Route::get('/gateway', [TraineeEvaluationsController::class, 'gateway'])->name('gateway');
@@ -573,7 +582,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/trainers', [TraineeRatingsController::class, 'trainers'])->name('trainers');
             Route::get('/metrics', [TraineeRatingsController::class, 'metrics'])->name('metrics');
         });
-        Route::middleware('permission:' . Permissions::MANAGE_OWN_MY_INFO)
+        Route::middleware('permission:'.Permissions::MANAGE_OWN_MY_INFO)
             ->prefix('my-info')->name('my-info.')->group(function () {
                 Route::get('/', [TraineeMyInfoController::class, 'index'])->name('index');
                 Route::post('/documents', [TraineeMyInfoController::class, 'uploadDocument'])->name('documents.store');

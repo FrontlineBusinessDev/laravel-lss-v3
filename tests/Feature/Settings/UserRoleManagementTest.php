@@ -8,14 +8,6 @@ beforeEach(function () {
     $this->seed(RoleSeeder::class);
 });
 
-function userWithRole(string $role): User
-{
-    $user = User::factory()->create();
-    $user->assignRole($role);
-
-    return $user;
-}
-
 // ── Access control ───────────────────────────────────────────────────────────
 
 test('developer can list users and roles', function () {

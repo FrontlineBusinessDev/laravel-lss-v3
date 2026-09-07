@@ -1,3 +1,4 @@
+import { Skeleton } from 'boneyard-js/react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 interface StatCardProps {
@@ -7,6 +8,7 @@ interface StatCardProps {
   tone?: 'default' | 'warning' | 'success' | 'accent';
   hint?: string;
   className?: string;
+  loading?: boolean;
 }
 const TONE_TEXT: Record<NonNullable<StatCardProps['tone']>, string> = {
   default: 'text-ink',
@@ -14,20 +16,32 @@ const TONE_TEXT: Record<NonNullable<StatCardProps['tone']>, string> = {
   success: 'text-success-800',
   accent: 'text-brand-600'
 };
+/** Static stand-in snapshotted by the boneyard CLI in place of the real (async) value/hint. */
+function StatFixture() {
+  return (
+    <>
+      <span className="mt-1.5 block h-6 w-14 rounded bg-neutral-200 sm:h-7" />
+      <span className="mt-1 block h-3 w-24 rounded bg-neutral-100" />
+    </>
+  );
+}
 export function StatCard({
   label,
   value,
   icon: Icon,
   tone = 'default',
   hint,
-  className
+  className,
+  loading = false
 }: StatCardProps) {
   return <div className={cn('group min-w-0 rounded-lg border border-neutral-200 bg-white p-3.5 transition-colors duration-150 hover:border-neutral-300', className)} data-cy="stat-card-div-1">
       <div className="flex items-start justify-between gap-2" data-cy="stat-card-div-2">
         <span className="min-w-0 truncate text-xs text-neutral-500" data-cy="stat-card-span-3">{label}</span>
         {Icon && <Icon size={15} strokeWidth={2} className="shrink-0 text-neutral-400 transition-colors group-hover:text-brand-500" data-cy="stat-card-icon-4" />}
       </div>
-      <div className={cn('mt-1.5 truncate text-lg font-semibold sm:text-xl', TONE_TEXT[tone])} title={String(value)} data-cy="stat-card-div-5">{value}</div>
-      {hint && <div className="mt-1 text-xs text-neutral-500" data-cy="stat-card-div-6">{hint}</div>}
+      <Skeleton name="stat-card" loading={loading} fixture={<StatFixture />}>
+        <div className={cn('mt-1.5 truncate text-lg font-semibold sm:text-xl', TONE_TEXT[tone])} title={String(value)} data-cy="stat-card-div-5">{value}</div>
+        {hint && <div className="mt-1 text-xs text-neutral-500" data-cy="stat-card-div-6">{hint}</div>}
+      </Skeleton>
     </div>;
 }

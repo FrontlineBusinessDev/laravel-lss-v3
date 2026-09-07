@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\v1\Trainer\Trainees;
 
 use App\Http\Controllers\v1\BaseController;
-use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController as AdminTraineeDocumentsController;
 use App\Models\TraineeDocument;
 use App\Models\Trainees;
 use App\Traits\ScopesToAssignedBatches;
@@ -63,9 +62,10 @@ class TraineeDocumentsController extends BaseController
 
         $document->save();
 
-        $transform = new AdminTraineeDocumentsController();
-
-        return $this->sendResponse($transform->transform($document), 'Document uploaded successfully.', 201);
+        return $this->sendResponse([
+            ...$document->toArray(),
+            ...$document->resolveUrls(),
+        ], 'Document uploaded successfully.', 201);
     }
 
     public function deleteDocument(int|string $traineeId, int|string $documentId): JsonResponse

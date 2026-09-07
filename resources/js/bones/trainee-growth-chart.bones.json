@@ -1,0 +1,95 @@
+{
+  "breakpoints": {
+    "375": {
+      "name": "trainee-growth-chart",
+      "viewportWidth": 309,
+      "width": 309,
+      "height": 112,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          112,
+          4
+        ]
+      ]
+    },
+    "640": {
+      "name": "trainee-growth-chart",
+      "viewportWidth": 566,
+      "width": 566,
+      "height": 112,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          112,
+          4
+        ]
+      ]
+    },
+    "768": {
+      "name": "trainee-growth-chart",
+      "viewportWidth": 694,
+      "width": 694,
+      "height": 112,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          112,
+          4
+        ]
+      ]
+    },
+    "1024": {
+      "name": "trainee-growth-chart",
+      "viewportWidth": 454,
+      "width": 454,
+      "height": 112,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          112,
+          4
+        ]
+      ]
+    },
+    "1280": {
+      "name": "trainee-growth-chart",
+      "viewportWidth": 625,
+      "width": 625,
+      "height": 112,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          112,
+          4
+        ]
+      ]
+    },
+    "1536": {
+      "name": "trainee-growth-chart",
+      "viewportWidth": 795,
+      "width": 795,
+      "height": 112,
+      "bones": [
+        [
+          0,
+          0,
+          100,
+          112,
+          4
+        ]
+      ]
+    }
+  },
+  "_hash": "a4b248adc8852b557c5c217e2b7452f0"
+}

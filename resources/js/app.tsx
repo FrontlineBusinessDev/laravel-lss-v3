@@ -1,5 +1,6 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
+import './bones/registry';
 import { AppProviders, makeQueryClient } from './AppProviders';
 import { ResolvedLayout } from './layouts/ResolvedLayout';
 
@@ -32,6 +33,7 @@ createInertiaApp({
                 <App {...props} />
             </AppProviders>
         );
+
         // Hydrate only when the server actually rendered markup (SSR enabled).
         // With SSR off, Inertia ships an empty #app div, so hydrateRoot would
         // report "Hydration failed …"; use createRoot instead. This keeps the

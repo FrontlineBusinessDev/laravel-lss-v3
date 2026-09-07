@@ -2,7 +2,6 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
-use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
@@ -54,4 +53,40 @@ test('users are rate limited', function () {
     ]);
 
     $response->assertTooManyRequests();
+});
+
+test('a user with capitalized Active status can authenticate', function () {
+    $user = User::factory()->create(['status' => 'Active']);
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('a user with inactive status can not authenticate', function () {
+    $user = User::factory()->create(['status' => 'inactive']);
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+});
+
+test('a user with capitalized Inactive status can not authenticate', function () {
+    $user = User::factory()->create(['status' => 'Inactive']);
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
 });

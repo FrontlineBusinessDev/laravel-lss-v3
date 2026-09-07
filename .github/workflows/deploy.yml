@@ -1,0 +1,27 @@
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master')
+    runs-on: ubuntu-latest
+    steps:
+      # Coolify builds and deploys directly from this git repo, so this job
+      # just triggers that build via the app's Coolify deploy webhook — no
+      # build/push step here. Create the two secrets below in this repo's
+      # GitHub settings (Settings > Secrets and variables > Actions):
+      #   COOLIFY_WEBHOOK_URL   - Coolify Application > Webhooks > Deploy webhook URL
+      #   COOLIFY_WEBHOOK_TOKEN - Coolify Application > Webhooks > API token
+      - name: Trigger Coolify deploy
+        run: |
+          curl -fsS -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_WEBHOOK_TOKEN }}"

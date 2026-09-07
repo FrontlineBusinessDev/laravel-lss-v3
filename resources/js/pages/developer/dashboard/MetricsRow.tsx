@@ -14,7 +14,8 @@ export function MetricsRow() {
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
                 label="Total batches"
-                value={isLoading ? '—' : (data?.total_batches ?? 0)}
+                value={data?.total_batches ?? 0}
+                loading={isLoading}
                 icon={UsersRound}
                 hint={
                     error ??
@@ -23,21 +24,24 @@ export function MetricsRow() {
             />
             <StatCard
                 label="Total trainees"
-                value={isLoading ? '—' : (data?.total_trainees ?? 0)}
+                value={data?.total_trainees ?? 0}
+                loading={isLoading}
                 icon={GraduationCap}
                 tone="accent"
                 hint={error ?? 'Across all batches, all time'}
             />
             <StatCard
                 label="Ongoing trainees"
-                value={isLoading ? '—' : (data?.ongoing_trainees ?? 0)}
+                value={data?.ongoing_trainees ?? 0}
+                loading={isLoading}
                 icon={Activity}
                 tone="success"
                 hint={error ?? `${data?.active_batches ?? 0} active batches`}
             />
             <StatCard
                 label="Overall LS program rating"
-                value={isLoading ? '—' : (data?.average_rating ?? 0).toFixed(1)}
+                value={(data?.average_rating ?? 0).toFixed(1)}
+                loading={isLoading}
                 icon={Star}
                 tone="warning"
                 hint={

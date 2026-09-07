@@ -1,3 +1,4 @@
+import { Skeleton } from 'boneyard-js/react';
 import { BarChart3 } from 'lucide-react';
 import { adminDashboardService } from '@/api-service-layer/admin/dashboard';
 import { YearlyTraineesChart } from '@/components/YearlyTraineesChart';
@@ -20,18 +21,24 @@ export function TraineeGrowthWidget() {
                 </h2>
             </div>
             <div className="p-4">
-                {isLoading ? (
-                    <div className="h-28 animate-pulse rounded bg-neutral-100" />
-                ) : error ? (
+                {error && !isLoading ? (
                     <p className="text-danger-700 rounded-md bg-danger-50 px-2.5 py-1.5 text-xs">
                         {error}
                     </p>
-                ) : rows.length === 0 ? (
+                ) : rows.length === 0 && !isLoading ? (
                     <p className="py-5 text-center text-xs text-neutral-400">
                         No trainee data yet.
                     </p>
                 ) : (
-                    <YearlyTraineesChart data={rows} />
+                    <Skeleton
+                        name="trainee-growth-chart"
+                        loading={isLoading}
+                        fixture={
+                            <span className="block h-28 rounded bg-neutral-100" />
+                        }
+                    >
+                        <YearlyTraineesChart data={rows} />
+                    </Skeleton>
                 )}
             </div>
         </div>

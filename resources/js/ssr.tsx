@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import createServerHtml from '@inertiajs/react/server';
 import ReactDOMServer from 'react-dom/server';
+import './bones/registry';
 import { AppProviders, makeQueryClient } from './AppProviders';
 import { ResolvedLayout } from './layouts/ResolvedLayout';
 

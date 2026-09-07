@@ -12,15 +12,18 @@
  *   - card view : all table chrome/headers hidden, only children render
  */
 
+import { Skeleton } from 'boneyard-js/react';
+import React from 'react';
 import { ConfirmInUseModal } from '@/components/modal/ConfirmInUseModal';
 import type { CardActions } from '@/types/reusable/card';
 import type { DataTableProps } from '@/types/reusable/data-table';
-import React from 'react';
 import { ConfirmDeleteModal } from '../modal/ConfirmDeleteModal';
 import FetchingSpinner from '../spinners/FetchingSpinner';
 import { CardFilterPanel } from './components/CardFilterPanel';
 import { DefaultRecordCard } from './components/DefaultRecordCard';
 import { PaginationBar } from './components/Pagination';
+import { TableCardsFixture } from './components/TableCardSkeleton';
+import { TableRowsFixture } from './components/TableRowSkeleton';
 import { Toolbar } from './components/Toolbar';
 import { ViewToggle } from './components/ViewToggle';
 import { useCardTableController } from './hooks/use-card-table-controller';
@@ -76,17 +79,6 @@ export function DataTableCardField<T extends Record<string, unknown>>(
             )}
         </React.Fragment>
     ));
-
-    const skeletonNodes = Array.from({ length: 7 }).map((_, i) =>
-        isTable ? (
-            <div key={i} className="h-16 animate-pulse bg-gray-400/50" />
-        ) : (
-            <div
-                key={i}
-                className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/40 dark:bg-gray-300/80"
-            />
-        ),
-    );
 
     const emptyState = (
         <div
@@ -195,13 +187,29 @@ export function DataTableCardField<T extends Record<string, unknown>>(
             )}
 
             <div className="relative">
-                {c.isLoading && c.displayRows.length === 0
-                    ? listShell(skeletonNodes)
-                    : isEmpty
-                      ? isTable
-                          ? listShell(emptyState)
-                          : emptyState
-                      : listShell(body)}
+                {isEmpty && !c.isLoading ? (
+                    isTable ? (
+                        listShell(emptyState)
+                    ) : (
+                        emptyState
+                    )
+                ) : (
+                    listShell(
+                        <Skeleton
+                            name={isTable ? 'table-rows' : 'table-cards'}
+                            loading={c.isLoading && c.displayRows.length === 0}
+                            fixture={
+                                isTable ? (
+                                    <TableRowsFixture />
+                                ) : (
+                                    <TableCardsFixture />
+                                )
+                            }
+                        >
+                            {body}
+                        </Skeleton>,
+                    )
+                )}
 
                 {c.isFetching && !c.isLoading && <FetchingSpinner />}
             </div>

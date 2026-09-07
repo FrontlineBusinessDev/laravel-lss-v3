@@ -47,8 +47,8 @@ export default function TraineeTasksPrimaryLayout({
             >
                 {NAV_LINKS.map((link) => {
                     const isActive =
-                        link.href === '/tasks'
-                            ? url === '/tasks'
+                        link.href === '/trainee/tasks'
+                            ? url === '/trainee/tasks'
                             : url.endsWith(link.href);
                     return (
                         <Link

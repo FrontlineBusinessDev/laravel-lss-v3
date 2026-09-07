@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Skeleton } from 'boneyard-js/react';
 import { formatDate, formatDateTime } from '@/lib/date';
 import {
     Upload,
@@ -16,6 +17,7 @@ import { Dropdown } from '@/components/Dropdown';
 import { Modal } from '@/components/Modal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { TooltipIconButton } from '@/components/TooltipIconButton';
+import { TableRowsFixture } from '@/components/table/components/TableRowSkeleton';
 import { useToast } from '@/components/Toast';
 import { biometricsService } from '@/api-service-layer/admin/biometrics';
 import { batchService } from '@/api-service-layer/admin/batch';
@@ -350,36 +352,12 @@ export default function BiometricsPage() {
                 </div>
             </div>
 
-            {loading && (
-                <>
-                    <div
-                        className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
-                        data-cy="index-div-loading-table"
-                    >
-                        <div className="flex flex-col gap-2 p-3">
-                            {Array.from({ length: 7 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-16 animate-pulse rounded-md bg-gray-400/50"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                    <div
-                        className="no-print flex flex-col gap-2 sm:hidden"
-                        data-cy="index-div-loading-cards"
-                    >
-                        {Array.from({ length: 7 }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="h-22 animate-pulse rounded-2xl border border-slate-200 bg-gray-300/40 dark:bg-gray-300/80"
-                            />
-                        ))}
-                    </div>
-                </>
-            )}
-
-            {!loading && tab === 'Daily records' && (
+            {tab === 'Daily records' && (
+                <Skeleton
+                    name="biometrics-table"
+                    loading={loading}
+                    fixture={<TableRowsFixture />}
+                >
                 <>
                     <div
                         className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
@@ -718,9 +696,15 @@ export default function BiometricsPage() {
                         )}
                     </div>
                 </>
+                </Skeleton>
             )}
 
-            {!loading && tab === 'Trainee summary' && (
+            {tab === 'Trainee summary' && (
+                <Skeleton
+                    name="biometrics-table"
+                    loading={loading}
+                    fixture={<TableRowsFixture />}
+                >
                 <>
                     <div
                         className="no-print hidden overflow-hidden rounded-lg border border-neutral-200 bg-white sm:block"
@@ -904,6 +888,7 @@ export default function BiometricsPage() {
                         )}
                     </div>
                 </>
+                </Skeleton>
             )}
 
             <ImportCsvModal

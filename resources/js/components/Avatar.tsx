@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { Skeleton } from 'boneyard-js/react';
 import { useEffect, useState } from 'react';
 import { SkeletonLoader } from './spinners/SkeletonLoader';
 
@@ -54,24 +55,29 @@ export function Avatar({
         const showShimmer = !imgLoaded || isLoading;
         return (
             <div className={cn('relative shrink-0', sizeClass)}>
-                {showShimmer && (
-                    <SkeletonLoader
-                        variant="circle"
-                        className={cn('absolute inset-0 z-10', sizeClass)}
+                <Skeleton
+                    name="avatar"
+                    loading={showShimmer}
+                    fixture={
+                        <SkeletonLoader
+                            variant="circle"
+                            className={cn('absolute inset-0 z-10', sizeClass)}
+                        />
+                    }
+                >
+                    <img
+                        src={src}
+                        alt={name}
+                        className={cn(
+                            'h-full w-full rounded-full object-cover',
+                            className,
+                        )}
+                        loading="lazy"
+                        onLoad={() => setImgLoaded(true)}
+                        onError={() => setImgLoaded(true)}
+                        data-cy={`${dataCy}-img`}
                     />
-                )}
-                <img
-                    src={src}
-                    alt={name}
-                    className={cn(
-                        'h-full w-full rounded-full object-cover',
-                        className,
-                    )}
-                    loading="lazy"
-                    onLoad={() => setImgLoaded(true)}
-                    onError={() => setImgLoaded(true)}
-                    data-cy={`${dataCy}-img`}
-                />
+                </Skeleton>
             </div>
         );
     }

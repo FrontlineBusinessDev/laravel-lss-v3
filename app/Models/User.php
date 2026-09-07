@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Statuses;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -52,6 +53,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
     protected function casts(): array
     {
         return [
@@ -59,22 +61,27 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
     public function getNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
     }
+
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return strtolower($this->status) === Statuses::ACTIVE;
     }
+
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->whereRaw('LOWER(status) = ?', [Statuses::ACTIVE]);
     }
+
     public function scopeInactive($query)
     {
-        return $query->where('status', 'inactive');
+        return $query->whereRaw('LOWER(status) = ?', [Statuses::INACTIVE]);
     }
+
     public function assignedBatches(): BelongsToMany
     {
         return $this->belongsToMany(Batches::class, 'app_batch_trainer', 'trainer_id', 'batch_id');
@@ -90,6 +97,7 @@ class User extends Authenticatable
             Announcement::where('created_by_id', $user->id)->update(['created_by_id' => null]);
         });
     }
+
     /**
      * Prepare the user data payload for Inertia.
      */

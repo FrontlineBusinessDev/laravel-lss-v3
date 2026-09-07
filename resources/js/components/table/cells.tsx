@@ -9,8 +9,31 @@
 
 import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { avatarBg, initialsOf } from '@/pages/developer/dashboard/shared';
 import type { CardActions } from '@/types/reusable/card';
+
+const AVATAR_COLORS = [
+  '#2563eb', '#7c3aed', '#db2777', '#dc2626',
+  '#d97706', '#059669', '#0891b2', '#4f46e5',
+];
+
+/** Deterministic background color from a name, so the same name always gets the same color. */
+function avatarBg(name: string): string {
+  const hash = [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+/** Up to two uppercase initials derived from a name. */
+function initialsOf(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '—';
+}
 
 /** Colored initials avatar (deterministic gradient from the name). */
 export function TableAvatar({

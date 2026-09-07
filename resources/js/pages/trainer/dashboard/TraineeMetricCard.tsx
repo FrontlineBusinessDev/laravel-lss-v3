@@ -13,7 +13,8 @@ export function TraineeMetricCard() {
     return (
         <StatCard
             label="Ongoing Trainees"
-            value={isLoading ? '—' : (data?.ongoing_trainees ?? 0)}
+            value={data?.ongoing_trainees ?? 0}
+            loading={isLoading}
             icon={Users}
             tone={error ? 'warning' : 'accent'}
             hint={error ?? 'Across your assigned batches'}

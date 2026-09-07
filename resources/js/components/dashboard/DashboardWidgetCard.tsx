@@ -1,3 +1,4 @@
+import { Skeleton } from 'boneyard-js/react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -13,12 +14,13 @@ interface DashboardWidgetCardProps {
     className?: string;
 }
 
-function LoadingSkeleton() {
+/** Static stand-in snapshotted by the boneyard CLI in place of real (data-dependent) widget content. */
+function WidgetFixture() {
     return (
         <div className="flex flex-col gap-2">
-            <div className="h-3.5 w-3/4 animate-pulse rounded bg-neutral-100" />
-            <div className="h-3.5 w-1/2 animate-pulse rounded bg-neutral-100" />
-            <div className="h-3.5 w-2/3 animate-pulse rounded bg-neutral-100" />
+            <span className="h-3.5 w-3/4 rounded bg-neutral-100" />
+            <span className="h-3.5 w-1/2 rounded bg-neutral-100" />
+            <span className="h-3.5 w-2/3 rounded bg-neutral-100" />
         </div>
     );
 }
@@ -51,16 +53,20 @@ export function DashboardWidgetCard({
                 <h2 className="text-sm font-semibold text-ink">{title}</h2>
             </div>
 
-            {isLoading ? (
-                <LoadingSkeleton />
-            ) : error ? (
+            {error && !isLoading ? (
                 <p className="text-danger-700 rounded-md bg-danger-50 px-2 py-1.5 text-xs">
                     {error}
                 </p>
-            ) : isEmpty ? (
+            ) : isEmpty && !isLoading ? (
                 <p className="text-xs text-neutral-500">{emptyMessage}</p>
             ) : (
-                children
+                <Skeleton
+                    name="dashboard-widget"
+                    loading={isLoading}
+                    fixture={<WidgetFixture />}
+                >
+                    {children}
+                </Skeleton>
             )}
         </div>
     );

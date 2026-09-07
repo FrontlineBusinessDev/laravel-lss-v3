@@ -1,0 +1,39 @@
+batch_code,setup,industry,program_type,date_started,projected_end_date,is_open,is_completed,is_dissolved
+FBS-004,f2f,ICT,College On-the-Job-Training,2022-07-14,,0,0,1
+FBS-002,f2f,ICT,College On-the-Job-Training,2022-08-22,,0,1,0
+FBS-002,f2f,ICT,College On-the-Job-Training,2022-08-30,,1,1,0
+FBS-005,online,ICT,College On-the-Job-Training,2022-09-01,,0,0,1
+FBS-006,online,ICT,College On-the-Job-Training,2022-09-19,,0,0,1
+FBS-007,online,ICT,College On-the-Job-Training,2022-11-22,,0,0,1
+FBS-001,online,ICT,College On-the-Job-Training,2022-12-06,,0,0,1
+FBS-008,f2f,ICT,College On-the-Job-Training,2023-02-03,,0,0,1
+FBS-009,online,ICT,College On-the-Job-Training,2023-02-03,,0,0,1
+FBS-011,f2f,ACCTG,College On-the-Job-Training,2023-02-09,,0,0,1
+FBS-002,online,ICT,College On-the-Job-Training,2023-02-09,,0,0,1
+FBS-003,online,ICT,College On-the-Job-Training,2023-02-09,,0,0,1
+FBS-012,online,ICT,Senior High School Work Immersion,2023-03-02,,0,0,1
+FBS-013,online,ICT,Senior High School Work Immersion,2023-03-09,,0,0,1
+FBS-014,online,ACCTG,College On-the-Job-Training,2023-03-14,,0,0,1
+FBS-015,online,HUMSS,Senior High School Work Immersion,2023-03-17,,0,0,1
+FBS-016,f2f,ICT,College On-the-Job-Training,2023-03-17,,1,0,1
+FBS-010,online,ICT,College On-the-Job-Training,2023-04-04,,0,0,1
+FBS-018,f2f,ICT,College On-the-Job-Training,2023-05-26,,1,0,1
+FBS-017,f2f,ACCTG,Senior High School Work Immersion,2023-06-05,,0,0,1
+FBS-019,online,ICT,College On-the-Job-Training,2023-06-13,,1,0,1
+FBS-020,f2f,ICT,College On-the-Job-Training,2023-06-23,,1,0,1
+FBS-021,online,ACCTG,College On-the-Job-Training,2023-07-03,,1,1,0
+FBS-022,online,ICT,College On-the-Job-Training,2023-07-03,,1,1,0
+FBS-022,f2f,ICT,Continuing Studies,2023-08-04,,1,0,1
+FBS-023,f2f,ICT,Continuing Studies,2023-08-30,,1,0,1
+FBS-024,f2f,ICT,College On-the-Job-Training,2023-09-12,,1,1,0
+FBS-025,online,ACCTG,College On-the-Job-Training,2023-10-10,,1,0,1
+FBS-026,online,ICT,College On-the-Job-Training,2023-10-18,,1,1,0
+FBS-027,f2f,HUMSS,Senior High School Work Immersion,2024-01-08,,1,0,1
+FBS-028,f2f,STEM,Senior High School Work Immersion,2024-01-08,,1,0,1
+FBS-029,f2f,ABM,Senior High School Work Immersion,2024-01-08,,1,0,1
+FBS-030,f2f,GAS,Senior High School Work Immersion,2024-01-08,,1,0,1
+FBS-031,f2f,ICT,College On-the-Job-Training,2024-01-23,,1,0,1
+FBS-032,f2f,STEM,Senior High School Work Immersion,2024-01-26,,1,0,1
+FBS-033,f2f,STEM,Senior High School Work Immersion,2024-01-26,,1,0,1
+FBS-034,f2f,ABM,Senior High School Work Immersion,2024-02-06,,1,0,1
+FBS-035,f2f,ICT,Senior High School Work Immersion,2024-02-29,,1,0,1

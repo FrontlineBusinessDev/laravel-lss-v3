@@ -14,6 +14,7 @@ import {
     ChevronsUpDown,
     ClipboardList,
     FileBarChart,
+    FileText,
     Fingerprint,
     GraduationCap,
     IdCard,
@@ -104,6 +105,11 @@ const NAV_ITEMS = [
         to: '/reports',
         label: 'Reports',
         icon: FileBarChart,
+    },
+    {
+        to: '/documents',
+        label: 'Documents',
+        icon: FileText,
     },
     {
         to: '/settings',
