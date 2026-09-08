@@ -18,6 +18,7 @@ use App\Http\Controllers\v1\Developer\Documents\DocumentsController;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationSeminarQuestionnaire;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationTrainerQuestionnaire;
 use App\Http\Controllers\v1\Developer\Evaluation\EvaluationViewController;
+use App\Http\Controllers\v1\Developer\JobRunController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveController;
 use App\Http\Controllers\v1\Developer\Leave\LeaveRequestController;
 use App\Http\Controllers\v1\Developer\Payment\PaymentController;
@@ -146,6 +147,14 @@ Route::middleware('auth')->group(function () {
     // Global command-palette search (Ctrl+K/Cmd+K) — one endpoint for every
     // role; GlobalSearchController branches server-side on auth()->user().
     Route::get('/search', [GlobalSearchController::class, 'search'])->name('search');
+
+    // Generic queued-job status/cancel, polled by the frontend's reusable
+    // progress-toast system (resources/js/components/AsyncOperations.tsx).
+    // Scoped to the requesting user's own JobRun rows in the controller.
+    Route::prefix('job-runs')->name('job-runs.')->group(function () {
+        Route::get('/{id}', [JobRunController::class, 'show'])->name('show');
+        Route::post('/{id}/cancel', [JobRunController::class, 'cancel'])->name('cancel');
+    });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Dashboard widgets self-fetch client-side (see

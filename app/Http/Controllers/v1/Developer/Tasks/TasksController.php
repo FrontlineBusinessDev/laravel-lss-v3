@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\v1\Developer\Tasks;
 
 use App\Http\Controllers\v1\BaseController;
+use App\Jobs\BulkTaskStatusJob;
+use App\Models\JobRun;
 use App\Models\LeaveRequest;
 use App\Models\Task;
 use App\Models\Trainees;
@@ -276,10 +278,12 @@ class TasksController extends BaseController
      * Cross-page bulk action: complete/lock every task-group matching the
      * current view (same search/filters as paginationSearch(), via
      * buildGroupedQuery()) whose rolled-up status is `status_scope` — not
-     * just the rows loaded on the current page. Reuses the exact per-row
-     * guard logic already in completeGroupAction()/lockGroupAction() so
-     * behavior (skip rows already in the target state, dispatch
-     * HourThresholdDispatcher on completion) stays identical.
+     * just the rows loaded on the current page. Dispatches a queued
+     * BulkTaskStatusJob and returns immediately with a job id the frontend
+     * polls for progress (see JobRunController) — this used to run the whole
+     * loop inline in the request and could blow the 30s execution limit
+     * (re-authorizing per group, one query per group) once enough groups
+     * matched; see BulkTaskStatusJob's docblock for the fix.
      */
     public function bulkStatusByFilter(Request $request): JsonResponse
     {
@@ -288,53 +292,40 @@ class TasksController extends BaseController
             'action' => ['required', 'in:complete,lock'],
         ]);
 
+        // No per-row/per-group authorize() call needed here: the route group
+        // already requires Permissions::MANAGE_TASKS (routes/web.php), and
+        // buildGroupedQuery() -> scopeTrainerBatches() already restricts a
+        // trainer-only user's matched groups to their own assigned batches —
+        // TaskPolicy::canMutate() can't say anything more restrictive than
+        // that for a group with no single representative row to check.
         $groups = $this->buildGroupedQuery($request)->get();
         $groupIds = $groups
             ->filter(fn ($row) => $this->groupStatus((int) $row->trainee_count, (int) $row->completed_count, (int) $row->locked_count) === $validated['status_scope'])
-            ->pluck('group_id');
+            ->pluck('group_id')
+            ->values()
+            ->all();
 
-        if ($groupIds->isEmpty()) {
-            return $this->sendResponse(['groups_updated' => 0, 'rows_updated' => 0], 'No matching tasks found.');
+        if (empty($groupIds)) {
+            return $this->sendResponse(['job_id' => null, 'total' => 0], 'No matching tasks found.');
         }
 
-        $groupsUpdated = 0;
-        $rowsUpdated = 0;
+        $traineeCount = (int) $groups
+            ->filter(fn ($row) => in_array($row->group_id, $groupIds, true))
+            ->sum('trainee_count');
 
-        DB::transaction(function () use ($groupIds, $validated, &$groupsUpdated, &$rowsUpdated) {
-            foreach ($groupIds as $groupId) {
-                $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
-                if ($rows->isEmpty()) {
-                    continue;
-                }
-                $this->authorize('update', $rows->first());
+        $jobRun = JobRun::create([
+            'type' => 'bulk_task_status',
+            'status' => 'queued',
+            'total' => $traineeCount,
+            'payload' => ['group_ids' => $groupIds, 'action' => $validated['action']],
+            'user_id' => auth()->id(),
+        ]);
 
-                $targetStatus = $validated['action'] === 'complete' ? 'completed' : 'locked';
-                $skipStatuses = $validated['action'] === 'complete' ? ['locked', 'completed'] : ['locked'];
-                $eligible = $rows->whereNotIn('status', $skipStatuses);
-
-                foreach ($eligible as $row) {
-                    $row->update($validated['action'] === 'complete'
-                        ? ['status' => 'completed', 'completed_at' => now()]
-                        : ['status' => 'locked', 'locked_at' => now()]);
-
-                    if ($validated['action'] === 'complete') {
-                        $trainee = Trainees::whereKey($row->trainee_id)->first();
-                        if ($trainee) {
-                            HourThresholdDispatcher::maybeDispatch($trainee);
-                        }
-                    }
-                    $rowsUpdated++;
-                }
-
-                if ($eligible->isNotEmpty()) {
-                    $groupsUpdated++;
-                }
-            }
-        });
+        BulkTaskStatusJob::dispatch($jobRun->id, $groupIds, $validated['action']);
 
         return $this->sendResponse(
-            ['groups_updated' => $groupsUpdated, 'rows_updated' => $rowsUpdated],
-            "{$groupsUpdated} task group(s) updated.",
+            ['job_id' => $jobRun->id, 'total' => $traineeCount],
+            'Update started.',
         );
     }
 

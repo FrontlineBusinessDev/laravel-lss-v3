@@ -9,6 +9,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAsyncOperations } from '@/components/AsyncOperations';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import type { RowMenuAction } from '@/components/RowMenu';
@@ -136,6 +137,7 @@ const listHeader = (
 
 export default function TasksPage() {
     const { showToast } = useToast();
+    const { trackServerJob } = useAsyncOperations();
     const queryClient = useQueryClient();
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [rosterGroup, setRosterGroup] = useState<ApiTaskGroup | null>(null);
@@ -250,8 +252,8 @@ export default function TasksPage() {
 
         try {
             const res = await apiFetchJson<{
-                groups_updated: number;
-                rows_updated: number;
+                job_id: string | null;
+                total: number;
             }>('/tasks/bulk-status-by-filter', {
                 method: 'PATCH',
                 body: JSON.stringify({
@@ -261,11 +263,34 @@ export default function TasksPage() {
                     search: liveFilters.search,
                 }),
             });
-            showToast(
-                `${res.data?.groups_updated ?? 0} task group(s) ${action === 'complete' ? 'marked as complete' : 'locked'}.`,
-                'success',
-            );
-            invalidateTasks();
+
+            const jobId = res.data?.job_id;
+
+            if (!jobId) {
+                showToast('No matching tasks found.', 'info');
+
+                return;
+            }
+
+            // Runs as a background job — the request above returns
+            // immediately, and this tracks its progress in a toast that
+            // survives navigating away or refreshing the page (see
+            // AsyncOperationsProvider), instead of blocking on one long
+            // synchronous request.
+            trackServerJob(jobId, {
+                label: `${action === 'complete' ? 'Marking' : 'Locking'} ${res.data?.total ?? 0} task(s)…`,
+                total: res.data?.total ?? 0,
+                onSettled: (status) => {
+                    if (status === 'completed') {
+                        showToast(
+                            `Task group(s) ${action === 'complete' ? 'marked as complete' : 'locked'}.`,
+                            'success',
+                        );
+                    }
+
+                    invalidateTasks();
+                },
+            });
         } catch {
             showToast(`Failed to ${verb} tasks.`, 'error');
         }

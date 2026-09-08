@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import { AsyncOperationsProvider } from './components/AsyncOperations';
 import { GlobalModalProvider } from './components/global-modal';
 import { SystemToastProvider } from './components/Toast';
 import { NotificationsProvider } from './contexts/NotificationsContext';
@@ -38,11 +39,13 @@ export function AppProviders({
             // data-cy="app-providers-query-client-provider-1"
         >
             <SystemToastProvider data-cy="app-providers-system-toast-provider-2">
-                <NotificationsProvider data-cy="app-providers-notifications-provider-4">
-                    <GlobalModalProvider data-cy="app-providers-batches-provider-6">
-                        {children}
-                    </GlobalModalProvider>
-                </NotificationsProvider>
+                <AsyncOperationsProvider>
+                    <NotificationsProvider data-cy="app-providers-notifications-provider-4">
+                        <GlobalModalProvider data-cy="app-providers-batches-provider-6">
+                            {children}
+                        </GlobalModalProvider>
+                    </NotificationsProvider>
+                </AsyncOperationsProvider>
             </SystemToastProvider>
         </QueryClientProvider>
     );
