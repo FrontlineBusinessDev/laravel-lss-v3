@@ -6,6 +6,7 @@ use App\Http\Controllers\v1\Controller;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
 use App\Support\Import\ImportLogging;
+use App\Support\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -14,9 +15,16 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Phase 5d — legacy lcssv2_trainee_lo onto app_trainees_learning_outcomes
- * (status: active). Replicates TraineesController::updateLearningOutcomeStatus()'s
- * industry-scoping rule: an outcome can only attach to a trainee whose
- * batch's industry matches the outcome's academic_industry_id.
+ * (status: active). Unlike TraineesController::updateLearningOutcomeStatus()
+ * (live assignment), this import does NOT enforce that an outcome's industry
+ * matches the trainee's batch industry: `learning_outcomes` text is globally
+ * unique in the schema, but the legacy data reuses the same wording across
+ * trainees from different industries, so one canonical row is attached to
+ * all of them — this is recording a historical fact ("trainee completed
+ * this outcome"), not a new live assignment subject to that rule. When the
+ * text has no matching row yet (this pipeline has no reference-data import
+ * step for outcomes), a new one is created — scoped to the trainee's own
+ * batch industry — and left `inactive` for an admin to review.
  */
 class LearningOutcomeImportController extends Controller implements HasMiddleware
 {
@@ -35,10 +43,10 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'trainee_email' => ['required', 'email'],
             'outcome_text' => ['required', 'string'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $successCount = 0;
@@ -56,14 +64,20 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
                 continue;
             }
 
-            $outcome = AcademicLearningOutcomes::whereRaw('LOWER(learning_outcomes) = ?', [mb_strtolower(trim($row['outcome_text']))])->first();
+            $outcomeText = trim($row['outcome_text']);
+            $outcome = AcademicLearningOutcomes::whereRaw('LOWER(learning_outcomes) = ?', [mb_strtolower($outcomeText)])->first();
             if (! $outcome) {
-                $errors[] = "Row {$rowNum}: no matching learning outcome for \"{$row['outcome_text']}\".";
-                continue;
-            }
-            if ($outcome->academic_industry_id !== $trainee->batch?->academic_industry_id) {
-                $errors[] = "Row {$rowNum}: outcome \"{$row['outcome_text']}\" belongs to a different industry than {$row['trainee_email']}'s batch — skipped.";
-                continue;
+                if (! $trainee->batch) {
+                    $errors[] = "Row {$rowNum}: trainee \"{$row['trainee_email']}\" has no batch — cannot determine an industry to create outcome \"{$row['outcome_text']}\".";
+                    continue;
+                }
+                $outcome = new AcademicLearningOutcomes([
+                    'status' => Statuses::INACTIVE,
+                    'learning_outcomes' => $outcomeText,
+                    'academic_industry_id' => $trainee->batch->academic_industry_id,
+                ]);
+                $this->saveWithImportTimestamps($outcome, $row);
+                $createdIds[] = ['model' => AcademicLearningOutcomes::class, 'id' => $outcome->id];
             }
 
             try {
@@ -71,7 +85,30 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
                     ->where('trainee_id', $trainee->id)
                     ->where('learning_outcome_id', $outcome->id)
                     ->exists();
-                DB::transaction(fn () => $trainee->learningOutcomes()->syncWithoutDetaching([$outcome->id => ['status' => 'active']]));
+                $timestamps = $this->importTimestamps($row);
+
+                // Bypasses the learningOutcomes() relation's automatic withTimestamps() pivot
+                // stamping (which would always overwrite updated_at with "now"), so the row's
+                // own legacy created_at/updated_at survive instead.
+                DB::transaction(function () use ($trainee, $outcome, $timestamps, $alreadyAttached) {
+                    if ($alreadyAttached) {
+                        DB::table('app_trainees_learning_outcomes')
+                            ->where('trainee_id', $trainee->id)
+                            ->where('learning_outcome_id', $outcome->id)
+                            ->update([
+                                'status' => 'active',
+                                'updated_at' => $timestamps['updated_at'],
+                            ]);
+                    } else {
+                        DB::table('app_trainees_learning_outcomes')->insert([
+                            'trainee_id' => $trainee->id,
+                            'learning_outcome_id' => $outcome->id,
+                            'status' => 'active',
+                            'created_at' => $timestamps['created_at'],
+                            'updated_at' => $timestamps['updated_at'],
+                        ]);
+                    }
+                });
                 if (! $alreadyAttached) {
                     $createdIds[] = ['model' => 'pivot:trainee_learning_outcome', 'trainee_id' => $trainee->id, 'outcome_id' => $outcome->id];
                 }

@@ -83,7 +83,7 @@ function PersonalInfoSection({ trainee }: { trainee: TraineeDetail }) {
                     value={trainee.birthday?.slice(0, 10) ?? ''}
                 />
                 <Field label="Birth place" value={trainee.birth_place} />
-                <Field label="Gender" value={trainee.gender} />
+                <Field label="Gender" value={trainee.gender ?? ''} />
                 <Field label="Mobile number" value={trainee.mobile_number} />
                 <Field
                     label="Landline number"

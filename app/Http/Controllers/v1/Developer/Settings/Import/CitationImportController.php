@@ -36,11 +36,11 @@ class CitationImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'industry' => ['required', 'string'],
             'program_type' => ['required', 'string'],
             'message' => ['required', 'string'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $warnings = ['Imported citation templates carry legacy "(Placeholder)" tokens as-is — rewrite them to this app\'s {{token}} syntax before issuing certificates from them.'];
@@ -69,14 +69,19 @@ class CitationImportController extends Controller implements HasMiddleware
             }
 
             try {
-                $citation = DB::transaction(fn () => CertificateCitation::create([
-                    'title' => $title,
-                    'applies_to' => 'trainee',
-                    'body_text' => $body,
-                    'status' => 'active',
-                    'critical' => false,
-                    'created_by' => auth()->id(),
-                ]));
+                $citation = DB::transaction(function () use ($title, $body, $row) {
+                    $citation = new CertificateCitation([
+                        'title' => $title,
+                        'applies_to' => 'trainee',
+                        'body_text' => $body,
+                        'status' => 'active',
+                        'critical' => false,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $this->saveWithImportTimestamps($citation, $row);
+
+                    return $citation;
+                });
                 $createdIds[] = ['model' => CertificateCitation::class, 'id' => $citation->id];
                 $successCount++;
             } catch (\Throwable $e) {

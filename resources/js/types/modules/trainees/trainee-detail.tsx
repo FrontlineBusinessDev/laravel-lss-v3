@@ -158,7 +158,7 @@ export interface TraineeDetail {
     email: string;
     birthday: string;
     birth_place: string;
-    gender: 'male' | 'female';
+    gender: 'male' | 'female' | null;
     mobile_number: string;
     landline_number: string | null;
     emergency_contact_name: string;

@@ -25,7 +25,11 @@ export default function PersonalInfoTab({ trainee }: { trainee: TraineeDetail })
                     <Field
                         label="Gender"
                         value={
-                            trainee.gender === 'male' ? 'Male' : 'Female'
+                            trainee.gender === 'male'
+                                ? 'Male'
+                                : trainee.gender === 'female'
+                                  ? 'Female'
+                                  : 'Unknown'
                         }
                     />
                     <Field label="Mobile number" value={trainee.mobile_number} />

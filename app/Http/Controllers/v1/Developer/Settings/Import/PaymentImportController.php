@@ -32,13 +32,13 @@ class PaymentImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'trainee_email' => ['required', 'email'],
             'amount_paid' => ['required', 'numeric', 'min:0.01'],
             'payment_date' => ['required', 'date'],
             'official_receipt_number' => ['nullable', 'string', 'max:100'],
             'receipt_link' => ['nullable', 'string'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $successCount = 0;
@@ -77,12 +77,17 @@ class PaymentImportController extends Controller implements HasMiddleware
             $notes = ! empty($row['receipt_link']) ? "Legacy receipt link: {$row['receipt_link']}" : null;
 
             try {
-                $payment = DB::transaction(fn () => $trainee->payments()->create([
-                    'amount_paid' => $row['amount_paid'],
-                    'payment_date' => $row['payment_date'],
-                    'official_receipt_number' => $row['official_receipt_number'] ?? null,
-                    'notes' => $notes,
-                ]));
+                $payment = DB::transaction(function () use ($trainee, $row, $notes) {
+                    $payment = $trainee->payments()->make([
+                        'amount_paid' => $row['amount_paid'],
+                        'payment_date' => $row['payment_date'],
+                        'official_receipt_number' => $row['official_receipt_number'] ?? null,
+                        'notes' => $notes,
+                    ]);
+                    $this->saveWithImportTimestamps($payment, $row);
+
+                    return $payment;
+                });
                 $createdIds[] = ['model' => TraineesPayments::class, 'id' => $payment->id];
                 $successCount++;
             } catch (\Throwable $e) {

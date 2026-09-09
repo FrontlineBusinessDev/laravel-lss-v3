@@ -1,37 +1,37 @@
-school_name,abbreviation,contact_person,contact_email,address
-Pamantasan ng Lungsod ng San Pablo,PLSP,Engr. Jomar C. Escobido,n/a@gmail.com,"Barangay San Jose, San Pablo City, Laguna"
-Laguna State Polytechnic University - San Pablo City Campus,LSPU - SPCC,,n/a@gmail.com,"Brgy. Del Remedio, San Pablo City, Laguna"
-Cavite State University - Cavite City Campus,CSU - CCC,,n/a@gmail.com,"Barangay 8, Pulo II, Dalahican, Cavite City"
-Mariano Marcos State University,MMSU,,n/a@gmail.com,n/a
-STI College - San Pablo City Campus,STI - SPCC,,n/a@gmail.com,Others
-Cavite State University - Rosario Campus,CSU - CCAT,,n/a@gmail.com,"Rosario, Cavite"
-Cavite State University - Silang Campus,CSU - Silang Campus,,n/a@gmail.com,"Silang, Cavite"
-Mabini Colleges Inc.,MCI,,n/a@gmail.com,n/a
-Laguna College,LC,Jhonny Dichoso,jhonny.dichoso@frontlinebusiness.com.ph,San Pablo City
-AMA Computer College - Batangas,ACC - Batangas,,n/a@gmail.com,"n/a
-"
-AMA Computer Learning Center - San Pablo,ACLC - San Pablo,,n/a@gmail.com,n/a
-Cavite State University - Silang Campus,CSU - SC,,n/a@gmail.com,n/a
-Far Eastern College,FEC,,n/a@gmail.com,"n/a
-"
-Teodoro M. Luansing College of Rosario,TLC - Batangas,,n/a@gmail.com,"Ibaan Road, Rosario, Batangas"
-Don Honorio Ventura State University,DHVSU - Pampanga,,n/a@gmail.com,"Bacolor, Pampanga"
-Colegio de San Juan de Letran Calamba,Letran,,N/A@gmail.com,Calamba
-De La Salle University - Lipa,DLSU-Lipa,,n/a@gmail.com,"Lipa, Batangas"
-Batangas State University,BSU-Alangilan,,n/a@gmail.com,"Golden Country Homes, Brgy. Alangilan, Batangas City"
-University of Batangas,UB-Lipa,,n/a@gmail.com,Lipa Batangas
-Technological Institute of the Philippines,TIP,,n/a@gmail.com,"Manila, Philippines"
-Marcelino Fule Memorial College,MFMC,Harold Coronado,blank@gmail.com,"Alaminos, Laguna"
-San Pablo Colleges,SPC,Ruby Abrigo Migo,n/a@gmail.com,"Hermanos Belen, Street, San Pablo City"
-Lyceum of the Philippines University - Calamba,LPU - Calamba,,blank@gmail.com,n/a
-"Polytechnic University of the Philippines - Lopez, Quezon",PUP-Lopez,,n/a@gmail.com,"Yumul St., Brgy. Burgos, Lopez, Quezon, Philippines"
-"Polytechnic University of the Philippine - Sta. Mesa, Manila",PUP - Sta. Mesa,,blank@gmail.com,n/a
-Lyceum of the Philippines University - Manila,LPU - Manila,,blank@gmail.com,n/a
-Manuel S. Enverga University Foundation,MSEUF,,n/a@gmail.com,"Lucena, City"
-University of Makati,UM,,n/a@gmail.com,"Makati, City"
-Philippine Christian University,PCU,,n/a@gmail.com,Manila
-National University,NU,,n/a@gmail.com,Manila
-Batangas State University - Lipa Campus,BSU-Lipa,,n/a@gmail.com,"Brgy. Marawoy, Lipa City, Batangas"
-South Lakes Integrated School,SLIS,,n/a@gmail.com,"San Pablo City, Laguna"
-Greenville Academy of Sta. Clara,GVAS,,n/a@gmail.com,"Sta. Clara 4232 Sto. Tomas, Batangas"
-"St. Therese Montessori School of San Pablo, Inc.",STMS,,n/a@gmail.com,"Brgy. San Nicolas, San Pablo City"
+school_name,abbreviation,contact_person,contact_email,address,created_at,updated_at
+"AMA Computer College - Batangas","ACC - Batangas",,n/a@gmail.com,"n/a
+",2022-09-19,"2023-06-08 15:44:06"
+"AMA Computer Learning Center - San Pablo","ACLC - San Pablo",,n/a@gmail.com,n/a,2022-09-19,"2023-07-26 08:13:40"
+"Batangas State University",BSU-Alangilan,,n/a@gmail.com,"Golden Country Homes, Brgy. Alangilan, Batangas City",2023-02-10,"2023-02-10 13:08:25"
+"Batangas State University - Lipa Campus",BSU-Lipa,,n/a@gmail.com,"Brgy. Marawoy, Lipa City, Batangas",2023-07-26,"2023-07-26 08:02:14"
+"Cavite State University - Cavite City Campus","CSU - CCC",,n/a@gmail.com,"Barangay 8, Pulo II, Dalahican, Cavite City",2022-07-13,"2022-07-13 15:44:46"
+"Cavite State University - Rosario Campus","CSU - CCAT",,n/a@gmail.com,"Rosario, Cavite",2022-07-14,"2022-07-20 15:41:56"
+"Cavite State University - Silang Campus","CSU - Silang Campus",,n/a@gmail.com,"Silang, Cavite",2022-07-14,"2022-07-14 14:52:25"
+"Cavite State University - Silang Campus","CSU - SC",,n/a@gmail.com,n/a,2022-09-19,"2022-09-19 10:54:43"
+"Colegio de San Juan de Letran Calamba",Letran,,N/A@gmail.com,Calamba,2023-02-09,"2023-04-26 15:16:25"
+"De La Salle University - Lipa",DLSU-Lipa,,n/a@gmail.com,"Lipa, Batangas",2023-02-10,"2023-08-16 10:20:04"
+"Don Honorio Ventura State University","DHVSU - Pampanga",,n/a@gmail.com,"Bacolor, Pampanga",2023-02-08,"2023-02-08 12:25:58"
+"Far Eastern College",FEC,,n/a@gmail.com,"n/a
+",2022-09-19,"2022-09-19 10:57:25"
+"Greenville Academy of Sta. Clara",GVAS,,n/a@gmail.com,"Sta. Clara 4232 Sto. Tomas, Batangas",2024-01-26,"2024-01-26 08:58:49"
+"Laguna College",LC,,jhonny.dichoso@frontlinebusiness.com.ph,"San Pablo City",2022-09-01,"2022-09-01 13:53:50"
+"Laguna State Polytechnic University - San Pablo City Campus","LSPU - SPCC",,n/a@gmail.com,"Brgy. Del Remedio, San Pablo City, Laguna",2022-07-13,"2022-07-14 14:49:51"
+"Lyceum of the Philippines University - Calamba","LPU - Calamba",,blank@gmail.com,n/a,2023-03-15,"2023-03-31 14:38:43"
+"Lyceum of the Philippines University - Manila","LPU - Manila",,blank@gmail.com,n/a,2023-03-31,"2023-03-31 14:38:27"
+"Mabini Colleges Inc.",MCI,,n/a@gmail.com,n/a,2022-08-25,"2022-08-25 13:08:28"
+"Manuel S. Enverga University Foundation",MSEUF,,n/a@gmail.com,"Lucena, City",2023-06-08,"2023-06-08 15:37:48"
+"Marcelino Fule Memorial College",MFMC,,blank@gmail.com,"Alaminos, Laguna",2023-03-02,"2023-03-02 20:48:50"
+"Mariano Marcos State University",MMSU,,n/a@gmail.com,n/a,2022-07-13,"2022-07-13 15:46:21"
+"National University",NU,,n/a@gmail.com,Manila,2023-06-15,"2023-06-15 10:18:20"
+"Pamantasan ng Lungsod ng San Pablo",PLSP,,n/a@gmail.com,"Barangay San Jose, San Pablo City, Laguna",2022-07-13,"2022-09-29 08:22:23"
+"Philippine Christian University",PCU,,n/a@gmail.com,Manila,2023-06-15,"2023-06-15 10:14:04"
+"Polytechnic University of the Philippine - Sta. Mesa, Manila","PUP - Sta. Mesa",,blank@gmail.com,n/a,2023-03-31,"2023-03-31 14:36:48"
+"Polytechnic University of the Philippines - Lopez, Quezon",PUP-Lopez,,n/a@gmail.com,"Yumul St., Brgy. Burgos, Lopez, Quezon, Philippines",2023-03-29,"2023-03-31 14:37:18"
+"San Pablo Colleges",SPC,,n/a@gmail.com,"Hermanos Belen, Street, San Pablo City",2023-03-03,"2023-03-03 07:23:06"
+"South Lakes Integrated School",SLIS,,n/a@gmail.com,"San Pablo City, Laguna",2024-01-08,"2024-01-08 08:30:38"
+"St. Therese Montessori School of San Pablo, Inc.",STMS,,n/a@gmail.com,"Brgy. San Nicolas, San Pablo City",2024-02-05,"2024-02-05 12:32:51"
+"STI College - San Pablo City Campus","STI - SPCC",,n/a@gmail.com,Others,2022-07-14,"2022-07-14 07:43:08"
+"Technological Institute of the Philippines",TIP,,n/a@gmail.com,"Manila, Philippines",2023-02-10,"2023-02-10 13:42:42"
+"Teodoro M. Luansing College of Rosario","TLC - Batangas",,n/a@gmail.com,"Ibaan Road, Rosario, Batangas",2023-02-08,"2023-02-08 09:17:31"
+"University of Batangas",UB-Lipa,,n/a@gmail.com,"Lipa Batangas",2023-02-10,"2023-02-10 13:40:44"
+"University of Makati",UM,,n/a@gmail.com,"Makati, City",2023-06-08,"2023-06-08 15:40:27"

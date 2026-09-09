@@ -42,34 +42,33 @@ class TraineeImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'batch_code' => ['required', 'string'],
-            'school_name' => ['required', 'string'],
+            'school_name' => ['nullable', 'string'],
             'program_name' => ['nullable', 'string'],
             'level_name' => ['nullable', 'string'],
-            'gender' => ['required', 'string'],
+            'gender' => ['nullable', 'string'],
             'birthday' => ['nullable', 'date'],
             'birth_place' => ['nullable', 'string'],
             'address' => ['nullable', 'string'],
             'mobile_number' => ['nullable', 'string'],
             'emergency_contact_name' => ['nullable', 'string'],
             'emergency_contact_number' => ['nullable', 'string'],
-            'required_hours' => ['required', 'numeric', 'min:0'],
+            'required_hours' => ['nullable', 'numeric', 'min:0'],
             'f2f_hours_rate' => ['nullable', 'numeric'],
             'online_hours_rate' => ['nullable', 'numeric'],
             'discount_percent' => ['nullable', 'numeric'],
             'is_active' => ['nullable'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $successCount = 0;
         $createdIds = [];
 
-        // Each row is its own transaction: app_trainees.birthday and other
-        // columns are NOT NULL, and a bad row's constraint violation must
+        // Each row is its own transaction: a bad row's constraint violation must
         // only roll back that row, not every row already imported this batch.
         foreach ($validated['rows'] as $i => $row) {
             $rowNum = $i + 2;
@@ -78,14 +77,15 @@ class TraineeImportController extends Controller implements HasMiddleware
                 continue;
             }
             $email = trim($row['email']);
-            $gender = strtolower(trim($row['gender']));
 
-            if (! in_array($gender, ['male', 'female'], true)) {
+            // Legacy data sometimes has no gender on file at all — leave it null rather than
+            // reject the whole row, but a genuinely bad (non-blank, non-male/female) value still
+            // signals bad data and is rejected as before.
+            $genderRaw = trim($row['gender'] ?? '');
+            $gender = $genderRaw === '' ? null : strtolower($genderRaw);
+
+            if ($gender !== null && ! in_array($gender, ['male', 'female'], true)) {
                 $errors[] = "Row {$rowNum}: gender \"{$row['gender']}\" is not male/female — skipped.";
-                continue;
-            }
-            if (empty($row['birthday'])) {
-                $errors[] = "Row {$rowNum}: birthday is required (app_trainees.birthday is NOT NULL) — skipped.";
                 continue;
             }
             if (Trainees::where('email', $email)->exists()) {
@@ -98,10 +98,17 @@ class TraineeImportController extends Controller implements HasMiddleware
                 $errors[] = "Row {$rowNum}: batch \"{$row['batch_code']}\" not found — run the Batches import first.";
                 continue;
             }
-            $school = PartnerSchools::whereRaw('LOWER(school_name) = ?', [mb_strtolower(trim($row['school_name']))])->first();
-            if (! $school) {
-                $errors[] = "Row {$rowNum}: school \"{$row['school_name']}\" not found — run the Partner Schools import first.";
-                continue;
+            // Legacy data sometimes has no school on file at all — leave it null rather than
+            // reject the whole row, but a non-blank name that doesn't match any imported school
+            // still signals bad data (or a missing Partner Schools import step) and is rejected.
+            $schoolName = trim($row['school_name'] ?? '');
+            $school = null;
+            if ($schoolName !== '') {
+                $school = PartnerSchools::whereRaw('LOWER(school_name) = ?', [mb_strtolower($schoolName)])->first();
+                if (! $school) {
+                    $errors[] = "Row {$rowNum}: school \"{$row['school_name']}\" not found — run the Partner Schools import first.";
+                    continue;
+                }
             }
 
             $program = ! empty($row['program_name'])
@@ -114,29 +121,40 @@ class TraineeImportController extends Controller implements HasMiddleware
             $rate = $batch->setup === 'online' ? ($row['online_hours_rate'] ?? null) : ($row['f2f_hours_rate'] ?? null);
 
             try {
-                $trainee = DB::transaction(fn () => Trainees::create([
-                    'status' => $this->truthy($row['is_active'] ?? 1) ? Statuses::ACTIVE : Statuses::INACTIVE,
-                    'batch_id' => $batch->id,
-                    'school_id' => $school->id,
-                    'academic_program_id' => $program?->id,
-                    'academic_level_id' => $level?->id,
-                    'public_url_id' => (string) Str::ulid(),
-                    'first_name' => trim($row['first_name']),
-                    'last_name' => trim($row['last_name']),
-                    'email' => $email,
-                    'birthday' => $row['birthday'],
-                    'birth_place' => $row['birth_place'] ?? '',
-                    'gender' => $gender,
-                    'mobile_number' => $row['mobile_number'] ?? '',
-                    'emergency_contact_name' => $row['emergency_contact_name'] ?? '',
-                    'emergency_contact_number' => $row['emergency_contact_number'] ?? '',
-                    'required_hours' => $row['required_hours'],
-                    'address' => $row['address'] ?? '',
-                    'override_rate_per_hour' => $rate !== null && $rate !== '' ? (float) $rate : null,
-                    'override_hours_discount_percent' => isset($row['discount_percent']) && $row['discount_percent'] !== ''
-                        ? (float) $row['discount_percent']
-                        : null,
-                ]));
+                $trainee = DB::transaction(function () use ($row, $batch, $school, $program, $level, $email, $gender, $rate) {
+                    $trainee = new Trainees([
+                        'status' => $this->truthy($row['is_active'] ?? 1) ? Statuses::ACTIVE : Statuses::INACTIVE,
+                        'batch_id' => $batch->id,
+                        'school_id' => $school?->id,
+                        'academic_program_id' => $program?->id,
+                        'academic_level_id' => $level?->id,
+                        'public_url_id' => (string) Str::ulid(),
+                        'first_name' => trim($row['first_name']),
+                        'last_name' => trim($row['last_name']),
+                        'email' => $email,
+                        'birthday' => $row['birthday'] ?: null,
+                        'birth_place' => $row['birth_place'] ?? '',
+                        'gender' => $gender,
+                        'mobile_number' => $row['mobile_number'] ?? '',
+                        'emergency_contact_name' => $row['emergency_contact_name'] ?? '',
+                        'emergency_contact_number' => $row['emergency_contact_number'] ?? '',
+                        // Unlike gender/school/birthday, this feeds billing math (BillingService,
+                        // HourThresholdDispatcher, etc.) throughout the app — defaulting a blank
+                        // value to 0 (a real number those already handle) instead of null avoids
+                        // spreading null-arithmetic edge cases into code that isn't expecting them.
+                        'required_hours' => $row['required_hours'] !== null && $row['required_hours'] !== ''
+                            ? $row['required_hours']
+                            : 0,
+                        'address' => $row['address'] ?? '',
+                        'override_rate_per_hour' => $rate !== null && $rate !== '' ? (float) $rate : null,
+                        'override_hours_discount_percent' => isset($row['discount_percent']) && $row['discount_percent'] !== ''
+                            ? (float) $row['discount_percent']
+                            : null,
+                    ]);
+                    $this->saveWithImportTimestamps($trainee, $row);
+
+                    return $trainee;
+                });
                 $createdIds[] = ['model' => Trainees::class, 'id' => $trainee->id];
                 $successCount++;
             } catch (\Throwable $e) {

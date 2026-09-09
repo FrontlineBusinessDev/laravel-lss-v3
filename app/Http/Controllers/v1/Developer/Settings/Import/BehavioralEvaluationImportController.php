@@ -9,6 +9,7 @@ use App\Models\BehavioralQuestion;
 use App\Models\Trainees;
 use App\Models\User;
 use App\Support\Import\ImportLogging;
+use App\Support\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -22,6 +23,10 @@ use Illuminate\Support\Facades\DB;
  * trainee_id) constraint and no history table, rows are grouped by
  * (trainee, date) and processed oldest-to-newest so only the most recent
  * legacy evaluation per trainee survives — a stated, surfaced limitation.
+ * A question_text with no matching row yet (the CSV carries no section, and
+ * this pipeline has no reference-data import step for questions) is created
+ * on the fly, filed under an "Imported (Unreviewed)" section and left
+ * `inactive`, instead of the answer being silently dropped.
  */
 class BehavioralEvaluationImportController extends Controller implements HasMiddleware
 {
@@ -43,14 +48,14 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'trainee_email' => ['required', 'email'],
             'trainer_email' => ['required', 'email'],
             'date' => ['required', 'date'],
             'question_text' => ['required', 'string'],
             'score' => ['required', 'integer', 'min:1', 'max:5'],
             'remarks' => ['nullable', 'string'],
-        ];
+        ], $this->timestampRowRules());
 
         $rows = $validated['rows'];
         $errors = [];
@@ -99,7 +104,7 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
             }
 
             try {
-                $rowCreatedIds = DB::transaction(function () use ($group, $trainee, $trainer, &$warnings) {
+                $rowCreatedIds = DB::transaction(function () use ($group, $trainee, $trainer, $first, &$warnings) {
                     $evaluation = BehavioralEvaluation::firstOrNew([
                         'batch_id' => $trainee->batch_id,
                         'trainee_id' => $trainee->id,
@@ -107,6 +112,12 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
                     $evaluationIsNew = ! $evaluation->exists;
                     $evaluation->evaluator_id = $trainer->id;
                     $evaluation->remarks = collect($group)->pluck('row.remarks')->filter()->first();
+                    if ($evaluationIsNew) {
+                        $timestamps = $this->importTimestamps($first);
+                        $evaluation->created_at = $timestamps['created_at'];
+                        $evaluation->updated_at = $timestamps['updated_at'];
+                        $evaluation->timestamps = false;
+                    }
                     $evaluation->save();
 
                     if (! $evaluationIsNew) {
@@ -123,15 +134,22 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
                     foreach ($group as $entry) {
                         $row = $entry['row'];
                         $entryRowNum = $entry['index'] + 2;
-                        $question = BehavioralQuestion::whereRaw('LOWER(question) = ?', [mb_strtolower(trim($row['question_text']))])->first();
+                        $questionText = trim($row['question_text']);
+                        $question = BehavioralQuestion::whereRaw('LOWER(question) = ?', [mb_strtolower($questionText)])->first();
                         if (! $question) {
-                            $warnings[] = "Row {$entryRowNum}: no matching question for \"{$row['question_text']}\" — answer skipped.";
-                            continue;
+                            $question = new BehavioralQuestion([
+                                'status' => Statuses::INACTIVE,
+                                'section' => 'Imported (Unreviewed)',
+                                'question' => $questionText,
+                            ]);
+                            $this->saveWithImportTimestamps($question, $row);
+                            $entries[] = ['model' => BehavioralQuestion::class, 'id' => $question->id];
                         }
-                        $answer = $evaluation->answers()->create([
+                        $answer = $evaluation->answers()->make([
                             'question_id' => $question->id,
                             'score' => $row['score'],
                         ]);
+                        $this->saveWithImportTimestamps($answer, $row);
                         if ($evaluationIsNew) {
                             $entries[] = ['model' => BehavioralEvaluationAnswer::class, 'id' => $answer->id];
                         }

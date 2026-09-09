@@ -1,9 +1,9 @@
-"name","abbreviation","description"
-"Continuing Studies",,
-"First Year",,
-"Fourth Year",,
-"Grade 11",,
-"Grade 12",,
-"Others",,
-"Second Year",,
-"Third Year",,
+name,abbreviation,description,created_at,updated_at
+"Continuing Studies",,,"2024-06-14 14:48:21","2024-06-14 14:48:21"
+"First Year",,,"2024-05-29 14:41:16","2024-05-29 14:41:16"
+"Fourth Year",,,"2023-07-03 09:05:16","2023-07-03 09:05:51"
+"Grade 11",,,"2023-07-03 09:06:32","2023-07-03 09:06:32"
+"Grade 12",,,"2023-07-03 09:06:23","2023-07-03 09:06:23"
+Others,,,"2024-09-17 09:36:30","2024-09-17 09:36:30"
+"Second Year",,,"2024-05-29 14:41:26","2024-05-29 14:41:26"
+"Third Year",,,"2023-07-03 09:06:05","2023-07-03 09:06:05"

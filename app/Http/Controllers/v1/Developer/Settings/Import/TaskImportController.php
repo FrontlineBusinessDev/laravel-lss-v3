@@ -31,7 +31,7 @@ class TaskImportController extends Controller implements HasMiddleware
         return [new Middleware(['auth', 'role:admin|developer', 'throttle:60,1'])];
     }
 
-    /** rows: [{trainee_email, trainer_email, task_title, description?, date, time_goal, time_spent?, grade?, remarks?, is_complete}] */
+    /** rows: [{trainee_email, trainer_email?, task_title, description?, date, time_goal, time_spent?, grade?, remarks?, is_complete}] */
     public function import(Request $request): JsonResponse
     {
         $this->nullifyBlankRowFields($request, ['date', 'time_spent']);
@@ -44,18 +44,18 @@ class TaskImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'trainee_email' => ['required', 'email'],
-            'trainer_email' => ['required', 'email'],
+            'trainer_email' => ['nullable', 'email'],
             'task_title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'date' => ['required', 'date'],
             'time_goal' => ['required', 'numeric', 'min:0'],
             'time_spent' => ['nullable', 'numeric', 'min:0'],
-            'grade' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'grade' => ['nullable', 'numeric'],
             'remarks' => ['nullable', 'string'],
             'is_complete' => ['nullable'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $warnings = [];
@@ -84,10 +84,16 @@ class TaskImportController extends Controller implements HasMiddleware
 
                 continue;
             }
-            ['user' => $trainer, 'warning' => $trainerWarning] = $this->findOrInviteTrainer($row['trainer_email']);
-            if ($trainerWarning) {
-                $warnings[] = "Row {$rowNum}: {$trainerWarning}";
-                $createdIds[] = ['model' => User::class, 'id' => $trainer->id];
+            if (! empty($row['trainer_email'])) {
+                ['user' => $trainer, 'warning' => $trainerWarning] = $this->findOrInviteTrainer($row['trainer_email']);
+                if ($trainerWarning) {
+                    $warnings[] = "Row {$rowNum}: {$trainerWarning}";
+                    $createdIds[] = ['model' => User::class, 'id' => $trainer->id];
+                }
+            } else {
+                // No trainer named at all — assign the single shared "Unassigned Trainer"
+                // placeholder account rather than rejecting the row over missing legacy data.
+                $trainer = $this->findOrCreatePlaceholderTrainer();
             }
 
             $complete = $this->truthy($row['is_complete'] ?? null);
@@ -107,7 +113,7 @@ class TaskImportController extends Controller implements HasMiddleware
                 $rowCreatedIds = DB::transaction(function () use ($row, $trainee, $trainer, $complete) {
                     $entries = [];
 
-                    $task = Task::create([
+                    $task = new Task([
                         'task_group_id' => (string) Str::uuid(),
                         'status' => $complete ? 'completed' : 'open',
                         'batch_id' => $trainee->batch_id,
@@ -121,6 +127,7 @@ class TaskImportController extends Controller implements HasMiddleware
                         'remarks' => $row['remarks'] ?? null,
                         'completed_at' => $complete ? $row['date'] : null,
                     ]);
+                    $this->saveWithImportTimestamps($task, $row);
                     $entries[] = ['model' => Task::class, 'id' => $task->id];
 
                     if (isset($row['grade']) && $row['grade'] !== '') {
@@ -130,21 +137,26 @@ class TaskImportController extends Controller implements HasMiddleware
                             'trainee_id' => $trainee->id,
                         ]);
                         $ratingIsNew = ! $rating->exists;
-                        $rating->rating = (int) round((float) $row['grade']);
+                        // Legacy grades occasionally fall outside 0-100 (typos, bad exports) —
+                        // clamp instead of rejecting the row over one bad value.
+                        $rating->rating = (int) round(max(0, min(100, (float) $row['grade'])));
                         $rating->evaluator_id = $trainer->id;
                         $rating->rated_at = $row['date'];
                         $rating->comments = $row['remarks'] ?? $rating->comments;
-                        $rating->save();
                         if ($ratingIsNew) {
+                            $this->saveWithImportTimestamps($rating, $row);
                             $entries[] = ['model' => TaskRating::class, 'id' => $rating->id];
+                        } else {
+                            $rating->save();
                         }
 
-                        $history = $rating->history()->create([
+                        $history = $rating->history()->make([
                             'rating' => $rating->rating,
                             'comments' => $rating->comments,
                             'evaluator_id' => $trainer->id,
                             'rated_at' => $row['date'],
                         ]);
+                        $this->saveWithImportTimestamps($history, $row);
                         // Append-only audit trail — always a genuinely new row regardless of whether the rating itself was new.
                         $entries[] = ['model' => TaskRatingHistory::class, 'id' => $history->id];
                     }
