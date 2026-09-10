@@ -23,6 +23,8 @@ class SeminarFactory extends Factory
             'max_participants' => fake()->numberBetween(30, 150),
             'status' => fake()->randomElement(['active', 'completed', 'completed', 'closed']),
             'type' => fake()->randomElement(['Webinar', 'On-site', 'Hybrid']),
+            'public_registration_url_id' => (string) \Illuminate\Support\Str::ulid(),
+            'is_public_url_enable' => true,
         ];
     }
 }

@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
 import { Search, X, ChevronLeft, ChevronRight, ChevronRight as RowChevron } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Dropdown } from '@/components/Dropdown';
+import { cn } from '@/lib/utils';
+import type { Seminar, SeminarParticipant } from '@/types';
 import { ParticipantDetailModal } from './ParticipantDetailModal';
 import { PARTICIPANT_STATUS_ORDER, PARTICIPANT_STATUS_STYLE, MONTH_NAMES, seminarYears } from './seminarUtils';
-import type { Seminar, SeminarParticipant } from '@/types';
-import { cn } from '@/lib/utils';
 const PAGE_SIZE = 8;
 interface Props {
   seminars: Seminar[];
@@ -26,23 +26,50 @@ export function ParticipantsTab({
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<SeminarParticipant | null>(null);
+  // Stored by id, not by object — re-looked-up from `participants` below so the
+  // open modal reflects fresh data after onUpdate's reload, not the stale
+  // snapshot captured when the row was first clicked.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = participants.find((p) => p.id === selectedId) ?? null;
   const years = useMemo(() => seminarYears(seminars), [seminars]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     return participants.filter(p => {
-      if (q && !p.name.toLowerCase().includes(q) && !p.email.toLowerCase().includes(q)) return false;
-      if (statusFilter && statusFilter !== 'Status' && p.status !== statusFilter) return false;
-      if (topicFilter && topicFilter !== 'Seminar topic' && p.seminarTopic !== topicFilter) return false;
+      if (q && !p.name.toLowerCase().includes(q) && !p.email.toLowerCase().includes(q)) {
+return false;
+}
+
+      if (statusFilter && statusFilter !== 'Status' && p.status !== statusFilter) {
+return false;
+}
+
+      if (topicFilter && topicFilter !== 'Seminar topic' && p.seminarTopic !== topicFilter) {
+return false;
+}
+
       if (p.registeredAt) {
-        if (yearFilter && yearFilter !== 'Year' && !p.registeredAt.startsWith(yearFilter)) return false;
+        if (yearFilter && yearFilter !== 'Year' && !p.registeredAt.startsWith(yearFilter)) {
+return false;
+}
+
         if (monthFilter && monthFilter !== 'Month') {
           const m = MONTH_NAMES.indexOf(monthFilter) + 1;
-          if (Number(p.registeredAt.slice(5, 7)) !== m) return false;
+
+          if (Number(p.registeredAt.slice(5, 7)) !== m) {
+return false;
+}
         }
-        if (from && p.registeredAt < from) return false;
-        if (to && p.registeredAt > to) return false;
+
+        if (from && p.registeredAt < from) {
+return false;
+}
+
+        if (to && p.registeredAt > to) {
+return false;
+}
       }
+
       return true;
     });
   }, [participants, query, statusFilter, topicFilter, yearFilter, monthFilter, from, to]);
@@ -66,6 +93,7 @@ export function ParticipantsTab({
       setPage(1);
     };
   }
+
   return <>
       <div className="mb-3 flex flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center" data-cy="participants-tab-div-1">
         <div className="relative w-full flex-1 sm:min-w-[160px]" data-cy="participants-tab-div-2">
@@ -109,7 +137,7 @@ export function ParticipantsTab({
               </tr>
             </thead>
             <tbody data-cy="participants-tab-tbody-24">
-              {paged.map(p => <tr key={p.id} onClick={() => setSelected(p)} className="cursor-pointer border-t border-neutral-100 transition-colors hover:bg-neutral-50" data-cy="participants-tab-tr-set-selected">
+              {paged.map(p => <tr key={p.id} onClick={() => setSelectedId(p.id)} className="cursor-pointer border-t border-neutral-100 transition-colors hover:bg-neutral-50" data-cy="participants-tab-tr-set-selected">
                   <td className="px-4 py-2.5" data-cy="participants-tab-td-26">
                     <span className={cn('inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-medium', PARTICIPANT_STATUS_STYLE[p.status])} data-cy="participants-tab-span-27">
                       {p.status}
@@ -134,7 +162,7 @@ export function ParticipantsTab({
 
       {/* Mobile cards */}
       <div className="flex flex-col gap-2 sm:hidden" data-cy="participants-tab-div-35">
-        {paged.map(p => <button key={p.id} onClick={() => setSelected(p)} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3.5 text-left transition-colors active:bg-neutral-50" data-cy="participants-tab-button-set-selected">
+        {paged.map(p => <button key={p.id} onClick={() => setSelectedId(p.id)} className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-3.5 text-left transition-colors active:bg-neutral-50" data-cy="participants-tab-button-set-selected">
             <div className="min-w-0 flex-1" data-cy="participants-tab-div-37">
               <div className="mb-1 flex items-center gap-2" data-cy="participants-tab-div-38">
                 <span className="truncate text-sm font-semibold text-ink" data-cy="participants-tab-span-39">{p.name}</span>
@@ -167,6 +195,6 @@ export function ParticipantsTab({
         </div>
       </div>
 
-      <ParticipantDetailModal open={!!selected} onClose={() => setSelected(null)} participant={selected} onUpdate={onUpdate} data-cy="participants-tab-participant-detail-modal-set-selected" />
+      <ParticipantDetailModal open={!!selected} onClose={() => setSelectedId(null)} participant={selected} onUpdate={onUpdate} data-cy="participants-tab-participant-detail-modal-set-selected" />
     </>;
 }

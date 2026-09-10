@@ -8,12 +8,8 @@ beforeEach(function () {
 
 // ── Access control ───────────────────────────────────────────────────────────
 //
-// The Seminars module has no store/update/archive/restore/destroy wired yet
-// (SeminarController/SeminarListController/SeminarParticipantsController/
-// SeminarEmailNotificationController only serve static CSR shells + a
-// read-only lookup() feed backed by client-side mock data — see their
-// docblocks). So this file is access-control only; there is no CRUD surface
-// to exercise.
+// Page-load + permission checks. Real CRUD/mutation coverage lives in
+// SeminarModuleTest.php.
 
 test('developer can view the list of seminars page', function () {
     $this->withoutVite();

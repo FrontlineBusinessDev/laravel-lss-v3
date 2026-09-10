@@ -115,10 +115,10 @@ export const IMPORT_STEPS: ImportStepConfig[] = [
     {
         key: 'payments',
         title: '5a. Payments',
-        description: 'Run Trainees import first — matched by trainee_email.',
+        description: 'Run Trainees import first — matched by trainee_email. Add batch_code if the email has more than one enrollment.',
         endpoint: 'payments',
         template:
-            'trainee_email,amount_paid,payment_date,official_receipt_number,receipt_link,created_at,updated_at\nmacmerin24@gmail.com,3000,2024-04-02,asdqw,,,\n',
+            'trainee_email,amount_paid,payment_date,official_receipt_number,receipt_link,notes,batch_code,created_at,updated_at\nmacmerin24@gmail.com,3000,2024-04-02,asdqw,,,,,\n',
         templateFileName: 'payments_template.csv',
     },
     {

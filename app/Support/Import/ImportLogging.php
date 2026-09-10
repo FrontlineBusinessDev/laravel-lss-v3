@@ -3,8 +3,10 @@
 namespace App\Support\Import;
 
 use App\Models\SettingsImportLog;
+use App\Models\Trainees;
 use App\Models\User;
 use App\Support\Statuses;
+use App\Support\TraineeEnrollmentLinker;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -133,6 +135,46 @@ trait ImportLogging
         }
         $model->timestamps = false;
         $model->save();
+    }
+
+    /**
+     * Resolves the trainee row a secondary import CSV (task/payment/behavioral
+     * evaluation/learning outcome) should attach to, by `trainee_email`. Now
+     * that the same email can have multiple app_trainees rows (re-enrollment
+     * across batches), an exact `batch_code` match disambiguates when given;
+     * otherwise falls back to the current enrollment (TraineeEnrollmentLinker::resolveHead())
+     * with a warning so the importer can add batch_code if it picked wrong.
+     *
+     * @return array{trainee: ?Trainees, warning: ?string}
+     */
+    protected function resolveImportTrainee(string $email, ?string $batchCode = null): array
+    {
+        $matches = Trainees::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])
+            ->with('batch:id,batch_code,academic_industry_id')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        if ($matches->isEmpty()) {
+            return ['trainee' => null, 'warning' => null];
+        }
+        if ($matches->count() === 1) {
+            return ['trainee' => $matches->first(), 'warning' => null];
+        }
+
+        if ($batchCode !== null && $batchCode !== '') {
+            $exact = $matches->first(fn (Trainees $t) => $t->batch?->batch_code === trim($batchCode));
+            if ($exact) {
+                return ['trainee' => $exact, 'warning' => null];
+            }
+        }
+
+        $head = TraineeEnrollmentLinker::resolveHead($matches);
+
+        return [
+            'trainee' => $head,
+            'warning' => "\"{$email}\" matches {$matches->count()} enrollment records — imported against the current one (trainee #{$head->id}, batch #{$head->batch_id}). Add a batch_code column to disambiguate if this is wrong.",
+        ];
     }
 
     /** Validates a single decoded CSV row against its field rules, returning the first error message or null. Row-by-row validation (instead of `rows.*.field` wildcard rules) means one bad row is just another skippable per-row error — not a `ValidationException` that aborts the whole request/chunk and, with chunked uploads, every chunk after it. */

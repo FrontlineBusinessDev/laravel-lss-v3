@@ -1,6 +1,7 @@
 import { LogoMark } from '@/components/Logo';
 import { formatCurrency, PAYMENT_STATUS_LABEL } from './paymentsUtils';
-import { traineeFullName, type AppPaymentDetail } from './types';
+import { traineeFullName  } from './types';
+import type {AppPaymentDetail} from './types';
 
 interface PaymentReportPrintProps {
   detail: AppPaymentDetail;
@@ -64,6 +65,7 @@ export function PaymentReportPrint({ detail, generatedAt, variant = 'print' }: P
             <th className="border border-ink px-2 py-1.5 text-left" data-cy="payment-report-print-th-date">Date</th>
             <th className="border border-ink px-2 py-1.5 text-left" data-cy="payment-report-print-th-reference">Reference no.</th>
             <th className="border border-ink px-2 py-1.5 text-right" data-cy="payment-report-print-th-amount-paid">Amount Paid</th>
+            <th className="border border-ink px-2 py-1.5 text-left" data-cy="payment-report-print-th-reference-link">Reference Link</th>
             <th className="border border-ink px-2 py-1.5 text-left" data-cy="payment-report-print-th-notes">Notes</th>
           </tr>
         </thead>
@@ -73,12 +75,13 @@ export function PaymentReportPrint({ detail, generatedAt, variant = 'print' }: P
               <td className="border border-ink px-2 py-1.5" data-cy="payment-report-print-td-date">{p.payment_date}</td>
               <td className="border border-ink px-2 py-1.5" data-cy="payment-report-print-td-reference">{p.reference_no || '—'}</td>
               <td className="border border-ink px-2 py-1.5 text-right" data-cy="payment-report-print-td-amount">{formatCurrency(Number(p.amount_paid))}</td>
+              <td className="border border-ink px-2 py-1.5 break-all" data-cy="payment-report-print-td-reference-link">{p.receipt_link || '—'}</td>
               <td className="border border-ink px-2 py-1.5" data-cy="payment-report-print-td-notes">{p.notes || '—'}</td>
             </tr>
           ))}
           {sorted.length === 0 && (
             <tr data-cy="payment-report-print-tr-53">
-              <td className="border border-ink px-2 py-4 text-center text-neutral-400" colSpan={4} data-cy="payment-report-print-td-no-transactions-recorded">No transactions recorded.</td>
+              <td className="border border-ink px-2 py-4 text-center text-neutral-400" colSpan={5} data-cy="payment-report-print-td-no-transactions-recorded">No transactions recorded.</td>
             </tr>
           )}
         </tbody>
@@ -86,7 +89,7 @@ export function PaymentReportPrint({ detail, generatedAt, variant = 'print' }: P
           <tr className="bg-neutral-100 font-semibold" data-cy="payment-report-print-tr-56">
             <td className="border border-ink px-2 py-1.5" colSpan={2} data-cy="payment-report-print-td-total">Total</td>
             <td className="border border-ink px-2 py-1.5 text-right" data-cy="payment-report-print-td-58">{formatCurrency(Number(detail.total_paid))}</td>
-            <td className="border border-ink px-2 py-1.5" data-cy="payment-report-print-td-59" />
+            <td className="border border-ink px-2 py-1.5" colSpan={2} data-cy="payment-report-print-td-59" />
           </tr>
         </tfoot>
       </table>

@@ -1,20 +1,22 @@
-import { useState } from 'react';
 import { Mail, Bell, Pencil, Send } from 'lucide-react';
+import { useState } from 'react';
 import { useToast } from '@/components/Toast';
-import { EditEmailTemplateModal } from './EditEmailTemplateModal';
-import type { SeminarEmailTemplate, SeminarAdminAlertSetting } from '@/types';
 import { cn } from '@/lib/utils';
+import type { SeminarEmailTemplate, SeminarAdminAlertSetting } from '@/types';
+import { EditEmailTemplateModal } from './EditEmailTemplateModal';
 interface Props {
   templates: SeminarEmailTemplate[];
   onUpdateTemplate: (id: string, patch: Partial<SeminarEmailTemplate>) => void;
   adminAlerts: SeminarAdminAlertSetting[];
   onToggleAlert: (key: SeminarAdminAlertSetting['key']) => void;
+  onSendTest?: (id: string) => void;
 }
 export function EmailNotificationsTab({
   templates,
   onUpdateTemplate,
   adminAlerts,
-  onToggleAlert
+  onToggleAlert,
+  onSendTest
 }: Props) {
   const {
     showToast
@@ -26,6 +28,7 @@ export function EmailNotificationsTab({
     });
     showToast(`"${t.name}" ${t.enabled ? 'disabled' : 'enabled'}.`, 'success');
   }
+
   return <div className="flex flex-col gap-5" data-cy="email-notifications-tab-div-1">
       <section data-cy="email-notifications-tab-section-2">
         <h2 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-ink" data-cy="email-notifications-tab-h2-participant-email-templates">
@@ -74,6 +77,6 @@ export function EmailNotificationsTab({
         </div>
       </section>
 
-      <EditEmailTemplateModal open={!!editing} onClose={() => setEditing(null)} template={editing} onSave={onUpdateTemplate} data-cy="email-notifications-tab-edit-email-template-modal-set-editing" />
+      <EditEmailTemplateModal open={!!editing} onClose={() => setEditing(null)} template={editing} onSave={onUpdateTemplate} onSendTest={onSendTest} data-cy="email-notifications-tab-edit-email-template-modal-set-editing" />
     </div>;
 }

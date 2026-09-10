@@ -4,7 +4,6 @@ namespace App\Http\Controllers\v1\Developer\Settings\Import;
 
 use App\Http\Controllers\v1\Controller;
 use App\Models\AcademicLearningOutcomes;
-use App\Models\Trainees;
 use App\Support\Import\ImportLogging;
 use App\Support\Statuses;
 use Illuminate\Http\JsonResponse;
@@ -49,6 +48,7 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
         ], $this->timestampRowRules());
 
         $errors = [];
+        $warnings = [];
         $successCount = 0;
         $createdIds = [];
 
@@ -58,10 +58,13 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
                 $errors[] = "Row {$rowNum}: {$error}";
                 continue;
             }
-            $trainee = Trainees::with('batch')->where('email', trim($row['trainee_email']))->first();
+            ['trainee' => $trainee, 'warning' => $traineeWarning] = $this->resolveImportTrainee(trim($row['trainee_email']), $row['batch_code'] ?? null);
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$row['trainee_email']}\" — run the Trainees import first.";
                 continue;
+            }
+            if ($traineeWarning) {
+                $warnings[] = "Row {$rowNum}: {$traineeWarning}";
             }
 
             $outcomeText = trim($row['outcome_text']);
@@ -118,6 +121,6 @@ class LearningOutcomeImportController extends Controller implements HasMiddlewar
             }
         }
 
-        return $this->finishImport('learning_outcomes', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
+        return $this->finishImport('learning_outcomes', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 }

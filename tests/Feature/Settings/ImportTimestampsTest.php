@@ -105,6 +105,28 @@ test('batches import stamps the row created_at/updated_at', function () {
     expect($batch->updated_at->toDateTimeString())->toBe('2022-06-15 17:45:00');
 });
 
+test('batches import archives a dissolved batch instead of terminating it', function () {
+    $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
+    $programType = AcademicProgramType::create(['status' => Statuses::ACTIVE, 'name' => 'OJT']);
+
+    $this->postJson(route('settings.import.batches'), [
+        'file_name' => 'import.csv',
+        'rows' => [[
+            'batch_code' => 'FBS-DISSOLVED',
+            'setup' => 'f2f',
+            'industry' => $industry->name,
+            'program_type' => $programType->name,
+            'date_started' => '2022-01-01',
+            'is_open' => 0,
+            'is_completed' => 0,
+            'is_dissolved' => 1,
+        ]],
+    ])->assertOk();
+
+    $batch = Batches::where('batch_code', 'FBS-DISSOLVED')->firstOrFail();
+    expect($batch->status)->toBe(Statuses::INACTIVE);
+});
+
 test('batches import creates a missing industry/program type as inactive instead of rejecting the row', function () {
     $this->postJson(route('settings.import.batches'), [
         'file_name' => 'import.csv',
@@ -154,6 +176,32 @@ test('trainees import stamps the row created_at/updated_at', function () {
     $trainee = Trainees::where('email', 'ada@example.com')->firstOrFail();
     expect($trainee->created_at->toDateTimeString())->toBe('2022-07-14 00:00:00');
     expect($trainee->updated_at->toDateTimeString())->toBe('2023-06-08 15:15:05');
+});
+
+test('trainees import archives a trainee into an already-archived batch even when the row says is_active', function () {
+    $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
+    $programType = AcademicProgramType::create(['status' => Statuses::ACTIVE, 'name' => 'OJT']);
+    $batch = Batches::factory()->create([
+        'status' => Statuses::INACTIVE,
+        'academic_industry_id' => $industry->id,
+        'academic_program_type_id' => $programType->id,
+    ]);
+
+    $this->postJson(route('settings.import.trainees'), [
+        'file_name' => 'import.csv',
+        'rows' => [[
+            'first_name' => 'Stale',
+            'last_name' => 'Active',
+            'email' => 'stale-active@example.com',
+            'batch_code' => $batch->batch_code,
+            'birthday' => '',
+            'required_hours' => '',
+            'is_active' => 1,
+        ]],
+    ])->assertOk();
+
+    $trainee = Trainees::where('email', 'stale-active@example.com')->firstOrFail();
+    expect($trainee->status)->toBe(Statuses::INACTIVE);
 });
 
 test('trainees import allows null gender, school, and birthday for incomplete legacy records, defaulting required_hours to 0', function () {
@@ -223,6 +271,27 @@ test('payments import stamps the row created_at/updated_at on the guarded Traine
     $payment = $trainee->payments()->firstOrFail();
     expect($payment->created_at->toDateTimeString())->toBe('2024-04-02 11:00:00');
     expect($payment->updated_at->toDateTimeString())->toBe('2024-04-02 11:00:00');
+});
+
+test('payments import does not treat distinct installments sharing the same generic receipt text as duplicates', function () {
+    $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
+    $batch = Batches::factory()->create(['academic_industry_id' => $industry->id]);
+    $school = PartnerSchools::create(['status' => Statuses::ACTIVE, 'school_name' => 'Payer School']);
+    $trainee = Trainees::factory()->create(['email' => 'installments@example.com', 'batch_id' => $batch->id, 'school_id' => $school->id]);
+
+    $response = $this->postJson(route('settings.import.payments'), [
+        'file_name' => 'import.csv',
+        'rows' => [
+            ['trainee_email' => 'installments@example.com', 'amount_paid' => 500, 'payment_date' => '2024-01-09', 'official_receipt_number' => 'Acknowledgement Rece'],
+            ['trainee_email' => 'installments@example.com', 'amount_paid' => 1000, 'payment_date' => '2024-01-10', 'official_receipt_number' => 'Acknowledgement Rece'],
+            ['trainee_email' => 'installments@example.com', 'amount_paid' => 500, 'payment_date' => '2024-01-09', 'official_receipt_number' => 'Acknowledgement Rece'],
+        ],
+    ])->assertOk();
+
+    expect($response->json('data.created_count'))->toBe(2);
+    expect($response->json('data.errors'))->toHaveCount(1);
+    expect($response->json('data.errors.0'))->toContain('duplicate payment');
+    expect($trainee->payments()->count())->toBe(2);
 });
 
 test('learning outcomes import stamps the pivot created_at/updated_at without the relation overwriting it', function () {
@@ -350,6 +419,30 @@ test('tasks import stamps Task, TaskRating, and the created_at-only TaskRatingHi
     expect($history->created_at->toDateTimeString())->toBe('2022-03-21 09:00:00');
 });
 
+test('tasks import falls back to created_at\'s date when the row\'s date is after it (corrupted legacy export)', function () {
+    $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
+    $batch = Batches::factory()->create(['academic_industry_id' => $industry->id]);
+    $school = PartnerSchools::create(['status' => Statuses::ACTIVE, 'school_name' => 'Task School']);
+    $trainee = Trainees::factory()->create(['email' => 'baddate@example.com', 'batch_id' => $batch->id, 'school_id' => $school->id]);
+
+    $response = $this->postJson(route('settings.import.tasks'), [
+        'file_name' => 'import.csv',
+        'rows' => [[
+            'trainee_email' => 'baddate@example.com',
+            'task_title' => 'Bad Date Task',
+            'date' => '2026-09-09',
+            'time_goal' => 3,
+            'created_at' => '2024-09-10 07:08:46',
+            'updated_at' => '2024-09-10 07:08:46',
+        ]],
+    ])->assertOk();
+
+    expect($response->json('data.warnings.0'))->toContain('used created_at\'s date instead');
+
+    $task = Task::where('trainee_id', $trainee->id)->where('task', 'Bad Date Task')->firstOrFail();
+    expect($task->date->toDateString())->toBe('2024-09-10');
+});
+
 test('tasks import clamps an out-of-range grade to 0-100 instead of rejecting the row', function () {
     $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
     $batch = Batches::factory()->create(['academic_industry_id' => $industry->id]);
@@ -370,6 +463,54 @@ test('tasks import clamps an out-of-range grade to 0-100 instead of rejecting th
 
     $rating = TaskRating::where('trainee_id', $trainee->id)->where('task_name', 'Over Graded Task')->firstOrFail();
     expect($rating->rating)->toBe(100);
+});
+
+test('tasks import locks incomplete tasks instead of leaving them open, and keeps completed ones completed', function () {
+    $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
+    $batch = Batches::factory()->create(['academic_industry_id' => $industry->id]);
+    $school = PartnerSchools::create(['status' => Statuses::ACTIVE, 'school_name' => 'Task School']);
+    $trainee = Trainees::factory()->create(['email' => 'locktest@example.com', 'batch_id' => $batch->id, 'school_id' => $school->id]);
+
+    $this->postJson(route('settings.import.tasks'), [
+        'file_name' => 'import.csv',
+        'rows' => [
+            ['trainee_email' => 'locktest@example.com', 'task_title' => 'Unfinished Task', 'date' => '2022-03-21', 'time_goal' => 3, 'is_complete' => 0],
+            ['trainee_email' => 'locktest@example.com', 'task_title' => 'Finished Task', 'date' => '2022-03-22', 'time_goal' => 3, 'is_complete' => 1],
+        ],
+    ])->assertOk();
+
+    $unfinished = Task::where('trainee_id', $trainee->id)->where('task', 'Unfinished Task')->firstOrFail();
+    expect($unfinished->status)->toBe('locked');
+    expect($unfinished->locked_at)->not->toBeNull();
+
+    $finished = Task::where('trainee_id', $trainee->id)->where('task', 'Finished Task')->firstOrFail();
+    expect($finished->status)->toBe('completed');
+    expect($finished->completed_at)->not->toBeNull();
+});
+
+test('tasks import groups repeated (trainee, task, date) rows into one rating instead of dropping later grade updates', function () {
+    $industry = AcademicIndustry::create(['status' => Statuses::ACTIVE, 'name' => 'ICT']);
+    $batch = Batches::factory()->create(['academic_industry_id' => $industry->id]);
+    $school = PartnerSchools::create(['status' => Statuses::ACTIVE, 'school_name' => 'Task School']);
+    $trainee = Trainees::factory()->create(['email' => 'progressive@example.com', 'batch_id' => $batch->id, 'school_id' => $school->id]);
+
+    $response = $this->postJson(route('settings.import.tasks'), [
+        'file_name' => 'import.csv',
+        'rows' => [
+            ['trainee_email' => 'progressive@example.com', 'task_title' => 'React JS', 'date' => '2024-04-29', 'time_goal' => 3],
+            ['trainee_email' => 'progressive@example.com', 'task_title' => 'React JS', 'date' => '2024-04-29', 'time_goal' => 3],
+            ['trainee_email' => 'progressive@example.com', 'task_title' => 'React JS', 'date' => '2024-04-29', 'time_goal' => 3, 'grade' => 85],
+            ['trainee_email' => 'progressive@example.com', 'task_title' => 'React JS', 'date' => '2024-04-29', 'time_goal' => 3, 'grade' => 85],
+        ],
+    ])->assertOk();
+
+    expect($response->json('data.created_count'))->toBe(2);
+    expect($response->json('data.errors'))->toHaveCount(2);
+    expect(Task::where('trainee_id', $trainee->id)->where('task', 'React JS')->count())->toBe(1);
+
+    $rating = TaskRating::where('trainee_id', $trainee->id)->where('task_name', 'React JS')->firstOrFail();
+    expect($rating->rating)->toBe(85);
+    expect($rating->history()->count())->toBe(1);
 });
 
 test('tasks import assigns the shared placeholder trainer when trainer_email is blank', function () {

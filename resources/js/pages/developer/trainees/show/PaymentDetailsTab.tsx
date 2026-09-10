@@ -1,26 +1,20 @@
+import { router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import { traineePaymentsService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
-import { TextField } from '@/components/FormField';
-import { Modal } from '@/components/Modal';
 import { AttachmentViewerModal } from '@/components/modal/AttachmentViewerModal';
 import { StatCard } from '@/components/StatCard';
-import { BillingOverridePanel } from '@/components/trainees/BillingOverridePanel';
 import { useToast } from '@/components/Toast';
-import {
-    FileUploadField,
-    emptyFileFieldValue,
-} from '@/hooks/use-file-upload-field';
+import { BillingOverridePanel } from '@/components/trainees/BillingOverridePanel';
+import { PaymentTransactionModal } from '@/components/trainees/PaymentTransactionModal';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
+import { formatDateTime } from '@/lib/date';
 import type {
     AppTraineePayment,
     TraineeDetail,
 } from '@/types/modules/trainees/trainee-detail';
-import type { FileFieldValue } from '@/types/reusable/fields';
-import { router } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { formatDateTime } from '@/lib/date';
 
 const currency = (value: string | number) =>
     `₱${Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
@@ -31,51 +25,12 @@ export default function PaymentDetailsTab({
     trainee: TraineeDetail;
 }) {
     const { showToast } = useToast();
-    const [modalOpen, setModalOpen] = useState(false);
-    const [saving, setSaving] = useState(false);
+    const [transactionModal, setTransactionModal] = useState<{
+        mode: 'add' | 'edit';
+        payment: AppTraineePayment | null;
+    } | null>(null);
     const [viewingReceipt, setViewingReceipt] =
         useState<AppTraineePayment | null>(null);
-    const [form, setForm] = useState({
-        amount_paid: '',
-        payment_date: new Date().toISOString().slice(0, 10),
-        reference_no: '',
-        notes: '',
-        official_receipt_number: '',
-    });
-    const [receipt, setReceipt] = useState<FileFieldValue>(emptyFileFieldValue);
-
-    const handleRecord = async () => {
-        const amount = Number(form.amount_paid);
-        if (!amount) return;
-        setSaving(true);
-        try {
-            await traineePaymentsService.create(trainee.id, {
-                ...form,
-                amount_paid: amount,
-                receipt: receipt.files[0] ?? null,
-            });
-            showToast('Payment recorded', 'success');
-            setForm({
-                amount_paid: '',
-                payment_date: new Date().toISOString().slice(0, 10),
-                reference_no: '',
-                notes: '',
-                official_receipt_number: '',
-            });
-            setReceipt(emptyFileFieldValue);
-            setModalOpen(false);
-            router.reload({ only: ['trainee'] });
-        } catch (error) {
-            showToast(
-                error instanceof ApiError
-                    ? error.message
-                    : 'Failed to record payment',
-                'error',
-            );
-        } finally {
-            setSaving(false);
-        }
-    };
 
     const deletePayment = async (paymentId: number) => {
         try {
@@ -151,7 +106,12 @@ export default function PaymentDetailsTab({
                             variant="primary"
                             size="sm"
                             icon={Plus}
-                            onClick={() => setModalOpen(true)}
+                            onClick={() =>
+                                setTransactionModal({
+                                    mode: 'add',
+                                    payment: null,
+                                })
+                            }
                             data-cy="payment-details-tab-button-set-modal-open"
                         >
                             Record payment
@@ -192,6 +152,12 @@ export default function PaymentDetailsTab({
                                             data-cy="payment-details-tab-th-reference"
                                         >
                                             Reference
+                                        </th>
+                                        <th
+                                            className="px-3.5 py-2.5 font-medium"
+                                            data-cy="payment-details-tab-th-reference-link"
+                                        >
+                                            Reference link
                                         </th>
                                         <th
                                             className="px-3.5 py-2.5 font-medium"
@@ -237,7 +203,27 @@ export default function PaymentDetailsTab({
                                                 {p.reference_no ?? '—'}
                                             </td>
                                             <td
-                                                className="px-3.5 py-2.5 text-neutral-600"
+                                                className="px-3.5 py-2.5 text-xs"
+                                                data-cy="payment-details-tab-td-reference-link"
+                                            >
+                                                {p.receipt_link ? (
+                                                    <a
+                                                        href={p.receipt_link}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="font-medium text-brand-600 hover:underline"
+                                                    >
+                                                        Open link
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-neutral-400">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td
+                                                className="max-w-[200px] truncate px-3.5 py-2.5 text-neutral-600"
+                                                title={p.notes ?? undefined}
                                                 data-cy="payment-details-tab-td-notes"
                                             >
                                                 {p.notes ?? '—'}
@@ -266,22 +252,36 @@ export default function PaymentDetailsTab({
                                                 className="px-3.5 py-2.5 text-right"
                                                 data-cy="payment-details-tab-td-27"
                                             >
-                                                <button
-                                                    onClick={() =>
-                                                        deletePayment(p.id)
-                                                    }
-                                                    className="hover:text-danger-700 text-xs font-medium text-danger-600 transition-colors"
-                                                    data-cy="payment-details-tab-button-delete-payment"
-                                                >
-                                                    Remove
-                                                </button>
+                                                <div className="flex justify-end gap-3">
+                                                    <button
+                                                        onClick={() =>
+                                                            setTransactionModal({
+                                                                mode: 'edit',
+                                                                payment: p,
+                                                            })
+                                                        }
+                                                        className="text-xs font-medium text-brand-600 transition-colors hover:underline"
+                                                        data-cy="payment-details-tab-button-edit-payment"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            deletePayment(p.id)
+                                                        }
+                                                        className="hover:text-danger-700 text-xs font-medium text-danger-600 transition-colors"
+                                                        data-cy="payment-details-tab-button-delete-payment"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
                                     {trainee.payments.length === 0 && (
                                         <tr data-cy="payment-details-tab-tr-30">
                                             <td
-                                                colSpan={6}
+                                                colSpan={7}
                                                 className="px-3.5 py-8 text-center text-sm text-neutral-500"
                                                 data-cy="payment-details-tab-td-no-payment-transactions-recorded-yet"
                                             >
@@ -298,107 +298,16 @@ export default function PaymentDetailsTab({
 
                 <BillingOverridePanel trainee={trainee} />
 
-                <Modal
-                    open={modalOpen}
-                    onClose={() => setModalOpen(false)}
-                    title="Record payment"
-                    description="Log a new payment transaction for this trainee."
-                    data-cy="payment-details-tab-modal-record-payment"
-                >
-                    <TextField
-                        label="Amount"
-                        type="number"
-                        min={0}
-                        value={form.amount_paid}
-                        onChange={(e) =>
-                            setForm((f) => ({
-                                ...f,
-                                amount_paid: e.target.value,
-                            }))
-                        }
-                        placeholder="0.00"
-                        data-cy="payment-details-tab-text-field-amount"
-                    />
-                    <TextField
-                        label="Payment date"
-                        type="date"
-                        value={form.payment_date}
-                        onChange={(e) =>
-                            setForm((f) => ({
-                                ...f,
-                                payment_date: e.target.value,
-                            }))
-                        }
-                        data-cy="payment-details-tab-text-field-payment-date"
-                    />
-                    <TextField
-                        label="Reference no."
-                        optional
-                        value={form.reference_no}
-                        onChange={(e) =>
-                            setForm((f) => ({
-                                ...f,
-                                reference_no: e.target.value,
-                            }))
-                        }
-                        placeholder="e.g. REF-12345"
-                        data-cy="payment-details-tab-text-field-reference-no"
-                    />
-                    <TextField
-                        label="Notes"
-                        optional
-                        value={form.notes}
-                        onChange={(e) =>
-                            setForm((f) => ({ ...f, notes: e.target.value }))
-                        }
-                        data-cy="payment-details-tab-text-field-notes"
-                    />
-                    <TextField
-                        label="Official receipt no."
-                        optional
-                        value={form.official_receipt_number}
-                        onChange={(e) =>
-                            setForm((f) => ({
-                                ...f,
-                                official_receipt_number: e.target.value,
-                            }))
-                        }
-                        placeholder="e.g. OR-00123"
-                        data-cy="payment-details-tab-text-field-or-number"
-                    />
-                    <div className="mb-3.5">
-                        <label className="mb-1.5 block text-xs font-medium text-neutral-600">
-                            Official receipt document
-                        </label>
-                        <FileUploadField
-                            value={receipt}
-                            onChange={setReceipt}
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            maxSizeMB={5}
-                        />
-                    </div>
-                    <div
-                        className="flex justify-end gap-2 pt-1"
-                        data-cy="payment-details-tab-div-36"
-                    >
-                        <Button
-                            variant="secondary"
-                            onClick={() => setModalOpen(false)}
-                            disabled={saving}
-                            data-cy="payment-details-tab-button-set-modal-open-2"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={handleRecord}
-                            disabled={saving}
-                            data-cy="payment-details-tab-button-record"
-                        >
-                            {saving ? 'Saving…' : 'Save payment'}
-                        </Button>
-                    </div>
-                </Modal>
+                <PaymentTransactionModal
+                    open={transactionModal !== null}
+                    mode={transactionModal?.mode ?? 'add'}
+                    traineeId={trainee.id}
+                    traineeName={`${trainee.first_name} ${trainee.last_name}`.trim()}
+                    outstandingBalance={outstanding}
+                    payment={transactionModal?.payment ?? null}
+                    onClose={() => setTransactionModal(null)}
+                    onSaved={() => router.reload({ only: ['trainee'] })}
+                />
 
                 <AttachmentViewerModal
                     attachment={

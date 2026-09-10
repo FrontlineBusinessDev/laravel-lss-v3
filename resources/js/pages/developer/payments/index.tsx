@@ -1,21 +1,22 @@
+import { Eye, Pencil, Plus, Printer, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { formatDateTime } from '@/lib/date';
-import { Eye, Pencil, Plus, Printer, X } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { RowMenu } from '@/components/RowMenu';
-import { TooltipIconButton } from '@/components/TooltipIconButton';
 import { DataTableCardField } from '@/components/table/DataTableCardField';
-import { loadLookupOptions } from '@/types/reusable/fields';
-import type { ColumnDef } from '@/types/reusable/data-table';
+import { TooltipIconButton } from '@/components/TooltipIconButton';
+import { PaymentTransactionModal } from '@/components/trainees/PaymentTransactionModal';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
-import { formatCurrency, PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from './paymentsUtils';
-import { traineeFullName, type AppPaymentDetail, type AppPaymentRow } from './types';
-import { PaymentDetailModal } from './PaymentDetailModal';
+import type { ColumnDef } from '@/types/reusable/data-table';
+import { loadLookupOptions } from '@/types/reusable/fields';
 import { EditPaymentInfoModal } from './EditPaymentInfoModal';
-import { TransactionModal } from './TransactionModal';
+import { PaymentDetailModal } from './PaymentDetailModal';
 import { PaymentReportPrint } from './PaymentReportPrint';
+import { formatCurrency, PAYMENT_STATUS_LABEL, PAYMENT_STATUS_STYLE } from './paymentsUtils';
+import { traineeFullName    } from './types';
+import type {AppPaymentDetail, AppPaymentRow, AppPaymentTransaction} from './types';
 
 const GRID = 'sm:grid sm:grid-cols-[1.6fr_1.3fr_1fr_1fr_1fr_1fr_1fr_2.5rem] sm:items-center sm:gap-3';
 
@@ -69,7 +70,13 @@ const listHeader = (
 export default function PaymentsPage() {
   const [detailId, setDetailId] = useState<number | null>(null);
   const [editInfoId, setEditInfoId] = useState<number | null>(null);
-  const [transactionModal, setTransactionModal] = useState<{ mode: 'add' | 'edit'; traineeId: number; paymentId: number | null } | null>(null);
+  const [transactionModal, setTransactionModal] = useState<{
+    mode: 'add' | 'edit';
+    traineeId: number;
+    traineeName: string;
+    outstandingBalance: number;
+    payment: AppPaymentTransaction | null;
+  } | null>(null);
   const [printId, setPrintId] = useState<number | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
   const [refreshTable, setRefreshTable] = useState<() => void>(() => () => {});
@@ -82,6 +89,7 @@ export default function PaymentsPage() {
   function renderRow(row: AppPaymentRow) {
     const name = traineeFullName(row);
     const outstanding = Math.max(0, Number(row.outstanding_balance));
+
     return (
       <div className={cn('px-4 py-3 text-sm', GRID)} data-cy="payments-index-row">
         <button onClick={() => setDetailId(row.id)} className="min-w-0 text-left font-medium text-ink hover:underline" data-cy="payments-index-button-view-trainee">
@@ -104,7 +112,7 @@ export default function PaymentsPage() {
               {
                 label: 'Record payment',
                 icon: Plus,
-                onClick: () => setTransactionModal({ mode: 'add', traineeId: row.id, paymentId: null }),
+                onClick: () => setTransactionModal({ mode: 'add', traineeId: row.id, traineeName: name, outstandingBalance: outstanding, payment: null }),
               },
               {
                 label: 'Edit payment info',
@@ -147,21 +155,29 @@ export default function PaymentsPage() {
         refreshToken={refreshToken}
         onClose={() => setDetailId(null)}
         onEditPaymentInfo={() => detailId && setEditInfoId(detailId)}
-        onAddPayment={() => detailId && setTransactionModal({ mode: 'add', traineeId: detailId, paymentId: null })}
-        onEditTransaction={(paymentId) => detailId && setTransactionModal({ mode: 'edit', traineeId: detailId, paymentId })}
+        onAddPayment={(detail) =>
+          setTransactionModal({ mode: 'add', traineeId: detail.id, traineeName: traineeFullName(detail), outstandingBalance: Number(detail.outstanding_balance), payment: null })
+        }
+        onEditTransaction={(payment, detail) =>
+          setTransactionModal({ mode: 'edit', traineeId: detail.id, traineeName: traineeFullName(detail), outstandingBalance: Number(detail.outstanding_balance), payment })
+        }
         onMutated={handleMutated}
       />
 
       <EditPaymentInfoModal open={editInfoId != null} traineeId={editInfoId} onClose={() => setEditInfoId(null)} onSaved={handleMutated} />
 
-      <TransactionModal
-        open={!!transactionModal}
-        mode={transactionModal?.mode ?? 'add'}
-        traineeId={transactionModal?.traineeId ?? null}
-        paymentId={transactionModal?.paymentId ?? null}
-        onClose={() => setTransactionModal(null)}
-        onSaved={handleMutated}
-      />
+      {transactionModal && (
+        <PaymentTransactionModal
+          open
+          mode={transactionModal.mode}
+          traineeId={transactionModal.traineeId}
+          traineeName={transactionModal.traineeName}
+          outstandingBalance={transactionModal.outstandingBalance}
+          payment={transactionModal.payment}
+          onClose={() => setTransactionModal(null)}
+          onSaved={handleMutated}
+        />
+      )}
 
       {printId != null && (
         <PaymentPrintOverlay traineeId={printId} onClose={() => setPrintId(null)} />
@@ -177,14 +193,20 @@ function PaymentPrintOverlay({ traineeId, onClose }: { traineeId: number; onClos
   useEffect(() => {
     let active = true;
     apiFetchJson<AppPaymentDetail>(`/payments/${traineeId}`).then((res) => {
-      if (active) setDetail(res.data);
+      if (active) {
+setDetail(res.data);
+}
     });
+
     return () => {
       active = false;
     };
   }, [traineeId]);
 
-  if (!detail) return null;
+  if (!detail) {
+return null;
+}
+
   const generatedAt = formatDateTime(new Date());
 
   return createPortal(

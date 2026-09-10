@@ -1,14 +1,9 @@
-export type PaymentStatus = 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid';
+// Same shape the trainee-page Payment Details tab uses — one payment-record
+// type, not two independently maintained copies that drift apart.
+export type { AppTraineePayment as AppPaymentTransaction } from '@/types/modules/trainees/trainee-detail';
+import type { AppTraineePayment } from '@/types/modules/trainees/trainee-detail';
 
-export interface AppPaymentTransaction {
-  id: number;
-  trainee_id: number;
-  amount_paid: string;
-  payment_date: string;
-  reference_no: string | null;
-  notes: string | null;
-  created_at: string;
-}
+export type PaymentStatus = 'unpaid' | 'partially_paid' | 'fully_paid' | 'overpaid';
 
 export interface AppPaymentBatch {
   id: number;
@@ -44,7 +39,7 @@ export interface AppPaymentRow {
 }
 
 export interface AppPaymentDetail extends AppPaymentRow {
-  payments: AppPaymentTransaction[];
+  payments: AppTraineePayment[];
 }
 
 export function traineeFullName(row: { first_name: string; last_name: string }): string {

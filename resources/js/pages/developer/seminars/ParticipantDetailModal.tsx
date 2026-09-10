@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
 import { CheckCircle2, Circle, Mail, Send, User, Wallet } from 'lucide-react';
-import { Modal } from '@/components/Modal';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
 import { SelectField, TextField, TextAreaField } from '@/components/FormField';
+import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import { useNotifications } from '@/contexts/NotificationsContext';
 import { TODAY } from '@/data/mockData';
+import { cn } from '@/lib/utils';
 import type { SeminarParticipant, SeminarProgress } from '@/types';
 import { PARTICIPANT_STATUS_STYLE, progressPercent } from './seminarUtils';
-import { cn } from '@/lib/utils';
 const PROGRESS_STEPS: {
     key: keyof SeminarProgress;
     label: string;
@@ -69,7 +69,11 @@ export function ParticipantDetailModal({
             });
         }
     }, [participant]);
-    if (!participant) return null;
+
+    if (!participant) {
+return null;
+}
+
     const pct = progressPercent(participant);
     function toggleStep(key: keyof SeminarProgress) {
         const base: SeminarProgress = participant!.progress ?? {
@@ -108,6 +112,7 @@ export function ParticipantDetailModal({
             link: '/seminars',
         });
     }
+
     return (
         <Modal
             open={open}
@@ -295,6 +300,7 @@ export function ParticipantDetailModal({
                 >
                     {PROGRESS_STEPS.map((step) => {
                         const done = !!participant.progress?.[step.key];
+
                         return (
                             <button
                                 key={step.key}

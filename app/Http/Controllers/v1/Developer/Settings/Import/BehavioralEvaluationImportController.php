@@ -6,7 +6,6 @@ use App\Http\Controllers\v1\Controller;
 use App\Models\BehavioralEvaluation;
 use App\Models\BehavioralEvaluationAnswer;
 use App\Models\BehavioralQuestion;
-use App\Models\Trainees;
 use App\Models\User;
 use App\Support\Import\ImportLogging;
 use App\Support\Statuses;
@@ -92,10 +91,13 @@ class BehavioralEvaluationImportController extends Controller implements HasMidd
             $first = $group[0]['row'];
             $rowNum = $group[0]['index'] + 2;
 
-            $trainee = Trainees::where('email', trim($first['trainee_email']))->first();
+            ['trainee' => $trainee, 'warning' => $traineeWarning] = $this->resolveImportTrainee(trim($first['trainee_email']), $first['batch_code'] ?? null);
             if (! $trainee) {
                 $errors[] = "Row {$rowNum}: no trainee found with email \"{$first['trainee_email']}\" — run the Trainees import first.";
                 continue;
+            }
+            if ($traineeWarning) {
+                $warnings[] = "Row {$rowNum}: {$traineeWarning}";
             }
             ['user' => $trainer, 'warning' => $trainerWarning] = $this->findOrInviteTrainer($first['trainer_email']);
             if ($trainerWarning) {

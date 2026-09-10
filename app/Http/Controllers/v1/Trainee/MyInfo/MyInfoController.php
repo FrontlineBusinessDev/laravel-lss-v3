@@ -28,10 +28,38 @@ class MyInfoController
 
     private const UPLOADABLE_DOCUMENT_TYPES = RequiredDocumentTypes::TYPES;
 
-    public function index(): mixed
+    /**
+     * `?enrollment=<id>` lets the trainee browse a past enrollment from their
+     * own re-enrollment chain (view-only history) instead of their current
+     * one — same page, same shape, just scoped to a different app_trainees
+     * row after an ownership check via viewOwnEnrollment(). All the writable
+     * actions below (uploadDocument/deleteDocument) always stay scoped to
+     * resolveOwnTrainee() regardless of this param, so a past enrollment is
+     * naturally unreachable for writes.
+     */
+    public function index(Request $request): mixed
     {
-        $trainee = $this->resolveOwnTrainee();
-        $this->authorize('viewOwn', $trainee);
+        $ownTrainee = $this->resolveOwnTrainee();
+        $this->authorize('viewOwn', $ownTrainee);
+
+        $enrollmentId = $request->integer('enrollment') ?: null;
+        $trainee = $ownTrainee;
+        if ($enrollmentId && $enrollmentId !== $ownTrainee->id) {
+            $trainee = Trainees::findOrFail($enrollmentId);
+            $this->authorize('viewOwnEnrollment', [$ownTrainee, $trainee]);
+        }
+
+        $enrollmentHistory = $ownTrainee->enrollmentChain()->load('batch:id,batch_code')
+            ->map(fn (Trainees $t) => [
+                'id' => $t->id,
+                'status' => $t->status,
+                'batch_code' => $t->batch?->batch_code,
+                'created_at' => $t->created_at,
+                'date_completed' => $t->date_completed,
+                'is_current' => $t->id === $ownTrainee->id,
+                'is_viewing' => $t->id === $trainee->id,
+            ])
+            ->values();
 
         $trainee->load([
             'school:id,school_name',
@@ -75,6 +103,10 @@ class MyInfoController
                 'outcomes' => $outcomes,
                 'documents' => $documents,
             ],
+            // Read-only unless viewing the current enrollment — the frontend
+            // uses this to hide/disable document upload etc. on a past one.
+            'isCurrentEnrollment' => $trainee->id === $ownTrainee->id,
+            'enrollmentHistory' => $enrollmentHistory,
             'uploadableDocumentTypes' => self::UPLOADABLE_DOCUMENT_TYPES,
         ]);
     }

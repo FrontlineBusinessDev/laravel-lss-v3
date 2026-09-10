@@ -254,17 +254,6 @@ export default function EvaluationOverviewPage() {
         queryFn: evaluationOverviewService.reminders,
     });
 
-    const distributionRows = data
-        ? (['5', '4', '3', '2', '1'] as const).map((star) => ({
-              star: `${star} ★`,
-              count: data.rating_distribution[star] ?? 0,
-          }))
-        : [];
-    const totalDistribution = distributionRows.reduce(
-        (sum, r) => sum + r.count,
-        0,
-    );
-
     return (
         <EvaluationPrimaryLayout>
             <div className="flex flex-col gap-4" data-cy="overview-tab-div-1">
@@ -315,44 +304,36 @@ export default function EvaluationOverviewPage() {
                     data-cy="overview-tab-div-8"
                 >
                     <div className="rounded-lg border border-neutral-200 bg-white p-5">
-                        <h3 className="mb-1 text-sm font-semibold text-ink">
-                            Rating distribution
+                        <h3 className="mb-3 text-sm font-semibold text-ink">
+                            Answers received per batch & seminar
                         </h3>
-                        <p className="mb-3 text-xs text-neutral-500">
-                            {totalDistribution} evaluation responses across all
-                            categories
-                        </p>
-                        <div className="flex items-end justify-between gap-2">
-                            {distributionRows.map((row) => {
-                                const max = Math.max(
-                                    1,
-                                    ...distributionRows.map((r) => r.count),
-                                );
-
-                                return (
-                                    <div
-                                        key={row.star}
-                                        className="flex flex-1 flex-col items-center gap-1.5"
-                                    >
-                                        <div className="flex h-24 w-full items-end">
-                                            <div
-                                                className="w-full rounded-t bg-brand-500"
-                                                style={{
-                                                    height: `${Math.max(2, (row.count / max) * 100)}%`,
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="text-xs text-neutral-500">
-                                            {row.star}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                        <BarList
+                            rows={[
+                                ...(data?.answers_by_batch ?? []).map(
+                                    (row) => ({
+                                        ...row,
+                                        label: `Batch ${row.batch_code}`,
+                                    }),
+                                ),
+                                ...(data?.answers_by_seminar ?? []).map(
+                                    (row) => ({
+                                        ...row,
+                                        label: row.topic as string,
+                                    }),
+                                ),
+                            ].sort(
+                                (a, b) =>
+                                    Number(b.answer_count) -
+                                    Number(a.answer_count),
+                            )}
+                            labelKey="label"
+                            valueKey="answer_count"
+                            empty="No evaluations submitted yet."
+                        />
                     </div>
                     <div className="rounded-lg border border-neutral-200 bg-white p-5">
                         <h3 className="mb-3 text-sm font-semibold text-ink">
-                            Average trainer rating by batch
+                            Average rating per batch
                         </h3>
                         <BarList
                             rows={data?.answers_by_batch ?? []}

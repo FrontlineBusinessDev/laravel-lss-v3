@@ -1,10 +1,10 @@
 import { Copy, Users, MapPin, CalendarDays, Wallet, ArrowRight } from 'lucide-react';
-import { Modal } from '@/components/Modal';
 import { Button } from '@/components/Button';
+import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
-import { SEMINAR_STATUS_STYLE, SEMINAR_STATUS_LABEL, PARTICIPANT_STATUS_STYLE, formatDate } from './seminarUtils';
-import type { Seminar, SeminarParticipant } from '@/types';
 import { cn } from '@/lib/utils';
+import type { Seminar, SeminarParticipant } from '@/types';
+import { SEMINAR_STATUS_STYLE, SEMINAR_STATUS_LABEL, PARTICIPANT_STATUS_STYLE, formatDate } from './seminarUtils';
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -22,12 +22,17 @@ export function ViewSeminarModal({
   const {
     showToast
   } = useToast();
-  if (!seminar) return null;
+
+  if (!seminar) {
+return null;
+}
+
   const list = participants.filter(p => p.seminarTopic === seminar.topic);
   function copyLink() {
     navigator.clipboard?.writeText(seminar!.registrationLink).catch(() => {});
     showToast('Registration link copied to clipboard.', 'success');
   }
+
   return <Modal open={open} onClose={onClose} title="Seminar details" maxWidth={560} data-cy="view-seminar-modal-modal-seminar-details">
       <div className="mb-4 flex items-start justify-between gap-3" data-cy="view-seminar-modal-div-2">
         <div data-cy="view-seminar-modal-div-3">

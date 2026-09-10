@@ -88,10 +88,6 @@ class TraineeImportController extends Controller implements HasMiddleware
                 $errors[] = "Row {$rowNum}: gender \"{$row['gender']}\" is not male/female — skipped.";
                 continue;
             }
-            if (Trainees::where('email', $email)->exists()) {
-                $errors[] = "Row {$rowNum}: a trainee with email \"{$email}\" already exists — skipped.";
-                continue;
-            }
 
             $batch = Batches::where('batch_code', trim($row['batch_code']))->first();
             if (! $batch) {
@@ -123,7 +119,13 @@ class TraineeImportController extends Controller implements HasMiddleware
             try {
                 $trainee = DB::transaction(function () use ($row, $batch, $school, $program, $level, $email, $gender, $rate) {
                     $trainee = new Trainees([
-                        'status' => $this->truthy($row['is_active'] ?? 1) ? Statuses::ACTIVE : Statuses::INACTIVE,
+                        // A row's own is_active flag is legacy data and often stale (see
+                        // TraineeEnrollmentLinker) — but a batch that's already archived/dissolved
+                        // is a hard fact: nothing enrolled in it can still be an active trainee
+                        // today, regardless of what the CSV says.
+                        'status' => $batch->status === Statuses::ACTIVE && $this->truthy($row['is_active'] ?? 1)
+                            ? Statuses::ACTIVE
+                            : Statuses::INACTIVE,
                         'batch_id' => $batch->id,
                         'school_id' => $school?->id,
                         'academic_program_id' => $program?->id,
@@ -157,6 +159,8 @@ class TraineeImportController extends Controller implements HasMiddleware
                 });
                 $createdIds[] = ['model' => Trainees::class, 'id' => $trainee->id];
                 $successCount++;
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $errors[] = "Row {$rowNum}: " . collect($e->errors())->flatten()->first();
             } catch (\Throwable $e) {
                 $errors[] = "Row {$rowNum}: {$e->getMessage()}";
             }

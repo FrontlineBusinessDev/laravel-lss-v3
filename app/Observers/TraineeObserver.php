@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Trainees;
 use App\Services\BillingService;
+use App\Support\TraineeEnrollmentLinker;
 
 class TraineeObserver
 {
@@ -23,6 +24,9 @@ class TraineeObserver
         // Kung nagbago ang batch_id o school_id, i-recalculate ang group discounts para sa apektadong grupo
         if ($trainee->wasChanged(['batch_id', 'school_id']) || $trainee->wasRecentlyCreated) {
             $this->billingService->recalculateGroupForBatchAndSchool($trainee->batch_id, $trainee->school_id);
+        }
+        if ($trainee->wasRecentlyCreated || $trainee->wasChanged(['email', 'status'])) {
+            TraineeEnrollmentLinker::relinkChain($trainee);
         }
     }
 }

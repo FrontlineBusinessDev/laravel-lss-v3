@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Role;
 use App\Models\Trainees;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 /**
  * Trainee <-> User account linking. "Link" enables login for a trainee
@@ -39,6 +40,25 @@ class TraineeAccountLinker
         abort_if(! $user instanceof User, 500, 'Failed to create the trainee account.');
 
         return [$user, true];
+    }
+
+    /**
+     * Moves the shared login (user_id) onto $head, if it currently sits on a
+     * different row in the same enrollment chain — so the trainee always logs
+     * into their current enrollment. Raw query-builder updates (not save())
+     * so this pure FK move doesn't re-trigger TraineeObserver/billing.
+     *
+     * @param  Collection<int, Trainees>  $chain
+     */
+    public static function moveToHead(Trainees $head, Collection $chain): void
+    {
+        $currentHolder = $chain->first(fn (Trainees $t) => $t->user_id !== null);
+        if (! $currentHolder || $currentHolder->is($head)) {
+            return;
+        }
+
+        Trainees::whereKey($currentHolder->id)->update(['user_id' => null]);
+        Trainees::whereKey($head->id)->update(['user_id' => $currentHolder->user_id]);
     }
 
     /** Disables login for the trainee's linked account, if any. */

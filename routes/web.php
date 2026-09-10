@@ -69,6 +69,7 @@ use App\Http\Controllers\v1\HomeController;
 use App\Http\Controllers\v1\NotificationController;
 use App\Http\Controllers\v1\PublicCertificateController;
 use App\Http\Controllers\v1\PublicRegistrationController;
+use App\Http\Controllers\v1\PublicSeminarRegistrationController;
 use App\Http\Controllers\v1\Trainee\Announcements\AnnouncementsController as TraineeAnnouncementsController;
 use App\Http\Controllers\v1\Trainee\Biometrics\BiometricsController as TraineeBiometricsController;
 use App\Http\Controllers\v1\Trainee\Dashboard\DashboardController as TraineeDashboardController;
@@ -114,6 +115,11 @@ Route::post('/register/{token}', [PublicRegistrationController::class, 'store'])
 // HEAD as well as GET: some social scrapers issue a HEAD to validate the image
 // (content-type/length) before fetching it, and a HEAD-less route 405s them.
 Route::match(['get', 'head'], '/register/{token}/qr', [PublicRegistrationController::class, 'qr'])->name('public.register.qr');
+
+// Public seminar registration. One link per seminar (public_registration_url_id),
+// same mechanism as batches — no seminar-selection dropdown.
+Route::get('/seminars/register/{token}', [PublicSeminarRegistrationController::class, 'show'])->name('public.seminars.register');
+Route::post('/seminars/register/{token}', [PublicSeminarRegistrationController::class, 'store'])->name('public.seminars.register.store');
 
 // Public certificate verification. Resolved by a certificate's system-generated
 // public_id (the QR/shareable link target) — never certificate_no, which is
@@ -216,7 +222,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/trainees/{id}/avatar', [TraineesController::class, 'destroyAvatar'])->name('trainees.destroyAvatar');
     Route::get('/trainees/{id}/payment-details', [TraineesViewController::class, 'paymentDetails'])->name('trainees.paymentDetails');
     Route::post('/trainees/{id}/payments', [TraineePaymentsController::class, 'storePayment'])->name('trainees.payments.store');
-    Route::patch('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'updatePayment'])->name('trainees.payments.update');
+    // POST, not PATCH: a multipart body (the receipt file) can't ride a real PATCH request — see api-service-layer/http.ts's file-upload convention.
+    Route::post('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'updatePayment'])->name('trainees.payments.update');
     Route::delete('/trainees/{id}/payments/{paymentId}', [TraineePaymentsController::class, 'deletePayment'])->name('trainees.payments.destroy');
     Route::patch('/trainees/{id}/billing-overrides', [TraineesController::class, 'updateBillingOverrides'])->name('trainees.updateBillingOverrides');
     Route::patch('/trainees/{id}/link-account', [TraineesController::class, 'linkAccount'])->name('trainees.linkAccount');
@@ -345,10 +352,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
     Route::middleware('permission:'.Permissions::MANAGE_SEMINARS)->group(function () {
         Route::redirect('/seminars', '/seminars/list-of-seminars')->name('seminars.index');
-        Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.list-of-seminars.index');
-        Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
-        Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
         Route::get('/seminars/lookup', [SeminarController::class, 'lookup'])->name('seminars.lookup');
+
+        Route::get('/seminars/list-of-seminars', [SeminarListController::class, 'index'])->name('seminars.list-of-seminars.index');
+        Route::post('/seminars/list-of-seminars', [SeminarListController::class, 'store'])->name('seminars.list-of-seminars.store');
+        Route::post('/seminars/list-of-seminars/{id}', [SeminarListController::class, 'update'])->name('seminars.list-of-seminars.update');
+        Route::patch('/seminars/list-of-seminars/{id}/complete', [SeminarListController::class, 'complete'])->name('seminars.list-of-seminars.complete');
+        Route::patch('/seminars/list-of-seminars/{id}/close', [SeminarListController::class, 'close'])->name('seminars.list-of-seminars.close');
+        Route::patch('/seminars/list-of-seminars/{id}/dissolve', [SeminarListController::class, 'dissolve'])->name('seminars.list-of-seminars.dissolve');
+        Route::patch('/seminars/list-of-seminars/{id}/toggle-registration', [SeminarListController::class, 'toggleRegistration'])->name('seminars.list-of-seminars.toggle-registration');
+        Route::get('/seminars/list-of-seminars/{id}/registration', [SeminarListController::class, 'registration'])->name('seminars.list-of-seminars.registration');
+
+        Route::get('/seminars/participants', [SeminarParticipantsController::class, 'index'])->name('seminars.participants.index');
+        Route::patch('/seminars/participants/{id}', [SeminarParticipantsController::class, 'update'])->name('seminars.participants.update');
+
+        Route::get('/seminars/email-notification', [SeminarEmailNotificationController::class, 'index'])->name('seminars.email-notification.index');
+        Route::patch('/seminars/email-notification/templates/{id}', [SeminarEmailNotificationController::class, 'updateTemplate'])->name('seminars.email-notification.templates.update');
+        Route::post('/seminars/email-notification/templates/{id}/send-test', [SeminarEmailNotificationController::class, 'sendTest'])->name('seminars.email-notification.templates.send-test');
+        Route::patch('/seminars/email-notification/admin-alerts/{key}/toggle', [SeminarEmailNotificationController::class, 'toggleAlert'])->name('seminars.email-notification.admin-alerts.toggle');
     });
     Route::redirect('/reports', '/reports/annual')->name('reports.index');
     Route::get('/reports/annual', [ReportController::class, 'annual'])->name('reports.annual.index');

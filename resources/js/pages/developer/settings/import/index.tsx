@@ -1,9 +1,12 @@
+import { useQueryClient } from '@tanstack/react-query';
 import SettingsImportLayout from '@/layouts/settings/SettingsImportLayout';
 import SettingsPrimaryLayout from '@/layouts/settings/SettingsPrimaryLayout';
 import { CsvImportCard } from './CsvImportCard';
 import { IMPORT_STEPS } from './importUtils';
 
 export default function index() {
+    const queryClient = useQueryClient();
+
     return (
         <SettingsPrimaryLayout>
             <SettingsImportLayout>
@@ -19,7 +22,15 @@ export default function index() {
                     data-cy="settings-import-list"
                 >
                     {IMPORT_STEPS.map((step) => (
-                        <CsvImportCard key={step.key} step={step} />
+                        <CsvImportCard
+                            key={step.key}
+                            step={step}
+                            // An import can touch data any other page's table is showing (batches,
+                            // trainees, payments, etc.) — those pages aren't mounted right now to
+                            // invalidate themselves, so clear the whole cache instead of maintaining
+                            // a per-step list of affected query keys that will drift out of date.
+                            onImported={() => queryClient.invalidateQueries()}
+                        />
                     ))}
                 </div>
             </SettingsImportLayout>

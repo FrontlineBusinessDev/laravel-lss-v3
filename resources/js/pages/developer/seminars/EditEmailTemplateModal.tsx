@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
 import { Send, Eye, EyeOff } from 'lucide-react';
-import { Modal } from '@/components/Modal';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
 import { TextField, TextAreaField, InfoNote } from '@/components/FormField';
+import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import type { SeminarEmailTemplate } from '@/types';
 interface Props {
@@ -10,12 +10,14 @@ interface Props {
   onClose: () => void;
   template: SeminarEmailTemplate | null;
   onSave: (id: string, patch: Partial<SeminarEmailTemplate>) => void;
+  onSendTest?: (id: string) => void;
 }
 export function EditEmailTemplateModal({
   open,
   onClose,
   template,
-  onSave
+  onSave,
+  onSendTest
 }: Props) {
   const {
     showToast
@@ -30,7 +32,11 @@ export function EditEmailTemplateModal({
       setPreview(false);
     }
   }, [template]);
-  if (!template) return null;
+
+  if (!template) {
+return null;
+}
+
   const sample: Record<string, string> = {
     name: 'Carla Dizon',
     seminarTopic: 'Intro to Data Privacy for HR Teams',
@@ -51,8 +57,13 @@ export function EditEmailTemplateModal({
     onClose();
   }
   function sendTest() {
-    showToast(`Test email "${subject}" sent to your inbox.`, 'success');
+    if (onSendTest) {
+      onSendTest(template!.id);
+    } else {
+      showToast(`Test email "${subject}" sent to your inbox.`, 'success');
+    }
   }
+
   return <Modal open={open} onClose={onClose} title={template.name} maxWidth={520} data-cy="edit-email-template-modal-modal-template-name">
       <InfoNote data-cy="edit-email-template-modal-info-note-2">{template.trigger}</InfoNote>
 

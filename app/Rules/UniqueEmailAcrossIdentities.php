@@ -5,6 +5,7 @@ namespace App\Rules;
 use App\Models\Trainers;
 use App\Models\Trainees;
 use App\Models\User;
+use App\Support\Statuses;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Facades\DB;
@@ -18,16 +19,32 @@ use Illuminate\Support\Facades\DB;
  * already used elsewhere. This rule checks all three tables together and
  * fails with one consistent message regardless of which table the conflict
  * is in.
+ *
+ * `app_trainees` intentionally allows multiple rows per email (a trainee
+ * re-enrolling under a new batch) — TraineeEnrollmentLinker::relinkChain()
+ * auto-supersedes the older row's status when a newer enrollment is saved.
+ * So this rule never checks `app_trainees` for a trainee's own email
+ * (forTrainee()); it only checks it for a *user*'s email (forUser()), and
+ * only against that email's currently active-like enrollment, so a `users`
+ * row can still coexist with an archived trainee row of the same email.
  */
 class UniqueEmailAcrossIdentities implements ValidationRule
 {
     // 'app_traineers'
     private const TABLES = ['app_trainees', 'users'];
 
+    private const ACTIVE_LIKE_STATUSES = [Statuses::ACTIVE, Statuses::PENDING];
+
     /**
      * @param  array<string,int>  $ignore  Table name => id to exclude from that table's check.
+     * @param  array<int,string>  $tables  Tables to check (defaults to all).
+     * @param  bool  $activeTraineesOnly  When checking `app_trainees`, only count active-like rows.
      */
-    public function __construct(private readonly array $ignore = []) {}
+    public function __construct(
+        private readonly array $ignore = [],
+        private readonly array $tables = self::TABLES,
+        private readonly bool $activeTraineesOnly = false,
+    ) {}
 
     /**
      * Build the rule for a Trainer create/update. On update, also ignores the
@@ -43,15 +60,15 @@ class UniqueEmailAcrossIdentities implements ValidationRule
     }
 
     /**
-     * Build the rule for an Trainee create/update. On update, also ignores
-     * the trainee's own linked user row.
+     * Build the rule for a Trainee create/update. Only guards against
+     * colliding with an unrelated `users` account — a duplicate `app_trainees`
+     * email is a legitimate re-enrollment, not a conflict.
      */
     public static function forTrainee(?Trainees $trainee = null): self
     {
-        if (! $trainee) return new self;
-        $ignore = ['app_trainees' => $trainee->id];
-        if ($trainee->user_id) $ignore['users'] = $trainee->user_id;
-        return new self($ignore);
+        $ignore = [];
+        if ($trainee && $trainee->user_id) $ignore['users'] = $trainee->user_id;
+        return new self($ignore, ['users']);
     }
 
     /**
@@ -62,7 +79,7 @@ class UniqueEmailAcrossIdentities implements ValidationRule
      */
     public static function forUser(?User $user = null): self
     {
-        if (! $user) return new self;
+        if (! $user) return new self([], self::TABLES, true);
         $ignore = ['users' => $user->id];
         /** @disregard P1013 */ // this disregard the error below but it works
         if ($trainee = Trainees::where('user_id', $user->id)->first()) {
@@ -72,16 +89,20 @@ class UniqueEmailAcrossIdentities implements ValidationRule
         if ($assignee = Trainers::where('user_id', $user->id)->first()) {
             $ignore['app_trainers'] = $assignee->id;
         }
-        return new self($ignore);
+        return new self($ignore, self::TABLES, true);
     }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $email = strtolower(trim((string) $value));
         if ($email === '') return;
-        foreach (self::TABLES as $table) {
+        foreach ($this->tables as $table) {
             $exists = DB::table($table)
                 ->whereRaw('LOWER(email) = ?', [$email])
+                ->when(
+                    $table === 'app_trainees' && $this->activeTraineesOnly,
+                    fn($query) => $query->whereIn('status', self::ACTIVE_LIKE_STATUSES),
+                )
                 ->when(
                     isset($this->ignore[$table]),
                     fn($query) => $query->where('id', '!=', $this->ignore[$table]),

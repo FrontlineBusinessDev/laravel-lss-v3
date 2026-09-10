@@ -123,13 +123,15 @@ class BatchImportController extends Controller implements HasMiddleware
         return $this->finishImport('batches', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 
-    /** Collapses legacy's 3 booleans onto the current single status string. Dissolved wins, then completed, then open/default active. */
+    /**
+     * Collapses legacy's 3 booleans onto the current single status string. `terminated` is a
+     * separate, harsher lifecycle end-state than archiving (see BatchesController::terminate())
+     * and isn't something a legacy record can assert on its own — both is_completed and
+     * is_dissolved just mean the batch is no longer active, i.e. archived (`inactive`).
+     */
     private function resolveStatus(array $row): string
     {
-        if ($this->truthy($row['is_dissolved'] ?? null)) {
-            return Statuses::TERMINATED;
-        }
-        if ($this->truthy($row['is_completed'] ?? null)) {
+        if ($this->truthy($row['is_completed'] ?? null) || $this->truthy($row['is_dissolved'] ?? null)) {
             return Statuses::INACTIVE;
         }
 

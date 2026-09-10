@@ -1,15 +1,15 @@
+import { X, Printer } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { formatDateTime } from '@/lib/date';
-import { X, Printer } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { apiFetchJson } from '@/lib/apiFetch';
+import { formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
-import type { AppPaymentDetail } from './types';
-import { traineeFullName } from './types';
 import { PaymentInfoTab } from './PaymentInfoTab';
-import { TransactionHistoryTab } from './TransactionHistoryTab';
 import { PaymentReportPrint } from './PaymentReportPrint';
+import { TransactionHistoryTab } from './TransactionHistoryTab';
+import type { AppPaymentDetail, AppPaymentTransaction } from './types';
+import { traineeFullName } from './types';
 
 const TABS = ['Payment information', 'Transaction history'] as const;
 type Tab = (typeof TABS)[number];
@@ -19,8 +19,8 @@ interface PaymentDetailModalProps {
   refreshToken: number;
   onClose: () => void;
   onEditPaymentInfo: () => void;
-  onAddPayment: () => void;
-  onEditTransaction: (paymentId: number) => void;
+  onAddPayment: (detail: AppPaymentDetail) => void;
+  onEditTransaction: (payment: AppPaymentTransaction, detail: AppPaymentDetail) => void;
   onMutated: () => void;
 }
 
@@ -40,8 +40,10 @@ export function PaymentDetailModal({
   useEffect(() => {
     if (traineeId == null) {
       setDetail(null);
+
       return;
     }
+
     apiFetchJson<AppPaymentDetail>(`/payments/${traineeId}`).then((res) => setDetail(res.data));
   }, [traineeId, refreshToken]);
 
@@ -52,7 +54,10 @@ export function PaymentDetailModal({
     }
   }, [traineeId]);
 
-  if (traineeId == null || !detail) return null;
+  if (traineeId == null || !detail) {
+return null;
+}
+
   const generatedAt = formatDateTime(new Date());
 
   return createPortal(
@@ -95,7 +100,13 @@ export function PaymentDetailModal({
 
           {tab === 'Payment information' && <PaymentInfoTab detail={detail} onEdit={onEditPaymentInfo} data-cy="payment-detail-modal-payment-info-tab-13" />}
           {tab === 'Transaction history' && (
-            <TransactionHistoryTab detail={detail} onAddPayment={onAddPayment} onEditTransaction={onEditTransaction} onDeleted={onMutated} data-cy="payment-detail-modal-transaction-history-tab-14" />
+            <TransactionHistoryTab
+              detail={detail}
+              onAddPayment={() => onAddPayment(detail)}
+              onEditTransaction={(payment) => onEditTransaction(payment, detail)}
+              onDeleted={onMutated}
+              data-cy="payment-detail-modal-transaction-history-tab-14"
+            />
           )}
         </div>
       </div>

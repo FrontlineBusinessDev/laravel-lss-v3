@@ -36,9 +36,63 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
+interface EnrollmentHistoryEntry {
+    id: number;
+    status: string;
+    batch_code: string | null;
+    created_at: string | null;
+    date_completed: string | null;
+    is_current: boolean;
+    is_viewing: boolean;
+}
+
 interface Props {
     trainee: TraineeDetail;
     uploadableDocumentTypes: string[];
+    isCurrentEnrollment: boolean;
+    enrollmentHistory: EnrollmentHistoryEntry[];
+}
+
+/** Lets the trainee switch between their own past re-enrollments (view-only) and their current one. */
+function EnrollmentSwitcher({
+    history,
+    isCurrentEnrollment,
+}: {
+    history: EnrollmentHistoryEntry[];
+    isCurrentEnrollment: boolean;
+}) {
+    if (history.length < 2) return null;
+
+    return (
+        <div className="mb-4 rounded-lg border border-neutral-200 bg-white p-3">
+            {!isCurrentEnrollment && (
+                <p className="mb-2 text-xs font-medium text-warning-600">
+                    Viewing a past enrollment — read only.
+                </p>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+                {history.map((entry) => (
+                    <Link
+                        key={entry.id}
+                        href={
+                            entry.is_current
+                                ? '/trainee/my-info'
+                                : `/trainee/my-info?enrollment=${entry.id}`
+                        }
+                        className={cn(
+                            'rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors',
+                            entry.is_viewing
+                                ? 'border-brand-500 bg-brand-50 text-brand-600'
+                                : 'border-neutral-200 text-neutral-500 hover:text-neutral-700',
+                        )}
+                    >
+                        {entry.batch_code ?? `Enrollment #${entry.id}`}
+                        {entry.is_current ? ' (current)' : ''}
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
 }
 
 function Field({
@@ -242,7 +296,13 @@ function formatSize(bytes: number) {
         : `${Math.ceil(bytes / 1024)} KB`;
 }
 
-function DocumentsSection({ trainee, uploadableDocumentTypes }: Props) {
+function DocumentsSection({
+    trainee,
+    uploadableDocumentTypes,
+}: {
+    trainee: TraineeDetail;
+    uploadableDocumentTypes: string[];
+}) {
     const { showToast } = useToast();
     const [docs, setDocs] = useState<Record<string, DocState>>(() =>
         Object.fromEntries(
@@ -880,11 +940,22 @@ function BiometricsSection() {
 export default function MyInfoPage({
     trainee,
     uploadableDocumentTypes,
+    isCurrentEnrollment,
+    enrollmentHistory,
 }: Props) {
     const [tab, setTab] = useState<Tab>('Personal Info');
+    // A past enrollment is view-only: no document types are editable there,
+    // regardless of what the server would otherwise allow for the current one.
+    const effectiveUploadableDocumentTypes = isCurrentEnrollment
+        ? uploadableDocumentTypes
+        : [];
 
     return (
         <TraineeLayout title="My Info">
+            <EnrollmentSwitcher
+                history={enrollmentHistory}
+                isCurrentEnrollment={isCurrentEnrollment}
+            />
             <div className="mb-4 flex flex-wrap gap-1 border-b border-neutral-200">
                 {TABS.map((t) => (
                     <button
@@ -912,7 +983,7 @@ export default function MyInfoPage({
             {tab === 'Documents' && (
                 <DocumentsSection
                     trainee={trainee}
-                    uploadableDocumentTypes={uploadableDocumentTypes}
+                    uploadableDocumentTypes={effectiveUploadableDocumentTypes}
                 />
             )}
             {tab === 'Learning Outcomes' && (
