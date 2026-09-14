@@ -65,7 +65,7 @@ test('an existing contact name can be cleared on update', function () {
     ]);
 
     $this->actingAs($this->developer)
-        ->putJson(route('settings.partner-schools.update', $school->id), [
+        ->postJson(route('settings.partner-schools.update', $school->id), [
             'status' => 'active',
             'school_name' => 'Has Contact Institute',
             'abbreviation' => 'HCI',

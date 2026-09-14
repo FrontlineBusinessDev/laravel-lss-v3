@@ -1,6 +1,6 @@
 import { evaluationAccessOverrideService } from '@/api-service-layer/admin/evaluation';
+import { Switch } from '@/components/Switch';
 import { useToast } from '@/components/Toast';
-import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileWarning, Search, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -61,10 +61,9 @@ export function AccessOverridePanel() {
                         className="text-xs text-neutral-500"
                         data-cy="access-override-panel-p-trainees-with-incomplete-documents-are-normally"
                     >
-                        Trainees with incomplete documents are normally
-                        blocked from the trainer-evaluation form. Grant an
-                        override below to let a specific trainee proceed
-                        anyway.
+                        Trainees with incomplete documents are normally blocked
+                        from the trainer-evaluation form. Grant an override
+                        below to let a specific trainee proceed anyway.
                     </p>
                 </div>
             </div>
@@ -138,31 +137,14 @@ export function AccessOverridePanel() {
                                             : 's'}
                                     </p>
                                 </div>
-                                <button
-                                    role="switch"
-                                    aria-checked={allowed}
+                                <Switch
+                                    checked={allowed}
                                     disabled={pendingId === t.id}
                                     onClick={() =>
                                         toggle(t.id, !allowed, t.name)
                                     }
-                                    className={cn(
-                                        'relative h-6 w-11 shrink-0 rounded-pill transition-colors disabled:opacity-50',
-                                        allowed
-                                            ? 'bg-brand-500'
-                                            : 'bg-neutral-200',
-                                    )}
-                                    data-cy="access-override-panel-button-toggle"
-                                >
-                                    <span
-                                        className={cn(
-                                            'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-card transition-transform',
-                                            allowed
-                                                ? 'translate-x-[22px]'
-                                                : 'translate-x-0.5',
-                                        )}
-                                        data-cy="access-override-panel-span-18"
-                                    />
-                                </button>
+                                    ariaLabel={`Evaluation access override for ${t.name}`}
+                                />
                             </div>
                         );
                     })}
@@ -171,8 +153,7 @@ export function AccessOverridePanel() {
                         className="px-4 py-8 text-center text-xs text-neutral-400"
                         data-cy="access-override-panel-div-no-trainees-with-incomplete-documents-match"
                     >
-                        No trainees with incomplete documents match your
-                        search.
+                        No trainees with incomplete documents match your search.
                     </div>
                 )}
             </div>

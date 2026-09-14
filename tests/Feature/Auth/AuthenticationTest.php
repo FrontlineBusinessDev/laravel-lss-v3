@@ -14,7 +14,7 @@ test('users can authenticate using the login screen', function () {
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
-        'password' => 'password',
+        'password' => '123123qQ!',
     ]);
 
     $this->assertAuthenticated();
@@ -60,7 +60,7 @@ test('a user with capitalized Active status can authenticate', function () {
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
-        'password' => 'password',
+        'password' => '123123qQ!',
     ]);
 
     $this->assertAuthenticated();

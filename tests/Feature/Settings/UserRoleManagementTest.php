@@ -65,10 +65,11 @@ test('admin cannot create a trainee account', function () {
         ->assertJsonValidationErrors('roles.0');
 });
 
-test('admin can create a trainer account and the name is split', function () {
+test('admin can create a trainer account', function () {
     $this->actingAs(userWithRole('admin'))
         ->postJson(route('settings.users.store'), [
-            'name' => 'Juan Dela Cruz',
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
             'email' => 'juan@example.com',
             'roles' => ['trainer'],
         ])
@@ -86,7 +87,8 @@ test('admin can create a trainer account and the name is split', function () {
 test('developer can create an admin account', function () {
     $this->actingAs(userWithRole('developer'))
         ->postJson(route('settings.users.store'), [
-            'name' => 'Ada Admin',
+            'first_name' => 'Ada',
+            'last_name' => 'Admin',
             'email' => 'ada@example.com',
             'roles' => ['admin'],
         ])
@@ -175,22 +177,14 @@ test('a role assigned to users cannot be deleted', function () {
 
 // ── Settings page selection (developer vs admin) ─────────────────────────────
 
-test('developers get the settings shell with the roles module', function () {
-    $this->withoutVite();
-
+test('developers land on the users matrix, not a separate roles shell', function () {
     $this->actingAs(userWithRole('developer'))
         ->get(route('settings.index'))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('developer/settings/index')
-            ->has('permissionModules'));
+        ->assertRedirect(route('settings.users.index'));
 });
 
-test('admins get the users-only settings shell', function () {
-    $this->withoutVite();
-
+test('admins land on the users matrix too', function () {
     $this->actingAs(userWithRole('admin'))
         ->get(route('settings.index'))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('admin/settings/index'));
+        ->assertRedirect(route('settings.users.index'));
 });
