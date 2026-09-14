@@ -7,6 +7,7 @@ use App\Models\TraineesPayments;
 use App\Models\Trainees;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
 class TraineePaymentsController extends BaseController
@@ -27,11 +28,12 @@ class TraineePaymentsController extends BaseController
             'reference_no' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'official_receipt_number' => ['nullable', 'string', 'max:100'],
+            'receipt_link' => ['nullable', 'string', 'max:2048'],
             'receipt' => self::RECEIPT_RULES,
         ]);
 
         $payment = new TraineesPayments([
-            ...$validated,
+            ...Arr::except($validated, 'receipt'),
             'trainee_id' => $trainee->id,
         ]);
         $this->attachReceiptFile($request, $payment);
@@ -53,10 +55,11 @@ class TraineePaymentsController extends BaseController
             'reference_no' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'official_receipt_number' => ['nullable', 'string', 'max:100'],
+            'receipt_link' => ['nullable', 'string', 'max:2048'],
             'receipt' => self::RECEIPT_RULES,
         ]);
 
-        $payment->fill($validated);
+        $payment->fill(Arr::except($validated, 'receipt'));
         $this->attachReceiptFile($request, $payment);
         $payment->save();
 

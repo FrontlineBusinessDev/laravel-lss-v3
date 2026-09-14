@@ -22,6 +22,16 @@ class TraineesPolicy
         return $trainee->user_id === $user->id;
     }
 
+    /**
+     * Self-service: a trainee viewing a past enrollment from their own
+     * re-enrollment chain (read-only history), not just their current one.
+     */
+    public function viewOwnEnrollment(User $user, Trainees $current, Trainees $target): bool
+    {
+        return $current->user_id === $user->id
+            && mb_strtolower(trim($target->email)) === mb_strtolower(trim($current->email));
+    }
+
     /** Self-service: a trainee uploading a document for their own record, restricted to allowed types. */
     public function uploadOwnDocument(User $user, Trainees $trainee, string $documentType): bool
     {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Modal } from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { TextField, TextAreaField, SelectField } from '@/components/FormField';
+import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import type { Seminar } from '@/types';
 const SEMINAR_TYPES = ['Technical & Automation Workshops', 'Compliance & Softskills Seminars'];
@@ -41,8 +41,12 @@ export function CreateEditSeminarModal({
   const [draft, setDraft] = useState<SeminarDraft>(EMPTY_DRAFT);
   const [touched, setTouched] = useState(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+return;
+}
+
     setTouched(false);
+
     if (editing) {
       setDraft({
         topic: editing.topic,
@@ -60,13 +64,17 @@ export function CreateEditSeminarModal({
   const isValid = draft.topic.trim() && draft.description.trim() && draft.date && draft.venue.trim() && draft.fee !== '';
   function handleSave() {
     setTouched(true);
+
     if (!isValid) {
       showToast('Please fill in all required fields.', 'error');
+
       return;
     }
+
     onSave(draft, editing?.id);
     onClose();
   }
+
   return <Modal open={open} onClose={onClose} title={editing ? 'Edit seminar' : 'Add seminar'} maxWidth={460} data-cy="create-edit-seminar-modal-modal-close">
       <TextField label="Seminar topic" placeholder="e.g. AI Automation for HR" value={draft.topic} onChange={e => setDraft(d => ({
       ...d,

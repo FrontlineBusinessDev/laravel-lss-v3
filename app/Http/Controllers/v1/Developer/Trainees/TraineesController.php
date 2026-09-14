@@ -7,11 +7,13 @@ use App\Mail\TraineeActivatedMail;
 use App\Mail\UserInviteMail;
 use App\Models\AcademicLearningOutcomes;
 use App\Models\Trainees;
+use App\Rules\UniqueEmailAcrossIdentities;
 use App\Support\PasswordSetupUrl;
 use App\Support\RequiredDocumentTypes;
 use App\Support\Statuses;
 use App\Support\TraineeAccountLinker;
 use App\Support\TraineeCascadeDeleter;
+use App\Support\TraineeEnrollmentLinker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -123,7 +125,7 @@ class TraineesController extends BaseController
             'public_url_id' => ['required', 'string', 'unique:app_trainees,public_url_id'],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:app_trainees,email'],
+            'email' => ['required', 'email', UniqueEmailAcrossIdentities::forTrainee()],
             'birthday' => ['required', 'date'],
             'birth_place' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:male,female'],
@@ -148,7 +150,7 @@ class TraineesController extends BaseController
             'public_url_id' => ['required', 'string', Rule::unique('app_trainees')->ignore($model->id)],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', Rule::unique('app_trainees')->ignore($model->id)],
+            'email' => ['required', 'email', UniqueEmailAcrossIdentities::forTrainee($model instanceof Trainees ? $model : null)],
             'birthday' => ['required', 'date'],
             'birth_place' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'string', 'in:male,female'],
@@ -193,6 +195,13 @@ class TraineesController extends BaseController
     {
         $trainee = $this->resolveModel($id);
         $this->authorize('linkAccount', $trainee);
+
+        $head = TraineeEnrollmentLinker::resolveHead($trainee->enrollmentChain());
+        abort_if(
+            ! $head->is($trainee),
+            422,
+            'Only the current enrollment (batch #' . $head->batch_id . ') can be linked to a login account.',
+        );
 
         [$user, $isNewAccount] = TraineeAccountLinker::link($trainee);
 

@@ -1,16 +1,16 @@
-name,abbreviation
-Bachelor of Science in Information Technology,BSIT
-Bachelor of Science in Computer Science,BSCS
-"Accountancy, Business and Management",ABM
-"Science, Technology, Engineering, and Mathematics",STEM
-Bachelor of Science in Computer Engineering,BSCpE
-Information and Communications Technology,ICT
-Bachelor of Science in Electronics Engineering,BSEE
-Bachelor of Science in Accounting Information System,BSAIS
-Bachelor of Science in Business Administration,BSBA
-Bachelor of Science in Information System,BSIS
-Bachelor of Science in Accountancy,BSA
-Bachelor of Science in Management Accounting,BSMA
-Humanities and Social Sciences,HUMSS
-Bachelor of Science in Accounting Technology,BSAT
-General Academic Strand,GAS
+name,abbreviation,created_at,updated_at
+"Accountancy, Business and Management",ABM,"2024-02-12 10:34:13","2024-02-12 10:34:13"
+"Bachelor of Science in Accountancy",BSA,"2023-03-15 10:11:47","2023-03-15 10:11:47"
+"Bachelor of Science in Accounting Information System",BSAIS,"2023-02-10 10:07:46","2023-02-10 10:07:46"
+"Bachelor of Science in Accounting Technology",BSAT,"2023-10-16 12:46:36","2023-10-16 12:46:36"
+"Bachelor of Science in Business Administration",BSBA,"2023-02-10 10:08:21","2023-02-10 10:08:21"
+"Bachelor of Science in Computer Engineering",BSCpE,"2022-07-15 15:16:42","2022-07-15 15:16:42"
+"Bachelor of Science in Computer Science",BSCS,"2022-07-15 15:16:54","2022-07-15 15:16:54"
+"Bachelor of Science in Electronics Engineering",BSEE,"2023-02-09 14:58:45","2023-02-09 14:58:45"
+"Bachelor of Science in Information System",BSIS,"2023-02-10 13:22:05","2023-02-10 13:22:05"
+"Bachelor of Science in Information Technology",BSIT,"2022-07-15 15:17:07","2022-07-15 15:17:07"
+"Bachelor of Science in Management Accounting",BSMA,"2023-03-31 14:32:36","2023-03-31 14:32:36"
+"General Academic Strand",GAS,"2024-01-15 14:12:25","2024-01-15 14:12:25"
+"Humanities and Social Sciences",HUMSS,"2023-04-03 15:49:07","2023-04-03 15:49:07"
+"Information and Communications Technology",ICT,"2022-07-15 15:18:46","2022-07-15 15:18:46"
+"Science, Technology, Engineering, and Mathematics",STEM,"2023-04-03 15:48:25","2023-04-03 15:48:25"

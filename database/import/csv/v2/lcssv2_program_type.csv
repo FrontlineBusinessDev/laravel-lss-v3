@@ -1,6 +1,6 @@
-"name","abbreviation","description"
-"College On-the-Job Training","OJT",
-"Continuing Studies","CS",
-"IT Upskill Training","Upskill",
-"Seminar","SEM",
-"Senior High School Work Immersion","IM",
+name,abbreviation,description,created_at,updated_at
+"College On-the-Job Training",OJT,,"2023-12-01 13:58:01","2024-07-19 09:23:04"
+"Continuing Studies",CS,,"2023-12-01 14:19:17","2024-03-18 12:47:32"
+"IT Upskill Training",Upskill,,"2024-07-19 08:20:54","2024-07-19 08:21:36"
+Seminar,SEM,,"2023-12-01 14:19:28","2024-03-18 12:47:36"
+"Senior High School Work Immersion",IM,,"2023-12-01 14:18:45","2024-11-22 07:40:15"

@@ -1,12 +1,15 @@
-import { seminarParticipants, seminars } from '@/data/mockData';
+import { Link, usePage } from '@inertiajs/react';
+import type { ReactNode } from 'react';
+import React from 'react';
 import { usePermission } from '@/hooks/use-permissions';
 import { cn } from '@/lib/utils';
-import { Link, usePage } from '@inertiajs/react';
-import React, { ReactNode } from 'react';
 
 interface LayoutProps {
     children: ReactNode;
     actionNode?: ReactNode;
+    /** Header stat line counts — each seminar page passes its own real props here. */
+    seminarsCount?: number;
+    participantsCount?: number;
 }
 
 const NAV_LINKS = [
@@ -33,6 +36,8 @@ const NAV_LINKS = [
 export default function SeminarPrimaryLayout({
     children,
     actionNode,
+    seminarsCount,
+    participantsCount,
 }: LayoutProps) {
     const { can } = usePermission(); // Used to permission
     const { url } = usePage(); // Used to automatically highlight the active tab
@@ -48,13 +53,16 @@ export default function SeminarPrimaryLayout({
                         >
                             Seminars
                         </h1>
-                        <p
-                            className="text-sm text-neutral-500"
-                            data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"
-                        >
-                            {seminars.length} seminars ·{' '}
-                            {seminarParticipants.length} participants
-                        </p>
+                        {(seminarsCount !== undefined ||
+                            participantsCount !== undefined) && (
+                            <p
+                                className="text-sm text-neutral-500"
+                                data-cy="settings-primary-layout-p-manage-user-accounts-partner-schools-and"
+                            >
+                                {seminarsCount ?? 0} seminars ·{' '}
+                                {participantsCount ?? 0} participants
+                            </p>
+                        )}
                     </div>
                     <div>{actionNode}</div>
                 </div>
@@ -64,9 +72,13 @@ export default function SeminarPrimaryLayout({
                 >
                     {NAV_LINKS.map((link) => {
                         // 2. Filter tabs out dynamically based on user permissions
-                        if (!can(link.permission)) return null;
+                        if (!can(link.permission)) {
+return null;
+}
+
                         // 3. Determine if the link is currently active
                         const isActive = url.startsWith(link.href);
+
                         return (
                             <Link
                                 key={link.id}

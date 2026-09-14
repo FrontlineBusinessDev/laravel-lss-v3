@@ -23,6 +23,7 @@ export interface TraineePaymentInput extends Record<string, unknown> {
     reference_no?: string | null;
     notes?: string | null;
     official_receipt_number?: string | null;
+    receipt_link?: string | null;
     receipt?: File | null;
 }
 
@@ -35,6 +36,18 @@ export const traineePaymentsService = {
         unwrap<AppTraineePayment>(
             await http.post(
                 `/trainees/${traineeId}/payments`,
+                hasBinaryFiles(data) ? buildFormData(data) : data,
+            ),
+        ),
+    // POST, not PATCH — the receipt file can't ride a multipart PATCH body (see routes/web.php).
+    update: async (
+        traineeId: string | number,
+        paymentId: string | number,
+        data: TraineePaymentInput,
+    ): Promise<AppTraineePayment> =>
+        unwrap<AppTraineePayment>(
+            await http.post(
+                `/trainees/${traineeId}/payments/${paymentId}`,
                 hasBinaryFiles(data) ? buildFormData(data) : data,
             ),
         ),

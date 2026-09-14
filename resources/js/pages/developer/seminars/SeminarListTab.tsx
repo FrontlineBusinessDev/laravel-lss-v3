@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
 import { Search, X, ChevronLeft, ChevronRight, Copy, Eye, Pencil, CheckCircle2, Lock, Ban, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Dropdown } from '@/components/Dropdown';
 import { RowMenu } from '@/components/RowMenu';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/components/Toast';
-import { SEMINAR_STATUS_STYLE, SEMINAR_STATUS_LABEL, formatDate } from './seminarUtils';
-import type { Seminar } from '@/types';
 import { cn } from '@/lib/utils';
+import type { Seminar } from '@/types';
+import { SEMINAR_STATUS_STYLE, SEMINAR_STATUS_LABEL, formatDate } from './seminarUtils';
 const PAGE_SIZE = 8;
 type StatusTransition = 'completed' | 'closed' | 'dissolved';
 interface Props {
@@ -35,10 +35,20 @@ export function SeminarListTab({
   const types = useMemo(() => Array.from(new Set(seminars.map(s => s.type))), [seminars]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     return seminars.filter(s => {
-      if (q && !s.topic.toLowerCase().includes(q)) return false;
-      if (statusFilter && statusFilter !== 'Status' && SEMINAR_STATUS_LABEL[s.status] !== statusFilter) return false;
-      if (typeFilter && typeFilter !== 'Track' && s.type !== typeFilter) return false;
+      if (q && !s.topic.toLowerCase().includes(q)) {
+return false;
+}
+
+      if (statusFilter && statusFilter !== 'Status' && SEMINAR_STATUS_LABEL[s.status] !== statusFilter) {
+return false;
+}
+
+      if (typeFilter && typeFilter !== 'Track' && s.type !== typeFilter) {
+return false;
+}
+
       return true;
     });
   }, [seminars, query, statusFilter, typeFilter]);
@@ -68,7 +78,10 @@ export function SeminarListTab({
     dissolved: 'Dissolve this seminar'
   };
   function confirmTransition() {
-    if (!confirm) return;
+    if (!confirm) {
+return;
+}
+
     onChangeStatus(confirm.seminar.id, confirm.to);
     showToast(`"${confirm.seminar.topic}" is now ${SEMINAR_STATUS_LABEL[confirm.to]}.`, 'success');
     setConfirm(null);
@@ -88,6 +101,7 @@ export function SeminarListTab({
       icon: Copy,
       onClick: () => copyLink(s)
     }];
+
     if (s.status === 'active') {
       actions.push({
         label: 'Mark as completed',
@@ -113,8 +127,10 @@ export function SeminarListTab({
         danger: true
       } as any);
     }
+
     return actions;
   }
+
   return <>
       <div className="mb-3 flex flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center" data-cy="seminar-list-tab-div-1">
         <div className="relative w-full flex-1 sm:min-w-[160px]" data-cy="seminar-list-tab-div-2">

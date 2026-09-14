@@ -17,7 +17,7 @@ export interface AppTrainees extends Record<string, unknown> {
     email: string;
     birthday: string;
     birth_place: string;
-    gender: 'male' | 'female';
+    gender: 'male' | 'female' | null;
     mobile_number: string;
     emergency_contact_name: string;
     emergency_contact_number: string;

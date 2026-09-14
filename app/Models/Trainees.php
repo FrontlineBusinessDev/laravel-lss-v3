@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 class Trainees extends Model
@@ -80,6 +82,35 @@ class Trainees extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /** The prior enrollment (older batch) this row was created after, for the same person's email. */
+    public function previousTrainee(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_trainee_id');
+    }
+
+    /** The later enrollment (newer batch) chained onto this row, if any. */
+    public function nextTrainee(): HasOne
+    {
+        return $this->hasOne(self::class, 'previous_trainee_id');
+    }
+
+    /**
+     * Every app_trainees row sharing this trainee's email (including itself),
+     * oldest first — the authoritative re-enrollment history/order. Queried by
+     * email rather than walked via previous_trainee_id, so it's correct even
+     * before TraineeEnrollmentLinker has (re)computed those pointers.
+     *
+     * @return Collection<int, self>
+     */
+    public function enrollmentChain(): Collection
+    {
+        return static::query()
+            ->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($this->email))])
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
     }
     public function payments()
     {

@@ -74,6 +74,7 @@ export interface AppTraineePayment {
     reference_no: string | null;
     notes: string | null;
     official_receipt_number: string | null;
+    receipt_link: string | null;
     receipt_path: string | null;
     receipt_original_name: string | null;
     receipt_mime_type: string | null;
@@ -158,7 +159,7 @@ export interface TraineeDetail {
     email: string;
     birthday: string;
     birth_place: string;
-    gender: 'male' | 'female';
+    gender: 'male' | 'female' | null;
     mobile_number: string;
     landline_number: string | null;
     emergency_contact_name: string;

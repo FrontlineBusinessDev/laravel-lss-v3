@@ -19,7 +19,9 @@ use Illuminate\Support\Str;
  * Phase 3 — legacy lcssv2_batch onto app_batches. Reuses the legacy
  * `batch_number` verbatim as batch_code (legacy occupied 1..75; the live
  * generator in BatchesController never emits below 76, so no collision risk
- * — see BatchesController::BATCH_SEQUENCE_START).
+ * — see BatchesController::BATCH_SEQUENCE_START). A row's industry/program
+ * type that has no matching reference row yet is created on the fly —
+ * left `inactive` for an admin to review — instead of rejecting the row.
  */
 class BatchImportController extends Controller implements HasMiddleware
 {
@@ -44,7 +46,7 @@ class BatchImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'batch_code' => ['required', 'string', 'max:50'],
             'setup' => ['required', 'string', 'in:f2f,online'],
             'industry' => ['required', 'string'],
@@ -54,7 +56,7 @@ class BatchImportController extends Controller implements HasMiddleware
             'is_open' => ['nullable'],
             'is_completed' => ['nullable'],
             'is_dissolved' => ['nullable'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $warnings = [];
@@ -78,29 +80,39 @@ class BatchImportController extends Controller implements HasMiddleware
                 $warnings[] = "Row {$rowNum}: batch_code \"{$code}\" is at/above the reserved auto-generation threshold ({$this->reservedStartLabel()}) — may collide with a future system-generated batch.";
             }
 
-            $industry = AcademicIndustry::whereRaw('LOWER(name) = ?', [mb_strtolower(trim($row['industry']))])->first();
-            $programType = AcademicProgramType::whereRaw('LOWER(name) = ?', [mb_strtolower(trim($row['program_type']))])->first();
+            $industryName = trim($row['industry']);
+            $industry = AcademicIndustry::whereRaw('LOWER(name) = ?', [mb_strtolower($industryName)])->first();
             if (! $industry) {
-                $errors[] = "Row {$rowNum}: industry \"{$row['industry']}\" not found — run the Academic Reference Data import first.";
-                continue;
+                $industry = new AcademicIndustry(['status' => Statuses::INACTIVE, 'name' => $industryName]);
+                $this->saveWithImportTimestamps($industry, $row);
+                $createdIds[] = ['model' => AcademicIndustry::class, 'id' => $industry->id];
             }
+
+            $programTypeName = trim($row['program_type']);
+            $programType = AcademicProgramType::whereRaw('LOWER(name) = ?', [mb_strtolower($programTypeName)])->first();
             if (! $programType) {
-                $errors[] = "Row {$rowNum}: program type \"{$row['program_type']}\" not found — run the Academic Reference Data import first.";
-                continue;
+                $programType = new AcademicProgramType(['status' => Statuses::INACTIVE, 'name' => $programTypeName]);
+                $this->saveWithImportTimestamps($programType, $row);
+                $createdIds[] = ['model' => AcademicProgramType::class, 'id' => $programType->id];
             }
 
             try {
-                $batch = DB::transaction(fn () => Batches::create([
-                    'status' => $this->resolveStatus($row),
-                    'batch_code' => $code,
-                    'public_registration_url_id' => (string) Str::ulid(),
-                    'is_public_url_enable' => false,
-                    'date_started' => $row['date_started'],
-                    'projected_end_date' => $row['projected_end_date'] ?? null,
-                    'setup' => $row['setup'],
-                    'academic_industry_id' => $industry->id,
-                    'academic_program_type_id' => $programType->id,
-                ]));
+                $batch = DB::transaction(function () use ($row, $code, $industry, $programType) {
+                    $batch = new Batches([
+                        'status' => $this->resolveStatus($row),
+                        'batch_code' => $code,
+                        'public_registration_url_id' => (string) Str::ulid(),
+                        'is_public_url_enable' => false,
+                        'date_started' => $row['date_started'],
+                        'projected_end_date' => $row['projected_end_date'] ?? null,
+                        'setup' => $row['setup'],
+                        'academic_industry_id' => $industry->id,
+                        'academic_program_type_id' => $programType->id,
+                    ]);
+                    $this->saveWithImportTimestamps($batch, $row);
+
+                    return $batch;
+                });
                 $createdIds[] = ['model' => Batches::class, 'id' => $batch->id];
                 $successCount++;
             } catch (\Throwable $e) {
@@ -111,13 +123,15 @@ class BatchImportController extends Controller implements HasMiddleware
         return $this->finishImport('batches', $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 
-    /** Collapses legacy's 3 booleans onto the current single status string. Dissolved wins, then completed, then open/default active. */
+    /**
+     * Collapses legacy's 3 booleans onto the current single status string. `terminated` is a
+     * separate, harsher lifecycle end-state than archiving (see BatchesController::terminate())
+     * and isn't something a legacy record can assert on its own — both is_completed and
+     * is_dissolved just mean the batch is no longer active, i.e. archived (`inactive`).
+     */
     private function resolveStatus(array $row): string
     {
-        if ($this->truthy($row['is_dissolved'] ?? null)) {
-            return Statuses::TERMINATED;
-        }
-        if ($this->truthy($row['is_completed'] ?? null)) {
+        if ($this->truthy($row['is_completed'] ?? null) || $this->truthy($row['is_dissolved'] ?? null)) {
             return Statuses::INACTIVE;
         }
 

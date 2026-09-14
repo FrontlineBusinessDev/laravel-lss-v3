@@ -1,17 +1,17 @@
-import { useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/Button';
-import { TooltipIconButton } from '@/components/TooltipIconButton';
 import { ConfirmDeleteModal } from '@/components/modal/ConfirmDeleteModal';
-import { apiFetchJson } from '@/lib/apiFetch';
 import { useToast } from '@/components/Toast';
+import { TooltipIconButton } from '@/components/TooltipIconButton';
+import { apiFetchJson } from '@/lib/apiFetch';
 import { formatCurrency } from './paymentsUtils';
 import type { AppPaymentDetail, AppPaymentTransaction } from './types';
 
 interface TransactionHistoryTabProps {
   detail: AppPaymentDetail;
   onAddPayment: () => void;
-  onEditTransaction: (paymentId: number) => void;
+  onEditTransaction: (payment: AppPaymentTransaction) => void;
   onDeleted: () => void;
 }
 
@@ -22,8 +22,12 @@ export function TransactionHistoryTab({ detail, onAddPayment, onEditTransaction,
   const sorted = [...detail.payments].sort((a, b) => (a.payment_date < b.payment_date ? 1 : -1));
 
   async function confirmDelete() {
-    if (!deleteTarget) return;
+    if (!deleteTarget) {
+return;
+}
+
     setDeleting(true);
+
     try {
       await apiFetchJson(`/trainees/${detail.id}/payments/${deleteTarget.id}`, { method: 'DELETE' });
       showToast('Payment transaction deleted.', 'success');
@@ -53,6 +57,7 @@ export function TransactionHistoryTab({ detail, onAddPayment, onEditTransaction,
                 <th className="px-3.5 py-2.5 font-medium" data-cy="transaction-history-tab-th-date">Date</th>
                 <th className="px-3.5 py-2.5 font-medium" data-cy="transaction-history-tab-th-reference">Reference no.</th>
                 <th className="px-3.5 py-2.5 font-medium" data-cy="transaction-history-tab-th-amount-paid">Amount paid</th>
+                <th className="px-3.5 py-2.5 font-medium" data-cy="transaction-history-tab-th-reference-link">Reference link</th>
                 <th className="px-3.5 py-2.5 font-medium" data-cy="transaction-history-tab-th-notes">Notes</th>
                 <th className="px-3.5 py-2.5" data-cy="transaction-history-tab-th-actions" />
               </tr>
@@ -63,12 +68,21 @@ export function TransactionHistoryTab({ detail, onAddPayment, onEditTransaction,
                   <td className="px-3.5 py-2.5 font-mono text-xs text-neutral-600" data-cy="transaction-history-tab-td-date">{p.payment_date}</td>
                   <td className="px-3.5 py-2.5 font-mono text-xs text-neutral-600" data-cy="transaction-history-tab-td-reference">{p.reference_no || '—'}</td>
                   <td className="px-3.5 py-2.5 font-medium text-ink" data-cy="transaction-history-tab-td-amount">{formatCurrency(Number(p.amount_paid))}</td>
+                  <td className="px-3.5 py-2.5 text-xs" data-cy="transaction-history-tab-td-reference-link">
+                    {p.receipt_link ? (
+                      <a href={p.receipt_link} target="_blank" rel="noreferrer" className="font-medium text-brand-600 hover:underline">
+                        Open link
+                      </a>
+                    ) : (
+                      <span className="text-neutral-400">—</span>
+                    )}
+                  </td>
                   <td className="max-w-[220px] truncate px-3.5 py-2.5 text-xs text-neutral-500" title={p.notes ?? undefined} data-cy="transaction-history-tab-td-notes">
                     {p.notes || '—'}
                   </td>
                   <td className="px-3.5 py-2.5 text-right" data-cy="transaction-history-tab-td-actions">
                     <div className="flex justify-end gap-0.5">
-                      <TooltipIconButton icon={Pencil} label="Edit transaction" onClick={() => onEditTransaction(p.id)} data-cy="transaction-history-tab-tooltip-icon-button-edit" />
+                      <TooltipIconButton icon={Pencil} label="Edit transaction" onClick={() => onEditTransaction(p)} data-cy="transaction-history-tab-tooltip-icon-button-edit" />
                       <TooltipIconButton icon={Trash2} label="Delete transaction" danger onClick={() => setDeleteTarget(p)} data-cy="transaction-history-tab-tooltip-icon-button-delete" />
                     </div>
                   </td>
@@ -76,7 +90,7 @@ export function TransactionHistoryTab({ detail, onAddPayment, onEditTransaction,
               ))}
               {sorted.length === 0 && (
                 <tr data-cy="transaction-history-tab-tr-35">
-                  <td colSpan={5} className="px-3.5 py-8 text-center text-sm text-neutral-500" data-cy="transaction-history-tab-td-no-payment-transactions-recorded-yet">
+                  <td colSpan={6} className="px-3.5 py-8 text-center text-sm text-neutral-500" data-cy="transaction-history-tab-td-no-payment-transactions-recorded-yet">
                     No payment transactions recorded yet.
                   </td>
                 </tr>

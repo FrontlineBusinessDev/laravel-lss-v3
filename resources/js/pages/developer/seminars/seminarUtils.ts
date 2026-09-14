@@ -38,13 +38,20 @@ export const PARTICIPANT_STATUS_STYLE: Record<SeminarParticipantStatus, string> 
 /** Whether a participant record counts as "Active" per the simplified lifecycle in the spec
  *  (registered & paid, seminar not yet started) vs. "Inactive" (completed/cancelled/dissolved). */
 export function isParticipantActive(p: SeminarParticipant, seminar?: Seminar): boolean {
-  if (seminar && (seminar.status === 'completed' || seminar.status === 'dissolved')) return false
+  if (seminar && (seminar.status === 'completed' || seminar.status === 'dissolved')) {
+return false
+}
+
   return p.status !== 'Completed' && p.status !== 'Certificate Sent'
 }
 
 export function progressPercent(p: SeminarParticipant): number {
-  if (!p.progress) return 0
+  if (!p.progress) {
+return 0
+}
+
   const steps = [p.progress.registration, p.progress.payment, p.progress.seminarProper, p.progress.feedbackForm, p.progress.certificate]
+
   return Math.round((steps.filter(Boolean).length / steps.length) * 100)
 }
 

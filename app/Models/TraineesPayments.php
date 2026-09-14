@@ -18,6 +18,7 @@ class TraineesPayments extends Model
         'reference_no',
         'notes',
         'official_receipt_number',
+        'receipt_link',
     ];
 
     protected $appends = ['receipt_view_url', 'receipt_download_url'];

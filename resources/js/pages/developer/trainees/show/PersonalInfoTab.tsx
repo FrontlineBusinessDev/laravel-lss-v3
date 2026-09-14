@@ -214,7 +214,7 @@ export default function PersonalInfoTab({ trainee }: Props) {
                             />
                             <Field
                                 label="Gender"
-                                value={saved.gender}
+                                value={saved.gender ?? ''}
                                 data-cy="personal-info-tab-field-gender"
                             />
                             <Field
@@ -296,7 +296,7 @@ export default function PersonalInfoTab({ trainee }: Props) {
                             <SelectField
                                 label="Gender"
                                 options={['male', 'female']}
-                                value={draft.gender}
+                                value={draft.gender ?? ''}
                                 onChange={(e) =>
                                     set(
                                         'gender',

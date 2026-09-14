@@ -3,10 +3,14 @@
 namespace App\Support\Import;
 
 use App\Models\SettingsImportLog;
+use App\Models\Trainees;
 use App\Models\User;
 use App\Support\Statuses;
+use App\Support\TraineeEnrollmentLinker;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -48,6 +52,33 @@ trait ImportLogging
         ];
     }
 
+    /**
+     * A single shared, inactive placeholder trainer account for import rows that don't name a
+     * trainer at all (as opposed to `findOrInviteTrainer()`, which handles a *named* trainer
+     * that just doesn't have an account yet). Find-or-create by a fixed sentinel email, so every
+     * such row across every import — and every re-import — points at the same one account
+     * instead of minting a new placeholder each time.
+     */
+    protected function findOrCreatePlaceholderTrainer(): User
+    {
+        $email = 'unassigned-trainer@import.local';
+        $user = User::where('email', $email)->first();
+        if ($user) {
+            return $user;
+        }
+
+        $user = User::create([
+            'first_name' => 'Unassigned',
+            'last_name' => 'Trainer',
+            'email' => $email,
+            'password' => Hash::make(Str::password(16)),
+            'status' => Statuses::INACTIVE,
+        ]);
+        $user->assignRole('trainer');
+
+        return $user;
+    }
+
     /** @return array{0: string, 1: string} */
     private function guessNameFromEmail(string $email): array
     {
@@ -60,6 +91,90 @@ trait ImportLogging
         }
 
         return [$parts[0] ?? 'Trainer', 'Account'];
+    }
+
+    /** Row-validation rules for the optional legacy `created_at`/`updated_at` columns every import phase accepts. */
+    protected function timestampRowRules(): array
+    {
+        return [
+            'created_at' => ['nullable', 'date'],
+            'updated_at' => ['nullable', 'date'],
+        ];
+    }
+
+    /**
+     * Resolves the created_at/updated_at pair to stamp on a freshly-created import row: the
+     * row's own legacy values when present (from `created_at`/`updated_at` columns exported
+     * from the legacy DB), falling back to "now" so CSVs without those columns still import
+     * exactly as before.
+     *
+     * @return array{created_at: Carbon, updated_at: Carbon}
+     */
+    protected function importTimestamps(array $row): array
+    {
+        $createdAt = ! empty($row['created_at']) ? Carbon::parse($row['created_at']) : now();
+        $updatedAt = ! empty($row['updated_at']) ? Carbon::parse($row['updated_at']) : $createdAt;
+
+        return ['created_at' => $createdAt, 'updated_at' => $updatedAt];
+    }
+
+    /**
+     * Stamps an unsaved model with importTimestamps($row) and saves it with automatic
+     * timestamp management disabled, so save() doesn't overwrite the values just set. Use this
+     * instead of `Model::create()`/`$relation->create()` for any import row that should carry
+     * the legacy created_at/updated_at instead of getting stamped at import time. Models with
+     * no `updated_at` column (`::UPDATED_AT === null`, e.g. TaskRatingHistory) are left with
+     * only `created_at` set.
+     */
+    protected function saveWithImportTimestamps(Model $model, array $row): void
+    {
+        $timestamps = $this->importTimestamps($row);
+        $model->setAttribute($model::CREATED_AT ?? 'created_at', $timestamps['created_at']);
+        if ($model::UPDATED_AT !== null) {
+            $model->setAttribute($model::UPDATED_AT, $timestamps['updated_at']);
+        }
+        $model->timestamps = false;
+        $model->save();
+    }
+
+    /**
+     * Resolves the trainee row a secondary import CSV (task/payment/behavioral
+     * evaluation/learning outcome) should attach to, by `trainee_email`. Now
+     * that the same email can have multiple app_trainees rows (re-enrollment
+     * across batches), an exact `batch_code` match disambiguates when given;
+     * otherwise falls back to the current enrollment (TraineeEnrollmentLinker::resolveHead())
+     * with a warning so the importer can add batch_code if it picked wrong.
+     *
+     * @return array{trainee: ?Trainees, warning: ?string}
+     */
+    protected function resolveImportTrainee(string $email, ?string $batchCode = null): array
+    {
+        $matches = Trainees::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])
+            ->with('batch:id,batch_code,academic_industry_id')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        if ($matches->isEmpty()) {
+            return ['trainee' => null, 'warning' => null];
+        }
+        if ($matches->count() === 1) {
+            return ['trainee' => $matches->first(), 'warning' => null];
+        }
+
+        if ($batchCode !== null && $batchCode !== '') {
+            $exact = $matches->first(fn (Trainees $t) => $t->batch?->batch_code === trim($batchCode));
+            if ($exact) {
+                return ['trainee' => $exact, 'warning' => null];
+            }
+        }
+
+        $head = TraineeEnrollmentLinker::resolveHead($matches);
+
+        return [
+            'trainee' => $head,
+            'warning' => "\"{$email}\" matches {$matches->count()} enrollment records — imported against the current one (trainee #{$head->id}, batch #{$head->batch_id}). Add a batch_code column to disambiguate if this is wrong.",
+        ];
     }
 
     /** Validates a single decoded CSV row against its field rules, returning the first error message or null. Row-by-row validation (instead of `rows.*.field` wildcard rules) means one bad row is just another skippable per-row error — not a `ValidationException` that aborts the whole request/chunk and, with chunked uploads, every chunk after it. */

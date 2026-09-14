@@ -1,14 +1,14 @@
-"name","abbreviation","description"
-"Accountancy, Business and Management","ABM",
-"Bachelor of Electronics Engineering","BSECE",
-"Bachelor of Science in Accountancy","BSA",
-"Bachelor of Science in Business Administration","BSBA",
-"Bachelor of Science in Computer Engineering","BSCpE",
-"Bachelor of Science in Computer Science","BSCS",
-"Bachelor of Science in Industrial Education","BSIE",
-"Bachelor of Science in Information Technology","BSIT",
-"Bachelor of Science in Psychology","BSP",
-"Humanities and Social Sciences","HUMSS",
-"Information and Communication Technology","ICT",
-"Others","Others",
-"Science, Technology, Engineering, and Math.","STEM",
+name,abbreviation,description,created_at,updated_at
+"Accountancy, Business and Management",ABM,,"2023-07-03 10:22:52","2025-01-20 15:28:32"
+"Bachelor of Electronics Engineering",BSECE,,"2025-02-06 15:28:55","2025-02-10 12:05:08"
+"Bachelor of Science in Accountancy",BSA,,"2024-06-14 14:49:53","2024-06-14 14:49:53"
+"Bachelor of Science in Business Administration",BSBA,,"2025-05-09 12:09:36","2025-10-27 12:48:09"
+"Bachelor of Science in Computer Engineering",BSCpE,,"2024-07-04 13:54:51","2025-01-22 12:45:10"
+"Bachelor of Science in Computer Science",BSCS,,"2024-05-29 09:02:06","2025-01-22 12:45:20"
+"Bachelor of Science in Industrial Education",BSIE,,"2024-06-14 14:55:06","2024-06-14 14:55:06"
+"Bachelor of Science in Information Technology",BSIT,,"2024-02-13 15:09:43","2025-01-22 12:45:34"
+"Bachelor of Science in Psychology",BSP,,"2024-05-31 08:37:12","2024-05-31 08:37:12"
+"Humanities and Social Sciences",HUMSS,,"2025-01-07 15:08:01","2025-01-07 15:08:01"
+"Information and Communication Technology",ICT,,"2024-03-21 18:00:12","2024-03-21 18:00:12"
+Others,Others,,"2024-09-17 09:37:05","2024-09-17 09:37:05"
+"Science, Technology, Engineering, and Math.",STEM,,"2024-03-22 09:40:36","2024-03-22 09:40:36"

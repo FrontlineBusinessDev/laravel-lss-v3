@@ -201,8 +201,40 @@ class PublicRegistrationController extends Controller
 
         $validated = $request->validate($this->storeRules());
 
-        $trainee = null;
-        $trainee = DB::transaction(function () use ($request, $validated, $batch, &$trainee) {
+        try {
+            $trainee = $this->createTraineeApplication($request, $validated, $batch);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first(),
+            ], 422);
+        }
+
+        // Sent after commit: never email for a transaction that could still roll back.
+        if ($trainee) {
+            $this->notifyAdminsOfRegistration($trainee, $batch);
+            Mail::to($trainee->email)->queue(new ApplicationSubmittedMail($trainee));
+            foreach (User::role(['admin', 'developer'])->get() as $recipient) {
+                Mail::to($recipient->email)->queue(new NewApplicationAdminMail($trainee, $batch));
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration submitted successfully. Our team will be in touch.',
+            'data' => ['batch_code' => $batch->batch_code],
+        ]);
+    }
+
+    /**
+     * Persists the trainee + uploaded documents in one transaction. Split out
+     * from store() so any ValidationException raised inside it can be caught
+     * and mapped to this controller's {success, message} envelope instead of
+     * Laravel's default shape.
+     */
+    private function createTraineeApplication(Request $request, array $validated, Batches $batch): Trainees
+    {
+        return DB::transaction(function () use ($request, $validated, $batch) {
             $trainee = Trainees::create([
                 'batch_id' => $batch->id,
                 'school_id' => $validated['school_id'],
@@ -238,21 +270,6 @@ class PublicRegistrationController extends Controller
 
             return $trainee;
         });
-
-        // Sent after commit: never email for a transaction that could still roll back.
-        if ($trainee) {
-            $this->notifyAdminsOfRegistration($trainee, $batch);
-            Mail::to($trainee->email)->queue(new ApplicationSubmittedMail($trainee));
-            foreach (User::role(['admin', 'developer'])->get() as $recipient) {
-                Mail::to($recipient->email)->queue(new NewApplicationAdminMail($trainee, $batch));
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Registration submitted successfully. Our team will be in touch.',
-            'data' => ['batch_code' => $batch->batch_code],
-        ]);
     }
 
     /**
@@ -279,7 +296,7 @@ class PublicRegistrationController extends Controller
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', new UniqueEmailAcrossIdentities],
+            'email' => ['required', 'email', 'max:255', UniqueEmailAcrossIdentities::forTrainee()],
             'birthday' => ['required', 'date', 'before:today'],
             'birth_place' => ['required', 'string', 'max:255'],
             'gender' => ['required', Rule::in(['male', 'female'])],

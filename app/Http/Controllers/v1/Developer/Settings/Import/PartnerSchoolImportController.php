@@ -30,13 +30,13 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'school_name' => ['required', 'string', 'max:255'],
             'abbreviation' => ['nullable', 'string', 'max:50'],
             'contact_person' => ['nullable', 'string'],
             'contact_email' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
         $successCount = 0;
@@ -63,15 +63,20 @@ class PartnerSchoolImportController extends Controller implements HasMiddleware
                 $contactPerson = trim($row['contact_person'] ?? '');
                 $parts = $contactPerson !== '' ? preg_split('/\s+/', $contactPerson, 2) : [];
 
-                $school = DB::transaction(fn () => PartnerSchools::create([
-                    'status' => Statuses::ACTIVE,
-                    'school_name' => $name,
-                    'abbreviation' => $row['abbreviation'] ?? null,
-                    'contact_first_name' => $parts[0] ?? null,
-                    'contact_last_name' => $parts[1] ?? null,
-                    'contact_email' => $row['contact_email'] ?? null,
-                    'physical_address' => $row['address'] ?? null,
-                ]));
+                $school = DB::transaction(function () use ($name, $row, $parts) {
+                    $school = new PartnerSchools([
+                        'status' => Statuses::ACTIVE,
+                        'school_name' => $name,
+                        'abbreviation' => $row['abbreviation'] ?? null,
+                        'contact_first_name' => $parts[0] ?? null,
+                        'contact_last_name' => $parts[1] ?? null,
+                        'contact_email' => $row['contact_email'] ?? null,
+                        'physical_address' => $row['address'] ?? null,
+                    ]);
+                    $this->saveWithImportTimestamps($school, $row);
+
+                    return $school;
+                });
                 $createdIds[] = ['model' => PartnerSchools::class, 'id' => $school->id];
                 $successCount++;
             } catch (\Throwable $e) {

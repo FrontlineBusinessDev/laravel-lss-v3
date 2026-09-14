@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\DB;
 /**
  * Phase 1 — legacy academic reference data (industry/program/level/program-type)
  * onto app_settings_academic_*. Match-or-create by exact (case-insensitive)
- * `name`, per the approved import plan.
+ * `name`, per the approved import plan. A newly-created row is left
+ * `inactive` for an admin to review/activate rather than going live
+ * immediately — an existing match's status is left untouched.
  */
 class AcademicImportController extends Controller implements HasMiddleware
 {
@@ -47,13 +49,14 @@ class AcademicImportController extends Controller implements HasMiddleware
             'rows' => ['required', 'array', 'min:1'],
         ]);
 
-        $rowRules = [
+        $rowRules = array_merge([
             'name' => ['required', 'string', 'max:255'],
             'abbreviation' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
-        ];
+        ], $this->timestampRowRules());
 
         $errors = [];
+        $warnings = [];
         $successCount = 0;
         $createdIds = [];
 
@@ -74,11 +77,14 @@ class AcademicImportController extends Controller implements HasMiddleware
             try {
                 $existing = $modelClass::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
                 if ($existing) {
+                    $warnings[] = "Row {$rowNum}: \"{$name}\" already exists — matched to the existing record, nothing created.";
                     $successCount++;
                     continue;
                 }
 
-                $payload = ['status' => Statuses::ACTIVE, 'name' => $name];
+                // Left inactive so an admin reviews/activates each newly-created reference
+                // row rather than it silently going live the moment the CSV is imported.
+                $payload = ['status' => Statuses::INACTIVE, 'name' => $name];
                 if (! empty($row['abbreviation']) && $this->hasColumn($modelClass, 'abbreviation')) {
                     $payload['abbreviation'] = $row['abbreviation'];
                 }
@@ -86,7 +92,12 @@ class AcademicImportController extends Controller implements HasMiddleware
                     $payload['description'] = $row['description'];
                 }
 
-                $created = DB::transaction(fn () => $modelClass::create($payload));
+                $created = DB::transaction(function () use ($modelClass, $payload, $row) {
+                    $model = new $modelClass($payload);
+                    $this->saveWithImportTimestamps($model, $row);
+
+                    return $model;
+                });
                 $createdIds[] = ['model' => $modelClass, 'id' => $created->id];
                 $successCount++;
             } catch (\Throwable $e) {
@@ -94,7 +105,7 @@ class AcademicImportController extends Controller implements HasMiddleware
             }
         }
 
-        return $this->finishImport("academic_{$type}", $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, [], $createdIds);
+        return $this->finishImport("academic_{$type}", $validated['file_name'] ?? 'import.csv', count($validated['rows']), $successCount, $errors, $warnings, $createdIds);
     }
 
     private function hasColumn(string $modelClass, string $column): bool
