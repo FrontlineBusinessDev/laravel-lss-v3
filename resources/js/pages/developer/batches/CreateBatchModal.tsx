@@ -16,7 +16,7 @@ import {
 
 /**
  * Unified Create/Edit batch modal. Passing `batch` switches it into edit mode
- * (PUT /batches/{id}); omitting it creates (POST /batches). The layout matches
+ * (POST /batches/{id}); omitting it creates (POST /batches). The layout matches
  * docs/img/screencapture-localhost-8000-batches-2026-07-07-14_05_07.png.
  *
  * Two entry points share this one modal:
@@ -109,7 +109,8 @@ export function CreateBatchModal({
     const validate = () => {
         const next: Record<string, string> = {};
         if (!values.academic_program_type_id) {
-            next.academic_program_type_id = 'Academic program type is required.';
+            next.academic_program_type_id =
+                'Academic program type is required.';
         }
         if (!values.academic_industry_id) {
             next.academic_industry_id = 'Industry is required.';
@@ -130,7 +131,7 @@ export function CreateBatchModal({
         }
         const url = batch ? `/batches/${batch.id}` : '/batches';
         const response = await apiFetchJson<AppBatches>(url, {
-            method: batch ? 'PUT' : 'POST',
+            method: 'POST',
             body: JSON.stringify(values),
         });
         showToast(batch ? 'Batch updated' : 'Batch created', 'success');
