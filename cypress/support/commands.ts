@@ -37,6 +37,48 @@ Cypress.Commands.add('verifySettingsModuleHeader', () => {
         );
 });
 
+/**
+ * Creates a throwaway batch via the real "Add batch" modal (must be called
+ * while already on /batches) and resolves with the created record
+ * (`{ id, batch_code, ... }`) so mutation-heavy tests (archive/restore/
+ * terminate/delete) can act on a batch of their own instead of permanently
+ * mutating shared seed data.
+ */
+Cypress.Commands.add('createBatch', () => {
+    cy.intercept('POST', '**/batches').as('createBatchRequest');
+
+    cy.get('[data-cy="add-record-button"]').click();
+
+    cy.get('[data-cy="use-async-select-field-button-button"]').eq(0).click();
+    cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
+        'College',
+    );
+    cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        .contains('College On-the-Job Training')
+        .click();
+
+    cy.get('[data-cy="use-async-select-field-button-button"]').eq(1).click();
+    cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
+        'Acc',
+    );
+    cy.get('[data-cy="use-async-select-field-button-button-2"]')
+        .contains('Accounting')
+        .click();
+
+    const today = new Date().toISOString().slice(0, 10);
+    cy.get('[data-cy="create-batch-modal-input-date"]').type(today);
+    cy.get('[data-cy="create-batch-modal-input-projected-end-date"]').type(
+        '2099-12-31',
+    );
+    cy.get('[data-cy="create-batch-modal-input-checkbox"]').check();
+
+    cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+
+    return cy
+        .wait('@createBatchRequest')
+        .then((interception) => interception.response.body.data);
+});
+
 Cypress.Commands.add('filterPerPage', () => {
     cy.get('[data-cy="toolbar-select-rows-per-page"] option')
         .should('have.length', 5)

@@ -260,278 +260,230 @@ describe('Batches Module', () => {
         cy.get('[data-cy="create-batch-modal-button-button"]').click();
     });
 
-    //edit
-    it('should edit a batch', () => {
-        cy.intercept('GET', '**/pagination-search*').as('searchBatch');
+    // Every test below acts on a batch it creates for itself (via
+    // cy.createBatch()) instead of a hardcoded seeded batch code. The
+    // previous version of this suite hardcoded FBS-9632/FBS-5908/FBS-3335:
+    // "should delete batch" permanently deleted FBS-3335 and "should
+    // terminate batch" permanently terminated FBS-5908 with no reset step,
+    // so re-running the suite against the same database broke — the batch
+    // could no longer be found. Using a fresh batch per test makes the
+    // suite repeatable and removes any dependency on a specific seed run.
 
-        cy.intercept('**/batches/**').as('updateBatch');
-
-        //search a batch
-        cy.get('[data-cy="toolbar-input-text"]').click();
-
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
-
-        cy.wait('@searchBatch');
-
-        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
-
-        //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
+    /** Opens the row-actions menu for the row containing `code` and clicks `label`. */
+    function runRowAction(code, label) {
+        cy.contains('[data-cy="settings-row-div-4"]', code)
             .should('be.visible')
-            .parent()
             .find('[data-cy="row-menu-button-row-actions"]')
             .click();
 
-        //click edit
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(0)
-            .should('be.visible')
-            .click();
+        cy.get('[role="menu"]').contains('[role="menuitem"]', label).click();
+    }
 
-        //update industry
-        cy.get('[data-cy="use-async-select-field-button-button"]')
-            .eq(1)
-            .click();
+    //edit
+    it('should edit a batch', () => {
+        cy.createBatch().then((batch) => {
+            cy.intercept('POST', `**/batches/${batch.id}`).as('updateBatch');
 
-        //type and search
-        cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
-            'Acc',
-        );
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains(batch.batch_code, { timeout: 5000 }).should(
+                'be.visible',
+            );
 
-        //select result
-        cy.get('[data-cy="use-async-select-field-button-button-2"]')
-            .contains('Accounting')
-            .should('be.visible')
-            .click();
+            runRowAction(batch.batch_code, 'Edit');
 
-        //save
-        cy.get('[data-cy="create-batch-modal-button-submit"]').click();
+            //update industry
+            cy.get('[data-cy="use-async-select-field-button-button"]')
+                .eq(1)
+                .click();
+            cy.get('[data-cy="use-async-select-field-input-placeholder"]').type(
+                'Acc',
+            );
+            cy.get('[data-cy="use-async-select-field-button-button-2"]')
+                .contains('Accounting')
+                .should('be.visible')
+                .click();
 
-        //verify update
-        cy.wait('@updateBatch', { timeout: 5000 });
+            cy.get('[data-cy="create-batch-modal-button-submit"]').click();
 
-        cy.get('[data-cy="toast-div-3"]').should('be.visible');
+            cy.wait('@updateBatch', { timeout: 5000 });
+            cy.get('[data-cy="toast-p-5"]').should(
+                'contain.text',
+                'Batch updated',
+            );
+        });
     });
 
     //registration QR
     it('should open the registration QR', () => {
-        // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
+        cy.createBatch().then((batch) => {
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains(batch.batch_code, { timeout: 5000 }).should(
+                'be.visible',
+            );
 
-        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
+            runRowAction(batch.batch_code, 'Registration QR');
 
-        // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
-            .should('be.visible')
-            .parent()
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
+            cy.get(
+                '[data-cy="batch-registration-modal-modal-registration-link"]',
+            ).should('be.visible');
 
-        // Click registration qr
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(1)
-            .should('be.visible')
-            .click();
+            cy.get('[data-cy="batch-registration-modal-button-button"]').click();
 
-        // Verify registration link modal
-        cy.get(
-            '[data-cy="batch-registration-modal-modal-registration-link"]',
-        ).should('be.visible');
+            cy.get('[data-cy="toast-div-3"]')
+                .should('contain.text', 'Registration link copied')
+                .and('be.visible');
 
-        // Click copy link
-        cy.get('[data-cy="batch-registration-modal-button-button"]').click();
-
-        // Verify copied link toast
-        cy.get('[data-cy="toast-div-3"]')
-            .should('contain.text', 'Registration link copied')
-            .and('be.visible');
-
-        //exit modal
-        cy.get('[data-cy="modal-button-close-dialog"]').click();
+            cy.get('[data-cy="modal-button-close-dialog"]').click();
+        });
     });
 
     //copy link
     it('should copy the registration link', () => {
-        // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
+        cy.createBatch().then((batch) => {
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains(batch.batch_code, { timeout: 5000 }).should(
+                'be.visible',
+            );
 
-        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
+            runRowAction(batch.batch_code, 'Copy link');
 
-        // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
-            .should('be.visible')
-            .parent()
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
-
-        //click copy link
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(2)
-            .should('be.visible')
-            .click();
-
-        //verify copied link
-        cy.get('[data-cy="toast-p-5"]')
-            .should('contain.text', 'Registration link copied')
-            .and('be.visible');
+            cy.get('[data-cy="toast-p-5"]')
+                .should('contain.text', 'Registration link copied')
+                .and('be.visible');
+        });
     });
 
-    //archive
-    it('should archive batch', () => {
-        // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
+    //archive + restore
+    it('should archive then restore a batch', () => {
+        cy.createBatch().then((batch) => {
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains(batch.batch_code, { timeout: 5000 }).should(
+                'be.visible',
+            );
 
-        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
+            runRowAction(batch.batch_code, 'Archive');
+            cy.get('[data-cy="toast-p-5"]')
+                .should('contain.text', 'Archived')
+                .and('be.visible');
+            cy.contains('[data-cy="settings-row-div-4"]', batch.batch_code)
+                .should('contain.text', 'Archived');
 
-        // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
-            .should('be.visible')
-            .parent()
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
-
-        //click archive
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(3)
-            .should('be.visible')
-            .click();
-
-        //verify archived batch
-        cy.get('[data-cy="toast-p-5"]')
-            .should('contain.text','Archived')
-            .and('be.visible');
-    });
-
-    //restore
-    it('should restore batch', () => {
-        // Search batch
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-9632');
-
-        cy.contains('FBS-9632', { timeout: 1000 }).should('be.visible');
-
-        // Open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-9632')
-            .should('be.visible')
-            .parent()
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
-
-        //click archive
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(3)
-            .should('be.visible')
-            .click();
-
-        //verify archived batch
-        cy.get('[data-cy="toast-p-5"]')
-            .and('be.visible');
+            runRowAction(batch.batch_code, 'Restore');
+            cy.get('[data-cy="toast-p-5"]')
+                .should('contain.text', 'Restored')
+                .and('be.visible');
+            cy.contains('[data-cy="settings-row-div-4"]', batch.batch_code)
+                .should('contain.text', 'Active');
+        });
     });
 
     //terminate
     it('should terminate batch', () => {
-        //search batch
-        cy.get('[data-cy="toolbar-input-text"]').clear().type('FBS-5908');
+        cy.createBatch().then((batch) => {
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains(batch.batch_code, { timeout: 5000 }).should(
+                'be.visible',
+            );
 
-        cy.contains('FBS-5908', { timeout: 1000 }).should('be.visible');
+            //click terminate, then cancel — batch must stay active
+            runRowAction(batch.batch_code, 'Terminate');
+            cy.get('[data-cy="index-modal-terminate-batch"]').should(
+                'be.visible',
+            );
+            cy.get('[data-cy="index-button-button"]').click();
+            cy.get('[data-cy="index-modal-terminate-batch"]').should(
+                'not.exist',
+            );
+            cy.contains('[data-cy="settings-row-div-4"]', batch.batch_code)
+                .should('contain.text', 'Active');
 
-        //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-5908')
-            .should('be.visible')
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
+            //click terminate, then confirm
+            runRowAction(batch.batch_code, 'Terminate');
+            cy.get('[data-cy="index-modal-terminate-batch"]').should(
+                'be.visible',
+            );
+            cy.get('[data-cy="index-button-button-2"]').click();
 
-        //click terminate
-        cy.contains('[data-cy="row-menu-button-4"]', 'Terminate')
-            .should('contain.text', 'Terminate')
-            .click();
-
-        //terminate modal
-        cy.get('[data-cy="index-modal-terminate-batch"]').should('be.visible');
-
-        //click cancel
-        cy.get('[data-cy="index-button-button"]').click();
-
-        //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-5908')
-            .should('be.visible')
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
-
-        //click terminate
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(4)
-            .should('be.visible')
-            .click();
-
-        //terminate modal
-        cy.get('[data-cy="index-modal-terminate-batch"]').should('be.visible');
-
-        //click terminate button
-        cy.get('[data-cy="index-button-button-2"]').click();
-
-        //verify terminate
-        cy.get('[data-cy="toast-p-5"]')
-            .should('contain.text', 'Batch terminated')
-            .and('be.visible');
+            cy.get('[data-cy="toast-p-5"]')
+                .should('contain.text', 'Batch terminated')
+                .and('be.visible');
+            cy.contains('[data-cy="settings-row-div-4"]', batch.batch_code)
+                .should('contain.text', 'Terminated');
+        });
     });
 
     //delete
-    it('should delete batch', () => {
-        cy.intercept('GET', '**/pagination-search*').as('searchBatch');
-        cy.intercept('GET', '**/batches/**').as('deleteBatch');
-        cy.intercept('DELETE', '**/settings/partner-schools/**').as(
-            'deleteBatch',
-        );
-        //search batch
-        cy.get('[data-cy="toolbar-input-text"]').clear().type('FBS-3335');
+    it('should delete a batch', () => {
+        cy.createBatch().then((batch) => {
+            cy.intercept('DELETE', `**/batches/${batch.id}`).as('deleteBatch');
 
-        cy.contains('FBS-3335', { timeout: 1000 }).should('be.visible');
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains(batch.batch_code, { timeout: 5000 }).should(
+                'be.visible',
+            );
 
-        //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-3335')
-            .should('be.visible')
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
+            // Delete is only offered once the batch is non-active — archive
+            // it first, exactly like a real user would have to.
+            runRowAction(batch.batch_code, 'Archive');
+            cy.contains('[data-cy="settings-row-div-4"]', batch.batch_code)
+                .should('contain.text', 'Archived');
 
-        //click delete
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(4)
-            .should('be.visible')
-            .click();
+            //click delete, then cancel
+            runRowAction(batch.batch_code, 'Delete');
+            cy.get('[data-cy="confirm-delete-modal-div-2"]').should(
+                'be.visible',
+            );
+            cy.contains(
+                '[data-cy="confirm-delete-modal-button-button"]',
+                'Cancel',
+            ).click();
+            cy.get('[data-cy="confirm-delete-modal-div-2"]').should(
+                'not.exist',
+            );
+            cy.contains(
+                '[data-cy="settings-row-div-4"]',
+                batch.batch_code,
+            ).should('be.visible');
 
-        //delete modal
-        cy.get('[data-cy="confirm-delete-modal-div-2"]').should('be.visible');
+            //click delete, then confirm (type-to-confirm guard)
+            runRowAction(batch.batch_code, 'Delete');
+            cy.get('[data-cy="confirm-delete-modal-div-2"]').should(
+                'be.visible',
+            );
+            cy.get(
+                '[data-cy="confirm-delete-modal-button-button-2"]',
+            ).should('be.disabled');
 
-        //click cancel
-        cy.contains(
-            '[data-cy="confirm-delete-modal-button-button"]',
-            'Cancel',
-        ).click();
+            cy.get('[data-cy="confirm-delete-modal-input-confirm-text"]').type(
+                batch.batch_code,
+            );
+            cy.get('[data-cy="confirm-delete-modal-button-button-2"]')
+                .should('be.enabled')
+                .click();
 
-        //open action menu
-        cy.contains('[data-cy="settings-row-div-4"]', 'FBS-3335')
-            .should('be.visible')
-            .find('[data-cy="row-menu-button-row-actions"]')
-            .click();
+            cy.wait('@deleteBatch')
+                .its('response.statusCode')
+                .should('eq', 204);
 
-        //click delete
-        cy.get('[data-cy="row-menu-button-4"]')
-            .eq(4)
-            .should('be.visible')
-            .click();
-
-        //delete modal
-        cy.get('[data-cy="confirm-delete-modal-div-2"]').should('be.visible');
-
-        cy.get('[data-cy="confirm-delete-modal-input-confirm-text"]').type(
-            'FBS-3335',
-        );
-
-        cy.get('[data-cy="confirm-delete-modal-button-button-2"]').click();
-
-        cy.wait('@deleteBatch');
-
-        //verify delete
-        cy.get('[data-cy="toast-div-3"]').should('be.visible');
+            cy.get('[data-cy="toast-div-3"]').should('be.visible');
+            cy.get('[data-cy="toolbar-input-text"]')
+                .clear()
+                .type(batch.batch_code);
+            cy.contains('No records found', { timeout: 5000 }).should(
+                'be.visible',
+            );
+        });
     });
 });

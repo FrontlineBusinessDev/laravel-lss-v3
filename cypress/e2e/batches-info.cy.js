@@ -1,6 +1,4 @@
-const { Cylinder } = require('lucide-react');
-
-describe('Batches Module', () => {
+describe('Batches Module - Batch Detail', () => {
     beforeEach(() => {
         cy.session(
             'admin',
@@ -17,466 +15,343 @@ describe('Batches Module', () => {
         cy.visit('/batches');
     });
 
-    // //check batches page display
-    // it('should load the Batches Page', () => {
-    //     //elements inside batches page
-    //     cy.get('[data-cy="add-record-button"]').should('be.visible');
-    //     cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
-    //         'be.visible',
-    //     );
-    // });
+    /**
+     * The batch header's status badge. `StatusBadge` doesn't spread props
+     * through to the DOM, so every badge on the page — the header one *and*
+     * each trainee row's — shares the same generic
+     * `[data-cy="status-badge-span-1"]` selector once the trainees list has
+     * loaded. Scope to the header container to avoid matching the whole set.
+     */
+    function headerStatusBadge() {
+        return cy
+            .get('[data-cy="batch-detail-layout-div-6"]')
+            .find('[data-cy="status-badge-span-1"]');
+    }
 
-    //search, select and open a batch
-    it('should search and select batch', () => {
-        cy.intercept('GET', '**/pagination-search*').as('searchBatch');
+    // ---------------------------------------------------------------
+    // Read-only checks against a known seeded batch (FBS-8323 / id 8),
+    // which has real trainee data the trainees tab needs.
+    // ---------------------------------------------------------------
 
-        cy.get('[data-cy="toolbar-input-text"]').click();
+    describe('detail page (read-only, seeded batch)', () => {
+        it('should search and select a batch, then display its detail page', () => {
+            cy.intercept('GET', '**/pagination-search*').as('searchBatch');
 
-        cy.get('[data-cy="toolbar-input-text"]').type('FBS-8323');
+            cy.get('[data-cy="toolbar-input-text"]').click();
+            cy.get('[data-cy="toolbar-input-text"]').type('FBS-8323');
 
-        cy.wait('@searchBatch');
+            cy.wait('@searchBatch');
 
-        cy.contains('FBS-8323', { timeout: 5000 }).should('be.visible');
+            cy.contains('FBS-8323', { timeout: 5000 }).should('be.visible');
 
-        cy.get('[data-cy="settings-row-div-4"]').click();
+            cy.get('[data-cy="settings-row-div-4"]').click();
 
-        //check the display of batch info page
-        cy.get('[data-cy="batch-detail-layout-div-1"]').should('be.visible');
-
-        cy.get('[data-cy="batch-detail-layout-span-7"]')
-            .should('be.visible')
-            .and('have.text', 'FBS-8323');
-
-        cy.get('[data-cy="status-badge-span-1"]')
-            .should('be.visible')
-            .and('have.text', 'Active');
-
-        cy.get('[data-cy="batch-detail-layout-p-9"]')
-            .should('be.visible')
-            .and(
-                'have.text',
-                'Continuing Studies · Information Technology · Online · Created Aug 10, 2026',
+            // Check the display of the batch info page.
+            cy.get('[data-cy="batch-detail-layout-div-1"]').should(
+                'be.visible',
             );
 
-        cy.get('[data-cy="button-button-1"]')
-            .eq(0)
-            .should('be.visible')
-            .and('have.text', 'Edit');
+            cy.get('[data-cy="batch-detail-layout-span-7"]')
+                .should('be.visible')
+                .and('have.text', 'FBS-8323');
 
-        cy.get('[data-cy="button-button-1"]')
-            .eq(1)
-            .should('be.visible')
-            .and('have.text', 'Archive');
+            headerStatusBadge().should('be.visible').and('have.text', 'Active');
 
-        cy.get('[data-cy="button-button-1"]')
-            .eq(2)
-            .should('be.visible')
-            .and('have.text', 'Terminate');
+            // The "Created <date>" portion is rendered via
+            // `toLocaleDateString` in the *viewer's* local timezone (see
+            // BatchDetailLayout.tsx), so asserting an exact hardcoded date
+            // is flaky across machines/timezones/DST. Assert the format and
+            // the stable prefix instead.
+            cy.get('[data-cy="batch-detail-layout-p-9"]')
+                .should('be.visible')
+                .invoke('text')
+                .should(
+                    'match',
+                    /^Continuing Studies · Information Technology · Online · Created [A-Z][a-z]{2} \d{1,2}, \d{4}$/,
+                );
 
-        cy.get('[data-cy="batch-detail-layout-div-39"]')
-            .eq(0)
-            .should('contain.text', 'Batch number')
-            .and('contain.text', 'FBS-8323');
+            cy.get('[data-cy="button-button-1"]')
+                .eq(0)
+                .should('be.visible')
+                .and('have.text', 'Edit');
 
-        cy.get('[data-cy="batch-detail-layout-div-39"]')
-            .eq(1)
-            .should('contain.text', 'Trainees')
-            .and('contain.text', '12');
+            cy.get('[data-cy="button-button-1"]')
+                .eq(1)
+                .should('be.visible')
+                .and('have.text', 'Archive');
 
-        cy.get('[data-cy="batch-detail-layout-div-39"]')
-            .eq(2)
-            .should('contain.text', 'Industry')
-            .and('contain.text', 'Information Technology');
+            cy.get('[data-cy="button-button-1"]')
+                .eq(2)
+                .should('be.visible')
+                .and('have.text', 'Terminate');
 
-        cy.get('[data-cy="batch-detail-layout-div-39"]')
-            .eq(3)
-            .should('contain.text', 'Program type')
-            .and('contain.text', 'Continuing Studies');
+            cy.get('[data-cy="batch-detail-layout-div-39"]')
+                .eq(0)
+                .should('contain.text', 'Batch number')
+                .and('contain.text', 'FBS-8323');
 
-        cy.get('[data-cy="batch-detail-layout-div-25"]').should(
-            'contain.text',
-            'Registration link',
-        );
+            cy.get('[data-cy="batch-detail-layout-div-39"]')
+                .eq(1)
+                .should('contain.text', 'Trainees');
 
-        cy.get('[data-cy="button-button-1"]').should(
-            'contain.text',
-            'Copy link',
-        );
+            cy.get('[data-cy="batch-detail-layout-div-39"]')
+                .eq(2)
+                .should('contain.text', 'Industry')
+                .and('contain.text', 'Information Technology');
 
-        //tabs
-        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-            .eq(0)
-            .should('contain.text', 'Trainees');
+            cy.get('[data-cy="batch-detail-layout-div-39"]')
+                .eq(3)
+                .should('contain.text', 'Program type')
+                .and('contain.text', 'Continuing Studies');
 
-        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-            .eq(1)
-            .should('contain.text', 'Activity log');
+            cy.get('[data-cy="batch-detail-layout-div-25"]').should(
+                'contain.text',
+                'Registration link',
+            );
 
-        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-            .eq(2)
-            .should('contain.text', 'Financials');
+            cy.contains(
+                '[data-cy="button-button-1"]',
+                'Copy link',
+            ).should('be.visible');
 
-        cy.get('[data-cy="batch-detail-layout-link-t-href"]')
-            .eq(3)
-            .should('contain.text', 'Trainers');
+            // Tabs
+            cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+                .eq(0)
+                .should('contain.text', 'Trainees');
+
+            cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+                .eq(1)
+                .should('contain.text', 'Trainers');
+        });
+
+        it('should open and close the edit modal without saving', () => {
+            cy.visit('/batches/8');
+
+            cy.contains('[data-cy="button-button-1"]', 'Edit').click();
+            cy.get('[data-cy="use-async-select-field-button-button"]').should(
+                'be.visible',
+            );
+
+            // Close via the X button.
+            cy.get('[data-cy="modal-button-close-dialog"]').click();
+            cy.get('[data-cy="use-async-select-field-button-button"]').should(
+                'not.exist',
+            );
+
+            // Close via Esc.
+            cy.contains('[data-cy="button-button-1"]', 'Edit').click();
+            cy.get('body').type('{esc}');
+            cy.get('[data-cy="use-async-select-field-button-button"]').should(
+                'not.exist',
+            );
+        });
+
+        it('should open and cancel the terminate confirmation without terminating', () => {
+            cy.visit('/batches/8');
+
+            cy.contains('[data-cy="button-button-1"]', 'Terminate').click();
+            cy.get('[data-cy="batch-detail-layout-modal-35"]').should(
+                'be.visible',
+            );
+
+            cy.get('[data-cy="batch-detail-layout-button-button"]').click();
+            cy.get('[data-cy="batch-detail-layout-modal-35"]').should(
+                'not.exist',
+            );
+
+            // The batch must still be active — nothing was confirmed.
+            headerStatusBadge().should('have.text', 'Active');
+        });
+
+        it('should copy the registration link', () => {
+            cy.visit('/batches/8');
+
+            cy.contains('[data-cy="button-button-1"]', 'Copy link').click();
+
+            cy.get('[data-cy="toast-p-5"]')
+                .should('contain.text', 'Registration link copied')
+                .and('be.visible');
+        });
     });
 
-    // //edit button
-    // it('should check if edit button is working', () => {
-    //     cy.visit('/batches/8');
+    // ---------------------------------------------------------------
+    // Mutating lifecycle actions (archive/restore) run against a batch
+    // created for this spec, never the shared seeded batch, so the suite
+    // stays repeatable.
+    // ---------------------------------------------------------------
 
-    //     //edit button
-    //     cy.get('[data-cy="button-button-1"]').eq(0).click();
+    describe('detail page (lifecycle actions, throwaway batch)', () => {
+        it('should archive then restore a batch from its detail page', () => {
+            cy.createBatch().then((batch) => {
+                cy.visit(`/batches/${batch.id}`);
 
-    //     //verify edit modal
-    //     cy.get('[data-cy="create-batch-modal-modal-close"]').should(
-    //         'be.visible',
-    //     );
+                cy.contains('[data-cy="button-button-1"]', 'Archive').click();
+                cy.get('[data-cy="toast-p-5"]').should(
+                    'contain.text',
+                    'Batch archived',
+                );
+                headerStatusBadge().should('have.text', 'Archived');
 
-    //     //close button
-    //     cy.get('[data-cy="modal-button-close-dialog"]').click();
-
-    //     //edit button
-    //     cy.get('[data-cy="button-button-1"]').eq(0).click();
-
-    //     //verify edit modal
-    //     cy.get('[data-cy="create-batch-modal-modal-close"]').should(
-    //         'be.visible',
-    //     );
-
-    //     //esc key
-    //     cy.get('body').type('{esc}');
-
-    //     //edit button
-    //     cy.get('[data-cy="button-button-1"]').eq(0).click();
-
-    //     //verify edit modal
-    //     cy.get('[data-cy="create-batch-modal-modal-close"]').should(
-    //         'be.visible',
-    //     );
-
-    //     //cancel button
-    //     cy.get('[data-cy="create-batch-modal-button-button"]').click();
-    // });
-
-    // //archive
-    // it('should check if archive button is working', () => {
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="button-button-1"]').eq(1).click();
-
-    //     //verify archive
-    //     cy.get('[data-cy="toast-div-3"]')
-    //         .should('contain.text', 'Batch archived')
-    //         .and('be.visible');
-    // });
-
-    // //restore
-    // it('should check if the restore button is working', () => {
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="button-button-1"]').eq(1).click();
-
-    //     //verify restore
-    //     cy.get('[data-cy="toast-div-3"]')
-    //         .should('contain.text', 'Batch restored')
-    //         .and('be.visible');
-    // });
-
-    // //terminate
-    // it('should check if the terminate button is working', () => {
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="button-button-1"]').eq(2).click();
-
-    //     //verify terminate modal
-    //     cy.get('[data-cy="batch-detail-layout-modal-35"]').should('be.visible');
-
-    //     //close terminate modal
-    //     cy.get('[data-cy="modal-button-close-dialog"]').click();
-
-    //     cy.get('[data-cy="button-button-1"]').eq(2).click();
-
-    //     //verify terminate modal
-    //     cy.get('[data-cy="batch-detail-layout-modal-35"]').should('be.visible');
-
-    //     //cancel terminate modal
-    //     cy.get('[data-cy="batch-detail-layout-button-button"]').click();
-
-    //     cy.get('[data-cy="button-button-1"]').eq(2).click();
-
-    //     //verify terminate modal
-    //     cy.get('[data-cy="batch-detail-layout-modal-35"]').should('be.visible');
-
-    //     //esc
-    //     cy.get('body').type('{esc}');
-    // });
-
-    // copy link
-    it('should check if the copy link button is working', () => {
-        cy.visit('/batches/8');
-
-        cy.get('[data-cy="button-button-1"]').eq(4).click();
-
-        //verify copy link
-        cy.get('[data-cy="toast-div-2"]')
-            .should('contain.text', 'Registration link copied')
-            .and('be.visible');
+                cy.contains('[data-cy="button-button-1"]', 'Restore').click();
+                cy.get('[data-cy="toast-p-5"]').should(
+                    'contain.text',
+                    'Batch restored',
+                );
+                headerStatusBadge().should('have.text', 'Active');
+            });
+        });
     });
 
-    // //trainees tab
-    // it('should check the display of trainees tab', () => {
-    //     cy.visit('/batches/8');
+    // ---------------------------------------------------------------
+    // Trainees tab (against the seeded batch, which has real trainees)
+    // ---------------------------------------------------------------
 
-    //     cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
-    //     cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
-    //         'be.visible',
-    //     );
-    //     cy.get('[data-cy="toolbar-select-rows-per-page"]').should('be.visible');
-    // });
+    describe('trainees tab', () => {
+        beforeEach(() => {
+            cy.visit('/batches/8');
+        });
 
-    // //trainees tab search
-    // it ('should check if the search function is working', () => {
-    //     cy.visit('/batches/8');
+        it('should display the trainees tab table', () => {
+            cy.get('[data-cy="toolbar-input-text"]').should('be.visible');
+            cy.get('[data-cy="toolbar-button-button"]').should('be.visible');
+            cy.get('[data-cy="toolbar-select-sort-by-change"]').should(
+                'be.visible',
+            );
+            cy.get('[data-cy="toolbar-select-rows-per-page"]').should(
+                'be.visible',
+            );
 
-    //     //search
-    //     cy.get('[data-cy="toolbar-input-text"]').click().type('Ludwig');
+            cy.get('[data-cy="settings-list-header-div-1"]')
+                .should('contain.text', 'Trainee')
+                .and('contain.text', 'School')
+                .and('contain.text', 'Required hrs')
+                .and('contain.text', 'Status');
 
-    //     //verify search
-    //     cy.get('[data-cy="trainees-div-2"]')
-    //         .should('contain.text', 'Ludwig')
-    //         .and('be.visible');
+            cy.get('[data-cy="trainees-div-2"]').should('be.visible');
+        });
 
-    //     //clear search
-    //     cy.get('[data-cy="toolbar-input-text"]').clear();
-    // });
+        it('should search trainees by name', () => {
+            cy.get('[data-cy="trainees-div-2"]')
+                .first()
+                .find('[data-cy="trainees-span-5"]')
+                .invoke('text')
+                .then((fullName) => {
+                    const firstName = fullName.trim().split(/\s+/)[0];
 
-    // //trainees tab filter (di pa tapos)
-    // it('should check if the filter function is working', () => {
-    //     cy.visit('/batches/8');
+                    cy.get('[data-cy="toolbar-input-text"]')
+                        .click()
+                        .type(firstName);
 
-    //     //filter
-    //     cy.get('[data-cy="toolbar-button-button"]').click();
+                    cy.get('[data-cy="trainees-div-2"]')
+                        .should('contain.text', firstName)
+                        .and('be.visible');
+                });
 
-    //     //filter status
-    //     cy.get('[data-cy="dropdown-button-button"]').click();
+            cy.get('[data-cy="toolbar-input-text"]').clear();
+        });
 
-    //     cy.get('[data-cy="dropdown-div-4"]')
-    //         .should('contain.text', 'All Status')
-    //         .and('contain.text', 'Active')
-    //         .and('contain.text', 'Terminated')
-    //         .and('contain.text', 'Archived');
+        it('should filter trainees by status', () => {
+            cy.get('[data-cy="toolbar-button-button"]').click();
 
-    //     //select a status
-    //     cy.get('[data-cy="dropdown-button-set-selected"]').eq(1).click();
+            cy.get('[data-cy="dropdown-button-button"]').click();
+            cy.get('[data-cy="dropdown-div-4"]')
+                .should('contain.text', 'All Status')
+                .and('contain.text', 'Active')
+                .and('contain.text', 'Terminated')
+                .and('contain.text', 'Archived');
 
-    //     //verify status
-    //     cy.get('[data-cy="trainees-div-2"]')
-    //         .should('contain.text', 'Active')
-    //         .and('be.visible');
+            cy.get('[data-cy="dropdown-div-4"]').contains('Active').click();
 
-    //     //select all
-    //     cy.get('[data-cy="dropdown-button-button"]').click();
+            cy.get('[data-cy="trainees-div-2"]', { timeout: 5000 }).should(
+                ($rows) => {
+                    expect($rows.length).to.be.greaterThan(0);
+                    $rows.each((_, row) => {
+                        expect(row.textContent).to.contain('Active');
+                    });
+                },
+            );
 
-    //     cy.get('[data-cy="dropdown-button-set-selected"]').eq(0).click();
+            cy.get('[data-cy="dropdown-button-button"]').click();
+            cy.get('[data-cy="dropdown-div-4"]').contains('All Status').click();
+        });
 
-    //     //first name filter
-    //     cy.get('[data-cy="data-input-first_name"]').click().type('Kari');
+        it('should expose the expected sort options', () => {
+            cy.get('[data-cy="toolbar-select-sort-by-change"] option')
+                .should('have.length', 4)
+                .and('contain.text', 'Status')
+                .and('contain.text', 'First Name')
+                .and('contain.text', 'Last Name')
+                .and('contain.text', 'Required hrs');
+        });
 
-    //     //verify first name filter
-    //     cy.get('[data-cy="trainees-div-2"]')
-    //         .should('contain.text', 'Kari')
-    //         .and('be.visible');
+        it('should support the rows-per-page filter', () => {
+            cy.filterPerPage();
+        });
 
-    //     //clear first name filter
-    //     cy.get('[data-cy="data-input-first_name"]').clear();
-    // });
+        it('should show Transfer/Terminate/Archive on a trainee row menu', () => {
+            cy.get('[data-cy="trainees-div-2"]')
+                .first()
+                .find('[data-cy="row-menu-more-horizontal-2"]')
+                .click();
 
-    // //trainees tab sort
-    // it('should check if the sort function is complete', () => {
-    //     cy.visit('/batches/8');
+            cy.get('[role="menu"]').within(() => {
+                cy.get('[role="menuitem"]').eq(0).should('contain.text', 'Transfer');
+                cy.get('[role="menuitem"]').eq(1).should('contain.text', 'Terminate');
+                cy.get('[role="menuitem"]').eq(2).should('contain.text', 'Archive');
+            });
+        });
 
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"] option')
-    //         .should('have.length', 4)
-    //         .and('contain.text', 'Status')
-    //         .and('contain.text', 'First Name')
-    //         .and('contain.text', 'Last Name')
-    //         .and('contain.text', 'Required hrs');
-    // });
+        it('should open and close the transfer modal', () => {
+            cy.get('[data-cy="trainees-div-2"]')
+                .first()
+                .find('[data-cy="row-menu-more-horizontal-2"]')
+                .click();
 
-    // //trainees tab sort - status
-    // it('should check if the sorting of status is working', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as(
-    //         'sortStatusTrainees',
-    //     );
+            cy.get('[role="menu"]').contains('[role="menuitem"]', 'Transfer').click();
 
-    //     cy.visit('/batches/8');
+            cy.get('[data-cy="transfer-trainee-modal"]').should('be.visible');
 
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]')
-    //         .contains('Status')
-    //         .should('exist');
+            // Close via Esc.
+            cy.get('body').type('{esc}');
+            cy.get('[data-cy="transfer-trainee-modal"]').should('not.exist');
 
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-    //         'Sort: Status',
-    //     );
+            // Reopen, close via the X button.
+            cy.get('[data-cy="trainees-div-2"]')
+                .first()
+                .find('[data-cy="row-menu-more-horizontal-2"]')
+                .click();
+            cy.get('[role="menu"]').contains('[role="menuitem"]', 'Transfer').click();
+            cy.get('[data-cy="modal-x-6"]').click();
+            cy.get('[data-cy="transfer-trainee-modal"]').should('not.exist');
 
-    //     cy.wait('@sortStatusTrainees').its('response.statusCode').should('eq', 200);
-    // });
-
-    // //trainees tab sort - first name
-    // it('should check if the sorting of first name is working', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as('sortFirstNameTrainees');
-
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]')
-    //         .contains('First Name')
-    //         .should('exist');
-
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-    //         'Sort: First Name',
-    //     );
-
-    //     cy.wait('@sortFirstNameTrainees')
-    //         .its('response.statusCode')
-    //         .should('eq', 200);
-    // });
-
-    // //trainees tab sort - last name
-    // it('should check if the sorting of last name is working', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as(
-    //         'sortLastNameTrainees',
-    //     );
-
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]')
-    //         .contains('Last Name')
-    //         .should('exist');
-
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-    //         'Sort: Last Name',
-    //     );
-
-    //     cy.wait('@sortLastNameTrainees')
-    //         .its('response.statusCode')
-    //         .should('eq', 200);
-    // });
-
-    // //trainees tab sort - required hrs
-    // it('should check if the sorting of required hrs is working', () => {
-    //     cy.intercept('GET', '**/pagination-search*').as('sortRequiredhrsTrainees');
-
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]')
-    //         .contains('Required hrs')
-    //         .should('exist');
-
-    //     cy.get('[data-cy="toolbar-select-sort-by-change"]').select(
-    //         'Sort: Required hrs',
-    //     );
-
-    //     cy.wait('@sortRequiredhrsTrainees')
-    //         .its('response.statusCode')
-    //         .should('eq', 200);
-    // });
-
-    // //trainees tab page
-    // it('should check if the page filter is working', () => {
-    //     cy.visit('/batches/8');
-
-    //     cy.filterPerPage();
-    // });
-
-    // //trainee table display
-    // it('should check if the trainees tab table displays properly', () => {
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="settings-list-header-div-1"]')
-    //         .should('contain.text', 'Trainee')
-    //         .and('contain.text', 'School')
-    //         .and('contain.text', 'Required hrs')
-    //         .and('contain.text', 'Status');
-
-    //     cy.get('[data-cy="trainees-div-2"]').should('be.visible');
-    //     cy.get('[data-cy="pagination-span-5"]').should('be.visible');
-    //     cy.get('[data-cy="pagination-div-6"]').should('be.visible');
-    // });
-
-    // //trainee action button
-    // it('should check if the trainee action button is visible and working', () => {
-    //     cy.visit('/batches/8');
-
-    //     cy.get('[data-cy="trainees-div-2"]')
-    //         .eq(0)
-    //         .find('[data-cy="row-menu-more-horizontal-2"]')
-    //         .click();
-
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(0)
-    //         .should('be.visible')
-    //         .and('contain.text', 'Transfer');
-
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(1)
-    //         .should('be.visible')
-    //         .and('contain.text', 'Terminate');
-
-    //     cy.get('[data-cy="row-menu-button-4"]')
-    //         .eq(2)
-    //         .should('be.visible')
-    //         .and('contain.text', 'Archive');
-    // });
-
-    //transfer button
-    it('should check if the transfer button is working', () => {
-        cy.visit('/batches/8');
-
-        cy.get('[data-cy="trainees-div-2"]')
-            .eq(0)
-            .find('[data-cy="row-menu-more-horizontal-2"]')
-            .click();
-
-        cy.get('[data-cy="row-menu-button-row-actions"]')
-            .eq(0)
-            .should('be.visible')
-            .and('contain.text', 'Transfer')
-            .click();
-
-        cy.get('[data-cy="transfer-trainee-modal"]').should('be.visible');
-
-        //esc btn
-        cy.get('body').type('{esc}');
-
-        //exit btn
-        cy.get('[data-cy="row-menu-button-row-actions"]')
-            .eq(0)
-            .should('be.visible')
-            .and('contain.text', 'Transfer')
-            .click();
-
-        cy.get('[data-cy="modal-x-6"]').click();
-
-        //cancel btn
-        cy.get('[data-cy="row-menu-button-row-actions"]')
-            .eq(0)
-            .should('be.visible')
-            .and('contain.text', 'Transfer')
-            .click();
-
-        cy.get('[data-cy="transfer-trainee-modal"]').should('be.visible');
-
-        cy.get('[data-cy="transfer-trainee-modal-cancel-button"]').click();
-        
+            // Reopen, cancel via the Cancel button.
+            cy.get('[data-cy="trainees-div-2"]')
+                .first()
+                .find('[data-cy="row-menu-more-horizontal-2"]')
+                .click();
+            cy.get('[role="menu"]').contains('[role="menuitem"]', 'Transfer').click();
+            cy.get('[data-cy="transfer-trainee-modal"]').should('be.visible');
+            cy.get('[data-cy="transfer-trainee-modal-cancel-button"]').click();
+            cy.get('[data-cy="transfer-trainee-modal"]').should('not.exist');
+        });
     });
 
-    // //trainers tab
-    // it('should check the display of trainers tab', () => {
-    //     cy.visit('/batches/8');
+    // ---------------------------------------------------------------
+    // Trainers tab
+    // ---------------------------------------------------------------
 
-    //     cy.get('[data-cy="batch-detail-layout-link-t-href"]').eq(1).click();
-    // });
+    describe('trainers tab', () => {
+        it('should navigate to the trainers tab', () => {
+            cy.visit('/batches/8');
+
+            cy.get('[data-cy="batch-detail-layout-link-t-href"]')
+                .contains('Trainers')
+                .click();
+
+            cy.url().should('match', /\/batches\/8\/trainers$/);
+            cy.get('[data-cy="batch-trainers-page-section"]').should(
+                'be.visible',
+            );
+        });
+    });
 });
