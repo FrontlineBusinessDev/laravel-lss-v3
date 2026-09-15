@@ -70,19 +70,10 @@ class TraineeCertificateController extends Controller
         // SQLite (and strict-mode MySQL) reject for a bare HAVING. A
         // correlated subquery in WHERE works in both the row query and the
         // wrapped count query.
-        $completedHoursExpr = '(select coalesce(sum(time_spent), 0) from app_tasks'
-            . ' where app_tasks.trainee_id = app_trainees.id and app_tasks.status = \'completed\')';
+        $completedHoursExpr = Trainees::completedHoursSql();
 
-        // Count of the trainee's assigned-batch trainers who don't yet have a
-        // submitted evaluation from this trainee — certificate issuance is
-        // blocked while this is > 0 (Trainer Evaluation requirement).
-        $pendingTrainerEvalExpr = '(select count(*) from app_batch_trainer'
-            . ' where app_batch_trainer.batch_id = app_trainees.batch_id'
-            . ' and app_batch_trainer.trainer_id not in ('
-            . 'select trainer_id from app_trainer_evaluations'
-            . ' where app_trainer_evaluations.trainee_id = app_trainees.id'
-            . ' and app_trainer_evaluations.submitted_at is not null'
-            . '))';
+        // Certificate issuance is blocked while this is > 0 (Trainer Evaluation requirement).
+        $pendingTrainerEvalExpr = Trainees::pendingTrainerEvalSql();
 
         $status = is_string($filters['status'] ?? null) ? $filters['status'] : 'all';
         match ($status) {

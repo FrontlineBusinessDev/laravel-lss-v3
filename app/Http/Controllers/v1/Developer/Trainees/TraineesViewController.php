@@ -54,18 +54,6 @@ class TraineesViewController extends BaseController
     {
         return $this->renderTab('developer/trainees/show/BiometricsTab', $id);
     }
-    // public function index(Request $request): mixed
-    // {
-    //     return Inertia::render('developer/trainees/show/detail')->asCsr();
-    // }
-    // /**
-    //  * The id is looked up client-side against resources/js/data/mockData.ts
-    //  * (see TraineesContext) — no trainees table exists yet.
-    //  */
-    // public function show(int|string $id): mixed
-    // {
-    //     return Inertia::render('developer/trainees/show/detail', ['id' => $id])->asCsr();
-    // }
     /**
      * Load the trainees with its display relations and hand the
      * common props to the requested tab component.

@@ -9,7 +9,6 @@ import { LogoMark } from './Logo';
 import { NotificationBell } from './NotificationBell';
 
 export function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
-    const navigate = useNavigate();
     const { displayName, initials, role } = useAuth();
     const { open: openSearch } = useGlobalSearchTrigger();
     const [open, setOpen] = useState(false);

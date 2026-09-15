@@ -28,7 +28,6 @@ import {
     Settings,
     Star,
     User,
-    UserCog,
     UsersRound,
     X,
 } from 'lucide-react';

@@ -11,10 +11,6 @@ use Inertia\Response;
 
 class SeminarController extends Controller
 {
-    /**
-     * Static frontend page. Data for this module lives client-side in
-     * resources/js/data/mockData.ts — see class docblock in that file.
-     */
     public function index(): Response
     {
         return Inertia::render('developer/seminars/index')->asCsr();

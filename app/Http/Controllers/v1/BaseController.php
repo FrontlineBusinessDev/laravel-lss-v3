@@ -510,6 +510,4 @@ abstract class BaseController extends Controller implements HasMiddleware
     // Add no-op defaults so child classes override only what they need
     protected function afterCreate(Model $model): void {}
     protected function afterUpdate(Model $model): void {}
-    protected function beforeCreate(Model $model): void {}
-    protected function beforeUpdate(Model $model): void {}
 }

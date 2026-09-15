@@ -1,18 +1,14 @@
+import { ReadOnlyField as Field } from '@/components/trainees/ReadOnlyField';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import TrainerTraineeDetailLayout from '@/layouts/trainees/TrainerTraineeDetailLayout';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
-    return (
-        <div>
-            <div className="text-xs text-neutral-500">{label}</div>
-            <div className="text-sm font-medium text-ink">{value || '—'}</div>
-        </div>
-    );
-}
-
 /** Read-only — trainers view but never edit a trainee's personal info. */
-export default function PersonalInfoTab({ trainee }: { trainee: TraineeDetail }) {
+export default function PersonalInfoTab({
+    trainee,
+}: {
+    trainee: TraineeDetail;
+}) {
     return (
         <TrainerLayout title="Trainee">
             <TrainerTraineeDetailLayout trainee={trainee}>
@@ -32,8 +28,14 @@ export default function PersonalInfoTab({ trainee }: { trainee: TraineeDetail })
                                   : 'Unknown'
                         }
                     />
-                    <Field label="Mobile number" value={trainee.mobile_number} />
-                    <Field label="Landline number" value={trainee.landline_number} />
+                    <Field
+                        label="Mobile number"
+                        value={trainee.mobile_number}
+                    />
+                    <Field
+                        label="Landline number"
+                        value={trainee.landline_number}
+                    />
                     <Field
                         label="Emergency contact"
                         value={trainee.emergency_contact_name}

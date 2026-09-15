@@ -12,7 +12,17 @@ class DocumentResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            ...$this->resource->toArray(),
+            'id' => $this->id,
+            'status' => $this->status,
+            'trainee_id' => $this->trainee_id,
+            'document_type' => $this->document_type,
+            'original_name' => $this->original_name,
+            'file_name' => $this->file_name,
+            'mime_type' => $this->mime_type,
+            'url_link' => $this->url_link,
+            'file_size' => $this->file_size,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
             ...$this->resolveUrls(),
             'trainee_name' => trim(($this->trainee?->first_name ?? '').' '.($this->trainee?->last_name ?? '')),
             'batch_code' => $this->trainee?->batch?->batch_code,

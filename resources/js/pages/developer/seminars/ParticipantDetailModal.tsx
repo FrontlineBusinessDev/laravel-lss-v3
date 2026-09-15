@@ -5,8 +5,10 @@ import { SelectField, TextField, TextAreaField } from '@/components/FormField';
 import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import { useNotifications } from '@/contexts/NotificationsContext';
-import { TODAY } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+
+/** Fixed "today" so the Seminars demo data (progress calcs, etc.) stays consistent. */
+const TODAY = new Date('2026-07-01');
 import type { SeminarParticipant, SeminarProgress } from '@/types';
 import { PARTICIPANT_STATUS_STYLE, progressPercent } from './seminarUtils';
 const PROGRESS_STEPS: {
@@ -71,8 +73,8 @@ export function ParticipantDetailModal({
     }, [participant]);
 
     if (!participant) {
-return null;
-}
+        return null;
+    }
 
     const pct = progressPercent(participant);
     function toggleStep(key: keyof SeminarProgress) {

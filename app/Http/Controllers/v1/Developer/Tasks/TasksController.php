@@ -356,7 +356,7 @@ class TasksController extends BaseController
         $rows = $this->newQuery()->where('task_group_id', $groupId)->orderBy('id')->get();
         abort_if($rows->isEmpty(), 404);
 
-        $this->authorize('view', $rows->first());
+        $rows->each(fn(Task $row) => $this->authorize('view', $row));
 
         return $this->sendResponse($rows);
     }
@@ -366,7 +366,7 @@ class TasksController extends BaseController
     {
         $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
         abort_if($rows->isEmpty(), 404);
-        $this->authorize('update', $rows->first());
+        $rows->each(fn(Task $row) => $this->authorize('update', $row));
 
         DB::transaction(function () use ($rows) {
             foreach ($rows->whereNotIn('status', ['locked', 'completed']) as $row) {
@@ -386,7 +386,7 @@ class TasksController extends BaseController
     {
         $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
         abort_if($rows->isEmpty(), 404);
-        $this->authorize('update', $rows->first());
+        $rows->each(fn(Task $row) => $this->authorize('update', $row));
 
         DB::transaction(function () use ($rows) {
             foreach ($rows->where('status', '!=', 'locked') as $row) {
@@ -402,7 +402,7 @@ class TasksController extends BaseController
     {
         $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
         abort_if($rows->isEmpty(), 404);
-        $this->authorize('update', $rows->first());
+        $rows->each(fn(Task $row) => $this->authorize('update', $row));
 
         DB::transaction(function () use ($rows) {
             foreach ($rows->where('status', 'completed') as $row) {
@@ -418,7 +418,7 @@ class TasksController extends BaseController
     {
         $rows = $this->newQuery()->where('task_group_id', $groupId)->get();
         abort_if($rows->isEmpty(), 404);
-        $this->authorize('update', $rows->first());
+        $rows->each(fn(Task $row) => $this->authorize('update', $row));
 
         DB::transaction(function () use ($rows) {
             foreach ($rows->where('status', 'locked') as $row) {
@@ -435,7 +435,7 @@ class TasksController extends BaseController
         return DB::transaction(function () use ($groupId) {
             $rows = $this->newQuery()->where('task_group_id', $groupId)->lockForUpdate()->get();
             abort_if($rows->isEmpty(), 404);
-            $this->authorize('delete', $rows->first());
+            $rows->each(fn(Task $row) => $this->authorize('delete', $row));
 
             foreach ($rows as $row) {
                 $row->delete();

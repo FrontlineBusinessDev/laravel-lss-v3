@@ -1,6 +1,5 @@
 import { formatDate } from '@/lib/date';
 import type { ColumnDef } from '@/types/reusable/data-table';
-import { STATUS_FILTER_PAIRS } from '@/types/reusable/status';
 
 export interface LeaveRequestTrainee {
     id: number;

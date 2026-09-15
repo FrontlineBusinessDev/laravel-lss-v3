@@ -26,8 +26,12 @@ class LeaveRequestPolicy
 
     public function view(User $user, LeaveRequest $leaveRequest): bool
     {
-        if ($user->can(Permissions::MANAGE_LEAVE) || $user->hasRole('trainer')) {
+        if ($user->can(Permissions::MANAGE_LEAVE)) {
             return true;
+        }
+
+        if ($user->hasRole('trainer')) {
+            return $this->assignedToBatch($user, $leaveRequest);
         }
 
         return $user->can(Permissions::MANAGE_OWN_LEAVE) && $this->ownsRequest($user, $leaveRequest);

@@ -39,7 +39,6 @@ export default function ResetPasswordPage({
     token,
     email,
 }: ResetPasswordProps) {
-    const { url } = usePage();
     const { data, setData, post, processing, errors } = useForm({
         email: email ?? '',
         password: '',

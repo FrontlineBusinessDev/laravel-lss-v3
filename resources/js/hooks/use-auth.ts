@@ -20,10 +20,7 @@ function initialsFor(name: string): string {
 
 /**
  * The logged-in user, shared globally by
- * App\Http\Middleware\HandleInertiaRequests. Almost every module in the LSS
- * admin frontend is now backend-driven; the Seminars admin module is the
- * sole remaining exception still reading from data/mockData.ts (deferred —
- * see memory).
+ * App\Http\Middleware\HandleInertiaRequests.
  */
 export function useAuth() {
     const { props } = usePage();

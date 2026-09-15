@@ -1,19 +1,15 @@
+import { ReadOnlyField as Field } from '@/components/trainees/ReadOnlyField';
 import TrainerLayout from '@/layouts/trainer/TrainerLayout';
 import TrainerTraineeDetailLayout from '@/layouts/trainees/TrainerTraineeDetailLayout';
 import { formatDate } from '@/lib/date';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 
-function Field({ label, value }: { label: string; value: string | null | undefined }) {
-    return (
-        <div>
-            <div className="text-xs text-neutral-500">{label}</div>
-            <div className="text-sm font-medium text-ink">{value || '—'}</div>
-        </div>
-    );
-}
-
 /** Read-only — trainers view but never edit a trainee's academic info. */
-export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail }) {
+export default function AcademicInfoTab({
+    trainee,
+}: {
+    trainee: TraineeDetail;
+}) {
     return (
         <TrainerLayout title="Trainee">
             <TrainerTraineeDetailLayout trainee={trainee}>
@@ -28,27 +24,39 @@ export default function AcademicInfoTab({ trainee }: { trainee: TraineeDetail })
                         label="Industry"
                         value={trainee.batch?.academic_industry?.name}
                     />
-                    <Field
-                        label="Level"
-                        value={trainee.academic_level?.name}
-                    />
+                    <Field label="Level" value={trainee.academic_level?.name} />
                     <Field
                         label="Program type"
                         value={trainee.batch?.academic_program_type?.name}
                     />
                     <Field
                         label="Setup"
-                        value={trainee.batch?.setup === 'F2F' ? 'Face to Face' : 'Online'}
+                        value={
+                            trainee.batch?.setup === 'F2F'
+                                ? 'Face to Face'
+                                : 'Online'
+                        }
                     />
                     <Field
                         label="Required hours"
-                        value={trainee.required_hours ? `${trainee.required_hours} hrs` : null}
+                        value={
+                            trainee.required_hours
+                                ? `${trainee.required_hours} hrs`
+                                : null
+                        }
                     />
                     <Field
                         label="Completed hours"
-                        value={trainee.completed_hours ? `${trainee.completed_hours} hrs` : null}
+                        value={
+                            trainee.completed_hours
+                                ? `${trainee.completed_hours} hrs`
+                                : null
+                        }
                     />
-                    <Field label="Date completed" value={formatDate(trainee.date_completed)} />
+                    <Field
+                        label="Date completed"
+                        value={formatDate(trainee.date_completed)}
+                    />
                 </div>
             </TrainerTraineeDetailLayout>
         </TrainerLayout>

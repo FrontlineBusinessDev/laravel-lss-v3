@@ -61,13 +61,33 @@ class RoleController extends BaseController
         /** @var Role $role */
         $role = $this->resolveModel($id);
         $data = $request->validate($this->updateRules($role));
+        $newPermissions = $data['permissions'] ?? [];
+
+        // Refuse to strip the last role holding `manage roles`, else no user
+        // could ever reach this screen again to fix it.
+        $hadManageRoles = $role->hasPermissionTo(Permissions::MANAGE_ROLES);
+        $keepsManageRoles = in_array(Permissions::MANAGE_ROLES, $newPermissions, true);
+
+        if ($hadManageRoles && ! $keepsManageRoles) {
+            $otherHolders = Role::where('id', '!=', $role->id)
+                ->whereHas('permissions', fn(Builder $q) => $q->where('name', Permissions::MANAGE_ROLES))
+                ->exists();
+
+            if (! $otherHolders) {
+                return $this->sendError(
+                    'Cannot remove "manage roles" — no other role would be able to manage roles afterward.',
+                    [],
+                    422,
+                );
+            }
+        }
 
         // Core role names are frozen; only their permission set may change.
         if (! in_array($role->name, self::PROTECTED_ROLES, true)) {
             $role->update(['name' => $data['name']]);
         }
 
-        $role->syncPermissions($data['permissions'] ?? []);
+        $role->syncPermissions($newPermissions);
 
         return $this->sendResponse(
             new RoleResource($role->load('permissions')),

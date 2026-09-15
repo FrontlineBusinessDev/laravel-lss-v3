@@ -143,11 +143,7 @@ Route::middleware('guest')->group(function () {
 });
 
 /**
- * Authenticated LSS admin/trainer/trainee modules. Every page below is a
- * static frontend view — the React pages read their data from
- * resources/js/data/mockData.ts rather than from these controllers.
- * No role/permission middleware yet, per current project scope: only
- * `auth` is enforced.
+ * Authenticated LSS admin/trainer/trainee modules.
  */
 Route::middleware('auth')->group(function () {
     // Global command-palette search (Ctrl+K/Cmd+K) — one endpoint for every

@@ -46,5 +46,4 @@ export default function index() {
 
     // Return a blank loading state while the useEffect redirect kicks in
     return null;
-    // return <AcademicTab />;
 }

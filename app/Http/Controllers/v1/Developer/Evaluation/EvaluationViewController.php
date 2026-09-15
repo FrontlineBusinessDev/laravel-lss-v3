@@ -386,16 +386,8 @@ class EvaluationViewController extends Controller implements HasMiddleware
      */
     private function pendingReminderTrainees(): Builder
     {
-        $completedHoursExpr = '(select coalesce(sum(time_spent), 0) from app_tasks'
-            . ' where app_tasks.trainee_id = app_trainees.id and app_tasks.status = \'completed\')';
-
-        $pendingTrainerEvalExpr = '(select count(*) from app_batch_trainer'
-            . ' where app_batch_trainer.batch_id = app_trainees.batch_id'
-            . ' and app_batch_trainer.trainer_id not in ('
-            . 'select trainer_id from app_trainer_evaluations'
-            . ' where app_trainer_evaluations.trainee_id = app_trainees.id'
-            . ' and app_trainer_evaluations.submitted_at is not null'
-            . '))';
+        $completedHoursExpr = Trainees::completedHoursSql();
+        $pendingTrainerEvalExpr = Trainees::pendingTrainerEvalSql();
 
         return Trainees::query()
             ->whereNotNull('user_id')

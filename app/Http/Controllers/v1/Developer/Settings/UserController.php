@@ -47,12 +47,6 @@ class UserController extends BaseController
     /** Roles captured during validation so afterCreate/afterUpdate can sync them. */
     private array $pendingRoles = [];
 
-    /** The settings shell is rendered by SettingController; bounce stray hits. */
-    // public function index(Request $request): mixed
-    // {
-    //     return redirect()->route('settings.index');
-    // }
-
     /**
      * Eager-load roles for display, and translate the Spatie role filter
      * (a pivot, not a column) into a scoped constraint. Applies only when the

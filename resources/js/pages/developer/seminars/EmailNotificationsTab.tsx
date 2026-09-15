@@ -1,4 +1,4 @@
-import { Mail, Bell, Pencil, Send } from 'lucide-react';
+import { Mail, Bell, Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { Switch } from '@/components/Switch';
 import { useToast } from '@/components/Toast';

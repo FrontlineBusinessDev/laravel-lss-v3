@@ -171,6 +171,31 @@ class Trainees extends Model
         return $query->withSum('completedTasks as completed_hours', 'time_spent');
     }
 
+    /**
+     * Raw correlated-subquery SQL for whereRaw()/orWhereRaw() use, shared by
+     * TraineeCertificateController and EvaluationViewController::
+     * pendingReminderTrainees(). A withSum()/scope can't be used at those call
+     * sites because paginate()'s wrapped count query rejects a bare HAVING on
+     * sqlite/strict-mode mysql — see TraineeCertificateController's comment.
+     */
+    public static function completedHoursSql(): string
+    {
+        return '(select coalesce(sum(time_spent), 0) from app_tasks'
+            . ' where app_tasks.trainee_id = app_trainees.id and app_tasks.status = \'completed\')';
+    }
+
+    /** Count of the trainee's assigned-batch trainers who don't yet have a submitted evaluation from this trainee. */
+    public static function pendingTrainerEvalSql(): string
+    {
+        return '(select count(*) from app_batch_trainer'
+            . ' where app_batch_trainer.batch_id = app_trainees.batch_id'
+            . ' and app_batch_trainer.trainer_id not in ('
+            . 'select trainer_id from app_trainer_evaluations'
+            . ' where app_trainer_evaluations.trainee_id = app_trainees.id'
+            . ' and app_trainer_evaluations.submitted_at is not null'
+            . '))';
+    }
+
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class, 'trainee_id');
