@@ -1,8 +1,13 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from '@inertiajs/react';
+import { Check, Loader2, Pencil, X } from 'lucide-react';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { traineeService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
-import { Field as FormField } from '@/components/form/Field';
-import { TextAreaField, TextField } from '@/components/FormField';
+import { errorInputCls, Field as FormField, inputCls, textareaCls } from '@/components/form/Field';
 import { RequiredHoursCompletedPill } from '@/components/RatingsBadges';
 import { useToast } from '@/components/Toast';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
@@ -10,12 +15,15 @@ import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
 import { formatDate } from '@/lib/date';
 import { formatToTwoDecimals } from '@/lib/number';
 import { getHoursProgress } from '@/lib/ratings';
+import { cn } from '@/lib/utils';
 import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
 import { loadLookupOptions } from '@/types/reusable/fields';
-import { router } from '@inertiajs/react';
-import { Check, Pencil, X } from 'lucide-react';
-import { useState } from 'react';
 
+// Readonly display atom for the always-visible summary fields that share this
+// tab's grid with the edit-mode FormField selects (school/program/level).
+// `mb-1` keeps it legible now that the grid runs gap-y-0 — FormField's own
+// message slot is the only other vertical spacer in that grid, and this atom
+// has no slot of its own.
 function Field({
     label,
     value,
@@ -26,7 +34,7 @@ function Field({
     hint?: string;
 }) {
     return (
-        <div data-cy="academic-info-tab-div-1">
+        <div className="mb-1" data-cy="academic-info-tab-div-1">
             <div
                 className="flex items-center gap-1.5 text-xs text-neutral-500"
                 data-cy="academic-info-tab-div-2"
@@ -51,28 +59,66 @@ function Field({
     );
 }
 
-type FormState = Pick<
-    TraineeDetail,
-    | 'required_hours'
-    | 'date_completed'
-    | 'termination_remarks'
-    | 'school_id'
-    | 'academic_program_id'
-    | 'academic_level_id'
->;
+type Values = {
+    required_hours: string;
+    date_completed: string;
+    termination_remarks: string;
+    school_id: string | number;
+    academic_program_id: string | number;
+    academic_level_id: string | number;
+};
+
+// Mirrors TraineesController::updateRules() for the fields this tab edits:
+// school_id/academic_program_id/academic_level_id required + exists (lookup
+// existence enforced server-side, client only checks presence);
+// required_hours required numeric 0-999.99; date_completed nullable date;
+// termination_remarks nullable string.
+const academicInfoSchema = z.object({
+    required_hours: z
+        .string()
+        .min(1, 'Required hours is required.')
+        .refine(
+            (v) =>
+                !Number.isNaN(Number(v)) && Number(v) >= 0 && Number(v) <= 999.99,
+            'Required hours must be a number between 0 and 999.99.',
+        ),
+    date_completed: z.string(),
+    termination_remarks: z.string(),
+    school_id: z.union([z.string(), z.number()]),
+    academic_program_id: z.union([z.string(), z.number()]),
+    academic_level_id: z.union([z.string(), z.number()]),
+}) satisfies z.ZodType<Values>;
+const academicInfoFormSchema = academicInfoSchema.superRefine((values, ctx) => {
+    if (!values.school_id) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['school_id'],
+            message: 'School is required.',
+        });
+    }
+
+    if (!values.academic_program_id) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['academic_program_id'],
+            message: 'Academic program is required.',
+        });
+    }
+
+    if (!values.academic_level_id) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['academic_level_id'],
+            message: 'Academic level is required.',
+        });
+    }
+});
 
 // The async-select lookups are structurally identical — drive them from one
 // config instead of near-duplicate JSX blocks (mirrors CreateBatchModal's
 // LOOKUPS pattern). `rel` is the eager-loaded relation the trigger label is
 // seeded from in edit mode.
-const LOOKUPS: ReadonlyArray<{
-    key: keyof FormState;
-    rel: 'school' | 'academic_program' | 'academic_level';
-    label: string;
-    endpoint: string;
-    columnNameShow?: string;
-    placeholder: string;
-}> = [
+const LOOKUPS = [
     {
         key: 'school_id',
         rel: 'school',
@@ -86,6 +132,7 @@ const LOOKUPS: ReadonlyArray<{
         rel: 'academic_program',
         label: 'Academic program',
         endpoint: '/settings/academic/program',
+        columnNameShow: undefined,
         placeholder: 'Select academic program',
     },
     {
@@ -93,9 +140,17 @@ const LOOKUPS: ReadonlyArray<{
         rel: 'academic_level',
         label: 'Academic level',
         endpoint: '/settings/academic/level',
+        columnNameShow: undefined,
         placeholder: 'Select academic level',
     },
-];
+] as const satisfies ReadonlyArray<{
+    key: keyof Values;
+    rel: 'school' | 'academic_program' | 'academic_level';
+    label: string;
+    endpoint: string;
+    columnNameShow?: string;
+    placeholder: string;
+}>;
 
 export default function AcademicInfoTab({
     trainee,
@@ -104,75 +159,73 @@ export default function AcademicInfoTab({
 }) {
     const { showToast } = useToast();
     const [editing, setEditing] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [saved, setSaved] = useState<FormState>({
+    const [formError, setFormError] = useState<string | null>(null);
+    const [saved, setSaved] = useState<Values>({
         required_hours: trainee.required_hours,
-        date_completed: trainee.date_completed,
+        date_completed: trainee.date_completed ?? '',
         termination_remarks: trainee.termination_remarks ?? '',
         school_id: trainee.school_id,
-        academic_program_id: trainee.academic_program_id,
-        academic_level_id: trainee.academic_level_id,
+        academic_program_id: trainee.academic_program_id ?? '',
+        academic_level_id: trainee.academic_level_id ?? '',
     });
-    const [draft, setDraft] = useState<FormState>(saved);
-    const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-        setDraft((d) => ({
-            ...d,
-            [key]: value,
-        }));
-        setErrors((e) => ({ ...e, [key]: '' }));
-    };
+    const {
+        control,
+        register,
+        setError,
+        reset,
+        handleSubmit: handleFormSubmit,
+        formState: { errors, isSubmitting: saving },
+    } = useForm<Values>({
+        resolver: zodResolver(academicInfoFormSchema),
+        defaultValues: saved,
+    });
+
     const startEdit = () => {
-        setDraft(saved);
-        setErrors({});
+        reset(saved);
+        setFormError(null);
         setEditing(true);
     };
     const cancel = () => {
-        setDraft(saved);
-        setErrors({});
+        reset(saved);
+        setFormError(null);
         setEditing(false);
     };
-    const save = async () => {
-        setSaving(true);
+    const onValid = async (values: Values) => {
+        setFormError(null);
+
         try {
             await traineeService.update(trainee.id, {
                 ...trainee,
-                required_hours: draft.required_hours,
-                date_completed: draft.date_completed,
-                termination_remarks: draft.termination_remarks,
-                school_id: draft.school_id,
-                academic_program_id: draft.academic_program_id,
-                academic_level_id: draft.academic_level_id,
+                required_hours: values.required_hours,
+                date_completed: values.date_completed || null,
+                termination_remarks: values.termination_remarks,
+                school_id: Number(values.school_id),
+                academic_program_id: Number(values.academic_program_id),
+                academic_level_id: Number(values.academic_level_id),
             });
-            setSaved(draft);
+            setSaved(values);
             setEditing(false);
             showToast('Academic information updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            const apiErrors = (
-                error as Error & { errors?: Record<string, string[]> }
-            ).errors;
-            if (apiErrors) {
-                const mapped: Record<string, string> = {};
-                Object.entries(apiErrors).forEach(([key, msgs]) => {
-                    mapped[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+            if (error instanceof ApiError && error.errors) {
+                Object.entries(error.errors).forEach(([key, msgs]) => {
+                    setError(key as keyof Values, {
+                        message: Array.isArray(msgs) ? msgs[0] : String(msgs),
+                    });
                 });
-                setErrors((prev) => ({ ...prev, ...mapped }));
             }
-            showToast(
-                error instanceof ApiError
-                    ? error.message
-                    : 'Failed to save changes',
-                'error',
+
+            setFormError(
+                error instanceof ApiError ? error.message : 'Failed to save changes',
             );
-        } finally {
-            setSaving(false);
         }
     };
     const hours = getHoursProgress(
         trainee.tasks_sum_time_spent,
         saved.required_hours,
     );
+
     return (
         <>
             <TraineesDetailLayout trainee={trainee}>
@@ -218,11 +271,17 @@ export default function AcademicInfoTab({
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    icon={Check}
-                                    onClick={save}
+                                    icon={saving ? undefined : Check}
+                                    onClick={handleFormSubmit(onValid)}
                                     disabled={saving}
                                     data-cy="academic-info-tab-button-save"
                                 >
+                                    {saving && (
+                                        <Loader2
+                                            size={13}
+                                            className="mr-1 animate-spin"
+                                        />
+                                    )}
                                     {saving ? 'Saving…' : 'Save changes'}
                                 </Button>
                             </div>
@@ -230,49 +289,54 @@ export default function AcademicInfoTab({
                     </div>
 
                     <div
-                        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                        className="grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2 lg:grid-cols-3"
                         data-cy="academic-info-tab-div-12"
                     >
                         {editing ? (
                             LOOKUPS.map((lookup) => (
-                                <FormField
+                                <Controller
                                     key={lookup.key}
-                                    label={lookup.label}
-                                    error={errors[lookup.key]}
-                                    data-cy={`academic-info-tab-field-${lookup.key}`}
-                                >
-                                    <AsyncSelectField
-                                        value={draft[lookup.key]}
-                                        onChange={(v) =>
-                                            set(
-                                                lookup.key,
-                                                v as FormState[typeof lookup.key],
-                                            )
-                                        }
-                                        loadOptions={(q) =>
-                                            loadLookupOptions(
-                                                lookup.endpoint,
-                                                q,
-                                                lookup.columnNameShow,
-                                            )
-                                        }
-                                        initialLabel={
-                                            (
-                                                trainee[lookup.rel] as {
-                                                    name?: string;
-                                                    school_name?: string;
-                                                } | null
-                                            )?.name ??
-                                            (
-                                                trainee[lookup.rel] as {
-                                                    school_name?: string;
-                                                } | null
-                                            )?.school_name
-                                        }
-                                        placeholder={lookup.placeholder}
-                                        error={errors[lookup.key]}
-                                    />
-                                </FormField>
+                                    control={control}
+                                    name={lookup.key}
+                                    render={({ field }) => (
+                                        <FormField
+                                            label={lookup.label}
+                                            error={errors[lookup.key]?.message}
+                                            data-cy={`academic-info-tab-field-${lookup.key}`}
+                                        >
+                                            <AsyncSelectField
+                                                value={field.value}
+                                                onChange={(v) =>
+                                                    field.onChange(
+                                                        v as Values[typeof lookup.key],
+                                                    )
+                                                }
+                                                loadOptions={(q) =>
+                                                    loadLookupOptions(
+                                                        lookup.endpoint,
+                                                        q,
+                                                        lookup.columnNameShow,
+                                                    )
+                                                }
+                                                initialLabel={
+                                                    (
+                                                        trainee[lookup.rel] as {
+                                                            name?: string;
+                                                            school_name?: string;
+                                                        } | null
+                                                    )?.name ??
+                                                    (
+                                                        trainee[lookup.rel] as {
+                                                            school_name?: string;
+                                                        } | null
+                                                    )?.school_name
+                                                }
+                                                placeholder={lookup.placeholder}
+                                                error={errors[lookup.key]?.message}
+                                            />
+                                        </FormField>
+                                    )}
+                                />
                             ))
                         ) : (
                             <>
@@ -332,47 +396,73 @@ export default function AcademicInfoTab({
                         </div>
                     ) : (
                         <div
-                            className="mt-4 grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3"
+                            className="mt-4 grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2 lg:grid-cols-3"
                             data-cy="academic-info-tab-div-21"
                         >
-                            <TextField
+                            <FormField
                                 label="Required hours"
-                                type="number"
-                                min={0}
-                                value={draft.required_hours}
-                                onChange={(e) =>
-                                    set('required_hours', e.target.value)
-                                }
+                                error={errors.required_hours?.message}
                                 data-cy="academic-info-tab-text-field-required-hours"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    type="number"
+                                    min={0}
+                                    className={cn(
+                                        inputCls,
+                                        errors.required_hours && errorInputCls,
+                                    )}
+                                    {...register('required_hours')}
+                                    data-cy="academic-info-tab-input-required-hours"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Date completed"
-                                type="date"
-                                value={draft.date_completed ?? ''}
-                                onChange={(e) =>
-                                    set('date_completed', e.target.value)
-                                }
+                                required={false}
+                                error={errors.date_completed?.message}
                                 data-cy="academic-info-tab-text-field-date-completed"
-                            />
+                            >
+                                <input
+                                    type="date"
+                                    className={cn(
+                                        inputCls,
+                                        errors.date_completed && errorInputCls,
+                                    )}
+                                    {...register('date_completed')}
+                                    data-cy="academic-info-tab-input-date-completed"
+                                />
+                            </FormField>
                             <div
                                 className="sm:col-span-2 lg:col-span-3"
                                 data-cy="academic-info-tab-div-30"
                             >
-                                <TextAreaField
+                                <FormField
                                     label="Termination remarks"
-                                    optional
-                                    value={draft.termination_remarks ?? ''}
-                                    onChange={(e) =>
-                                        set(
-                                            'termination_remarks',
-                                            e.target.value,
-                                        )
-                                    }
-                                    placeholder="Only applies if the trainee was terminated"
+                                    required={false}
+                                    error={errors.termination_remarks?.message}
                                     data-cy="academic-info-tab-text-area-field-termination-remarks"
-                                />
+                                >
+                                    <textarea
+                                        placeholder="Only applies if the trainee was terminated"
+                                        className={cn(
+                                            textareaCls,
+                                            errors.termination_remarks &&
+                                                errorInputCls,
+                                        )}
+                                        {...register('termination_remarks')}
+                                        data-cy="academic-info-tab-textarea-termination-remarks"
+                                    />
+                                </FormField>
                             </div>
                         </div>
+                    )}
+
+                    {formError && (
+                        <p
+                            className="text-danger-700 mt-3 rounded-md bg-danger-50 px-3 py-2 text-xs"
+                            data-cy="academic-info-tab-p-form-error"
+                        >
+                            {formError}
+                        </p>
                     )}
 
                     {saved.termination_remarks && !editing && (

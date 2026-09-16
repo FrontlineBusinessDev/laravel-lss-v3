@@ -1,16 +1,20 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { router } from '@inertiajs/react';
+import { Check, KeyRound, Loader2, Pencil, Unlink, X } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { traineeService } from '@/api-service-layer/admin/trainee';
 import { ApiError } from '@/api-service-layer/client';
 import { Button } from '@/components/Button';
-import { SelectField, TextField } from '@/components/FormField';
+import { errorInputCls, Field as FormField, inputCls } from '@/components/form/Field';
 import { useToast } from '@/components/Toast';
-import { apiFetchJson } from '@/lib/apiFetch';
 import TraineesDetailLayout from '@/layouts/trainees/TraineesDetailLayout';
-import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
-import { router } from '@inertiajs/react';
-import { Check, KeyRound, Pencil, Unlink, X } from 'lucide-react';
-import { useState } from 'react';
-import { ApprovalSection } from './ApprovalSection';
+import { apiFetchJson } from '@/lib/apiFetch';
 import { formatDateShort } from '@/lib/date';
+import { cn } from '@/lib/utils';
+import type { TraineeDetail } from '@/types/modules/trainees/trainee-detail';
+import { ApprovalSection } from './ApprovalSection';
 
 function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
     const { showToast } = useToast();
@@ -20,6 +24,7 @@ function AccountLinkSection({ trainee }: { trainee: TraineeDetail }) {
 
     const toggle = async () => {
         setBusy(true);
+
         try {
             await apiFetchJson(
                 `/trainees/${trainee.id}/${canLogin ? 'unlink-account' : 'link-account'}`,
@@ -107,20 +112,70 @@ function Field({ label, value }: { label: string; value: string }) {
     );
 }
 
-type FormState = Pick<
-    TraineeDetail,
-    | 'first_name'
-    | 'last_name'
-    | 'email'
-    | 'birthday'
-    | 'birth_place'
-    | 'gender'
-    | 'mobile_number'
-    | 'landline_number'
-    | 'emergency_contact_name'
-    | 'emergency_contact_number'
-    | 'address'
->;
+type Values = {
+    first_name: string;
+    last_name: string;
+    email: string;
+    birthday: string;
+    birth_place: string;
+    gender: 'male' | 'female';
+    mobile_number: string;
+    landline_number: string;
+    emergency_contact_name: string;
+    emergency_contact_number: string;
+    address: string;
+};
+
+// Mirrors TraineesController::updateRules() for the fields this tab edits:
+// first/last name, birth place, mobile number, emergency contact name
+// required strings <= 255/50; email required valid email; birthday required
+// date; gender required in:male,female; landline_number nullable <= 50;
+// address required string.
+const personalInfoSchema = z.object({
+    first_name: z
+        .string()
+        .trim()
+        .min(1, 'First name is required.')
+        .max(255, 'First name must be 255 characters or fewer.'),
+    last_name: z
+        .string()
+        .trim()
+        .min(1, 'Last name is required.')
+        .max(255, 'Last name must be 255 characters or fewer.'),
+    email: z
+        .string()
+        .trim()
+        .min(1, 'Email is required.')
+        .email('Enter a valid email address.'),
+    birthday: z.string().min(1, 'Birth date is required.'),
+    birth_place: z
+        .string()
+        .trim()
+        .min(1, 'Birth place is required.')
+        .max(255, 'Birth place must be 255 characters or fewer.'),
+    gender: z.enum(['male', 'female'], {
+        message: 'Gender is required.',
+    }),
+    mobile_number: z
+        .string()
+        .trim()
+        .min(1, 'Mobile number is required.')
+        .max(50, 'Mobile number must be 50 characters or fewer.'),
+    landline_number: z
+        .string()
+        .max(50, 'Landline number must be 50 characters or fewer.'),
+    emergency_contact_name: z
+        .string()
+        .trim()
+        .min(1, 'Emergency contact name is required.')
+        .max(255, 'Emergency contact name must be 255 characters or fewer.'),
+    emergency_contact_number: z
+        .string()
+        .trim()
+        .min(1, 'Emergency contact number is required.')
+        .max(50, 'Emergency contact number must be 50 characters or fewer.'),
+    address: z.string().trim().min(1, 'Address is required.'),
+}) satisfies z.ZodType<Values>;
 
 interface Props {
     trainee: TraineeDetail;
@@ -129,54 +184,66 @@ interface Props {
 export default function PersonalInfoTab({ trainee }: Props) {
     const { showToast } = useToast();
     const [editing, setEditing] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState<FormState>({
+    const [formError, setFormError] = useState<string | null>(null);
+    const [saved, setSaved] = useState<Values>({
         first_name: trainee.first_name,
         last_name: trainee.last_name,
         email: trainee.email,
         birthday: trainee.birthday,
         birth_place: trainee.birth_place,
-        gender: trainee.gender,
+        gender: trainee.gender ?? 'male',
         mobile_number: trainee.mobile_number,
         landline_number: trainee.landline_number ?? '',
         emergency_contact_name: trainee.emergency_contact_name,
         emergency_contact_number: trainee.emergency_contact_number,
         address: trainee.address,
     });
-    const [draft, setDraft] = useState<FormState>(saved);
-    const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
-        setDraft((d) => ({
-            ...d,
-            [key]: value,
-        }));
+    const {
+        register,
+        reset,
+        setError,
+        handleSubmit: handleFormSubmit,
+        formState: { errors, isSubmitting: saving },
+    } = useForm<Values>({
+        resolver: zodResolver(personalInfoSchema),
+        defaultValues: saved,
+    });
     const startEdit = () => {
-        setDraft(saved);
+        reset(saved);
+        setFormError(null);
         setEditing(true);
     };
     const cancel = () => {
-        setDraft(saved);
+        reset(saved);
+        setFormError(null);
         setEditing(false);
     };
-    const save = async () => {
-        setSaving(true);
+    const onValid = async (values: Values) => {
+        setFormError(null);
+
         try {
             await traineeService.update(trainee.id, {
                 ...trainee,
-                ...draft,
+                ...values,
             });
-            setSaved(draft);
+            setSaved(values);
             setEditing(false);
             showToast('Personal information updated', 'success');
             router.reload({ only: ['trainee'] });
         } catch (error) {
-            showToast(
+            if (error instanceof ApiError && error.errors) {
+                Object.entries(error.errors).forEach(([key, msgs]) => {
+                    setError(key as keyof Values, {
+                        message: Array.isArray(msgs) ? msgs[0] : String(msgs),
+                    });
+                });
+            }
+
+            setFormError(
                 error instanceof ApiError
                     ? error.message
                     : 'Failed to save changes',
-                'error',
             );
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -249,116 +316,154 @@ export default function PersonalInfoTab({ trainee }: Props) {
                             </div>
                         </div>
                     ) : (
-                        <div
-                            className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 lg:grid-cols-3"
+                        <form
+                            onSubmit={handleFormSubmit(onValid)}
+                            className="grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2 lg:grid-cols-3"
                             data-cy="personal-info-tab-div-27"
                         >
-                            <TextField
+                            <FormField
                                 label="First name"
-                                value={draft.first_name}
-                                onChange={(e) =>
-                                    set('first_name', e.target.value)
-                                }
+                                error={errors.first_name?.message}
                                 data-cy="personal-info-tab-text-field-first-name"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    className={cn(inputCls, errors.first_name && errorInputCls)}
+                                    {...register('first_name')}
+                                    data-cy="personal-info-tab-input-first-name"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Last name"
-                                value={draft.last_name}
-                                onChange={(e) =>
-                                    set('last_name', e.target.value)
-                                }
+                                error={errors.last_name?.message}
                                 data-cy="personal-info-tab-text-field-last-name"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    className={cn(inputCls, errors.last_name && errorInputCls)}
+                                    {...register('last_name')}
+                                    data-cy="personal-info-tab-input-last-name"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Email address"
-                                type="email"
-                                value={draft.email}
-                                onChange={(e) => set('email', e.target.value)}
+                                error={errors.email?.message}
                                 data-cy="personal-info-tab-text-field-email-address"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    type="email"
+                                    className={cn(inputCls, errors.email && errorInputCls)}
+                                    {...register('email')}
+                                    data-cy="personal-info-tab-input-email-address"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Birth date"
-                                type="date"
-                                value={draft.birthday}
-                                onChange={(e) =>
-                                    set('birthday', e.target.value)
-                                }
+                                error={errors.birthday?.message}
                                 data-cy="personal-info-tab-text-field-birth-date"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    type="date"
+                                    className={cn(inputCls, errors.birthday && errorInputCls)}
+                                    {...register('birthday')}
+                                    data-cy="personal-info-tab-input-birth-date"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Birth place"
-                                value={draft.birth_place}
-                                onChange={(e) =>
-                                    set('birth_place', e.target.value)
-                                }
+                                error={errors.birth_place?.message}
                                 data-cy="personal-info-tab-text-field-birth-place"
-                            />
-                            <SelectField
+                            >
+                                <input
+                                    className={cn(inputCls, errors.birth_place && errorInputCls)}
+                                    {...register('birth_place')}
+                                    data-cy="personal-info-tab-input-birth-place"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Gender"
-                                options={['male', 'female']}
-                                value={draft.gender ?? ''}
-                                onChange={(e) =>
-                                    set(
-                                        'gender',
-                                        e.target
-                                            .value as TraineeDetail['gender'],
-                                    )
-                                }
+                                error={errors.gender?.message}
                                 data-cy="personal-info-tab-select-field-gender"
-                            />
-                            <TextField
+                            >
+                                <select
+                                    className={cn(inputCls, errors.gender && errorInputCls)}
+                                    {...register('gender')}
+                                    data-cy="personal-info-tab-select-gender"
+                                >
+                                    <option value="male">male</option>
+                                    <option value="female">female</option>
+                                </select>
+                            </FormField>
+                            <FormField
                                 label="Mobile number"
-                                value={draft.mobile_number}
-                                onChange={(e) =>
-                                    set('mobile_number', e.target.value)
-                                }
+                                error={errors.mobile_number?.message}
                                 data-cy="personal-info-tab-text-field-mobile-number"
-                            />
-                            <TextField
-                                label="Landline number"
-                                optional
-                                value={draft.landline_number ?? ''}
-                                onChange={(e) =>
-                                    set('landline_number', e.target.value)
-                                }
+                            >
+                                <input
+                                    className={cn(inputCls, errors.mobile_number && errorInputCls)}
+                                    {...register('mobile_number')}
+                                    data-cy="personal-info-tab-input-mobile-number"
+                                />
+                            </FormField>
+                            <FormField
+                                label="Landline number (optional)"
+                                required={false}
+                                error={errors.landline_number?.message}
                                 data-cy="personal-info-tab-text-field-landline-number"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    className={cn(inputCls, errors.landline_number && errorInputCls)}
+                                    {...register('landline_number')}
+                                    data-cy="personal-info-tab-input-landline-number"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Emergency contact name"
-                                value={draft.emergency_contact_name}
-                                onChange={(e) =>
-                                    set(
-                                        'emergency_contact_name',
-                                        e.target.value,
-                                    )
-                                }
+                                error={errors.emergency_contact_name?.message}
                                 data-cy="personal-info-tab-text-field-emergency-contact-name"
-                            />
-                            <TextField
+                            >
+                                <input
+                                    className={cn(inputCls, errors.emergency_contact_name && errorInputCls)}
+                                    {...register('emergency_contact_name')}
+                                    data-cy="personal-info-tab-input-emergency-contact-name"
+                                />
+                            </FormField>
+                            <FormField
                                 label="Emergency contact number"
-                                value={draft.emergency_contact_number}
-                                onChange={(e) =>
-                                    set(
-                                        'emergency_contact_number',
-                                        e.target.value,
-                                    )
-                                }
+                                error={errors.emergency_contact_number?.message}
                                 data-cy="personal-info-tab-text-field-emergency-contact-number"
-                            />
+                            >
+                                <input
+                                    className={cn(inputCls, errors.emergency_contact_number && errorInputCls)}
+                                    {...register('emergency_contact_number')}
+                                    data-cy="personal-info-tab-input-emergency-contact-number"
+                                />
+                            </FormField>
                             <div
                                 className="sm:col-span-2 lg:col-span-3"
                                 data-cy="personal-info-tab-div-37"
                             >
-                                <TextField
+                                <FormField
                                     label="Address"
-                                    value={draft.address}
-                                    onChange={(e) =>
-                                        set('address', e.target.value)
-                                    }
+                                    error={errors.address?.message}
                                     data-cy="personal-info-tab-text-field-address"
-                                />
+                                >
+                                    <input
+                                        className={cn(inputCls, errors.address && errorInputCls)}
+                                        {...register('address')}
+                                        data-cy="personal-info-tab-input-address"
+                                    />
+                                </FormField>
                             </div>
-                        </div>
+                            {formError && (
+                                <div
+                                    className="sm:col-span-2 lg:col-span-3"
+                                    data-cy="personal-info-tab-div-form-error"
+                                >
+                                    <p className="text-danger-700 rounded-md bg-danger-50 px-3 py-2 text-xs">
+                                        {formError}
+                                    </p>
+                                </div>
+                            )}
+                        </form>
                     )}
                     {!editing ? (
                         <Button
@@ -388,11 +493,18 @@ export default function PersonalInfoTab({ trainee }: Props) {
                             <Button
                                 variant="primary"
                                 size="sm"
-                                icon={Check}
-                                onClick={save}
+                                icon={saving ? undefined : Check}
+                                onClick={handleFormSubmit(onValid)}
                                 disabled={saving}
                                 data-cy="personal-info-tab-button-save"
                             >
+                                {saving && (
+                                    <Loader2
+                                        size={13}
+                                        className="mr-1 animate-spin"
+                                        data-cy="personal-info-tab-loader"
+                                    />
+                                )}
                                 {saving ? 'Saving…' : 'Save changes'}
                             </Button>
                         </div>

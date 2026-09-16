@@ -198,23 +198,21 @@ export default function BiometricsPage() {
             showToast('Import failed. Please try again.', 'error');
         }
     }
+    // Errors propagate to EditRecordModal (not caught here) so it can show
+    // them inline and stay open instead of always closing — mirrors
+    // seminars/index.tsx's handleSave.
     async function handleSaveEdit(id: number, values: RecordFormValues) {
-        try {
-            await biometricsService.updateRecord(id, {
-                date: values.date,
-                on_leave: values.onLeave,
-                morning_time_in: values.onLeave ? null : values.morningTimeIn || null,
-                lunch_time_out: values.onLeave ? null : values.lunchTimeOut || null,
-                afternoon_time_in: values.onLeave ? null : values.afternoonTimeIn || null,
-                day_time_out: values.onLeave ? null : values.dayTimeOut || null,
-                remarks: values.remarks || null,
-            });
-            await loadRecords();
-            setEditTarget(null);
-            showToast('Attendance record updated.', 'success');
-        } catch {
-            showToast('Failed to update record.', 'error');
-        }
+        await biometricsService.updateRecord(id, {
+            date: values.date,
+            on_leave: values.onLeave,
+            morning_time_in: values.onLeave ? null : values.morningTimeIn || null,
+            lunch_time_out: values.onLeave ? null : values.lunchTimeOut || null,
+            afternoon_time_in: values.onLeave ? null : values.afternoonTimeIn || null,
+            day_time_out: values.onLeave ? null : values.dayTimeOut || null,
+            remarks: values.remarks || null,
+        });
+        await loadRecords();
+        showToast('Attendance record updated.', 'success');
     }
     async function confirmDelete() {
         if (!deleteTarget) return;

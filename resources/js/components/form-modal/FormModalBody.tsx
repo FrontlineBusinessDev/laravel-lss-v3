@@ -53,7 +53,7 @@ export function FormModalBody({
             noValidate
             className="flex min-h-0 flex-1 flex-col"
         >
-            <div className="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">
+            <div className="mb-3 grid grid-cols-1 gap-x-4 gap-y-0 px-6 py-5 sm:grid-cols-2">
                 {visibleFields.map((f) => (
                     <div
                         key={f.key}

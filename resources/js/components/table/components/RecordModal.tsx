@@ -68,15 +68,19 @@ export function RecordModal<T extends object>({
     const validate = (): boolean => {
         const errs = collectErrors(visibleFields, values);
         setFieldErrors(errs);
+
         return Object.keys(errs).length === 0;
     };
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
+
         if (!validate()) {
             return;
         }
+
         setSubmitting(true);
+
         try {
             await onSubmit(values);
         } catch (err: unknown) {
@@ -115,12 +119,12 @@ export function RecordModal<T extends object>({
             {' '}
             <form
                 onSubmit={handleSubmit}
-                className="space-y-4"
+                className="space-y-0"
                 data-cy="record-modal-form-submit"
             >
                 {' '}
                 <div
-                    className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    className="mb-3 grid grid-cols-1 gap-x-4 gap-y-0 sm:grid-cols-2"
                     data-cy="record-modal-div-3"
                 >
                     {visibleFields.map((f) => (
@@ -151,7 +155,7 @@ export function RecordModal<T extends object>({
                 {/* General form error (non-field API errors) */}
                 {formError && (
                     <p
-                        className="rounded-md bg-danger-50 px-3 py-2 text-xs text-danger-600"
+                        className="mb-3 rounded-md bg-danger-50 px-3 py-2 text-xs text-danger-600"
                         data-cy="record-modal-p-6"
                     >
                         {formError}
@@ -241,6 +245,7 @@ function buildInitialValues<T extends object>(
     fields.forEach((f) => {
         init[f.key] = seedFieldValue(f, mode, row);
     });
+
     return init;
 }
 function seedFieldValue<T extends object>(
@@ -255,12 +260,14 @@ function seedFieldValue<T extends object>(
             mode === 'edit' && row
                 ? (row as Record<string, unknown>)[f.key]
                 : null;
+
         return {
             existing: normalizeExistingFiles(raw),
             files: [],
             removedIds: [],
         };
     }
+
     if (mode === 'edit' && row) {
         let val = (row as Record<string, unknown>)[f.key];
 
@@ -268,8 +275,10 @@ function seedFieldValue<T extends object>(
         if (f.type === 'async-select' && Array.isArray(val)) {
             val = val[0] ?? '';
         }
+
         return val ?? '';
     }
+
     return f.defaultValue ?? (f.type === 'checkbox' ? false : '');
 }
 function collectErrors<T extends object>(
@@ -279,18 +288,23 @@ function collectErrors<T extends object>(
     const errs: Record<string, string> = {};
     fields.forEach((f) => {
         const value = values[f.key];
+
         if (
             f.required &&
             (value === '' || value === null || value === undefined)
         ) {
             errs[f.key] = `${f.label} is required.`;
+
             return;
         }
+
         const customErr = f.validate?.(value, values);
+
         if (customErr) {
             errs[f.key] = customErr;
         }
     });
+
     return errs;
 }
 
@@ -301,5 +315,6 @@ function mapApiErrors(
     Object.entries(apiErrors).forEach(([key, msgs]) => {
         mapped[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
     });
+
     return mapped;
 }

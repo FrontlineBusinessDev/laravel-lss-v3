@@ -1,7 +1,10 @@
-import { CheckCircle2, Circle, Mail, Send, User, Wallet } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CheckCircle2, Circle, Loader2, Mail, Send, User, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/Button';
-import { SelectField, TextField, TextAreaField } from '@/components/FormField';
+import { errorInputCls, Field, inputCls, textareaCls } from '@/components/form/Field';
 import { Modal } from '@/components/Modal';
 import { useToast } from '@/components/Toast';
 import { useNotifications } from '@/contexts/NotificationsContext';
@@ -11,6 +14,30 @@ import { cn } from '@/lib/utils';
 const TODAY = new Date('2026-07-01');
 import type { SeminarParticipant, SeminarProgress } from '@/types';
 import { PARTICIPANT_STATUS_STYLE, progressPercent } from './seminarUtils';
+
+const PAYMENT_STATUS_OPTIONS = ['Pending', 'Paid', 'Refunded', 'Waived'] as const;
+
+// Mirrors SeminarParticipantsController::update()'s `payment.*` rules: status
+// is one of the fixed enum values, date/amount/referenceNo/remarks are all
+// `sometimes|nullable` — only format/range needs client-side checking, no
+// field is hard-required.
+const paymentSchema = z.object({
+    status: z.enum(PAYMENT_STATUS_OPTIONS),
+    date: z.string(),
+    amount: z
+        .string()
+        .refine(
+            (v) => v === '' || (!Number.isNaN(Number(v)) && Number(v) >= 0),
+            'Amount paid must be a number of 0 or more.',
+        ),
+    referenceNo: z
+        .string()
+        .max(255, 'Reference number must be 255 characters or fewer.'),
+    remarks: z.string(),
+});
+
+type PaymentDraft = z.infer<typeof paymentSchema>;
+
 const PROGRESS_STEPS: {
     key: keyof SeminarProgress;
     label: string;
@@ -50,16 +77,26 @@ export function ParticipantDetailModal({
 }: Props) {
     const { showToast } = useToast();
     const { notify } = useNotifications();
-    const [payment, setPayment] = useState({
-        status: 'Pending',
-        date: '',
-        amount: '',
-        referenceNo: '',
-        remarks: '',
+    const {
+        control,
+        register,
+        reset,
+        handleSubmit: handleFormSubmit,
+        formState: { errors, isSubmitting: savingPayment },
+    } = useForm<PaymentDraft>({
+        resolver: zodResolver(paymentSchema),
+        defaultValues: {
+            status: 'Pending',
+            date: '',
+            amount: '',
+            referenceNo: '',
+            remarks: '',
+        },
     });
+    const [paymentError, setPaymentError] = useState<string | null>(null);
     useEffect(() => {
         if (participant) {
-            setPayment({
+            reset({
                 status: participant.payment?.status ?? 'Pending',
                 date: participant.payment?.date ?? '',
                 amount:
@@ -69,8 +106,10 @@ export function ParticipantDetailModal({
                 referenceNo: participant.payment?.referenceNo ?? '',
                 remarks: participant.payment?.remarks ?? '',
             });
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- clears a stale error from a previous open, same as AddTaskModal's reset-on-open effect
+            setPaymentError(null);
         }
-    }, [participant]);
+    }, [participant, reset]);
 
     if (!participant) {
         return null;
@@ -92,17 +131,25 @@ export function ParticipantDetailModal({
             },
         });
     }
-    function savePayment() {
-        onUpdate(participant!.id, {
-            payment: {
-                status: payment.status as any,
-                date: payment.date || undefined,
-                amount: payment.amount ? Number(payment.amount) : undefined,
-                referenceNo: payment.referenceNo || undefined,
-                remarks: payment.remarks || undefined,
-            },
-        });
-        showToast('Payment information updated.', 'success');
+    async function onValidPayment(draft: PaymentDraft) {
+        setPaymentError(null);
+
+        try {
+            await onUpdate(participant!.id, {
+                payment: {
+                    status: draft.status as any,
+                    date: draft.date || undefined,
+                    amount: draft.amount ? Number(draft.amount) : undefined,
+                    referenceNo: draft.referenceNo || undefined,
+                    remarks: draft.remarks || undefined,
+                },
+            });
+            showToast('Payment information updated.', 'success');
+        } catch (err: unknown) {
+            setPaymentError(
+                err instanceof Error ? err.message : 'Failed to update payment.',
+            );
+        }
     }
     function resend(kind: string) {
         showToast(`${kind} email sent to ${participant!.email}.`, 'success');
@@ -356,86 +403,120 @@ export function ParticipantDetailModal({
                     />{' '}
                     Payment information
                 </h4>
-                <div
-                    className="grid grid-cols-2 gap-3"
-                    data-cy="participant-detail-modal-div-42"
+                <form
+                    onSubmit={handleFormSubmit(onValidPayment)}
+                    className="space-y-0"
+                    data-cy="participant-detail-modal-payment-form"
                 >
-                    <SelectField
-                        label="Payment status"
-                        options={['Pending', 'Paid', 'Refunded', 'Waived']}
-                        value={payment.status}
-                        onChange={(e) =>
-                            setPayment((p) => ({
-                                ...p,
-                                status: e.target.value,
-                            }))
-                        }
-                        data-cy="participant-detail-modal-select-field-payment-status"
-                    />
-                    <TextField
-                        label="Payment date"
-                        type="date"
-                        value={payment.date}
-                        onChange={(e) =>
-                            setPayment((p) => ({
-                                ...p,
-                                date: e.target.value,
-                            }))
-                        }
-                        data-cy="participant-detail-modal-text-field-payment-date"
-                    />
-                    <TextField
-                        label="Amount paid"
-                        type="number"
-                        placeholder="0"
-                        value={payment.amount}
-                        onChange={(e) =>
-                            setPayment((p) => ({
-                                ...p,
-                                amount: e.target.value,
-                            }))
-                        }
-                        data-cy="participant-detail-modal-text-field-amount-paid"
-                    />
-                    <TextField
-                        label="Reference number"
-                        placeholder="e.g. GC-88213041"
-                        value={payment.referenceNo}
-                        onChange={(e) =>
-                            setPayment((p) => ({
-                                ...p,
-                                referenceNo: e.target.value,
-                            }))
-                        }
-                        data-cy="participant-detail-modal-text-field-reference-number"
-                    />
-                </div>
-                <TextAreaField
-                    label="Remarks"
-                    optional
-                    placeholder="Notes about this payment"
-                    value={payment.remarks}
-                    onChange={(e) =>
-                        setPayment((p) => ({
-                            ...p,
-                            remarks: e.target.value,
-                        }))
-                    }
-                    data-cy="participant-detail-modal-text-area-field-remarks"
-                />
-                <div
-                    className="-mt-2 flex justify-end"
-                    data-cy="participant-detail-modal-div-48"
-                >
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={savePayment}
-                        data-cy="participant-detail-modal-button-save-payment"
+                    <div
+                        className="grid grid-cols-2 gap-x-3 gap-y-0"
+                        data-cy="participant-detail-modal-div-42"
                     >
-                        Save payment info
-                    </Button>
-                </div>
+                        <Field
+                            label="Payment status"
+                            error={errors.status?.message}
+                            data-cy="participant-detail-modal-field-payment-status"
+                        >
+                            <Controller
+                                control={control}
+                                name="status"
+                                render={({ field }) => (
+                                    <select
+                                        className={cn(inputCls, errors.status && errorInputCls)}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        data-cy="participant-detail-modal-select-field-payment-status"
+                                    >
+                                        {PAYMENT_STATUS_OPTIONS.map((o) => (
+                                            <option key={o} value={o}>
+                                                {o}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            />
+                        </Field>
+                        <Field
+                            label="Payment date"
+                            error={errors.date?.message}
+                            data-cy="participant-detail-modal-field-payment-date"
+                        >
+                            <input
+                                type="date"
+                                className={cn(inputCls, errors.date && errorInputCls)}
+                                {...register('date')}
+                                data-cy="participant-detail-modal-text-field-payment-date"
+                            />
+                        </Field>
+                        <Field
+                            label="Amount paid"
+                            error={errors.amount?.message}
+                            data-cy="participant-detail-modal-field-amount-paid"
+                        >
+                            <input
+                                type="number"
+                                placeholder="0"
+                                className={cn(inputCls, errors.amount && errorInputCls)}
+                                {...register('amount')}
+                                data-cy="participant-detail-modal-text-field-amount-paid"
+                            />
+                        </Field>
+                        <Field
+                            label="Reference number"
+                            error={errors.referenceNo?.message}
+                            data-cy="participant-detail-modal-field-reference-number"
+                        >
+                            <input
+                                placeholder="e.g. GC-88213041"
+                                className={cn(inputCls, errors.referenceNo && errorInputCls)}
+                                {...register('referenceNo')}
+                                data-cy="participant-detail-modal-text-field-reference-number"
+                            />
+                        </Field>
+                    </div>
+                    <Field
+                        label="Remarks"
+                        required={false}
+                        error={errors.remarks?.message}
+                        data-cy="participant-detail-modal-field-remarks"
+                    >
+                        <textarea
+                            placeholder="Notes about this payment"
+                            className={cn(textareaCls, errors.remarks && errorInputCls)}
+                            {...register('remarks')}
+                            data-cy="participant-detail-modal-text-area-field-remarks"
+                        />
+                    </Field>
+                    {paymentError && (
+                        <p
+                            className="text-danger-700 mb-2 rounded-md bg-danger-50 px-3 py-2 text-xs"
+                            data-cy="participant-detail-modal-p-payment-error"
+                        >
+                            {paymentError}
+                        </p>
+                    )}
+                    <div
+                        className="flex justify-end"
+                        data-cy="participant-detail-modal-div-48"
+                    >
+                        <Button
+                            type="submit"
+                            variant="secondary"
+                            size="sm"
+                            disabled={savingPayment}
+                            data-cy="participant-detail-modal-button-save-payment"
+                        >
+                            {savingPayment && (
+                                <Loader2
+                                    size={13}
+                                    className="animate-spin"
+                                    data-cy="participant-detail-modal-loader"
+                                />
+                            )}
+                            Save payment info
+                        </Button>
+                    </div>
+                </form>
             </section>
 
             {/* Resend communications */}

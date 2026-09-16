@@ -1,15 +1,25 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Modal } from '@/components/Modal';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/Button';
-import { TextField, TextAreaField, SelectField } from '@/components/FormField';
+import {
+    errorInputCls,
+    Field,
+    inputCls,
+    textareaCls,
+} from '@/components/form/Field';
+import { Modal } from '@/components/Modal';
 import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
 import { apiFetchJson } from '@/lib/apiFetch';
-import { loadLookupOptions, type FieldOption } from '@/types/reusable/fields';
-import { toDateInputValue } from '@/lib/utils';
+import { cn, toDateInputValue } from '@/lib/utils';
+import { loadLookupOptions } from '@/types/reusable/fields';
+import type { FieldOption } from '@/types/reusable/fields';
 import type { TaskPriority } from '@/types/task';
 
-const PRIORITY_SELECT_OPTIONS = ['', 'High', 'Medium', 'Low'];
+const PRIORITY_OPTIONS = ['', 'High', 'Medium', 'Low'] as const;
 
 interface PersonOption {
   id: number;
@@ -70,7 +80,7 @@ interface FormValues {
 interface AddTaskModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (values: TaskSavePayload) => void;
+  onSave: (values: TaskSavePayload) => Promise<void>;
   /** When set, the modal edits this row instead of creating new ones. */
   editingTask?: EditableTaskRow | null;
   /** Batch picker source — trainer pages pass their own scoped
@@ -116,9 +126,36 @@ async function loadTrainerOptions(query: string): Promise<FieldOption[]> {
     const res = await apiFetchJson<PersonOption[]>('/tasks/trainers');
     trainerOptionsCache = (res.data ?? []).map(p => ({ value: String(p.id), label: personLabel(p) }));
   }
+
   const q = query.trim().toLowerCase();
+
   return q ? trainerOptionsCache.filter(o => o.label.toLowerCase().includes(q)) : trainerOptionsCache;
 }
+
+// Mirrors TasksController::storeRules()/updateRules(): date, batch, at least
+// one trainee, trainer, and task title are required; time_goal is required
+// numeric >= 0.5 (fan-out create uses trainee_ids, edit uses a single
+// trainee_id — both funnel through this one traineeIds array). priority is
+// optional (nullable in high/medium/low), stored capitalized here for the
+// select and lower-cased again on submit.
+const taskFormSchema = z.object({
+  date: z.string().min(1, 'Date is required.'),
+  batchId: z.string().min(1, 'Batch is required.'),
+  batchLabel: z.string(),
+  traineeIds: z.array(z.string()).min(1, 'Select at least one trainee.'),
+  trainerId: z.string().min(1, 'Trainer is required.'),
+  trainerLabel: z.string(),
+  task: z.string().trim().min(1, 'Task title is required.'),
+  description: z.string(),
+  timeGoal: z
+    .string()
+    .min(1, 'Time goal is required.')
+    .refine(
+      (v) => !Number.isNaN(Number(v)) && Number(v) >= 0.5,
+      'Time goal must be at least 0.5 hours.',
+    ),
+  priority: z.string(),
+}) satisfies z.ZodType<FormValues>;
 
 export function AddTaskModal({
   open,
@@ -128,49 +165,54 @@ export function AddTaskModal({
   batchLookupUrl = '/batches'
 }: AddTaskModalProps) {
   const isEdit = !!editingTask;
-  const [values, setValues] = useState<FormValues>(emptyValues);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
+  const {
+    control,
+    register,
+    watch,
+    setValue,
+    reset,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isSubmitting: submitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: emptyValues(),
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+  const batchId = watch('batchId');
+  const date = watch('date');
 
   useEffect(() => {
-    if (!open) return;
-    setValues(editingTask ? valuesFromRow(editingTask) : emptyValues());
-    setErrors({});
-  }, [open, editingTask]);
+    if (!open) {
+      return;
+    }
+
+    reset(editingTask ? valuesFromRow(editingTask) : emptyValues());
+    setFormError(null);
+  }, [open, editingTask, reset]);
 
   const loadTraineeOptions = useMemo(() => {
     return async (query: string): Promise<FieldOption[]> => {
-      if (!values.batchId) return [];
+      if (!batchId) {
+        return [];
+      }
+
       // Excludes trainees with an approved leave covering the task's date,
       // so they can't be assigned a task while on leave.
-      const excludeParam = values.date
-        ? `&exclude_on_leave_date=${encodeURIComponent(values.date)}`
+      const excludeParam = date
+        ? `&exclude_on_leave_date=${encodeURIComponent(date)}`
         : '';
+
       const res = await apiFetchJson<{ data: PersonOption[] }>(
-        `/trainees/pagination-search?filters[batch_id]=${values.batchId}&filters[status]=active&per_page=50&search=${encodeURIComponent(query)}${excludeParam}`
+        `/trainees/pagination-search?filters[batch_id]=${batchId}&filters[status]=active&per_page=50&search=${encodeURIComponent(query)}${excludeParam}`
       );
+
       return (res.data?.data ?? []).map(p => ({ value: String(p.id), label: personLabel(p) }));
     };
-  }, [values.batchId, values.date]);
+  }, [batchId, date]);
 
-  function set<K extends keyof FormValues>(key: K, val: FormValues[K]) {
-    setValues(v => ({ ...v, [key]: val }));
-    setErrors(e => ({ ...e, [key]: undefined }));
-  }
-  function validate() {
-    const next: typeof errors = {};
-    if (!values.date) next.date = 'Date is required.';
-    if (!values.batchId) next.batchId = 'Batch is required.';
-    if (values.traineeIds.length === 0) next.traineeIds = 'Select at least one trainee.';
-    if (!values.trainerId) next.trainerId = 'Trainer is required.';
-    if (!values.task.trim()) next.task = 'Task title is required.';
-    if (!values.timeGoal.trim()) next.timeGoal = 'Time goal is required.';else if (Number.isNaN(Number(values.timeGoal)) || Number(values.timeGoal) <= 0) {
-      next.timeGoal = 'Enter a positive number of hours.';
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
-  function handleSubmit() {
-    if (!validate()) return;
+  async function onValid(values: FormValues) {
+    setFormError(null);
+
     const shared = {
       date: values.date,
       batch_id: Number(values.batchId),
@@ -180,87 +222,128 @@ export function AddTaskModal({
       time_goal: Number(values.timeGoal),
       priority: (values.priority.toLowerCase() as TaskPriority | '')
     };
-    if (isEdit && editingTask) {
-      onSave({ mode: 'edit', id: editingTask.id, trainee_id: Number(values.traineeIds[0]), ...shared });
-    } else {
-      onSave({ mode: 'create', trainee_ids: values.traineeIds.map(Number), ...shared });
+    const payload: TaskSavePayload =
+      isEdit && editingTask
+        ? { mode: 'edit', id: editingTask.id, trainee_id: Number(values.traineeIds[0]), ...shared }
+        : { mode: 'create', trainee_ids: values.traineeIds.map(Number), ...shared };
+
+    try {
+      await onSave(payload);
+      onClose();
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Failed to save task.');
     }
   }
+
   return <Modal open={open} onClose={onClose} title={isEdit ? 'Edit task' : 'Add task'} description={isEdit ? 'Task details can be edited regardless of status.' : 'Assign a daily task to one or more trainees. It will appear as Open in the task list.'} maxWidth={440} data-cy="add-task-modal-modal-add-task">
-      <TextField label="Date" type="date" value={values.date} onChange={e => set('date', e.target.value)} data-cy="add-task-modal-text-field-date" />
-      {errors.date && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-3">{errors.date}</p>}
+      <form onSubmit={handleFormSubmit(onValid)} className="space-y-0" data-cy="add-task-modal-form-submit">
+        <Field label="Date" required error={errors.date?.message} data-cy="add-task-modal-field-date">
+          <input type="date" className={cn(inputCls, errors.date && errorInputCls)} {...register('date')} data-cy="add-task-modal-text-field-date" />
+        </Field>
 
-      <div className="mb-3.5" data-cy="add-task-modal-div-batch">
-        <label className="mb-1.5 block text-xs font-medium text-neutral-600">Batch</label>
-        <AsyncSelectField
-          value={values.batchId}
-          initialLabel={values.batchLabel}
-          placeholder="Select batch"
-          loadOptions={(q) => loadLookupOptions(batchLookupUrl, q, 'batch_code')}
-          onChange={(v) => {
-            set('batchId', (v as string) ?? '');
-            set('traineeIds', []);
-          }}
-          error={errors.batchId}
-        />
-      </div>
-      {errors.batchId && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-5">{errors.batchId}</p>}
+        <Field label="Batch" required error={errors.batchId?.message} data-cy="add-task-modal-field-batch">
+          <Controller
+            control={control}
+            name="batchId"
+            render={({ field }) => (
+              <AsyncSelectField
+                value={field.value}
+                initialLabel={watch('batchLabel')}
+                placeholder="Select batch"
+                loadOptions={(q) => loadLookupOptions(batchLookupUrl, q, 'batch_code')}
+                onChange={(v) => {
+                  field.onChange((v as string) ?? '');
+                  setValue('traineeIds', []);
+                }}
+                error={errors.batchId?.message}
+              />
+            )}
+          />
+        </Field>
 
-      <div className="mb-3.5" data-cy="add-task-modal-div-trainee">
-        <label className="mb-1.5 block text-xs font-medium text-neutral-600">Trainee</label>
-        {isEdit ? (
-          <AsyncSelectField
-            value={values.traineeIds[0] ?? ''}
-            initialLabel={editingTask ? personLabel(editingTask.trainee ?? { id: 0, first_name: '', last_name: '' }) : ''}
-            placeholder={values.batchId ? 'Select trainee' : 'Select a batch first'}
-            disabled={!values.batchId}
-            loadOptions={loadTraineeOptions}
-            onChange={(v) => set('traineeIds', v ? [v as string] : [])}
-            error={errors.traineeIds}
+        <Field label="Trainee" required error={errors.traineeIds?.message} data-cy="add-task-modal-field-trainee">
+          <Controller
+            control={control}
+            name="traineeIds"
+            render={({ field }) =>
+              isEdit ? (
+                <AsyncSelectField
+                  value={field.value[0] ?? ''}
+                  initialLabel={editingTask ? personLabel(editingTask.trainee ?? { id: 0, first_name: '', last_name: '' }) : ''}
+                  placeholder={batchId ? 'Select trainee' : 'Select a batch first'}
+                  disabled={!batchId}
+                  loadOptions={loadTraineeOptions}
+                  onChange={(v) => field.onChange(v ? [v as string] : [])}
+                  error={errors.traineeIds?.message}
+                />
+              ) : (
+                <AsyncMultiSelectField
+                  value={field.value}
+                  placeholder={batchId ? 'Select trainee(s)' : 'Select a batch first'}
+                  disabled={!batchId}
+                  loadOptions={loadTraineeOptions}
+                  onChange={field.onChange}
+                  error={errors.traineeIds?.message}
+                />
+              )
+            }
           />
-        ) : (
-          <AsyncMultiSelectField
-            value={values.traineeIds}
-            placeholder={values.batchId ? 'Select trainee(s)' : 'Select a batch first'}
-            disabled={!values.batchId}
-            loadOptions={loadTraineeOptions}
-            onChange={(v) => set('traineeIds', v)}
-            error={errors.traineeIds}
+        </Field>
+
+        <Field label="Trainer" required error={errors.trainerId?.message} data-cy="add-task-modal-field-trainer">
+          <Controller
+            control={control}
+            name="trainerId"
+            render={({ field }) => (
+              <AsyncSelectField
+                value={field.value}
+                initialLabel={watch('trainerLabel')}
+                placeholder="Select trainer"
+                loadOptions={loadTrainerOptions}
+                onChange={(v) => field.onChange((v as string) ?? '')}
+                error={errors.trainerId?.message}
+              />
+            )}
           />
+        </Field>
+
+        <Field label="Task" required error={errors.task?.message} data-cy="add-task-modal-field-task">
+          <input placeholder="Task title" className={cn(inputCls, errors.task && errorInputCls)} {...register('task')} data-cy="add-task-modal-text-field-task" />
+        </Field>
+
+        <Field label="Description" error={errors.description?.message} data-cy="add-task-modal-field-description">
+          <textarea placeholder="What should the trainee do for this task?" rows={3} className={cn(textareaCls, errors.description && errorInputCls)} {...register('description')} data-cy="add-task-modal-text-area-field-description" />
+        </Field>
+
+        <Field label="Time goal (hours)" required error={errors.timeGoal?.message} data-cy="add-task-modal-field-time-goal">
+          <input type="number" min={0} step="0.5" placeholder="8" className={cn(inputCls, errors.timeGoal && errorInputCls)} {...register('timeGoal')} data-cy="add-task-modal-text-field-time-goal" />
+        </Field>
+
+        <Field label="Priority" error={errors.priority?.message} data-cy="add-task-modal-field-priority">
+          <select className={inputCls} {...register('priority')} data-cy="add-task-modal-select-field-priority">
+            {PRIORITY_OPTIONS.map((o) => (
+              <option key={o} value={o} data-cy="add-task-modal-option">
+                {o || 'None'}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {formError && (
+          <p className="text-danger-700 rounded-md bg-danger-50 px-3 py-2 text-xs" data-cy="add-task-modal-p-form-error">
+            {formError}
+          </p>
         )}
-      </div>
-      {errors.traineeIds && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-7">{errors.traineeIds}</p>}
 
-      <div className="mb-3.5" data-cy="add-task-modal-div-trainer">
-        <label className="mb-1.5 block text-xs font-medium text-neutral-600">Trainer</label>
-        <AsyncSelectField
-          value={values.trainerId}
-          initialLabel={values.trainerLabel}
-          placeholder="Select trainer"
-          loadOptions={loadTrainerOptions}
-          onChange={(v) => set('trainerId', (v as string) ?? '')}
-          error={errors.trainerId}
-        />
-      </div>
-      {errors.trainerId && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-9">{errors.trainerId}</p>}
-
-      <TextField label="Task" placeholder="Task title" value={values.task} onChange={e => set('task', e.target.value)} data-cy="add-task-modal-text-field-task" />
-      {errors.task && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-11">{errors.task}</p>}
-
-      <TextAreaField label="Description" optional placeholder="What should the trainee do for this task?" value={values.description} onChange={e => set('description', e.target.value)} data-cy="add-task-modal-text-area-field-description" />
-
-      <TextField label="Time goal (hours)" type="number" min={0} step="0.5" placeholder="8" value={values.timeGoal} onChange={e => set('timeGoal', e.target.value)} data-cy="add-task-modal-text-field-8" />
-      {errors.timeGoal && <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600" data-cy="add-task-modal-p-14">{errors.timeGoal}</p>}
-
-      <SelectField label="Priority" options={PRIORITY_SELECT_OPTIONS} value={values.priority} onChange={e => set('priority', e.target.value)} data-cy="add-task-modal-select-field-priority" />
-
-      <div className="mt-2 flex gap-2" data-cy="add-task-modal-div-15">
-        <Button variant="secondary" className="flex-1" onClick={onClose} data-cy="add-task-modal-button-close">
-          Cancel
-        </Button>
-        <Button variant="primary" className="flex-1" onClick={handleSubmit} data-cy="add-task-modal-button-submit">
-          {isEdit ? 'Save changes' : 'Add'}
-        </Button>
-      </div>
+        <div className="mt-2 flex gap-2" data-cy="add-task-modal-div-15">
+          <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={submitting} data-cy="add-task-modal-button-close">
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" className="flex-1" disabled={submitting} data-cy="add-task-modal-button-submit">
+            {submitting && <Loader2 className="mr-1.5 inline h-4 w-4 animate-spin" />}
+            {isEdit ? 'Save changes' : 'Add'}
+          </Button>
+        </div>
+      </form>
     </Modal>;
 }

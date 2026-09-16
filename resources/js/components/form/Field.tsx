@@ -9,6 +9,17 @@ import { formatDateShort } from '@/lib/date';
  */
 export const labelCls = 'mb-1.5 block text-sm font-medium text-neutral-700';
 
+/**
+ * Red border/ring appended to inputCls/textareaCls when a field is invalid.
+ * Kept separate from inputCls/textareaCls (rather than a wrapping ring div)
+ * because a wrapper's own border-radius never lines up with every element
+ * Field can wrap (plain inputs are rounded-md, AsyncSelectField/
+ * FileUploadField are rounded-xl) — the mismatch left a visible gap at the
+ * corners. Applying the color straight onto the element's own border uses
+ * that element's own radius, so it always fits exactly.
+ */
+export const errorInputCls = 'border-danger-400 ring-2 ring-danger-100';
+
 /** Single-line input / select styling. */
 export const inputCls =
     'w-full rounded-md border border-neutral-200 bg-white px-2.5 h-9 text-sm text-ink placeholder:text-neutral-400 transition-colors hover:border-neutral-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-neutral-50';
@@ -33,8 +44,11 @@ export function Field({
     children: ReactNode;
 }) {
     return (
-        <div data-cy="field-div-1" className="relative">
-            <label className={labelCls} data-cy="field-label-2">
+        <div data-cy="field-div-1">
+            <label
+                className={labelCls}
+                data-cy="field-label-2"
+            >
                 {label}
                 {required && (
                     <span
@@ -46,14 +60,30 @@ export function Field({
                 )}
             </label>
             {children}
-            {error && (
-                <p
-                    className="absolute top-0.5 right-0 mt-1 text-xs text-danger-600"
-                    data-cy="field-p-5"
-                >
-                    {error}
-                </p>
-            )}
+            {/* Fixed-height slot reserved whether or not a message is shown, so
+                a validation error appearing/disappearing never shifts anything
+                below it (position:absolute inside a slot that never resizes). */}
+            <div className="relative h-4" data-cy="field-message-slot">
+                {error ? (
+                    <p
+                        className="absolute inset-x-0 top-0 truncate text-xs text-danger-600"
+                        title={error}
+                        data-cy="field-p-5"
+                    >
+                        {error}
+                    </p>
+                ) : (
+                    helpText && (
+                        <p
+                            className="absolute inset-x-0 top-0 truncate text-xs text-neutral-400"
+                            title={helpText}
+                            data-cy="field-p-help"
+                        >
+                            {helpText}
+                        </p>
+                    )
+                )}
+            </div>
         </div>
     );
 }

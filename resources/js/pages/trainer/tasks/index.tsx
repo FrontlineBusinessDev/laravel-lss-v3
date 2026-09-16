@@ -80,28 +80,22 @@ export default function TrainerTasksPage() {
         queryClient.invalidateQueries({ queryKey: [['tasks']] });
 
     async function handleSave(payload: TaskSavePayload) {
-        try {
-            if (payload.mode === 'edit') {
-                const { id, mode: _mode, ...body } = payload;
-                await apiFetchJson(`/tasks/${id}`, {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                });
-                showToast(`"${payload.task}" updated.`, 'success');
-            } else {
-                const { mode: _mode, ...body } = payload;
-                await apiFetchJson('/tasks', {
-                    method: 'POST',
-                    body: JSON.stringify(body),
-                });
-                showToast(`Task "${payload.task}" assigned.`, 'success');
-            }
-            setAddModalOpen(false);
-            setEditingTask(null);
-            invalidateTasks();
-        } catch {
-            showToast('Failed to save task.', 'error');
+        if (payload.mode === 'edit') {
+            const { id, mode: _mode, ...body } = payload;
+            await apiFetchJson(`/tasks/${id}`, {
+                method: 'POST',
+                body: JSON.stringify(body),
+            });
+            showToast(`"${payload.task}" updated.`, 'success');
+        } else {
+            const { mode: _mode, ...body } = payload;
+            await apiFetchJson('/tasks', {
+                method: 'POST',
+                body: JSON.stringify(body),
+            });
+            showToast(`Task "${payload.task}" assigned.`, 'success');
         }
+        invalidateTasks();
     }
     async function runComplete(task: ApiTask) {
         try {

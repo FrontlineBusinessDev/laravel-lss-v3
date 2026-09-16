@@ -133,7 +133,7 @@ export function DynamicField<T>({
 
     if (field.type === 'checkbox') {
         return (
-            <div data-cy="record-modal-field-div-checkbox-wrapper">
+            <div className="mb-3" data-cy="record-modal-field-div-checkbox-wrapper">
                 <label
                     className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-neutral-200 px-3 py-2.5"
                     data-cy="record-modal-field-label-5"

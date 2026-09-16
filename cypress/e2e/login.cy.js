@@ -15,10 +15,6 @@ describe('Login Page', () => {
         );
         cy.get('[data-cy="router-compat-inertia-link-to"]').should('exist');
         cy.get('[data-cy="button-button-1"]').should('exist');
-
-        cy.contains(
-            'Your role and dashboard are detected automatically after login.',
-        ).should('be.visible');
     });
 
     // check input fields

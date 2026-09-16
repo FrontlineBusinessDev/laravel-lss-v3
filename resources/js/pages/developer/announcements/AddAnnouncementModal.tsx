@@ -1,12 +1,19 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Button } from '@/components/Button';
 import {
-    SelectField,
-    TextAreaField,
-    TextField,
-} from '@/components/FormField';
+    errorInputCls,
+    Field,
+    inputCls,
+    textareaCls,
+} from '@/components/form/Field';
 import { Modal } from '@/components/Modal';
 import { AsyncMultiSelectField } from '@/hooks/use-async-multi-select-field';
 import { AsyncSelectField } from '@/hooks/use-async-select-field';
+import { cn } from '@/lib/utils';
 import type {
     AnnouncementInput,
     Announcements,
@@ -17,7 +24,6 @@ import {
     loadTraineeOptions,
 } from '@/types/modules/announcements/announcements';
 import { loadLookupOptions } from '@/types/reusable/fields';
-import { useEffect, useState } from 'react';
 
 interface AddAnnouncementModalProps {
     open: boolean;
@@ -27,15 +33,78 @@ interface AddAnnouncementModalProps {
     onSubmit: (values: AnnouncementInput) => Promise<void>;
 }
 
-function emptyValues(): AnnouncementInput {
+interface FormValues {
+    subject: string;
+    description: string;
+    audience_type: 'all' | 'batch' | 'role' | 'custom';
+    audience: 'trainee' | 'trainer' | null;
+    audience_batch_id: number | null;
+    audience_user_ids: number[];
+    scheduled_at: string;
+}
+
+const EMPTY_VALUES: FormValues = {
+    subject: '',
+    description: '',
+    audience_type: 'all',
+    audience: null,
+    audience_batch_id: null,
+    audience_user_ids: [],
+    scheduled_at: '',
+};
+
+// AUDIENCE_TYPE_OPTIONS' leading blank entry ("All Audiences") is a list-filter
+// reset affordance, not a valid audience_type to save — excluded here.
+const AUDIENCE_TYPE_CHOICES = AUDIENCE_TYPE_OPTIONS.filter((o) => o.value !== '');
+
+// Mirrors AnnoucementController::storeRules()/updateRules(): subject required;
+// audience_batch_id/audience/audience_user_ids are each required only when
+// audience_type selects that branch (required_if).
+const announcementSchema = z.object({
+    subject: z.string().trim().min(1, 'Subject is required.'),
+    description: z.string(),
+    audience_type: z.enum(['all', 'batch', 'role', 'custom']),
+    audience: z.enum(['trainee', 'trainer']).nullable(),
+    audience_batch_id: z.number().nullable(),
+    audience_user_ids: z.array(z.number()),
+    scheduled_at: z.string(),
+}) satisfies z.ZodType<FormValues>;
+
+const announcementFormSchema = announcementSchema.superRefine((values, ctx) => {
+    if (values.audience_type === 'batch' && !values.audience_batch_id) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['audience_batch_id'],
+            message: 'Batch is required.',
+        });
+    }
+
+    if (values.audience_type === 'role' && !values.audience) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['audience'],
+            message: 'Role is required.',
+        });
+    }
+
+    if (values.audience_type === 'custom' && values.audience_user_ids.length === 0) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['audience_user_ids'],
+            message: 'Select at least one trainee.',
+        });
+    }
+});
+
+function valuesFromAnnouncement(announcement: Announcements): FormValues {
     return {
-        subject: '',
-        description: '',
-        audience_type: 'all',
-        audience: null,
-        audience_batch_id: null,
-        audience_user_ids: [],
-        scheduled_at: '',
+        subject: announcement.subject,
+        description: announcement.description ?? '',
+        audience_type: announcement.audience_type,
+        audience: (announcement.audience as FormValues['audience']) ?? null,
+        audience_batch_id: announcement.audience_batch_id,
+        audience_user_ids: announcement.audience_user_ids ?? [],
+        scheduled_at: announcement.scheduled_at?.slice(0, 16) ?? '',
     };
 }
 
@@ -46,56 +115,42 @@ export function AddAnnouncementModal({
     onClose,
     onSubmit,
 }: AddAnnouncementModalProps) {
-    const [values, setValues] = useState<AnnouncementInput>(emptyValues());
-    const [errors, setErrors] = useState<
-        Partial<Record<'subject' | 'description', string>>
-    >({});
-    const [submitting, setSubmitting] = useState(false);
+    const {
+        control,
+        register,
+        watch,
+        reset,
+        handleSubmit: handleFormSubmit,
+        formState: { errors, isSubmitting: submitting },
+    } = useForm<FormValues>({
+        resolver: zodResolver(announcementFormSchema),
+        defaultValues: EMPTY_VALUES,
+    });
+    const [formError, setFormError] = useState<string | null>(null);
+    const audienceType = watch('audience_type');
 
     useEffect(() => {
-        if (open) {
-            setValues(
-                mode === 'edit' && announcement
-                    ? {
-                          subject: announcement.subject,
-                          description: announcement.description ?? '',
-                          audience_type: announcement.audience_type,
-                          audience: announcement.audience,
-                          audience_batch_id: announcement.audience_batch_id,
-                          audience_user_ids:
-                              announcement.audience_user_ids ?? [],
-                          scheduled_at:
-                              announcement.scheduled_at?.slice(0, 16) ?? '',
-                      }
-                    : emptyValues(),
-            );
-            setErrors({});
+        if (!open) {
+            return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, mode, announcement]);
 
-    function set<K extends keyof AnnouncementInput>(
-        key: K,
-        val: AnnouncementInput[K],
-    ) {
-        setValues((v) => ({ ...v, [key]: val }));
-        setErrors((e) => ({ ...e, [key]: undefined }));
-    }
+        reset(
+            mode === 'edit' && announcement
+                ? valuesFromAnnouncement(announcement)
+                : EMPTY_VALUES,
+        );
+    }, [open, mode, announcement, reset]);
 
-    function validate() {
-        const next: typeof errors = {};
-        if (!values.subject?.trim()) next.subject = 'Subject is required.';
-        setErrors(next);
-        return Object.keys(next).length === 0;
-    }
+    async function onValid(values: FormValues) {
+        setFormError(null);
 
-    async function handleSubmit() {
-        if (!validate()) return;
-        setSubmitting(true);
         try {
             await onSubmit(values);
-        } finally {
-            setSubmitting(false);
+            onClose();
+        } catch (err: unknown) {
+            setFormError(
+                err instanceof Error ? err.message : 'Failed to save announcement.',
+            );
         }
     }
 
@@ -107,137 +162,149 @@ export function AddAnnouncementModal({
             description="Notifications are sent automatically to the selected audience once posted."
             maxWidth={480}
         >
-            <TextField
-                label="Subject"
-                placeholder="e.g. Reminder: Submit your MOA before Friday"
-                value={values.subject ?? ''}
-                onChange={(e) => set('subject', e.target.value)}
-            />
-            {errors.subject && (
-                <p className="-mt-2.5 mb-3.5 text-xs font-medium text-danger-600">
-                    {errors.subject}
-                </p>
-            )}
-
-            <TextAreaField
-                label="Description"
-                placeholder="Write the announcement details..."
-                rows={4}
-                value={values.description ?? ''}
-                onChange={(e) => set('description', e.target.value)}
-            />
-
-            <SelectField
-                label="Audience"
-                options={AUDIENCE_TYPE_OPTIONS.map((o) => o.label)}
-                value={
-                    AUDIENCE_TYPE_OPTIONS.find(
-                        (o) => o.value === values.audience_type,
-                    )?.label ?? AUDIENCE_TYPE_OPTIONS[0].label
-                }
-                onChange={(e) => {
-                    const match = AUDIENCE_TYPE_OPTIONS.find(
-                        (o) => o.label === e.target.value,
-                    );
-                    set(
-                        'audience_type',
-                        (match?.value ??
-                            'all') as AnnouncementInput['audience_type'],
-                    );
-                }}
-            />
-
-            {values.audience_type === 'batch' && (
-                <div className="mb-3.5">
-                    <label className="mb-1.5 block text-xs font-medium text-neutral-600">
-                        Batch
-                    </label>
-                    <AsyncSelectField
-                        value={
-                            values.audience_batch_id
-                                ? String(values.audience_batch_id)
-                                : ''
-                        }
-                        onChange={(v) =>
-                            set(
-                                'audience_batch_id',
-                                v ? Number(v) : null,
-                            )
-                        }
-                        loadOptions={(q) =>
-                            loadLookupOptions('/batches', q, 'batch_code')
-                        }
-                        placeholder="Select a batch"
+            <form onSubmit={handleFormSubmit(onValid)} className="space-y-0">
+                <Field label="Subject" required error={errors.subject?.message}>
+                    <input
+                        placeholder="e.g. Reminder: Submit your MOA before Friday"
+                        className={cn(inputCls, errors.subject && errorInputCls)}
+                        {...register('subject')}
                     />
-                </div>
-            )}
+                </Field>
 
-            {values.audience_type === 'role' && (
-                <SelectField
-                    label="Role"
-                    options={AUDIENCE_ROLE_OPTIONS.map((o) => o.label)}
-                    value={
-                        AUDIENCE_ROLE_OPTIONS.find(
-                            (o) => o.value === values.audience,
-                        )?.label ?? AUDIENCE_ROLE_OPTIONS[0].label
-                    }
-                    onChange={(e) => {
-                        const match = AUDIENCE_ROLE_OPTIONS.find(
-                            (o) => o.label === e.target.value,
-                        );
-                        set('audience', match?.value ?? 'trainee');
-                    }}
-                />
-            )}
-
-            {values.audience_type === 'custom' && (
-                <div className="mb-3.5">
-                    <label className="mb-1.5 block text-xs font-medium text-neutral-600">
-                        Trainees
-                    </label>
-                    <AsyncMultiSelectField
-                        value={(values.audience_user_ids ?? []).map(String)}
-                        onChange={(v) =>
-                            set(
-                                'audience_user_ids',
-                                v.map((id) => Number(id)),
-                            )
-                        }
-                        loadOptions={loadTraineeOptions}
-                        placeholder="Select trainee(s)"
+                <Field label="Description" error={errors.description?.message}>
+                    <textarea
+                        placeholder="Write the announcement details..."
+                        rows={4}
+                        className={cn(textareaCls, errors.description && errorInputCls)}
+                        {...register('description')}
                     />
+                </Field>
+
+                <Field label="Audience" error={errors.audience_type?.message}>
+                    <Controller
+                        control={control}
+                        name="audience_type"
+                        render={({ field }) => (
+                            <select
+                                className={cn(inputCls, errors.audience_type && errorInputCls)}
+                                value={field.value}
+                                onChange={field.onChange}
+                            >
+                                {AUDIENCE_TYPE_CHOICES.map((o) => (
+                                    <option key={o.value} value={o.value}>
+                                        {o.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    />
+                </Field>
+
+                {audienceType === 'batch' && (
+                    <Field label="Batch" error={errors.audience_batch_id?.message}>
+                        <Controller
+                            control={control}
+                            name="audience_batch_id"
+                            render={({ field }) => (
+                                <AsyncSelectField
+                                    value={field.value ? String(field.value) : ''}
+                                    onChange={(v) =>
+                                        field.onChange(v ? Number(v as string) : null)
+                                    }
+                                    loadOptions={(q) =>
+                                        loadLookupOptions('/batches', q, 'batch_code')
+                                    }
+                                    placeholder="Select a batch"
+                                    error={errors.audience_batch_id?.message}
+                                />
+                            )}
+                        />
+                    </Field>
+                )}
+
+                {audienceType === 'role' && (
+                    <Field label="Role" error={errors.audience?.message}>
+                        <Controller
+                            control={control}
+                            name="audience"
+                            render={({ field }) => (
+                                <select
+                                    className={cn(inputCls, errors.audience && errorInputCls)}
+                                    value={field.value ?? ''}
+                                    onChange={(e) =>
+                                        field.onChange(e.target.value as FormValues['audience'])
+                                    }
+                                >
+                                    {AUDIENCE_ROLE_OPTIONS.map((o) => (
+                                        <option key={o.value} value={o.value}>
+                                            {o.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        />
+                    </Field>
+                )}
+
+                {audienceType === 'custom' && (
+                    <Field label="Trainees" error={errors.audience_user_ids?.message}>
+                        <Controller
+                            control={control}
+                            name="audience_user_ids"
+                            render={({ field }) => (
+                                <AsyncMultiSelectField
+                                    value={field.value.map(String)}
+                                    onChange={(v) => field.onChange(v.map(Number))}
+                                    loadOptions={loadTraineeOptions}
+                                    placeholder="Select trainee(s)"
+                                    error={errors.audience_user_ids?.message}
+                                />
+                            )}
+                        />
+                    </Field>
+                )}
+
+                <Field
+                    label="Publish"
+                    error={errors.scheduled_at?.message}
+                    helpText="Leave blank to publish immediately."
+                >
+                    <input
+                        type="datetime-local"
+                        className={cn(inputCls, errors.scheduled_at && errorInputCls)}
+                        {...register('scheduled_at')}
+                    />
+                </Field>
+
+                {formError && (
+                    <p className="text-danger-700 rounded-md bg-danger-50 px-3 py-2 text-xs">
+                        {formError}
+                    </p>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={onClose}
+                        disabled={submitting}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className="flex-1"
+                        disabled={submitting}
+                    >
+                        {submitting && (
+                            <Loader2 className="mr-1.5 inline h-4 w-4 animate-spin" />
+                        )}
+                        {mode === 'edit' ? 'Save changes' : 'Post announcement'}
+                    </Button>
                 </div>
-            )}
-
-            <TextField
-                label="Publish"
-                type="datetime-local"
-                optional
-                value={values.scheduled_at ?? ''}
-                onChange={(e) => set('scheduled_at', e.target.value)}
-            />
-            <p className="-mt-2.5 mb-3.5 text-xs text-neutral-400">
-                Leave blank to publish immediately.
-            </p>
-
-            <div className="flex gap-2">
-                <Button
-                    variant="secondary"
-                    className="flex-1"
-                    onClick={onClose}
-                    disabled={submitting}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="primary"
-                    className="flex-1"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                >
-                    {mode === 'edit' ? 'Save changes' : 'Post announcement'}
-                </Button>
-            </div>
+            </form>
         </Modal>
     );
 }

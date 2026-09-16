@@ -134,13 +134,6 @@ export default function LoginPage({ status }: { status?: string }) {
                     {processing ? 'Logging in…' : 'Log in'}
                 </Button>
             </form>
-
-            <div
-                className="mt-4 rounded-md bg-neutral-50 px-3 py-2.5 text-center text-xs text-neutral-500"
-                data-cy="login-div-your-role-and-dashboard-are-detected"
-            >
-                Your role and dashboard are detected automatically after login.
-            </div>
         </AuthLayout>
     );
 }

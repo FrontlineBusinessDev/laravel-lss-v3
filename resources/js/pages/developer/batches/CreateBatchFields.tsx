@@ -6,7 +6,7 @@ import { Building2, Video } from 'lucide-react';
  * batch modal and the DataTableField record modal render identically; only the
  * batch-specific SetupToggle stays here. Re-exported for existing call sites.
  */
-export { Field, formatDate, inputCls, labelCls, ReadonlyField, textareaCls } from '@/components/form/Field';
+export { errorInputCls, Field, formatDate, inputCls, labelCls, ReadonlyField, textareaCls } from '@/components/form/Field';
 const SETUP_CHOICES = [{
   value: 'f2f',
   label: 'Face-to-face',
@@ -30,6 +30,7 @@ export function SetupToggle({
       icon: Icon
     }) => {
       const active = value === v;
+
       return <button key={v} type="button" onClick={() => onChange(v)} className={`flex flex-col items-center gap-1.5 rounded-lg border py-3 text-sm font-medium transition-colors ${active ? 'border-brand-500 bg-brand-50 text-brand-600 ring-1 ring-brand-500' : 'border-neutral-200 text-neutral-600 hover:border-neutral-300'}`} data-cy="create-batch-fields-button-button">
                         <Icon className="h-4 w-4" data-cy="create-batch-fields-icon-3" />
                         {label}

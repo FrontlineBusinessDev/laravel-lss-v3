@@ -158,18 +158,13 @@ export default function TasksPage() {
             return;
         }
 
-        try {
-            const { mode: _mode, ...body } = payload;
-            await apiFetchJson('/tasks', {
-                method: 'POST',
-                body: JSON.stringify(body),
-            });
-            showToast(`Task "${payload.task}" assigned.`, 'success');
-            setAddModalOpen(false);
-            invalidateTasks();
-        } catch {
-            showToast('Failed to save task.', 'error');
-        }
+        const { mode: _mode, ...body } = payload;
+        await apiFetchJson('/tasks', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+        showToast(`Task "${payload.task}" assigned.`, 'success');
+        invalidateTasks();
     }
     async function runGroupComplete(row: ApiTaskGroup) {
         try {
