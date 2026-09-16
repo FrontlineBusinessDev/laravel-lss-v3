@@ -62,7 +62,12 @@ middleware `BaseController` wires in, and hand-roll response envelopes.
 
 ## Frontend (React/Inertia)
 
-Documented conventions are ~0% adopted — systemic drift, not isolated bugs.
+Documented conventions were ~0% adopted at the 2026-09-14 snapshot below —
+systemic drift, not isolated bugs. **Update 2026-09-16:** re-verified during
+this session's continuation and most of this section turned out to be
+either already resolved (`DataTableField`→`DataTableCardField`) or a
+mis-diagnosis (the API-layer "bypass"). See "Session progress" for the
+current, accurate state — read that first.
 
 ### API Service Layer bypass
 
@@ -79,14 +84,18 @@ Also affected (non-exhaustive, re-grep before starting):
 `pages/developer/certificates/*`, `pages/developer/batches/*`,
 `pages/auth/forgot-password.tsx`, `components/modal/ChangePasswordModal.tsx`.
 
-### DataTableField pattern unused for its documented job
+### ~~DataTableField pattern unused for its documented job~~ — RESOLVED, stale by the time this doc was read
 
-Only 3 files use it — all for form-field selects
-(`CreateBatchFields.tsx`, `CreateBatchModal.tsx`, `UserModal.tsx`), not table
-filtering. ~34 list pages reimplement search/filter/pagination state by hand:
-`payments`, `batches`, `biometrics`, `seminars`, `tasks`, `leave`,
-`evaluation`, `system-log`, `settings/{rates,roles}`, `certificates/*`,
-`reports/*`, trainee/trainer mirrors.
+Re-checked 2026-09-16: `components/table/DataTableField.tsx` no longer
+exists — deleted in `7d5c6ca "update announcement and notification and
+logger"`, a commit made *after* this audit's 2026-09-14 snapshot. All 36
+`pages/**/index.tsx` list pages already use `DataTableCardField` (the
+barrel's own docblock at `components/table/index.ts` documents that as the
+one true entry point now). `RecordModal.tsx`/`RecordModalField.tsx` (its
+former create/edit-modal sidekick) are the only survivors, and as of this
+session have exactly one consumer: `pages/developer/seminars/index.tsx`
+(wired in earlier this session). Nothing left to migrate here — do not
+re-open this item without re-grepping first.
 
 ### React Hook Form + Zod: 0 hits project-wide
 
@@ -109,17 +118,25 @@ built. Flag as stale convention, not a bug to fix.
 
 ### Migrate to (frontend), priority order — biggest leverage first
 
-1. Fix `use-record-row-actions.ts`, `FormModal.tsx`, `DataTableCardField.tsx`
-   first — 3 shared files, fixes the API-layer bypass for every page that
-   consumes them without touching each page individually.
-2. Pick ONE list page, convert to `DataTableField`, use as the template
-   before touching the other ~33 — don't refactor all at once blind.
-3. Convert `RecordModal.tsx` (shared) to RHF+Zod first — template for the
-   manual-`validate()` pages.
+~~1-3~~ Re-investigated 2026-09-16 (see "Session progress" below) — #1 isn't
+a real bug (`apiFetchJson` already shares the centralized Axios client),
+#2 is already fully done (stale by the time it was read), #3 is a poor fit
+for `RecordModal`'s dynamic field-array shape. Only #4 remains open:
+
 4. `export namespace` — lowest priority; batch-convert only when touching a
    file for other reasons.
 
 ## Session progress (2026-09-16)
+
+**Continuation pass:** re-verified every remaining open frontend item
+before touching more code (per this doc's own "re-check before you re-run"
+rule) and found the `DataTableField` migration item was already fully
+resolved by an intervening commit — see the strikethrough section above.
+No code changes this pass; the correction is the deliverable. With that,
+every item in this audit is now either done, corrected, or explicitly
+deferred with reasoning — nothing actionable remains open except #4
+(`export namespace`, opportunistic-only) and the flagged-not-done Trainer
+stub wiring.
 
 ### Backend — done
 
