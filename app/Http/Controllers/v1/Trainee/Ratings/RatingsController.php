@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\v1\Trainee\Ratings;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\TaskRating;
-use App\Models\Trainees;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +21,10 @@ use Inertia\Response;
  * (MyInfoController::index() is untouched). Behavioral ratings are never
  * selected here — only real App\Models\TaskRating columns.
  */
-class RatingsController
+class RatingsController extends ApiController
 {
+    use ScopedToCurrentTrainee;
+
     public function index(): Response
     {
         return Inertia::render('trainee/ratings/index')->asCsr();
@@ -115,10 +118,5 @@ class RatingsController
             ->get(['users.id', 'users.first_name', 'users.last_name']);
 
         return response()->json(['data' => $trainers]);
-    }
-
-    protected function currentTrainee(): Trainees
-    {
-        return Trainees::where('user_id', auth()->id())->firstOrFail();
     }
 }

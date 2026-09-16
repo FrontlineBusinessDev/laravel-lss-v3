@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\v1\Trainee\Evaluations;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\Batches;
 use App\Models\EvaluationTrainerQuestion;
 use App\Models\Trainees;
 use App\Models\TrainerEvaluation;
 use App\Support\RequiredDocumentTypes;
 use App\Support\Statuses;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,8 +26,16 @@ use Inertia\Response;
  * constraint). Questions are fetched live from the admin-managed question
  * bank (App\Models\EvaluationTrainerQuestion) — never hardcoded.
  */
-class EvaluationsController
+class EvaluationsController extends ApiController
 {
+    use ScopedToCurrentTrainee;
+
+    /** @return Builder<Trainees> */
+    protected function currentTraineeQuery(): Builder
+    {
+        return Trainees::query()->withCompletedHours()->where('user_id', auth()->id());
+    }
+
     public function index(): Response
     {
         return Inertia::render('trainee/evaluation/index')->asCsr();
@@ -174,11 +185,6 @@ class EvaluationsController
             'eligible' => $hoursOk && $docsOk && $balanceOk,
             'reasons' => $reasons,
         ];
-    }
-
-    private function currentTrainee(): Trainees
-    {
-        return Trainees::query()->withCompletedHours()->where('user_id', auth()->id())->firstOrFail();
     }
 
     private function currentBatch(Trainees $trainee): ?Batches

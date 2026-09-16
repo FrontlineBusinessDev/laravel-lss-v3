@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\v1\Trainee\Tasks;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\LeaveRequest;
 use App\Models\Task;
-use App\Models\Trainees;
 use App\Models\User;
 use App\Support\HourThresholdDispatcher;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -19,9 +19,9 @@ use Inertia\Response;
  * (App\Models\Trainees::user_id). Ownership is enforced twice: the query
  * scoping here, and TaskPolicy::isOwn() via $this->authorize().
  */
-class TasksController
+class TasksController extends ApiController
 {
-    use AuthorizesRequests;
+    use ScopedToCurrentTrainee;
 
     public function index(): Response
     {
@@ -39,7 +39,7 @@ class TasksController
      */
     public function paginationSearch(Request $request): JsonResponse
     {
-        $trainee = $this->currentTrainee($request);
+        $trainee = $this->currentTrainee();
 
         $search = $request->string('search')->toString();
         $filters = (array) $request->input('filters', []);
@@ -125,7 +125,7 @@ class TasksController
     /** DB-level aggregates for the Daily Task Sheet — completed task count + total hours. */
     public function aggregates(Request $request): JsonResponse
     {
-        $trainee = $this->currentTrainee($request);
+        $trainee = $this->currentTrainee();
 
         $result = Task::query()
             ->where('trainee_id', $trainee->id)
@@ -145,7 +145,7 @@ class TasksController
     /** Distinct trainers assigned to this trainee's own tasks — feeds the Trainer filter. */
     public function trainers(Request $request): JsonResponse
     {
-        $trainee = $this->currentTrainee($request);
+        $trainee = $this->currentTrainee();
 
         $trainers = User::query()
             ->whereIn('id', Task::where('trainee_id', $trainee->id)->whereNotNull('trainer_id')->distinct()->pluck('trainer_id'))
@@ -196,7 +196,7 @@ class TasksController
         }
         $model->update($attributes);
 
-        HourThresholdDispatcher::maybeDispatch($this->currentTrainee($request));
+        HourThresholdDispatcher::maybeDispatch($this->currentTrainee());
 
         return $this->sendResponse($model, 'Task marked as complete.');
     }
@@ -230,24 +230,10 @@ class TasksController
         return ['time_spent' => round((float) $model->time_spent + $elapsedHours, 2)];
     }
 
-    protected function currentTrainee(Request $request): Trainees
-    {
-        return Trainees::where('user_id', $request->user()->id)->firstOrFail();
-    }
-
     protected function ownedTask(Request $request, int|string $id): Task
     {
-        $trainee = $this->currentTrainee($request);
+        $trainee = $this->currentTrainee();
 
         return Task::where('trainee_id', $trainee->id)->findOrFail($id);
-    }
-
-    protected function sendResponse(mixed $data, string $message = '', int $statusCode = 200): JsonResponse
-    {
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $statusCode);
     }
 }

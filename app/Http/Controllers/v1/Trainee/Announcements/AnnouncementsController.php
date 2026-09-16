@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers\v1\Trainee\Announcements;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
-use App\Models\Trainees;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /** Read-only announcements feed for the logged-in trainee — no store/update/archive/destroy, trainees can't author or mutate announcements. */
-class AnnouncementsController
+class AnnouncementsController extends ApiController
 {
+    use ScopedToCurrentTrainee;
+
     public function index(): Response
     {
         return Inertia::render('trainee/announcements/index')->asCsr();
@@ -21,7 +24,7 @@ class AnnouncementsController
     /** GET /trainee/announcements-data — paginated feed, newest first. */
     public function list(Request $request): JsonResponse
     {
-        $trainee = $this->resolveOwnTrainee();
+        $trainee = $this->currentTrainee();
         $perPage = (int) $request->integer('per_page', 15);
 
         $readIds = AnnouncementRead::query()
@@ -53,10 +56,5 @@ class AnnouncementsController
                 ],
             ],
         ]);
-    }
-
-    private function resolveOwnTrainee(): Trainees
-    {
-        return Trainees::where('user_id', auth()->id())->firstOrFail();
     }
 }

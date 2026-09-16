@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\v1\Trainee\Dashboard;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\Announcement;
 use App\Models\AnnouncementRead;
 use App\Models\LeaveRequest;
@@ -21,8 +23,16 @@ use Inertia\Response;
  * announcements, batch-peers-on-leave, and certification eligibility. All
  * queries are scoped to the authenticated trainee's own batch/record.
  */
-class DashboardController
+class DashboardController extends ApiController
 {
+    use ScopedToCurrentTrainee;
+
+    /** @return Builder<Trainees> */
+    protected function currentTraineeQuery(): Builder
+    {
+        return Trainees::query()->withCompletedHours()->where('user_id', auth()->id());
+    }
+
     public function index(): Response
     {
         $trainee = $this->currentTrainee();
@@ -186,10 +196,5 @@ class DashboardController
             'status' => $status,
             'reasons' => $reasons,
         ];
-    }
-
-    private function currentTrainee(): Trainees
-    {
-        return Trainees::query()->withCompletedHours()->where('user_id', auth()->id())->firstOrFail();
     }
 }

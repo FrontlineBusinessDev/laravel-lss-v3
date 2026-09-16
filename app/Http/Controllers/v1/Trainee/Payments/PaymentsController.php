@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\v1\Trainee\Payments;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\PaymentMethod;
-use App\Models\Trainees;
 use App\Models\TraineesPayments;
 use App\Support\Statuses;
 use App\Traits\HandlesFileUploads;
@@ -18,9 +19,9 @@ use Inertia\Response;
  * Display-only: trainees never store/update/delete a payment — that stays
  * an admin-only action via TraineePaymentsController.
  */
-class PaymentsController
+class PaymentsController extends ApiController
 {
-    use HandlesFileUploads;
+    use HandlesFileUploads, ScopedToCurrentTrainee;
 
     protected array $fileFields = ['logo', 'qr_code'];
     protected int $fileUrlExpiry = 60;
@@ -96,10 +97,5 @@ class PaymentsController
                 'sort_dir' => $sortDir,
             ],
         ]);
-    }
-
-    protected function currentTrainee(): Trainees
-    {
-        return Trainees::where('user_id', auth()->id())->firstOrFail();
     }
 }

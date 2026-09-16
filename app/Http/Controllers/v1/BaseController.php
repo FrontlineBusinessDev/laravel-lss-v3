@@ -9,17 +9,14 @@ use App\Traits\HandlesFileUploads;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controllers\HasMiddleware;
-use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-abstract class BaseController extends Controller implements HasMiddleware
+abstract class BaseController extends ApiController
 {
-    use AuthorizesRequests, HandlesFileUploads, AppliesQueryFilters;
+    use HandlesFileUploads, AppliesQueryFilters;
     public const STATUS_ACTIVE = Statuses::ACTIVE;
     public const STATUS_INACTIVE = Statuses::INACTIVE;
     protected string $model; /** Fully qualified model class for this module. Set by child when using the CRUD helpers below. */
@@ -79,13 +76,6 @@ abstract class BaseController extends Controller implements HasMiddleware
      * e.g. ['image', 'attachment']
      */
     protected array $fileFields = [];
-    /** 
-     * THIS IS FOR AUTHENTICATED USERS ONLY AND RATE LIMIT OF PER USER
-     */
-    public static function middleware(): array
-    {
-        return [new Middleware(['auth', 'throttle:120,1'])];
-    }
     public function index(Request $request): mixed
     {
         /** @disregard P1013 */ // this disregard the error below but it works
@@ -399,38 +389,6 @@ abstract class BaseController extends Controller implements HasMiddleware
             ])
             ->values()
             ->all();
-    }
-    /**
-     * Send a successful JSON response.
-     *
-     * @param mixed $data
-     * @param string $message
-     * @param int $statusCode
-     * @return JsonResponse
-     */
-    protected function sendResponse(mixed $data, string $message = '', int $statusCode = 200): JsonResponse
-    {
-        return response()->json([
-            'success' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $statusCode);
-    }
-    /**
-     * Send an error JSON response.
-     *
-     * @param string $message
-     * @param array $errors
-     * @param int $statusCode
-     * @return JsonResponse
-     */
-    protected function sendError(string $message, array $errors = [], int $statusCode = 400): JsonResponse
-    {
-        return response()->json([
-            'success' => false,
-            'message' => $message,
-            'errors' => $errors,
-        ], $statusCode);
     }
     protected function applySearch(Builder $query, string $term): Builder
     {

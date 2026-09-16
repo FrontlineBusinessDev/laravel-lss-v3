@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\v1\Trainee\MyInfo;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Http\Controllers\v1\Developer\Trainees\TraineeDocumentsController;
 use App\Http\Responses\InertiaPageResponse;
 use App\Models\AcademicLearningOutcomes;
@@ -9,7 +11,6 @@ use App\Models\TraineeDocument;
 use App\Models\Trainees;
 use App\Support\RequiredDocumentTypes;
 use App\Support\Statuses;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -22,9 +23,9 @@ use Illuminate\Validation\Rule;
  * (profile fields, academic info, payments, ratings, certificate) is
  * display-only, matching TraineesPolicy::viewOwn()/uploadOwnDocument().
  */
-class MyInfoController
+class MyInfoController extends ApiController
 {
-    use AuthorizesRequests;
+    use ScopedToCurrentTrainee;
 
     private const UPLOADABLE_DOCUMENT_TYPES = RequiredDocumentTypes::TYPES;
 
@@ -34,12 +35,12 @@ class MyInfoController
      * one — same page, same shape, just scoped to a different app_trainees
      * row after an ownership check via viewOwnEnrollment(). All the writable
      * actions below (uploadDocument/deleteDocument) always stay scoped to
-     * resolveOwnTrainee() regardless of this param, so a past enrollment is
+     * currentTrainee() regardless of this param, so a past enrollment is
      * naturally unreachable for writes.
      */
     public function index(Request $request): mixed
     {
-        $ownTrainee = $this->resolveOwnTrainee();
+        $ownTrainee = $this->currentTrainee();
         $this->authorize('viewOwn', $ownTrainee);
 
         $enrollmentId = $request->integer('enrollment') ?: null;
@@ -113,7 +114,7 @@ class MyInfoController
 
     public function uploadDocument(Request $request): JsonResponse
     {
-        $trainee = $this->resolveOwnTrainee();
+        $trainee = $this->currentTrainee();
 
         $validated = $request->validate([
             'document_type' => ['required', 'string', Rule::in(self::UPLOADABLE_DOCUMENT_TYPES)],
@@ -154,7 +155,7 @@ class MyInfoController
 
     public function deleteDocument(int|string $documentId): JsonResponse
     {
-        $trainee = $this->resolveOwnTrainee();
+        $trainee = $this->currentTrainee();
         $document = TraineeDocument::where('trainee_id', $trainee->id)->findOrFail($documentId);
 
         $this->authorize('deleteOwnDocument', [$trainee, $document->document_type]);
@@ -165,10 +166,5 @@ class MyInfoController
         $document->delete();
 
         return response()->json(null, 204);
-    }
-
-    private function resolveOwnTrainee(): Trainees
-    {
-        return Trainees::where('user_id', auth()->id())->firstOrFail();
     }
 }

@@ -119,6 +119,77 @@ built. Flag as stale convention, not a bug to fix.
 4. `export namespace` — lowest priority; batch-convert only when touching a
    file for other reasons.
 
+## Session progress (2026-09-16)
+
+### Backend — done
+
+- **New `Concerns/JsonResponds` trait** (`sendResponse()`/`sendError()`,
+  extracted verbatim from `BaseController`) + **new lightweight
+  `ApiController`** (`extends Controller implements HasMiddleware`, bundles
+  `AuthorizesRequests` + `JsonResponds` + the same `auth`+`throttle:120,1`
+  middleware `BaseController` already wired). `BaseController` now `extends
+  ApiController` instead of duplicating all three — same public behavior,
+  one less copy.
+- All 14 previously-bare controllers now `extends ApiController` — they
+  pick up auth/throttle middleware, `authorize()`, and `sendResponse()`/
+  `sendError()` for free instead of hand-rolling or going without.
+- Applied `Concerns/ScopedToCurrentTrainee` (already existed, was unused)
+  to the 8 controllers that had their own copy of the
+  `Trainees::where('user_id', auth()->id())->firstOrFail()` lookup —
+  `Trainee/{Announcements,Biometrics,Dashboard,Evaluations,MyInfo,Payments,
+  Ratings,Tasks}`. `Dashboard`/`Evaluations` override `currentTraineeQuery()`
+  to layer `withCompletedHours()`, exactly the extension point the trait
+  documents. `Trainee/Tasks` also dropped the byte-for-byte-duplicated
+  `sendResponse()` the audit flagged (now inherited).
+- Verified: full Pest suite 213/213 passing, PHPStan clean on every touched
+  file (2 pre-existing `return.type` regressions from the
+  `currentTraineeQuery()` override fixed with a `@return Builder<Trainees>`
+  docblock; a few `property.notFound` on Eloquent magic accessors like
+  `avatar_url`/`batch_code`/`school_name` remain — pre-existing debt on
+  lines this pass didn't touch, part of the existing ~186-error baseline).
+
+### Backend — deliberately not done this pass
+
+- **`Trainer/{Dashboard,Ratings,Tasks,Leave}` reuse with Developer
+  counterparts** (audit item #4): `Trainer/Ratings`, `Trainer/Tasks`,
+  `Trainer/Leave` are still one-line `index()->asCsr()` stubs with no logic
+  to share yet — there's nothing to dedupe until real Trainer functionality
+  is built. `Trainer/Dashboard` already has real logic
+  (`HasDashboardWidgets` + `ScopesToAssignedBatches`), structurally
+  different enough from `Developer/Dashboard` (org-wide vs batch-scoped)
+  that forcing a shared base now would be speculative. Flagging, not doing.
+
+### Frontend — re-assessed, not the bug the audit implies
+
+- **"~28 files bypass the API service layer"**: traced `apiFetchJson`
+  (`lib/apiFetch.ts`) — it's documented as, and actually is, a thin adapter
+  over the *same* centralized Axios instance (`api-service-layer/client.ts`)
+  every `*Service` object uses: same CSRF header injection, same
+  credentials handling, same `ApiError` normalization. There's no
+  functional inconsistency to fix — the remaining gap is purely
+  organizational (inline URL strings vs a named per-domain service
+  function). For genuinely generic shared components
+  (`DataTableCardField.tsx`, `use-record-row-actions.ts`, `FormModal.tsx`)
+  a per-domain service isn't even the right shape — they take `apiUrl` as a
+  runtime prop precisely because they're reused across many domains. Not
+  touching this; the audit's premise (transport duplication) doesn't hold up.
+- **`RecordModal.tsx` → RHF + Zod** (audit item #3): re-examined given this
+  session's earlier RHF+Zod conversions (`AddTaskModal`, both
+  `AddAnnouncementModal`s, `CreateBatchModal`, `CreateEditSeminarModal`,
+  etc. — see prior session log). `RecordModal` takes a *dynamic*
+  `FieldDef<T>[]` config rather than a fixed shape; Zod's whole value is a
+  static, compile-time-checked schema per form. Forcing RHF+Zod onto a
+  runtime field array would mean building the schema at runtime from
+  `FieldDef.required`/`.validate`, which is what `RecordModal`'s existing
+  `collectErrors()` already does — same behavior, more machinery. Its
+  spacing/double-margin bug (the actual live issue) was already fixed this
+  session; leaving the validation engine as-is.
+- **34 pages not on `DataTableField`, `export namespace` convention**: still
+  open, still large, still exactly the kind of "don't refactor all at once
+  blind" work this doc already warns against — pick one page, convert it,
+  use it as the template, same as the doc's own priority-2 guidance says.
+  Not attempted this pass.
+
 ## Related fixes already applied this session (context, not open items)
 
 - [`CreateBatchModal.tsx`](../resources/js/pages/developer/batches/CreateBatchModal.tsx) —

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Trainer\Dashboard;
 
+use App\Http\Controllers\v1\ApiController;
 use App\Models\Announcement;
 use App\Models\Trainees;
 use App\Traits\HasDashboardWidgets;
@@ -18,7 +19,7 @@ use Inertia\Response;
  * ScopesToAssignedBatches. Shared widget logic lives in
  * App\Traits\HasDashboardWidgets.
  */
-class DashboardController
+class DashboardController extends ApiController
 {
     use HasDashboardWidgets, ScopesToAssignedBatches;
 

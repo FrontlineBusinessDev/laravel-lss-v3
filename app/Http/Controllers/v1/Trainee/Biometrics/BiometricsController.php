@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\v1\Trainee\Biometrics;
 
+use App\Http\Controllers\v1\ApiController;
+use App\Http\Controllers\v1\Concerns\ScopedToCurrentTrainee;
 use App\Models\BiometricRecord;
-use App\Models\Trainees;
 use App\Support\BiometricHours;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,11 +12,13 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /** Read-only attendance log for the logged-in trainee — mirrors Developer\Trainees\TraineeBiometricsController but scoped to auth()->id() instead of an {id} route param. */
-class BiometricsController
+class BiometricsController extends ApiController
 {
+    use ScopedToCurrentTrainee;
+
     public function index(): Response
     {
-        $trainee = $this->resolveOwnTrainee();
+        $trainee = $this->currentTrainee();
         $trainee->load(['school:id,school_name', 'batch:id,batch_code']);
 
         return Inertia::render('trainee/biometrics/index', [
@@ -30,7 +33,7 @@ class BiometricsController
     /** GET /trainee/biometrics-data */
     public function records(Request $request): JsonResponse
     {
-        $trainee = $this->resolveOwnTrainee();
+        $trainee = $this->currentTrainee();
 
         $validated = $request->validate([
             'start_date' => ['nullable', 'date'],
@@ -71,10 +74,5 @@ class BiometricsController
     private function shortTime(?string $value): ?string
     {
         return $value === null ? null : substr($value, 0, 5);
-    }
-
-    private function resolveOwnTrainee(): Trainees
-    {
-        return Trainees::where('user_id', auth()->id())->firstOrFail();
     }
 }

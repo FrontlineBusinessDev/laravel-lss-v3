@@ -10,9 +10,10 @@ use Illuminate\Http\Request;
  * Polled in-app notification feed (no broadcasting infra — TopBar/NotificationBell
  * refetches this on an interval). Every action is scoped to the authenticated
  * user's own rows; there is no cross-user access here. Shared across every
- * role, so it doesn't extend any role-scoped base controller.
+ * role, so it doesn't extend any role-scoped base controller (just the
+ * lightweight ApiController for auth/throttle middleware).
  */
-class NotificationController
+class NotificationController extends ApiController
 {
     public function index(Request $request): JsonResponse
     {
